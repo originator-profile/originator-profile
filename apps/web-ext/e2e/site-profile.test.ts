@@ -23,6 +23,9 @@ test("Site Profile を取得検証できる", async ({
   expect(await ext?.getByTestId("site-profile-wsp-name").innerText()).toBe(
     "SiteProfileの取得検証",
   );
+
+  // Visual Regression Test: ポップアップUIのスクリーンショット比較
+  await expect(ext).toHaveScreenshot("site-profile-popup.png");
 });
 test("Site Profile を取得検証できるが、WMP が存在しない", async ({
   context,

@@ -72,8 +72,11 @@
     "dev": "NODE_ENV=development pnpm build:chromium",
     "dev:firefox": "NODE_ENV=development pnpm build:firefox",
     "e2e": "NODE_ENV=testing run-s build:chromium e2e:en e2e:ja",
+    "e2e:update": "NODE_ENV=testing run-s build:chromium e2e:en:update e2e:ja:update",
     "e2e:ja": "LC_ALL=ja_JP.UTF-8 playwright test --project=ja",
+    "e2e:ja:update": "LC_ALL=ja_JP.UTF-8 playwright test --project=ja --update-snapshots",
     "e2e:en": "LC_ALL=en_US.UTF-8 playwright test --project=en",
+    "e2e:en:update": "LC_ALL=en_US.UTF-8 playwright test --project=en --update-snapshots",
     "test": "vitest run",
     "lint": "eslint --fix .",
     "type-check": "tsc --noEmit"

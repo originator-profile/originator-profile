@@ -26,4 +26,10 @@ export default defineConfig({
     trace: process.env.CI ? "on-first-retry" : "on",
     video: process.env.CI ? "on-first-retry" : "on",
   },
+  expect: {
+    toHaveScreenshot: {
+      maxDiffPixels: 100,
+      threshold: 0.2,
+    },
+  },
 });
