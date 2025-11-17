@@ -107,6 +107,9 @@ $ REGISTRY_OPS=$(cat registry-ops.json) pnpm build
 - `pnpm lint`: コードリントと fixable なリントエラーを修正します。
 - `pnpm test`: ユニットテストを実行します。
 - `pnpm e2e`: Chrome用拡張機能のe2eテストを実行します。
+- `pnpm e2e:update`: Visual Regression Testのベースライン画像を更新します。UIに意図的な変更を加えた後に実行してください。
+  - `pnpm e2e:ja:update`: 日本語UIのベースライン画像のみ更新
+  - `pnpm e2e:en:update`: 英語UIのベースライン画像のみ更新
 
 ## ドキュメント
 
