@@ -104,7 +104,7 @@ export const selectByIntegrity: ElementSelector = (params) => {
 export async function createIntegrity(
   alg: HashAlgorithm,
   { content = "", ...target }: RawTarget,
-  doc = document,
+  doc?: Document,
 ): Promise<Target | null> {
   if (
     ![
@@ -138,6 +138,8 @@ export async function createIntegrity(
       integrity: meta.join(" "),
     } as Target;
   }
+
+  doc ??= document;
 
   const { contentFetcher, elementSelector } = {
     HtmlTargetIntegrity: {

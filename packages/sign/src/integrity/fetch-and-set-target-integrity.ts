@@ -52,7 +52,11 @@ export async function fetchAndSetTargetIntegrity<
         return target as Target;
       }
 
-      const doc = await documentProvider(raw);
+      const doc =
+        raw.type === "ExternalResourceTargetIntegrity"
+          ? undefined
+          : await documentProvider(raw);
+
       const target = await createIntegrity(alg, raw, doc);
 
       if (!target) {

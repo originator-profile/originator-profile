@@ -1,4 +1,4 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import type { FromSchema, JSONSchema } from "json-schema-to-ts";
 
 export const RawTarget = {
   type: "object",
@@ -15,7 +15,7 @@ export const RawTarget = {
       ],
     },
     content: {
-      oneOf: [
+      anyOf: [
         {
           type: "array",
           items: {

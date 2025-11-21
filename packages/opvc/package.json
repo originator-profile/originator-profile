@@ -45,6 +45,7 @@
     "eslint-config-originator-profile": "workspace:*",
     "oclif": "^4.20.1",
     "tsdown": "^0.15.0",
-    "typescript": "^5.8.3"
+    "typescript": "^5.8.3",
+    "websri": "^1.0.1"
   }
 }

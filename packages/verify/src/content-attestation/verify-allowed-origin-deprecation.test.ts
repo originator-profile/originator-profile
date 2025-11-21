@@ -2,7 +2,15 @@ import { generateKey, LocalKeys } from "@originator-profile/cryptography";
 import { ContentAttestation } from "@originator-profile/model";
 import { signJwtVc } from "@originator-profile/securing-mechanism";
 import { addYears, fromUnixTime, getUnixTime } from "date-fns";
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import {
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+  MockInstance,
+} from "vitest";
 import { opId } from "../helper";
 import { CaVerifier } from "./verify-content-attestation";
 
@@ -13,7 +21,7 @@ const caIssuer = opId.originator;
 
 describe("allowedOrigin deprecation 警告", async () => {
   const issuer = await generateKey();
-  let consoleWarnSpy: ReturnType<typeof vi.spyOn>;
+  let consoleWarnSpy: MockInstance<typeof console.warn>;
 
   beforeEach(() => {
     consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});

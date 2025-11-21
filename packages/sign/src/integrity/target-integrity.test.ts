@@ -118,6 +118,30 @@ describe("createIntegrity()", () => {
       integrity: `${meta1.toString()} ${meta2.toString()}`,
     });
   });
+
+  it("should not reference document for ExternalResourceTargetIntegrity", async () => {
+    const content = "data:text/plain,external-content";
+    const integrityMetadata = await createIntegrityMetadata(
+      "sha256",
+      await fetch(content).then((res) => res.arrayBuffer()),
+    );
+
+    const invalidDoc = {} as Document;
+
+    const result = await createIntegrity(
+      "sha256",
+      {
+        type: "ExternalResourceTargetIntegrity",
+        content,
+      },
+      invalidDoc,
+    );
+
+    expect(result).toEqual({
+      type: "ExternalResourceTargetIntegrity",
+      integrity: integrityMetadata.toString(),
+    });
+  });
 });
 
 describe("fetchHtmlContent()", () => {

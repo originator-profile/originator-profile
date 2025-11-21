@@ -3,6 +3,7 @@ export * from "./content-attestation-set";
 export * from "./errors";
 export * from "./helper";
 export * from "./integrity/";
+export * from "./keys";
 export * from "./originator-profile-set";
 export * from "./site-profile/";
 export * from "./types";

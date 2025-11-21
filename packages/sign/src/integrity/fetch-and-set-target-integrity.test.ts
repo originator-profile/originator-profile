@@ -1,5 +1,5 @@
-import { RawTarget } from "@originator-profile/model";
-import { describe, expect, it } from "vitest";
+import type { RawTarget } from "@originator-profile/model";
+import { describe, expect, it, vi } from "vitest";
 import {
   fetchAndSetTargetIntegrity,
   IntegrityCalculationError,
@@ -67,5 +67,22 @@ describe("fetchAndSetTargetIntegrity()", () => {
         integrity: "existing-integrity",
       },
     ]);
+  });
+
+  it("should not call documentProvider for ExternalResourceTargetIntegrity", async () => {
+    const documentProvider = vi.fn();
+
+    const uca = {
+      target: [
+        {
+          type: "ExternalResourceTargetIntegrity",
+          content: ["data:text/plain,content1", "data:text/plain,content2"],
+        } satisfies RawTarget,
+      ],
+    };
+
+    await fetchAndSetTargetIntegrity("sha256", uca, documentProvider);
+
+    expect(documentProvider).not.toHaveBeenCalled();
   });
 });

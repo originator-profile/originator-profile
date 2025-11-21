@@ -50,12 +50,20 @@ function getPublParams(ca: ContentAttestation) {
   return { issuer: ca.issuer, subject: ca.credentialSubject.id };
 }
 
+export const paths = {
+  base: "tab/:tabId",
+  org: "org/:contentType/:orgIssuer/:orgSubject",
+  publ: "publ/:issuer/:subject",
+  site: "site",
+  prohibition: "prohibition",
+} as const;
+
 export const routes = {
-  base: route("/tab/:tabId"),
-  org: urlParamsRoute("org/:contentType/:orgIssuer/:orgSubject", getOrgParams),
-  publ: urlParamsRoute("publ/:issuer/:subject", getPublParams),
-  site: route("site"),
-  prohibition: route("prohibition"),
+  base: route(`/${paths.base}`),
+  org: urlParamsRoute(paths.org, getOrgParams),
+  publ: urlParamsRoute(paths.publ, getPublParams),
+  site: route(paths.site),
+  prohibition: route(paths.prohibition),
 } as const;
 
 export function buildPublUrl(

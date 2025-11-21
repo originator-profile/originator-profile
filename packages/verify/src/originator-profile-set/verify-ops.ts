@@ -8,56 +8,46 @@ import {
   WebMediaProfile,
 } from "@originator-profile/model";
 import {
-  JwtVcVerificationResult,
   JwtVcVerifier,
   UnverifiedJwtVc,
   VcValidator,
   VerifiedJwtVc,
 } from "@originator-profile/securing-mechanism";
+import { getMappedKeys, type MappedKeys } from "../keys";
 import { decodeOps } from "./decode-ops";
 import {
   CoreProfileNotFound,
+  OpVerifyFailed,
   OpsInvalid,
   OpsVerifyFailed,
-  OpVerifyFailed,
 } from "./errors";
 import {
   Certificate,
-  OpsVerificationResult,
   OpVerificationResult,
+  OpsVerificationResult,
   VerifiedOp,
   VerifiedOps,
 } from "./types";
 
-/** CP の署名検証結果 */
-type CoreProfileMap = Map<
-  CoreProfile["credentialSubject"]["id"],
-  JwtVcVerificationResult<CoreProfile>
->;
-
 /** OP (CP を除く) 署名検証者 */
 function OpVerifier<T extends OpVc>(
-  cps: CoreProfileMap,
+  paOrWmpIssuerKeys: MappedKeys,
   vc: UnverifiedJwtVc<T>,
   validator?: VcValidator<VerifiedJwtVc<T>>,
 ): JwtVcVerifier<T> | (() => Promise<CoreProfileNotFound<T>>) {
-  const cpHolder = vc.doc.issuer;
-  const cp = cps.get(cpHolder);
-  if (!cp) {
+  const issuer = vc.doc.issuer;
+  const jwks = paOrWmpIssuerKeys[issuer];
+  if (!jwks) {
     return async () =>
-      new CoreProfileNotFound(`Missing Core Profile (${cpHolder})`, vc);
+      new CoreProfileNotFound(`Missing Core Profile (${issuer})`, vc);
   }
-  if (cp instanceof Error) {
-    return async () =>
-      new CoreProfileNotFound(`Invalid Core Profile (${cpHolder})`, vc);
-  }
-  const cpKeys = LocalKeys(cp.doc.credentialSubject.jwks);
-  return JwtVcVerifier<T>(cpKeys, cpHolder, validator);
+  const cpKeys = LocalKeys(jwks);
+  return JwtVcVerifier<T>(cpKeys, issuer, validator);
 }
 
 /** annotations プロパティの署名検証 */
 async function verifyAnnotations(
-  cps: CoreProfileMap,
+  paIssuerKeys: MappedKeys,
   annotations?: UnverifiedJwtVc<Certificate>[],
   validator?: typeof VcValidator,
 ) {
@@ -65,7 +55,7 @@ async function verifyAnnotations(
   return await Promise.all(
     annotations.map((annotation) => {
       const verify = OpVerifier<Certificate>(
-        cps,
+        paIssuerKeys,
         annotation,
         validator?.({
           oneOf: [CertificateSchema, JapaneseExistenceCertificate],
@@ -78,13 +68,13 @@ async function verifyAnnotations(
 
 /** media プロパティの署名検証 */
 async function verifyMedia(
-  cps: CoreProfileMap,
+  wmpIssuerKeys: MappedKeys,
   media?: UnverifiedJwtVc<WebMediaProfile>,
   validator?: typeof VcValidator,
 ) {
   if (!media) return;
   const verify = OpVerifier<WebMediaProfile>(
-    cps,
+    wmpIssuerKeys,
     media,
     validator?.(WebMediaProfile),
   );
@@ -124,29 +114,16 @@ export function OpsVerifier(
     if (decoded instanceof OpsInvalid) {
       return decoded;
     }
-    const cps: CoreProfileMap = new Map(
-      await Promise.all(
-        decoded.map(({ core }) =>
-          verifyCp(core.source).then(
-            (result) => [core.doc.credentialSubject.id, result] as const,
-          ),
-        ),
-      ),
-    );
+    const paOrWmpIssuerKeys = getMappedKeys(decoded);
     const resultOps = await Promise.all(
       decoded.map(async (op): Promise<OpVerificationResult> => {
-        const core =
-          cps.get(op.core.doc.credentialSubject.id) ??
-          new CoreProfileNotFound(
-            `Missing Core Profile (${op.core.doc.credentialSubject.id})`,
-            op.core,
-          );
+        const core = await verifyCp(op.core.source);
         const annotations = await verifyAnnotations(
-          cps,
+          paOrWmpIssuerKeys,
           op.annotations,
           validator,
         );
-        const media = await verifyMedia(cps, op.media, validator);
+        const media = await verifyMedia(paOrWmpIssuerKeys, op.media, validator);
         const resultOp = { core, annotations, media };
 
         if (core instanceof Error) {

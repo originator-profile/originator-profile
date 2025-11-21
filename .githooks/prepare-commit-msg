@@ -1,0 +1,13 @@
+#!/bin/sh
+# To use this hook, run `git config core.hooksPath .githooks`
+# or copy this file to .git/hooks/prepare-commit-msg in your local repository.
+
+NAME=$(git config user.name)
+EMAIL=$(git config user.email)
+
+if [ -z "$NAME" ] || [ -z "$EMAIL" ]; then
+  echo "Error: Git user.name and user.email must be configured"
+  exit 1
+fi
+
+git interpret-trailers --in-place --if-exists doNothing --trailer "Signed-off-by: ${NAME} <${EMAIL}>" "$1"

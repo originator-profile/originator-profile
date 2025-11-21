@@ -16,6 +16,7 @@ import {
 import { Icon } from "@iconify/react";
 import { stringifyWithError } from "@originator-profile/core";
 import { SupportedCa } from "./credentials";
+import { ContentAttestation } from "@originator-profile/model";
 
 interface CodedError extends Error {
   code: string;
@@ -118,7 +119,10 @@ function ContentAttestationErrorDetails({
   attestation,
   index,
 }: {
-  attestation: CaInvalid | CaVerifyFailed;
+  attestation:
+    | CaInvalid
+    | CaVerifyFailed
+    | CoreProfileNotFound<ContentAttestation>;
   index: number;
 }) {
   let content;
@@ -165,7 +169,8 @@ function ContentAttestationCheckList({
       {errors.map((error, index) => {
         if (
           error.attestation instanceof CaInvalid ||
-          error.attestation instanceof CaVerifyFailed
+          error.attestation instanceof CaVerifyFailed ||
+          error.attestation instanceof CoreProfileNotFound
         ) {
           const attestation = error.attestation;
           return (
