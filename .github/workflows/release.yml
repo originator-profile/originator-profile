@@ -24,8 +24,8 @@ jobs:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
+      id-token: write
       contents: write
-      packages: write
     steps:
       - uses: actions/checkout@v5
         with:
@@ -48,13 +48,9 @@ jobs:
       - if: github.event.inputs.release_type == 'release'
         name: Publish Packages
         run: pnpm publish --recursive
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - if: github.event.inputs.release_type == 'beta'
         name: Publish Beta Packages
         run: pnpm publish --recursive --tag=beta
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - if: github.ref == 'refs/heads/main' && github.event.inputs.release_type == 'release' && github.event.inputs.version != 'prerelease'
         name: Next Release
         run: |
