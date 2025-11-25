@@ -7,27 +7,14 @@ Originator Profile (OP) 仕様に準拠した Verifiable Credential (VC) を作�
 ### From source
 
 ```sh
-git clone https://github.com/originator-profile/profile-share.git
-cd profile-share/packages/opvc
+git clone https://github.com/originator-profile/originator-profile.git
+cd originator-profile/packages/opvc
 pnpm install
 npm i -g .
 opvc
 ```
 
 ### Using `npx` / `npm`
-
-GitHub Packages にアクセスするため .npmrc 設定が必要です。
-
-1. GitHub の [Personal Access Token (classic)](https://github.com/settings/tokens) を発行
-   - 必要なスコープ:
-     - `read:packages`
-     - `repo`
-2. GitHub Packages のレジストリと認証トークンを設定
-
-```sh
-npm config set @originator-profile:registry https://npm.pkg.github.com
-npm config set //npm.pkg.github.com/:_authToken YOUR_PERSONAL_ACCESS_TOKEN
-```
 
 ```sh
 # npx
@@ -478,8 +465,8 @@ FLAG DESCRIPTIONS
 ## Development
 
 ```sh
-git clone https://github.com/originator-profile/profile-share.git
-cd profile-share/packages/opvc
+git clone https://github.com/originator-profile/originator-profile.git
+cd originator-profile/packages/opvc
 pnpm install
 bin/dev.ts
 ```

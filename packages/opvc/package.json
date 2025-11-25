@@ -1,11 +1,23 @@
 {
   "name": "@originator-profile/opvc",
   "version": "0.4.0-beta.1",
-  "private": false,
+  "license": "Apache-2.0",
+  "homepage": "https://docs.originator-profile.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/originator-profile/originator-profile.git",
+    "directory": "packages/opvc"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "files": [
     "bin",
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
   ],
   "bin": "bin/run.js",
   "exports": {

@@ -47,12 +47,12 @@ jobs:
         uses: "./.github/actions/wordpress_build"
       - if: github.event.inputs.release_type == 'release'
         name: Publish Packages
-        run: pnpm publish --access restricted --recursive
+        run: pnpm publish --recursive
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - if: github.event.inputs.release_type == 'beta'
         name: Publish Beta Packages
-        run: pnpm publish --access restricted --recursive --tag=beta
+        run: pnpm publish --recursive --tag=beta
         env:
           NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - if: github.ref == 'refs/heads/main' && github.event.inputs.release_type == 'release' && github.event.inputs.version != 'prerelease'
