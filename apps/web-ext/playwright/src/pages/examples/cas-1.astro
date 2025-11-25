@@ -1,0 +1,21 @@
+---
+import cas from "../../../public/examples/cas.json" assert { type: "json" };
+import * as opsApi from "./ops.json";
+
+const casText = JSON.stringify(cas, null, 2);
+const opsText = await opsApi.GET().then((res) => res.text());
+---
+
+<!doctype html>
+<html lang="ja" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>OPSとCAS</title>
+  </head>
+  <body>
+    <script type="application/ops+json" set:html={opsText} />
+    <script type="application/cas+json" set:html={casText} />
+    <p id="text-target-integrity">OPSとCASがあるWebページ</p>
+  </body>
+</html>
