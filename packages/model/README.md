@@ -1,6 +1,9 @@
-# Profile Model
+# Originator Profile Model
 
 システムのコアとなる静的構造のためのパッケージです。
 
-- [`@originator-profile/model/context.json`](https://originator-profile.org/context.jsonld) … JSON-LD コンテキスト
-- `@originator-profile/model/src/*.ts` … TypeScript の型
+## ドキュメント
+
+最新の仕様については以下のURLをご確認ください:
+
+- <https://docs.originator-profile.org/opb/>
