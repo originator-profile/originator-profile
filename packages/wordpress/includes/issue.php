@@ -3,8 +3,6 @@
 
 namespace Profile\Issue;
 
-use Ramsey\Uuid\Uuid;
-
 require_once __DIR__ . '/class-uca.php';
 use Profile\Uca\Uca;
 
@@ -58,7 +56,25 @@ function sign_post( string $new_status, string $old_status, \WP_Post $post ) {
 		return;
 	}
 
-	$uca_list = create_uca_list( $post, $issuer_id );
+	$uuid = \get_post_meta( $post->ID, '_profile_post_uuid', true );
+
+	if (
+		empty( $uuid )
+		|| ! metadata_exists( 'post', $post->ID, '_profile_post_uuid' )
+		|| ! is_valid_uuid( $uuid )
+	) {
+		if ( empty( $uuid ) ) {
+			debug( 'UUID is empty' );
+		} elseif ( ! metadata_exists( 'post', $post->ID, '_profile_post_uuid' ) ) {
+			debug( 'UUID key does not exist' );
+		} elseif ( ! is_valid_uuid( $uuid ) ) {
+			debug( 'UUID format invalid' );
+		}
+		$uuid = 'urn:uuid:' . wp_generate_uuid4();
+		\update_post_meta( $post->ID, '_profile_post_uuid', $uuid );
+	}
+
+	$uca_list = create_uca_list( $post, $issuer_id, $uuid );
 	if ( empty( $uca_list ) ) {
 		debug( "UCA list is empty for post ID: {$post->ID}" );
 	}
@@ -178,12 +194,16 @@ function create_integrity( string $file ): string {
 }
 
 /**
- * Uuid の生成
+ * Uuid の検証
  *
- * @param string $uri Uniform Resource Identifier
+ * @param string $uuid uuid
+ * @return bool
  */
-function generate_post_uuid( string $uri ): string {
-	return 'urn:uuid:' . Uuid::uuid5( Uuid::NAMESPACE_URL, $uri );
+function is_valid_uuid( $uuid ) {
+	return (bool) preg_match(
+		'/^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i',
+		$uuid
+	);
 }
 
 
@@ -192,9 +212,10 @@ function generate_post_uuid( string $uri ): string {
  *
  * @param \WP_Post $post Post object.
  * @param string   $issuer_id CA 発行者 ID
+ * @param string   $uuid CA ID uuid
  * @return list<Uca> 未署名 Content Attestation の一覧
  */
-function create_uca_list( \WP_Post $post, string $issuer_id ): array {
+function create_uca_list( \WP_Post $post, string $issuer_id, string $uuid ): array {
 	global $wp_rewrite;
 
 	/**
@@ -244,7 +265,6 @@ function create_uca_list( \WP_Post $post, string $issuer_id ): array {
 			}
 		}
 
-		$uuid   = generate_post_uuid( $uri );
 		$locale = \str_replace( '_', '-', \get_locale() );
 
 		$uca = new Uca(
@@ -356,8 +376,17 @@ function issue_ca( Uca $uca, string $admin_secret ): mixed {
  * @return mixed 成功した場合は null、失敗した場合は false
  */
 function delete_ca( string $admin_secret, \WP_Post $post ): mixed {
-	$uri      = $post->guid;
-	$uuid     = generate_post_uuid( $uri );
+	$uuid = \get_post_meta( $post->ID, '_profile_post_uuid', true );
+	if ( empty( $uuid ) ) {
+		debug( 'UUID is empty' );
+		return false;
+	} elseif ( ! metadata_exists( 'post', $post->ID, '_profile_post_uuid' ) ) {
+		debug( 'UUID key does not exist' );
+		return false;
+	} elseif ( ! is_valid_uuid( $uuid ) ) {
+		debug( 'UUID format invalid' );
+		return false;
+	}
 	$endpoint = build_ca_endpoint( "/ca/{$uuid}" );
 	return request_ca( $endpoint, $admin_secret, 'DELETE' );
 }
