@@ -19,11 +19,11 @@ Please **do not** disclose security issues publicly or file them as standard Git
 
 To help us investigate efficiently, please include the following information when possible:
 
-- Description of the vulnerability  
-- Steps to reproduce  
-- Expected vs. actual behavior  
-- Potential impact  
-- Environment details (OS, version, configuration)  
+- Description of the vulnerability
+- Steps to reproduce
+- Expected vs. actual behavior
+- Potential impact
+- Environment details (OS, version, configuration)
 - Proof of Concept (optional but appreciated)
 
 ---
@@ -59,7 +59,6 @@ Currently, GitHub Private Vulnerability Reporting is the **only supported method
 
 We are planning to provide an email contact option in the future and will update this document once it becomes available.  
 Until then, we kindly ask that you do not submit security reports via email or public channels.
-
 
 ---
 
