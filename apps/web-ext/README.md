@@ -45,10 +45,8 @@ $ pnpm dev --registry-url=https://oprexpt.originator-profile.org/ --url=https://
 ## 環境変数
 
 - `BASIC_AUTH`: レジストリ API の Basic 認証 (形式: `true` or `false`)
-- `BASIC_AUTH_USERNAME`: 開発用レジストリ API の Basic 認証のユーザー名
-- `BASIC_AUTH_PASSWORD`: 開発用レジストリ API の Basic 認証のパスワード
 - `BASIC_AUTH_CREDENTIALS`: Basic 認証の認証情報 (形式: JSON)
-- `REGISTRY_OPS`: Core Profile 発行者の Originator Profile Set (環境変数 `CI` が設定されている場合は必須)
+- `REGISTRY_OPS`: Core Profile 発行者の Originator Profile Set
 
 ## 認証情報
 
@@ -108,7 +106,7 @@ $ REGISTRY_OPS=$(cat registry-ops.json) pnpm build
   - `-u, --url`: プレビュー開始時に表示される URL を指定します。
 - `pnpm lint`: コードリントと fixable なリントエラーを修正します。
 - `pnpm test`: ユニットテストを実行します。
-- `pnpm e2e`: Chrome用拡張機能のe2eテストを実行します。`pnpm dev`で拡張機能をビルドした状態で実行してください。
+- `pnpm e2e`: Chrome用拡張機能のe2eテストを実行します。
 
 ## ドキュメント
 

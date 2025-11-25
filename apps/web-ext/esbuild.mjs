@@ -1,7 +1,7 @@
 // @ts-check
 
 import chokidar from "chokidar";
-import { execSync } from "node:child_process";
+import dotenv from "dotenv";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import util from "node:util";
@@ -9,9 +9,9 @@ import util from "node:util";
 const options = /** @type {const} */ ({
   mode: {
     type: "string",
-    default: "production",
+    default: process.env.NODE_ENV || "production",
     toString() {
-      return `production|development (default: ${this.default})`;
+      return `production|development|testing (default: ${this.default})`;
     },
   },
   target: {
@@ -25,7 +25,7 @@ const options = /** @type {const} */ ({
   url: {
     type: "string",
     short: "u",
-    default: "http://localhost:8080/examples/cas-1.html",
+    default: "https://originator-profile.org",
     toString() {
       return `<watch_url> (default: ${this.default}, development mode only)`;
     },
@@ -59,53 +59,25 @@ if (args.values.help) {
   process.exit();
 }
 
+dotenv.config({ path: [".env", `.env.${args.values.mode}`] });
+
 const filename = `{name}-${args.values.target}-{version}.zip`;
 const artifactsDir = "web-ext-artifacts";
 const cwd = path.dirname(fileURLToPath(new URL(import.meta.url)));
 const outdir = path.join(cwd, `dist-${args.values.target}`);
-/** @type {ImportMeta["env"]["BASIC_AUTH_CREDENTIALS"]} */
-let credentials = [];
-if (process.env.BASIC_AUTH_CREDENTIALS) {
-  credentials = JSON.parse(process.env.BASIC_AUTH_CREDENTIALS);
-} else if (args.values.mode === "development") {
-  credentials = [
-    {
-      domain: "localhost",
-      username: process.env.BASIC_AUTH_USERNAME ?? "",
-      password: process.env.BASIC_AUTH_PASSWORD ?? "",
-    },
-  ];
-}
 
-let registryOps = [];
-if (process.env.REGISTRY_OPS) {
-  registryOps = JSON.parse(process.env.REGISTRY_OPS);
-} else if (args.values.mode === "development") {
-  const privKeyPath = path.join(cwd, "e2e/account-key.example.priv.json");
-  const commandBinaryPath = path.join(cwd, "../../packages/opvc/bin/dev.ts");
-  const cpPath = path.join(cwd, "./cp.example.json");
-  const signedCoreProfile = execSync(
-    `${commandBinaryPath} sign -i ${privKeyPath} --input ${cpPath} --id localhost`,
-  )
-    .toString()
-    .trim();
-  registryOps = [
-    {
-      core: "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwX1hDazM2dFFrUlpsQnhEckhzMVhldHBUZUZYdDRfVlRSbHlEa0YyQWsiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiXSwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCIsIkNvcmVQcm9maWxlIl0sImlzc3VlciI6ImRuczpvcHJleHB0Lm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRuczpvcHJleHB0Lm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJ0eXBlIjoiQ29yZSIsImp3a3MiOnsia2V5cyI6W3sia3R5IjoiRUMiLCJraWQiOiIyMF9YQ2szNnRRa1JabEJ4RHJIczFYZXRwVGVGWHQ0X1ZUUmx5RGtGMkFrIiwieCI6IjNoYV84MTBZcmlNTi1rMzFkanY5SUFlMng3MWV3d0U0WGhyb2xsOGQxNFkiLCJ5IjoiSGh0R09YMnI3U3p6aTlGTDFIQ1l6N2lCckExaE96a25mSDNIb0NwSTFmayIsImNydiI6IlAtMjU2In1dfX0sImlzcyI6ImRuczpvcHJleHB0Lm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJzdWIiOiJkbnM6b3ByZXhwdC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwiaWF0IjoxNzM0NDQ1NDgwLCJleHAiOjE3NjU5ODE0ODB9.xoXG-uPdrMp1_wJ0nxnYr9p4SeQWc_531AGN7-Ke81K0cY3ucdzy0YhVvEhoiicm-yBlAcGHBfFaxJ3sFGnjLg",
-      media:
-        "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwX1hDazM2dFFrUlpsQnhEckhzMVhldHBUZUZYdDRfVlRSbHlEa0YyQWsiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphLUpQIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiV2ViTWVkaWFQcm9maWxlIl0sImlzc3VlciI6ImRuczpvcHJleHB0Lm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRuczpvcHJleHB0Lm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJ0eXBlIjoiT25saW5lQnVzaW5lc3MiLCJ1cmwiOiJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvIiwibmFtZSI6Ik9yaWdpbmF0b3IgUHJvZmlsZSDmioDooZPnoJTnqbbntYTlkIgiLCJsb2dvIjp7ImlkIjoiaHR0cHM6Ly9vcmlnaW5hdG9yLXByb2ZpbGUub3JnL2Zhdmljb24uc3ZnIiwiZGlnZXN0U1JJIjoic2hhMjU2LWI5V1FaL1RxNHRteWUwaXVwd3ZrZlVMT0Fyazg2NnJvQjlLZDZZTXhUSGs9In0sImNvbnRhY3RQb2ludCI6eyJpZCI6Imh0dHBzOi8vb3JpZ2luYXRvci1wcm9maWxlLm9yZy9qYS1KUC9jb250YWN0LyIsIm5hbWUiOiLjgYrllY_jgYTlkIjjgo_jgZsifSwicHJpdmFjeVBvbGljeSI6eyJpZCI6Imh0dHBzOi8vb3JpZ2luYXRvci1wcm9maWxlLm9yZy9qYS1KUC9wcml2YWN5LyIsIm5hbWUiOiLjg5fjg6njgqTjg5Djgrfjg7zjg53jg6rjgrfjg7wifX0sImlzcyI6ImRuczpvcHJleHB0Lm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJzdWIiOiJkbnM6b3ByZXhwdC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwiaWF0IjoxNzM2NDk1NjcwLCJleHAiOjE3NjgwMzE2NzB9.grI9O_N5glwsB_pNA69r9wtPcfGzwHh0hJ8rLSjK9r1pTFdY8vdXEgowoVXaC9ryE68I9SlrButet9fRutSvfg",
-    },
-    {
-      core: signedCoreProfile,
-    },
-  ];
-}
+/** @type {ImportMeta["env"]["BASIC_AUTH_CREDENTIALS"]} */
+const credentials = process.env.BASIC_AUTH_CREDENTIALS
+  ? JSON.parse(process.env.BASIC_AUTH_CREDENTIALS)
+  : [];
 
 const env = {
   MODE: args.values.mode,
   BASIC_AUTH: process.env.BASIC_AUTH === "true",
   BASIC_AUTH_CREDENTIALS: process.env.BASIC_AUTH === "true" ? credentials : [],
-  REGISTRY_OPS: registryOps,
+  REGISTRY_OPS: process.env.REGISTRY_OPS
+    ? JSON.parse(process.env.REGISTRY_OPS)
+    : [],
 };
 
 if (env.BASIC_AUTH && env.BASIC_AUTH_CREDENTIALS.length === 0) {
@@ -142,7 +114,7 @@ const buildOptions = {
   color: true,
   bundle: true,
   minify: args.values.mode === "production",
-  sourcemap: args.values.mode === "development",
+  sourcemap: ["development", "testing"].includes(args.values.mode),
   conditions: ["browser"],
   define: {
     "import.meta.env": JSON.stringify(env),
@@ -171,11 +143,7 @@ await rm(outdir, {
 
 await esbuild.build(buildOptions);
 
-const watch = Boolean(
-  args.values.mode === "development" &&
-    args.values.url &&
-    process.env.CI !== "true",
-);
+const watch = Boolean(args.values.mode === "development" && args.values.url);
 
 if (watch) {
   const ctx = await esbuild.context(buildOptions);
