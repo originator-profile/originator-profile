@@ -1,10 +1,12 @@
 {
   "name": "@originator-profile/originator-profile",
-  "description": "Originator Profile",
+  "description": "Originator Profile Web Extension",
+  "version": "0.4.0-beta.1",
+  "license": "Apache-2.0",
+  "private": true,
   "homepage": "https://docs.originator-profile.org",
   "repository": "https://github.com/originator-profile/originator-profile",
-  "version": "0.4.0-beta.1",
-  "private": true,
+  "type": "module",
   "scripts": {
     "build": "turbo run build",
     "dev": "turbo run dev --parallel --env-mode=loose",

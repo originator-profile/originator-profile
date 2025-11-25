@@ -7,7 +7,7 @@ Web ブラウザーで Originator Profile と Content Attestation の閲覧と�
 Step 1
 : ダウンロード
 
-[GitHub Releases](https://github.com/originator-profile/profile-share/releases/latest) から最新版をダウンロードします。
+[GitHub Releases](https://github.com/originator-profile/originator-profile/releases/latest) から最新版をダウンロードします。
 
 Step 2
 : インストール

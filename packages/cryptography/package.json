@@ -1,7 +1,16 @@
 {
   "name": "@originator-profile/cryptography",
   "version": "0.4.0-beta.1",
-  "private": false,
+  "license": "Apache-2.0",
+  "homepage": "https://docs.originator-profile.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/originator-profile/originator-profile.git",
+    "directory": "packages/cryptography"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "exports": {
     "require": {
@@ -14,7 +23,10 @@
     }
   },
   "files": [
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
   ],
   "scripts": {
     "build": "pkgroll --clean-dist --target=node20",

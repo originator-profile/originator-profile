@@ -7,27 +7,14 @@ Originator Profile (OP) 仕様に準拠した Verifiable Credential (VC) を作�
 ### From source
 
 ```sh
-git clone https://github.com/originator-profile/profile-share.git
-cd profile-share/packages/opvc
+git clone https://github.com/originator-profile/originator-profile.git
+cd originator-profile/packages/opvc
 pnpm install
 npm i -g .
 opvc
 ```
 
 ### Using `npx` / `npm`
-
-GitHub Packages にアクセスするため .npmrc 設定が必要です。
-
-1. GitHub の [Personal Access Token (classic)](https://github.com/settings/tokens) を発行
-   - 必要なスコープ:
-     - `read:packages`
-     - `repo`
-2. GitHub Packages のレジストリと認証トークンを設定
-
-```sh
-npm config set @originator-profile:registry https://npm.pkg.github.com
-npm config set //npm.pkg.github.com/:_authToken YOUR_PERSONAL_ACCESS_TOKEN
-```
 
 ```sh
 # npx
@@ -135,6 +122,8 @@ FLAG DESCRIPTIONS
     }
 ```
 
+_See code: [src/commands/ca/sign.ts](https://github.com/originator-profile/originator-profile/blob/v0.4.0-beta.1/src/commands/ca/sign.ts)_
+
 ## `opvc ca:unsigned`
 
 未署名 Content Attestation の取得
@@ -218,6 +207,8 @@ FLAG DESCRIPTIONS
     }
 ```
 
+_See code: [src/commands/ca/unsigned.ts](https://github.com/originator-profile/originator-profile/blob/v0.4.0-beta.1/src/commands/ca/unsigned.ts)_
+
 ## `opvc help [COMMAND]`
 
 Display help for opvc.
@@ -253,6 +244,8 @@ FLAGS
 DESCRIPTION
   鍵ペアの生成
 ```
+
+_See code: [src/commands/key-gen/index.ts](https://github.com/originator-profile/originator-profile/blob/v0.4.0-beta.1/src/commands/key-gen/index.ts)_
 
 ## `opvc sign`
 
@@ -410,6 +403,8 @@ FLAG DESCRIPTIONS
     }
 ```
 
+_See code: [src/commands/sign.ts](https://github.com/originator-profile/originator-profile/blob/v0.4.0-beta.1/src/commands/sign.ts)_
+
 ## `opvc wsp:unsigned`
 
 未署名 Website Profile の取得
@@ -472,14 +467,16 @@ FLAG DESCRIPTIONS
     }
     }
 ```
+
+_See code: [src/commands/wsp/unsigned.ts](https://github.com/originator-profile/originator-profile/blob/v0.4.0-beta.1/src/commands/wsp/unsigned.ts)_
 <!-- commandsstop -->
 <!-- prettier-ignore-end -->
 
 ## Development
 
 ```sh
-git clone https://github.com/originator-profile/profile-share.git
-cd profile-share/packages/opvc
+git clone https://github.com/originator-profile/originator-profile.git
+cd originator-profile/packages/opvc
 pnpm install
 bin/dev.ts
 ```

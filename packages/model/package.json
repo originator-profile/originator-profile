@@ -1,24 +1,32 @@
 {
   "name": "@originator-profile/model",
   "version": "0.4.0-beta.1",
-  "private": false,
+  "license": "Apache-2.0",
+  "homepage": "https://docs.originator-profile.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/originator-profile/originator-profile.git",
+    "directory": "packages/model"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
   "type": "module",
   "exports": {
-    ".": {
-      "require": {
-        "types": "./dist/index.d.cts",
-        "default": "./dist/index.cjs"
-      },
-      "import": {
-        "types": "./dist/index.d.mts",
-        "default": "./dist/index.mjs"
-      }
+    "require": {
+      "types": "./dist/index.d.cts",
+      "default": "./dist/index.cjs"
     },
-    "./context.json": "./context.json"
+    "import": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
   },
   "files": [
-    "context.json",
-    "dist"
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
   ],
   "scripts": {
     "build": "pkgroll --clean-dist --target=node20",
@@ -28,13 +36,10 @@
   },
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",
-    "@types/jsonld": "^1.5.15",
     "ajv": "^8.17.1",
     "eslint": "^9.25.1",
     "eslint-config-originator-profile": "workspace:*",
     "json-schema-to-ts": "^3.1.1",
-    "jsonld": "^8.3.3",
-    "msw": "^2.7.5",
     "pkgroll": "^2.12.2",
     "typescript": "^5.8.3",
     "vitest": "^4.0.0"

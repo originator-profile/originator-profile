@@ -67,7 +67,7 @@ test("verifyIntegrity() should verify VisibleTextTargetIntegrity", async functio
   const integrityMetadata = await createIntegrityMetadata(
     "sha256",
     await new Response(
-      // https://github.com/originator-profile/profile/issues/1721
+      // https://github.com/originator-profile/originator-profile/issues/64
       `Hello, World!${browserName === "webkit" ? "\n\n" : ""}`,
     ).arrayBuffer(),
   );

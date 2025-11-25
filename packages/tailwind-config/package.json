@@ -1,7 +1,14 @@
 {
   "name": "tailwind-config-originator-profile",
   "version": "0.4.0-beta.1",
+  "license": "Apache-2.0",
   "private": true,
+  "homepage": "https://docs.originator-profile.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/originator-profile/originator-profile.git",
+    "directory": "packages/tailwind-config"
+  },
   "type": "commonjs",
   "main": "./style.css",
   "exports": "./style.css",

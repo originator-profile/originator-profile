@@ -10,7 +10,7 @@ export default defineConfig({
   webServer: {
     command: "docker compose --env-file .env.development up",
     url: "http://localhost:9000",
-    reuseExistingServer: true, // CI環境では https://github.com/originator-profile/profile/blob/e1588c0e20800d4cbb81ba49b8a076e6da5da7f6/.github/actions/wordpress_setup/action.yml#L11-L16 で起動
+    reuseExistingServer: true, // CI環境では https://github.com/originator-profile/originator-profile/blob/e8e5b4f0f473833b352649527a88fb7692b908da/.github/actions/wordpress_setup/action.yml#L6-L11
   },
   use: {
     baseURL: "http://localhost:9000/",

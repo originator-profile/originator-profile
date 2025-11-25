@@ -2,11 +2,16 @@
   "name": "@originator-profile/web-ext",
   "description": "Profile Web Extension",
   "version": "0.4.0-beta.1",
+  "license": "Apache-2.0",
   "private": true,
-  "type": "module",
-  "bugs": {
-    "url": "https://github.com/originator-profile/profile/issues"
+  "homepage": "https://docs.originator-profile.org",
+  "bugs": "https://github.com/originator-profile/originator-profile/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/originator-profile/originator-profile.git",
+    "directory": "apps/web-ext"
   },
+  "type": "module",
   "dependencies": {
     "react": "^19.1.0",
     "react-dom": "^19.1.0"
@@ -56,12 +61,9 @@
     "vitest": "^4.0.0",
     "web-ext": "^9.0.0"
   },
-  "homepage": "https://docs.originator-profile.org/",
   "keywords": [
     "webextension"
   ],
-  "license": "MIT",
-  "repository": "git@github.com:originator-profile/profile.git",
   "scripts": {
     "build": "run-p build:*",
     "build:chromium": "dotenv -e ./.env.development.auth node esbuild.mjs",
