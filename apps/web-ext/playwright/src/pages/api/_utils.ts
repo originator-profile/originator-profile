@@ -22,6 +22,16 @@ export async function sign(input: string): Promise<string> {
     keyPath,
     "--input",
     inputPath,
+    "--expired-at",
+    new Date(
+      Date.now() +
+        10 * // year
+          365.25 *
+          24 *
+          60 *
+          60 *
+          1000,
+    ).toISOString(),
   ]);
 
   return result.stdout.trim();
