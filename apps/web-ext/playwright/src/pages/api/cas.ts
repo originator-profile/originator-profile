@@ -1,4 +1,4 @@
-import { sign, writeJson } from "./_utils.js";
+import { sign, writeJson } from "./_utils";
 
 export async function POST(): Promise<Response> {
   const content = await sign("_content.json");
