@@ -1,28 +1,4 @@
-import child_process from "node:child_process";
-import fs from "node:fs/promises";
-import util from "node:util";
-
-const exec = util.promisify(child_process.exec);
-
-const targetPath = new URL(
-  "../../../public/.well-known/sp.json",
-  import.meta.url,
-).pathname;
-
-const keyPath = new URL(
-  "../../../../e2e/account-key.example.priv.json",
-  import.meta.url,
-).pathname;
-
-async function sign(input: string): Promise<string> {
-  const inputPath = new URL(input, import.meta.url).pathname;
-
-  const result = await exec(
-    `npx @originator-profile/opvc sign --identity="${keyPath}" --input="${inputPath}"`,
-  );
-
-  return result.stdout.trim();
-}
+import { sign, writeJson } from "./_utils.js";
 
 export async function POST(): Promise<Response> {
   const {
@@ -37,24 +13,16 @@ export async function POST(): Promise<Response> {
     sign("_site.json"),
   ]);
 
-  await fs.writeFile(
-    targetPath,
-    `${JSON.stringify(
+  await writeJson("../../../public/.well-known/sp.json", {
+    originators: [
       {
-        originators: [
-          {
-            core,
-            annotations: [annotation],
-            media,
-          },
-        ],
-        credential: site,
+        core,
+        annotations: [annotation],
+        media,
       },
-      null,
-      2,
-    )}
-`,
-  );
+    ],
+    credential: site,
+  });
 
   return new Response("ok");
 }
