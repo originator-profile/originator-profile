@@ -2,7 +2,7 @@ import child_process from "node:child_process";
 import fs from "node:fs/promises";
 import util from "node:util";
 
-const exec = util.promisify(child_process.exec);
+const execFile = util.promisify(child_process.execFile);
 
 const keyPath = new URL(
   "../../../../e2e/account-key.example.priv.json",
@@ -15,9 +15,14 @@ const keyPath = new URL(
 export async function sign(input: string): Promise<string> {
   const inputPath = new URL(input, import.meta.url).pathname;
 
-  const result = await exec(
-    `npx @originator-profile/opvc sign --identity="${keyPath}" --input="${inputPath}"`,
-  );
+  const result = await execFile("npx", [
+    "@originator-profile/opvc",
+    "sign",
+    "--identity",
+    keyPath,
+    "--input",
+    inputPath,
+  ]);
 
   return result.stdout.trim();
 }
