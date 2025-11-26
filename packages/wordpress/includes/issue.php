@@ -22,7 +22,11 @@ use function Profile\Debug\debug;
 require_once __DIR__ . '/url.php';
 use function Profile\Url\add_page_query;
 
-/** 投稿への署名処理の初期化 */
+/** 投稿への署名処理の初期化
+ * transition_post_status について
+ * sign_post: 公開への遷移時のみの処理。非公開遷移時は何もしない。
+ * private_post: 公開から非公開など公開以外の状態への遷移時の処理。
+ */
 function init() {
 	\add_action( 'transition_post_status', '\Profile\Issue\sign_post', 10, 3 );
 	\add_action( 'transition_post_status', '\Profile\Issue\private_post', 20, 3 );
@@ -106,11 +110,7 @@ function private_post( string $new_status, string $old_status, \WP_Post $post ) 
 			debug( 'Missing CA server admin secret for deletion' );
 			return;
 		}
-
-		$res = delete_ca( $admin_secret, $post );
-		if ( ! $res ) {
-			debug( "Failed to delete CA for post ID {$post->ID}" );
-		}
+		delete_ca( $admin_secret, $post );
 	}
 }
 
@@ -131,11 +131,7 @@ function delete_post( int $post_id ) {
 		debug( 'Missing CA server admin secret for deletion' );
 		return;
 	}
-	$res = delete_ca( $admin_secret, $post );
-
-	if ( ! $res ) {
-		debug( "Failed to delete CA for post ID {$post_id}" );
-	}
+	delete_ca( $admin_secret, $post );
 }
 
 /**
@@ -181,8 +177,14 @@ function create_integrity( string $file ): string {
 	return "{$alg}-{$val}";
 }
 
-function get_valid_post_uuid( int $post_id ): string | false {
-	if ( ! metadata_exists( 'post', $post_id, '_profile_post_uuid') ) {
+/**
+ * UUIDの取得と検証
+ *
+ * @param int $post_id 投稿 ID
+ * @return string|false 検証に成功した場合は UUID を返す。存在しない／無効な場合は false を返す。
+ */
+function get_valid_post_uuid( int $post_id ): string|false {
+	if ( ! metadata_exists( 'post', $post_id, '_profile_post_uuid' ) ) {
 		debug( 'UUID key does not exist' );
 		return false;
 	}
@@ -195,7 +197,7 @@ function get_valid_post_uuid( int $post_id ): string | false {
 }
 
 /**
- * Uuid の検証
+ * UUID の検証
  *
  * @param string $uuid uuid
  * @return bool
@@ -378,15 +380,23 @@ function issue_ca( Uca $uca, string $admin_secret ): mixed {
  *
  * @param string   $admin_secret Content Attestation サーバー認証情報
  * @param \WP_Post $post 投稿オブジェクト
- * @return mixed 成功した場合はレスポンスボディをデコードした結果、失敗した場合は false
+ * @return bool
  */
-function delete_ca( string $admin_secret, \WP_Post $post ): mixed {
+function delete_ca( string $admin_secret, \WP_Post $post ): bool {
 	$uuid = get_valid_post_uuid( $post->ID );
 	if ( false === $uuid ) {
 		return false;
 	}
 	$endpoint = build_ca_endpoint( "/ca/{$uuid}" );
-	return request_ca( $endpoint, $admin_secret, 'DELETE' );
+	$res      = request_ca( $endpoint, $admin_secret, 'DELETE' );
+
+	if ( ! $res ) {
+		debug( "Failed to delete CA for post ID {$post->ID}" );
+		return false;
+	}
+	delete_post_meta( $post->ID, '_profile_post_uuid' );
+	debug( "Successfully deleted CA for post ID {$post->ID}" );
+	return true;
 }
 
 /**
