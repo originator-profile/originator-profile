@@ -56,20 +56,8 @@ function sign_post( string $new_status, string $old_status, \WP_Post $post ) {
 		return;
 	}
 
-	$uuid = \get_post_meta( $post->ID, '_profile_post_uuid', true );
-
-	if (
-		empty( $uuid )
-		|| ! metadata_exists( 'post', $post->ID, '_profile_post_uuid' )
-		|| ! is_valid_uuid( $uuid )
-	) {
-		if ( empty( $uuid ) ) {
-			debug( 'UUID is empty' );
-		} elseif ( ! metadata_exists( 'post', $post->ID, '_profile_post_uuid' ) ) {
-			debug( 'UUID key does not exist' );
-		} elseif ( ! is_valid_uuid( $uuid ) ) {
-			debug( 'UUID format invalid' );
-		}
+	$uuid = get_valid_post_uuid( $post->ID );
+	if ( false === $uuid ) {
 		$uuid = 'urn:uuid:' . wp_generate_uuid4();
 		\update_post_meta( $post->ID, '_profile_post_uuid', $uuid );
 	}
@@ -193,13 +181,30 @@ function create_integrity( string $file ): string {
 	return "{$alg}-{$val}";
 }
 
+function get_valid_post_uuid( int $post_id ): string | false {
+	if ( ! metadata_exists( 'post', $post_id, '_profile_post_uuid') ) {
+		debug( 'UUID key does not exist' );
+		return false;
+	}
+	$uuid = \get_post_meta( $post_id, '_profile_post_uuid', true );
+	if ( ! is_valid_uuid( $uuid ) ) {
+		debug( 'UUID format invalid' );
+		return false;
+	}
+	return $uuid;
+}
+
 /**
  * Uuid の検証
  *
  * @param string $uuid uuid
  * @return bool
  */
-function is_valid_uuid( $uuid ) {
+function is_valid_uuid( string $uuid ): bool {
+	if ( empty( $uuid ) ) {
+		debug( 'UUID is empty' );
+		return false;
+	}
 	return (bool) preg_match(
 		'/^urn:uuid:[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i',
 		$uuid
@@ -373,18 +378,11 @@ function issue_ca( Uca $uca, string $admin_secret ): mixed {
  *
  * @param string   $admin_secret Content Attestation サーバー認証情報
  * @param \WP_Post $post 投稿オブジェクト
- * @return mixed 成功した場合は null、失敗した場合は false
+ * @return mixed 成功した場合はレスポンスボディをデコードした結果、失敗した場合は false
  */
 function delete_ca( string $admin_secret, \WP_Post $post ): mixed {
-	$uuid = \get_post_meta( $post->ID, '_profile_post_uuid', true );
-	if ( empty( $uuid ) ) {
-		debug( 'UUID is empty' );
-		return false;
-	} elseif ( ! metadata_exists( 'post', $post->ID, '_profile_post_uuid' ) ) {
-		debug( 'UUID key does not exist' );
-		return false;
-	} elseif ( ! is_valid_uuid( $uuid ) ) {
-		debug( 'UUID format invalid' );
+	$uuid = get_valid_post_uuid( $post->ID );
+	if ( false === $uuid ) {
 		return false;
 	}
 	$endpoint = build_ca_endpoint( "/ca/{$uuid}" );
@@ -398,7 +396,7 @@ function delete_ca( string $admin_secret, \WP_Post $post ): mixed {
  * @param string  $admin_secret Content Attestation サーバー認証情報
  * @param string  $method Content Attestation サーバーへのリクエストメソッド
  * @param ?string $body (optional) Content Attestation サーバーへのリクエストボディ
- * @return mixed 成功した場合は Content Attestation Set、失敗した場合は false
+ * @return mixed 成功した場合はレスポンスボディをデコードした結果（POST なら Content Attestation Set、DELETE なら null など）、失敗した場合は false
  */
 function request_ca( string $endpoint, string $admin_secret, string $method = 'POST', ?string $body = null ): mixed {
 	$args = array(
