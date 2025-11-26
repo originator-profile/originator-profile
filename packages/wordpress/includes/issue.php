@@ -390,7 +390,7 @@ function delete_ca( string $admin_secret, \WP_Post $post ): bool {
 	$endpoint = build_ca_endpoint( "/ca/{$uuid}" );
 	$res      = request_ca( $endpoint, $admin_secret, 'DELETE' );
 
-	if ( ! $res ) {
+	if ( false === $res ) {
 		debug( "Failed to delete CA for post ID {$post->ID}" );
 		return false;
 	}
