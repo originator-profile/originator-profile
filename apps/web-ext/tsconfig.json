@@ -3,5 +3,5 @@
   "compilerOptions": {
     "noUncheckedIndexedAccess": true
   },
-  "exclude": ["playwright"]
+  "exclude": ["dev"]
 }

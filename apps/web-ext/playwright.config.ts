@@ -3,7 +3,7 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   webServer: {
     url: "http://localhost:8080",
-    command: "astro --root=playwright dev",
+    command: "astro --root=dev dev",
     reuseExistingServer: !process.env.CI,
   },
   globalSetup: "e2e/global-setup.ts",
