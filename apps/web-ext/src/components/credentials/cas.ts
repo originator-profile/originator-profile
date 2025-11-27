@@ -1,14 +1,16 @@
 import { ContentAttestation } from "@originator-profile/model";
 import { VerifiedCas } from "@originator-profile/verify";
+import { isArticleLike } from "./is-articlelike";
 
 /** CAS の列挙 */
 export function listCas<T extends ContentAttestation>(
   cas: VerifiedCas<T>,
-  type: "Article" | "OnlineAd" | "Main" | "Other" | "All",
+  type: "Article" | "Advertorial" | "OnlineAd" | "Main" | "Other" | "All",
 ): VerifiedCas<T> {
   let filtered: VerifiedCas<T>;
   switch (type) {
     case "Article":
+    case "Advertorial":
     case "OnlineAd": {
       filtered = cas.filter(
         (ca) => ca.attestation.doc.credentialSubject.type === type,
@@ -21,8 +23,7 @@ export function listCas<T extends ContentAttestation>(
     }
     case "Other": {
       filtered = cas.filter(
-        (ca) =>
-          !ca.main && ca.attestation.doc.credentialSubject.type === "Article",
+        (ca) => !ca.main && isArticleLike(ca.attestation.doc.credentialSubject),
       );
       break;
     }

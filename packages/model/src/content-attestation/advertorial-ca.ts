@@ -15,15 +15,15 @@ const subject = {
     },
     type: {
       type: "string",
-      const: "Article",
+      const: "Advertorial",
     },
     headline: {
       type: "string",
-      description: "コンテンツのタイトル。",
+      description: "記事広告のタイトル。",
     },
     description: {
       type: "string",
-      description: "コンテンツの説明（文字列）。",
+      description: "記事広告の説明（文字列）。",
     },
     image: Image,
     datePublished: {
@@ -51,6 +51,13 @@ const subject = {
         type: "string",
       },
     },
+    sponsor: {
+      title: "スポンサー名",
+      type: "array",
+      items: {
+        type: "string",
+      },
+    },
     genre: {
       title: "ジャンル",
       type: "string",
@@ -59,7 +66,7 @@ const subject = {
   required: ["id", "type", "headline", "description"],
 } as const satisfies JSONSchema;
 
-export const ArticleCA = {
+export const AdvertorialCA = {
   type: "object",
   additionalProperties: true,
   allOf: [
@@ -83,4 +90,4 @@ export const ArticleCA = {
   },
 } as const satisfies JSONSchema;
 
-export type ArticleCA = FromSchema<typeof ArticleCA>;
+export type AdvertorialCA = FromSchema<typeof AdvertorialCA>;

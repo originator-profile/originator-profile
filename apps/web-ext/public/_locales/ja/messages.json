@@ -20,6 +20,9 @@
   "ContentType_Advertisement": {
     "message": "広告"
   },
+  "ContentType_Advertorial": {
+    "message": "記事広告"
+  },
   "ContentType_Unknown": {
     "message": "種別不明のコンテンツ"
   },
@@ -325,6 +328,9 @@
   },
   "ArticleTable_Author": {
     "message": "記事執筆者"
+  },
+  "ArticleTable_Sponsor": {
+    "message": "スポンサー"
   },
   "ArticleTable_Category": {
     "message": "ジャンル"

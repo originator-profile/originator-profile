@@ -1,5 +1,5 @@
 import { formatLocaleDate } from "@originator-profile/core";
-import { ArticleCA } from "@originator-profile/model";
+import { AdvertorialCA, ArticleCA } from "@originator-profile/model";
 import { twMerge } from "tailwind-merge";
 import { _ } from "../utils";
 import Table from "./Table";
@@ -7,7 +7,7 @@ import TableRow from "./TableRow";
 
 type Props = {
   className?: string;
-  article: ArticleCA;
+  article: ArticleCA | AdvertorialCA;
 };
 
 function ArticleTable({ className, article }: Props) {
@@ -40,10 +40,16 @@ function ArticleTable({ className, article }: Props) {
           data={article.credentialSubject.editor?.join(", ")}
         />
       )}
-      {"aurhor" in article.credentialSubject && (
+      {"author" in article.credentialSubject && (
         <TableRow
           header={_("ArticleTable_Author")}
           data={article.credentialSubject.author?.join(", ")}
+        />
+      )}
+      {"sponsor" in article.credentialSubject && (
+        <TableRow
+          header={_("ArticleTable_Sponsor")}
+          data={article.credentialSubject.sponsor?.join(", ")}
         />
       )}
       {"genre" in article.credentialSubject && (

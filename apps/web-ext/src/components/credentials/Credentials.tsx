@@ -1,5 +1,9 @@
 import { Icon } from "@iconify/react";
-import { AdvertisementCA, ArticleCA } from "@originator-profile/model";
+import {
+  AdvertisementCA,
+  AdvertorialCA,
+  ArticleCA,
+} from "@originator-profile/model";
 import {
   ArticleTable,
   Description,
@@ -23,6 +27,7 @@ import { BidResponse } from "../rtb";
 import { listCas } from "./cas";
 import { getContentType } from "./get-content-type";
 import { CredentialsProps, SupportedVerifiedCa } from "./types";
+import { isArticleLike } from "./is-articlelike";
 
 export function Credentials(props: CredentialsProps) {
   const [caListType, setCaListType] =
@@ -123,14 +128,17 @@ export function Credentials(props: CredentialsProps) {
               />
               <div>
                 <p className="text-sm text-gray-900 font-bold">
-                  {ca.credentialSubject.type === "Article"
+                  {isArticleLike(ca.credentialSubject)
                     ? ca.credentialSubject.headline
                     : ca.credentialSubject.name}
                 </p>
               </div>
             </div>
-            {ca.credentialSubject.type === "Article" && (
-              <ArticleTable className="mb-1 w-full" article={ca as ArticleCA} />
+            {isArticleLike(ca.credentialSubject) && (
+              <ArticleTable
+                className="mb-1 w-full"
+                article={ca as ArticleCA | AdvertorialCA}
+              />
             )}
             {ca.credentialSubject.description && (
               <Description description={ca.credentialSubject.description} />

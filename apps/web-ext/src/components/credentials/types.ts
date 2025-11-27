@@ -1,6 +1,7 @@
 import {
   AdvertisementCA,
   ArticleCA,
+  AdvertorialCA,
   ContentAttestationSet,
   OriginatorProfileSet,
   WebMediaProfile,
@@ -8,7 +9,7 @@ import {
 import { VerifiedCas, VerifiedOps } from "@originator-profile/verify";
 
 /** 表示に対応している CA */
-export type SupportedCa = ArticleCA | AdvertisementCA;
+export type SupportedCa = ArticleCA | AdvertisementCA | AdvertorialCA;
 export type SupportedVerifiedCas = VerifiedCas<SupportedCa>;
 export type SupportedVerifiedCa = SupportedVerifiedCas[number];
 export type CredentialsProps = {
@@ -39,3 +40,7 @@ export type FrameCredentials = FrameResponse<
   } & FrameLocation
 >;
 export type TabCredentials = FrameCredentials & { frames: FrameCredentials[] };
+
+export type ArticleLike =
+  | ArticleCA["credentialSubject"]
+  | AdvertorialCA["credentialSubject"];

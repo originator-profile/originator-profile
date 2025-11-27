@@ -109,7 +109,7 @@ export function generateWebsiteProfileData(
 export function generateUnsignedContentAttestation(
   content: string,
   issuer: string = "dns:op-holder.example.com",
-  attestationType: "Article" | "OnlineAd" = "Article",
+  attestationType: "Article" | "Advertorial" | "OnlineAd" = "Article",
 ): UnsignedContentAttestation {
   const baseAttestation = {
     "@context": [
@@ -144,6 +144,27 @@ export function generateUnsignedContentAttestation(
         description: "<Webページの説明>",
         author: ["山田花子"],
         editor: ["山田太郎"],
+        datePublished: "2023-07-04T19:14:00Z",
+        dateModified: "2023-07-04T19:14:00Z",
+        genre: "Arts & Entertainment",
+        id: "urn:uuid:5c464165-c579-4fc9-aaff-ca4a65e79947",
+      },
+    };
+  }
+
+  if (attestationType === "Advertorial") {
+    return {
+      ...baseAttestation,
+      credentialSubject: {
+        type: "Advertorial",
+        headline: "<記事広告のタイトル>",
+        image: {
+          id: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==",
+        },
+        description: "<記事広告の説明>",
+        author: ["山田花子"],
+        editor: ["山田太郎"],
+        sponsor: ["スポンサー"],
         datePublished: "2023-07-04T19:14:00Z",
         dateModified: "2023-07-04T19:14:00Z",
         genre: "Arts & Entertainment",

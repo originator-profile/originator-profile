@@ -27,7 +27,7 @@ type TestFixtures = {
     key: { privateKey: Jwk },
     contents: string,
     issuer: string,
-    attestationType?: "Article" | "OnlineAd",
+    attestationType?: "Article" | "Advertorial" | "OnlineAd",
   ) => Promise<void>;
   validOps: (
     key: { publicKey: Jwk; privateKey: Jwk },
@@ -146,7 +146,7 @@ export const test = base.extend<TestFixtures>({
         key: { privateKey: Jwk },
         contents: string,
         issuer: string,
-        attestationType: "Article" | "OnlineAd" = "Article",
+        attestationType: "Article" | "Advertorial" | "OnlineAd" = "Article",
       ) => {
         const { privateKey } = key;
         const issuedAt: Date = new Date(Date.now());

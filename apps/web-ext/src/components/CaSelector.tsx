@@ -43,7 +43,10 @@ function CaSelector({ filteredCas, onClickCa }: Props) {
                   placeholderSrc={placeholderDpThumbnail}
                   alt={(() => {
                     const subject = ca.attestation.doc.credentialSubject;
-                    if (subject.type === "Article") {
+                    if (
+                      subject.type === "Article" ||
+                      subject.type === "Advertorial"
+                    ) {
                       return subject.headline;
                     }
                     if (subject.type === "OnlineAd") {

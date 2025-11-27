@@ -17,6 +17,7 @@ import { Icon } from "@iconify/react";
 import { stringifyWithError } from "@originator-profile/core";
 import { SupportedCa } from "./credentials";
 import { ContentAttestation } from "@originator-profile/model";
+import { isArticleLike } from "./credentials/is-articlelike";
 
 interface CodedError extends Error {
   code: string;
@@ -131,7 +132,7 @@ function ContentAttestationErrorDetails({
     content = (
       <DisplayCancel
         label={`CA ${index} ${
-          (ca.credentialSubject.type === "Article"
+          (isArticleLike(ca.credentialSubject)
             ? ca.credentialSubject.headline
             : ca.credentialSubject.name) ?? "Unrecognized Content Name"
         }`}
@@ -185,7 +186,7 @@ function ContentAttestationCheckList({
           return (
             <DisplayCheck
               label={`CA ${index} ${
-                (ca.credentialSubject.type === "Article"
+                (isArticleLike(ca.credentialSubject)
                   ? ca.credentialSubject.headline
                   : ca.credentialSubject.name) ?? "Unrecognized Content Name"
               }`}

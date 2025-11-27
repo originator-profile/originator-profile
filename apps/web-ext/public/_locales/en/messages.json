@@ -20,6 +20,9 @@
   "ContentType_Advertisement": {
     "message": "Advertisement"
   },
+  "ContentType_Advertorial": {
+    "message": "Advertorial"
+  },
   "ContentType_Unknown": {
     "message": "N/A"
   },
@@ -325,6 +328,9 @@
   },
   "ArticleTable_Author": {
     "message": "Article Author"
+  },
+  "ArticleTable_Sponsor": {
+    "message": "Sponsor"
   },
   "ArticleTable_Category": {
     "message": "Genre"
