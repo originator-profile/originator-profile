@@ -25,7 +25,7 @@ const options = /** @type {const} */ ({
   url: {
     type: "string",
     short: "u",
-    default: "https://originator-profile.org",
+    default: "http://localhost:8080",
     toString() {
       return `<watch_url> (default: ${this.default}, development mode only)`;
     },
@@ -92,6 +92,7 @@ if (env.REGISTRY_OPS.length === 0) {
   );
 }
 
+import * as astro from "astro";
 import esbuild from "esbuild";
 import copy from "esbuild-copy-static-files";
 import { rm } from "node:fs/promises";
@@ -146,6 +147,7 @@ await esbuild.build(buildOptions);
 const watch = Boolean(args.values.mode === "development" && args.values.url);
 
 if (watch) {
+  const devServer = await astro.dev({ root: "dev" });
   const ctx = await esbuild.context(buildOptions);
   await ctx.watch();
   console.log("watching...");
@@ -172,6 +174,7 @@ if (watch) {
   await new Promise((r) => {
     runner.registerCleanup(() => r(1));
   });
+  await devServer.stop();
 } else {
   await webExt.cmd.build({
     target: args.values.target,
