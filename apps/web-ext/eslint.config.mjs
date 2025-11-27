@@ -4,7 +4,7 @@ import globals from "globals";
 export default [
   ...originatorProfile,
   {
-    ignores: ["playwright/**/*"],
+    ignores: ["dev/**/*"],
   },
   {
     files: ["postcss.config.cjs", "tailwind.config.cjs", "esbuild.*.cjs"],
