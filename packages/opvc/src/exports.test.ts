@@ -29,5 +29,5 @@ await test("package.json exports field validation", async () => {
   for (const path of exportPaths) {
     await fs.access(path).catch(() => missingFiles.push(path));
   }
-  assert.ok(missingFiles.length === 0, `Missing files: ${missingFiles.join()}`);
+  assert.ok(missingFiles.length === 0, `Missing files:\n${missingFiles.join("\n")}`);
 });
