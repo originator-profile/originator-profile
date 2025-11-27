@@ -27,6 +27,7 @@ import { BidResponse } from "../rtb";
 import { listCas } from "./cas";
 import { getContentType } from "./get-content-type";
 import { CredentialsProps, SupportedVerifiedCa } from "./types";
+import { isArticleLike } from "./is-articlelike";
 
 export function Credentials(props: CredentialsProps) {
   const [caListType, setCaListType] =
@@ -127,15 +128,13 @@ export function Credentials(props: CredentialsProps) {
               />
               <div>
                 <p className="text-sm text-gray-900 font-bold">
-                  {ca.credentialSubject.type === "Article" ||
-                  ca.credentialSubject.type === "Advertorial"
+                  {isArticleLike(ca.credentialSubject)
                     ? ca.credentialSubject.headline
                     : ca.credentialSubject.name}
                 </p>
               </div>
             </div>
-            {(ca.credentialSubject.type === "Article" ||
-              ca.credentialSubject.type === "Advertorial") && (
+            {isArticleLike(ca.credentialSubject) && (
               <ArticleTable
                 className="mb-1 w-full"
                 article={ca as ArticleCA | AdvertorialCA}

@@ -40,3 +40,7 @@ export type FrameCredentials = FrameResponse<
   } & FrameLocation
 >;
 export type TabCredentials = FrameCredentials & { frames: FrameCredentials[] };
+
+export type ArticleLike =
+  | ArticleCA["credentialSubject"]
+  | AdvertorialCA["credentialSubject"];
