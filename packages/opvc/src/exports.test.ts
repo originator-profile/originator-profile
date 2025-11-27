@@ -25,18 +25,9 @@ await test("package.json exports field validation", async () => {
   const exportPaths = extractExportPaths(pkg.exports);
   assert.ok(0 < exportPaths.size, "No export paths found in package.json");
 
-  const missingFiles: Array<string> = (
-    await Promise.all(
-      [...exportPaths].map(async (path) => {
-        try {
-          await fs.access(path);
-          return [];
-        } catch {
-          return [path];
-        }
-      }),
-    )
-  ).flat();
-
+  const missingFiles: Array<string> = [];
+  for (const path of exportPaths) {
+    await fs.access(path).catch(() => missingFiles.push(path));
+  }
   assert.ok(missingFiles.length === 0, `Missing files: ${missingFiles.join()}`);
 });
