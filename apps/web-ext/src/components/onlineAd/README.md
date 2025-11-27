@@ -9,7 +9,7 @@ OnlineAd Content Attestation が設置された埋め込み広告の位置特定
 > なお、改修時にはデータ属性以外での埋め込み広告を含むサブフレーム (iframe) を特定する実装に見直すことが望ましいです。
 > 詳細は次の issue を確認してください。
 >
-> - [データ属性以外による HTMLIframeElement と webNavigation.getAllFrames() の紐付け · Issue #1217 · originator-profile/profile](https://github.com/originator-profile/profile/issues/1217)
+> - [データ属性以外による HTMLIframeElement と webNavigation.getAllFrames() の紐付け · Issue #40 · originator-profile/originator-profile](https://github.com/originator-profile/originator-profile/issues/40)
 
 全てのフレームから広告プロファイルを取得し、makeAdTree() により広告プロファイルが設置されたフレームの木構造が得られます。
 

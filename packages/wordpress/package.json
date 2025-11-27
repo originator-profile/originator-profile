@@ -1,7 +1,14 @@
 {
   "name": "@originator-profile/wordpress",
   "version": "0.4.0-beta.1",
+  "license": "Apache-2.0",
   "private": true,
+  "homepage": "https://docs.originator-profile.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/originator-profile/originator-profile.git",
+    "directory": "packages/wordpress"
+  },
   "type": "commonjs",
   "scripts": {
     "e2e": "playwright test",

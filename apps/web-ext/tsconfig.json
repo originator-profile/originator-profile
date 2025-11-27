@@ -2,5 +2,6 @@
   "extends": "@originator-profile/tsconfig/tsconfig.json",
   "compilerOptions": {
     "noUncheckedIndexedAccess": true
-  }
+  },
+  "exclude": ["playwright"]
 }
