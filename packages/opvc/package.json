@@ -27,6 +27,7 @@
   "oclif": {
     "bin": "opvc",
     "commands": "dist/commands",
+    "repositoryPrefix": "<%- repo %>/blob/v<%- version %>/packages/opvc/<%- commandPath %>",
     "plugins": [
       "@oclif/plugin-help"
     ]
@@ -35,7 +36,8 @@
     "build": "tsdown && oclif manifest && oclif readme",
     "lint": "eslint --fix .",
     "type-check": "tsc",
-    "test": "node --experimental-strip-types --no-warnings=ExperimentalWarning --test"
+    "test": "node --experimental-strip-types --no-warnings=ExperimentalWarning --test",
+    "version": "git add README.md"
   },
   "dependencies": {
     "@oclif/core": "^4.4.0",
