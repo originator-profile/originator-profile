@@ -25,6 +25,10 @@ type TestFixtures = {
   invalidSiteProfile: void;
   missingSiteProfile: void;
   evilSiteProfile: (key: { publicKey: Jwk }, issuer: string) => Promise<void>;
+  missingMediaSiteProfile: (
+    key: { publicKey: Jwk; privateKey: Jwk },
+    issuer: string,
+  ) => Promise<void>;
 };
 
 export const test = base.extend<TestFixtures>({
@@ -185,6 +189,62 @@ export const test = base.extend<TestFixtures>({
           }),
       );
     });
+
+    await page.unroute("http://localhost:8080/.well-known/sp.json");
+  },
+  missingMediaSiteProfile: async ({ page }: { page: Page }, use) => {
+    await use(
+      async (key: { publicKey: Jwk; privateKey: Jwk }, issuer: string) => {
+        const { publicKey, privateKey } = key;
+        const issuedAt: Date = new Date(Date.now());
+        const expiredAt: Date = addYears(new Date(), 1);
+
+        const coreProfile: CoreProfile = generateCoreProfileData(
+          publicKey,
+          issuer,
+        );
+        const certificate: Certificate = generateCertificateData(issuer);
+        const websiteProfile: WebsiteProfile =
+          generateWebsiteProfileData(issuer);
+
+        const signedCoreProfile = await signJwtVc(coreProfile, privateKey, {
+          issuedAt,
+          expiredAt,
+        });
+        const annotations = await signJwtVc(certificate, privateKey, {
+          issuedAt,
+          expiredAt,
+        });
+
+        const op = {
+          core: signedCoreProfile,
+          annotations: [annotations],
+        };
+
+        const signedWebsiteProfile = await signJwtVc(
+          websiteProfile,
+          privateKey,
+          {
+            issuedAt,
+            expiredAt,
+          },
+        );
+
+        const sp: SiteProfile = {
+          originators: [op],
+          credential: signedWebsiteProfile,
+        };
+
+        await page.route(
+          "http://localhost:8080/.well-known/sp.json",
+          async (route) =>
+            route.fulfill({
+              body: JSON.stringify(sp),
+              contentType: "application/json",
+            }),
+        );
+      },
+    );
 
     await page.unroute("http://localhost:8080/.well-known/sp.json");
   },
