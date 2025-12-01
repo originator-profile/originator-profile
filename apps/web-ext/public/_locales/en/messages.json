@@ -56,26 +56,11 @@
       }
     }
   },
-  "ReliabilityGuide_HasReliabilityInformation": {
-    "message": "$subject$ has reliability information",
-    "placeholders": {
-      "subject": {
-        "content": "$1",
-        "example": "The operator of this site"
-      }
-    }
-  },
   "ReliabilityGuide_SiteOperator": {
-    "message": "The operator of this site"
+    "message": "This site is operated by the following organizations"
   },
   "ReliabilityGuide_Publisher": {
-    "message": "The publisher of this $content_type$",
-    "placeholders": {
-      "content_type": {
-        "content": "$1",
-        "example": "publication"
-      }
-    }
+    "message": "This article is published by the following organization"
   },
   "ReliabilityGuide_AboutReliabilityInformation": {
     "message": "About reliability information"
