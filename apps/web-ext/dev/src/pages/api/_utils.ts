@@ -11,13 +11,19 @@ const keyPath = new URL(
 
 /**
  * Sign a JSON file using @originator-profile/opvc
+ * @param input Path to the JSON file to sign
+ * @param mode Mode to use (default: "none"; "ca" applies the predefined ContentAttestation preprocessing steps).
+ * @returns The signed VC as a string
  */
-export async function sign(input: string): Promise<string> {
+export async function sign(
+  input: string,
+  mode: "none" | "ca" = "none",
+): Promise<string> {
   const inputPath = new URL(input, import.meta.url).pathname;
 
   const result = await execFile("npx", [
     "@originator-profile/opvc",
-    "sign",
+    mode === "ca" ? "ca:sign" : "sign",
     "--identity",
     keyPath,
     "--input",

@@ -12,7 +12,7 @@ export async function POST(): Promise<Response> {
       path.basename(contentPath),
     );
 
-    const content = await sign(contentPath);
+    const content = await sign(contentPath, "ca");
 
     await writeJson(targetPath, [content]);
   }
