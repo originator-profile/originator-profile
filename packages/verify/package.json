@@ -45,7 +45,7 @@
     "ajv": "^8.17.1",
     "ajv-formats": "^3.0.1",
     "jose": "^6.0.10",
-    "jsonld": "^8.3.3"
+    "jsonld": "^9.0.0"
   },
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",
