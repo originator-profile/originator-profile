@@ -309,7 +309,7 @@
     "message": "The organization information corresponding to this site operator could not be correctly retrieved"
   },
   "WebMediaProfile_Missing_Reason": {
-    "message": "It is possible that the organization information corresponding to the site operator is not included or could not be retrieved. please contact the site administrator listed on the site."
+    "message": "It is possible that the organization information corresponding to the site operator is not included or could not be retrieved. Please contact the site administrator listed on the site."
   },
   "ProjectSummary_Statement_1": {
     "message": "Originator Profile technology is a technology that makes it easy to distinguish high-quality articles and media that have been verified by third parties by attaching verifiable information about web content creators and advertisers."
