@@ -16,7 +16,11 @@ export default function SiteProfile() {
       originator.media?.doc.credentialSubject.id ===
       siteProfile.credential.doc.issuer,
   );
-  if (!op?.media) return null;
+  if (!op?.media) {
+    return (
+      <Template siteProfile={siteProfile} wsp={siteProfile.credential.doc} />
+    );
+  }
   return (
     <Template
       siteProfile={siteProfile}

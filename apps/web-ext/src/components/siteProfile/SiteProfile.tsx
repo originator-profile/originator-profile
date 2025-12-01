@@ -63,9 +63,23 @@ export function SiteProfile(props: SiteProfileProps) {
         </h1>
         <ReliabilityGuide className="mb-3" contentType="ContentType_Site" />
       </div>
-      <div className="mb-3" data-testid="pp-json-holder">
-        <WebMediaProfileSummaryCard to={props.orgPath} wmp={props.wmp} />
-      </div>
+      {props.orgPath && props.wmp ? (
+        <div className="mb-3" data-testid="pp-json-holder">
+          <WebMediaProfileSummaryCard to={props.orgPath} wmp={props.wmp} />
+        </div>
+      ) : (
+        <div>
+          <h1
+            className="text-base text-center mb-6"
+            data-testid="web-media-profile-missing"
+          >
+            {_("WebMediaProfile_Missing")}
+          </h1>
+          <p className="whitespace-pre-line text-xs text-gray-700 text-center leading-5">
+            {_("WebMediaProfile_Missing_Reason")}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
