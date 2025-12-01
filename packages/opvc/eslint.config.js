@@ -6,6 +6,7 @@ export default [
     files: ["src/**/*.test.ts"],
     rules: {
       "vitest/no-import-node-test": "off",
+      "no-await-in-loop": "off",
     },
   },
 ];
