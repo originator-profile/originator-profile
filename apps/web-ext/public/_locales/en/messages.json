@@ -60,7 +60,7 @@
     "message": "This site is operated by the following organizations"
   },
   "ReliabilityGuide_Publisher": {
-    "message": "This article is published by the following organizations",
+    "message": "This $content_type$ is published by the following organizations",
     "placeholders": {
       "content_type": {
         "content": "$1",
