@@ -3,9 +3,9 @@ import { FetchSiteProfileSuccess } from "@originator-profile/presentation";
 import { VerifiedSp } from "@originator-profile/verify";
 
 export type SiteProfileProps = {
-  orgPath: { pathname: string; search: string };
+  orgPath?: { pathname: string; search: string };
   siteProfile: VerifiedSp;
-  wmp: WebMediaProfile;
+  wmp?: WebMediaProfile;
   wsp: WebsiteProfile;
 };
 

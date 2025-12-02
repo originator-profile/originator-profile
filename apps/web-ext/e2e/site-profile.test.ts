@@ -24,3 +24,20 @@ test("Site Profile を取得検証できる", async ({
     "SiteProfileの取得検証",
   );
 });
+test("Site Profile を取得検証できるが、WMP が存在しない", async ({
+  context,
+  page,
+  missingMediaSiteProfile,
+  credentialsMissingPage,
+}) => {
+  await missingMediaSiteProfile(
+    { privateKey, publicKey },
+    credentialsMissingPage.issuer,
+  );
+  await page.goto(credentialsMissingPage.endpoint);
+  const ext = await popup(context);
+  await expect(ext?.getByTestId("site-profile")).toBeVisible();
+  expect(await ext?.getByTestId("web-media-profile-missing").innerText()).toBe(
+    "このサイト運営者に対応する組織情報を正しく読み取れませんでした",
+  );
+});

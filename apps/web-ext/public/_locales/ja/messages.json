@@ -305,6 +305,12 @@
   "WebMediaProfileTable_Principle": {
     "message": "編集ガイドライン"
   },
+  "WebMediaProfile_Missing": {
+    "message": "このサイト運営者に対応する組織情報を正しく読み取れませんでした"
+  },
+  "WebMediaProfile_Missing_Reason": {
+    "message": "サイト運営者に対応する組織情報が含まれていないか、取得できなかった可能性があります。\nサイト内に記載されている運営管理者にお問い合わせください。"
+  },
   "ProjectSummary_Statement_1": {
     "message": "Originator Profile 技術は、ウェブコンテンツの作成者や広告主などの情報を検証可能な形で付与することで、第三者認証済みの良質な記事やメディアを容易に見分けられるようにする技術です。"
   },
