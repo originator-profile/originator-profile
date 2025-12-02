@@ -60,7 +60,13 @@
     "message": "このサイトは次の組織が運営しています"
   },
   "ReliabilityGuide_Publisher": {
-    "message": "この記事は次の組織が発信しています"
+    "message": "この$content_type$は次の組織が発信しています",
+    "placeholders": {
+      "content_type": {
+        "content": "$1",
+        "example": "出版物"
+      }
+    }
   },
   "ReliabilityGuide_AboutReliabilityInformation": {
     "message": "信頼性情報について"
