@@ -5,8 +5,11 @@
   "CaFilter_MainContent": {
     "message": "メインコンテンツ"
   },
-  "CaFilter_Other": {
-    "message": "その他コンテンツ"
+  "CaFilter_Article": {
+    "message": "記事"
+  },
+  "CaFilter_Advertorial": {
+    "message": "記事広告"
   },
   "CaFilter_Advertisements": {
     "message": "広告"

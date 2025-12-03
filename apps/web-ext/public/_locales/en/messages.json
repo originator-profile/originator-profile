@@ -5,8 +5,11 @@
   "CaFilter_MainContent": {
     "message": "Main Content"
   },
-  "CaFilter_Other": {
-    "message": "Other"
+  "CaFilter_Article": {
+    "message": "Articles"
+  },
+  "CaFilter_Advertorial": {
+    "message": "Advertorials"
   },
   "CaFilter_Advertisements": {
     "message": "Advertisements"
