@@ -23,6 +23,22 @@ test("Site Profile を取得検証できる", async ({
   expect(await ext?.getByTestId("site-profile-wsp-name").innerText()).toBe(
     "SiteProfileの取得検証",
   );
+});
+
+test("Site Profile のビジュアルリグレッションテスト", async ({
+  context,
+  page,
+  validSiteProfile,
+  credentialsMissingPage,
+}) => {
+  test.skip(!process.env.CI, "VRT is only run in CI");
+
+  await validSiteProfile(
+    { privateKey, publicKey },
+    credentialsMissingPage.issuer,
+  );
+  await page.goto(credentialsMissingPage.endpoint);
+  const ext = await popup(context);
 
   // Visual Regression Test: ポップアップUIのスクリーンショット比較
   await expect(ext).toHaveScreenshot("site-profile-popup.png");
