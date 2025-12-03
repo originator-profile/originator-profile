@@ -13,7 +13,7 @@ export default function SiteProfile() {
   if (!siteProfile) return null;
   const op = siteProfile.originators.find(
     (originator) =>
-      originator.core.doc.credentialSubject.id ===
+      originator.media?.doc.credentialSubject.id ===
       siteProfile.credential.doc.issuer,
   );
   const orgPath = op && {
