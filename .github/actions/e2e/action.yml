@@ -16,6 +16,8 @@ runs:
         name: e2e-report
         path: |
           packages/verify/playwright-report
+          packages/verify/test-results
           apps/web-ext/playwright-report
+          apps/web-ext/test-results
           apps/web-ext/screenshots
         retention-days: 7
