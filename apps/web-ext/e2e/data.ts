@@ -184,6 +184,29 @@ export function generateUnsignedContentAttestation(
       description: "テスト広告の説明文",
       genre: "Arts & Entertainment",
       landingPageUrl: "https://ad.landingpage.example.com",
+      adReportContact: {
+      "id": "https://ad.example.com/contact",
+      "name": "広告に対する報告窓口"
+      },
+      adReviewGuidelines: {
+        "id": "https://ad.example.com/guidelines",
+        "name": "広告審査ガイドライン"
+      },
+      targetingPolicy: {
+        "id": "https://ad.example.com/targeting",
+        "name": "ターゲティング広告に関するポリシー"
+      },
+      adDataHandlingPolicy: {
+        "id": "https://ad.example.com/datahandling",
+        "name": "広告配信に関する情報の取り扱いについての説明"
+      },
+      adDisplayRationale: {
+        page: {
+          "id": "https://ad.example.com/rationale",
+          "name": "この広告が表示されている理由"
+        },
+        description: "現在閲覧中のコンテンツと関連性が高いため。"
+      },
       id: "urn:uuid:5c464165-c579-4fc9-aaff-ca4a65e79947",
     },
   };

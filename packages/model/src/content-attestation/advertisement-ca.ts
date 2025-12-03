@@ -4,6 +4,7 @@ import { AllowedUrl } from "../allowed-url";
 import { OpCipContext } from "../context/op-cip-context";
 import { Image } from "../image";
 import { ContentAttestation } from "./content-attestation";
+import { Page } from "../page";
 
 const subject = {
   type: "object",
@@ -36,8 +37,31 @@ const subject = {
       type: "string",
       format: "uri",
     },
+    adReportContact: Page,
+    adReviewGuidelines: Page,
+    targetingPolicy: Page,
+    adDataHandlingPolicy: Page,
+    adDisplayRationale: {
+      title: "この広告が表示されている理由",
+      type: "object",
+      properties: {
+        page: Page,
+        description: {
+          type: "string"
+        }
+      },
+      anyOf: [
+        { "required": ["page"] },
+        { "required": ["description"] }
+      ],
+    },
   },
-  required: ["id", "type", "name", "description"],
+  required: ["id", "type"],
+  anyOf: [
+    { "required": ["name"] },
+    { "required": ["description"] },
+    { "required": ["image"] }
+  ],
 } as const satisfies JSONSchema;
 
 const AdvertisementCA = {
