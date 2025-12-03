@@ -1,12 +1,6 @@
 name: Update VRT Baselines
 on:
   workflow_dispatch:
-    inputs:
-      branch:
-        description: 'ベースライン画像を更新するブランチ'
-        required: false
-        default: ${{ github.ref_name }}
-        type: string
 jobs:
   update-baselines:
     runs-on: ubuntu-24.04
@@ -17,8 +11,6 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
-        with:
-          ref: ${{ inputs.branch }}
 
       - name: Setup
         uses: "./.github/actions/setup"
@@ -74,7 +66,7 @@ jobs:
           if [ "${{ steps.check_changes.outputs.has_changes }}" == "true" ]; then
             echo "### ✅ VRT Baseline Screenshots Updated" >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
-            echo "Updated baseline screenshots have been committed to branch \`${{ inputs.branch }}\`" >> $GITHUB_STEP_SUMMARY
+            echo "Updated baseline screenshots have been committed to the current branch." >> $GITHUB_STEP_SUMMARY
             echo "" >> $GITHUB_STEP_SUMMARY
             echo "**Changed files:**" >> $GITHUB_STEP_SUMMARY
             git diff HEAD~1 --name-only | grep -E '\-snapshots/.*\.png$' | sed 's/^/- /' >> $GITHUB_STEP_SUMMARY || echo "- No screenshot changes found" >> $GITHUB_STEP_SUMMARY
