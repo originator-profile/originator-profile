@@ -24,6 +24,7 @@ import {
   SupportedVerifiedCas,
   useCredentials,
 } from "../components/credentials";
+import { useFrameCasLocation } from "../components/frameCas";
 import { overlayExtensionMessenger } from "../components/overlay/extension-events";
 import { useSiteProfile } from "../components/siteProfile";
 import { buildPublUrl, routes } from "../utils/routes";
@@ -105,7 +106,8 @@ function isCredentialsVerifyError(credentials_error?: Error) {
 
 function Base() {
   const { tabId, siteProfile, error: sp_error } = useSiteProfile();
-  const { ops, cas, error: credentials_error } = useCredentials();
+  const { ops, cas, framesCas, error: credentials_error } = useCredentials();
+  useFrameCasLocation(tabId, framesCas ?? []);
   useTitle([_("Base_ContentsInformation"), origin].filter(Boolean).join(" ― "));
   window.addEventListener(
     "pagehide",

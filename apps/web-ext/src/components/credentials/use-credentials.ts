@@ -12,7 +12,11 @@ import useSWRImmutable from "swr/immutable";
 import { getRegistryKeys } from "../../utils/get-registry-keys";
 import { useSiteProfile } from "../siteProfile";
 import { FrameIntegrityVerifier, fetchTabCredentials } from "./messaging";
-import { FrameCredentials, SupportedCa, SupportedVerifiedCas } from "./types";
+import type {
+  SupportedCa,
+  SupportedVerifiedCas,
+  FrameVerifiedCas,
+} from "./types";
 
 const CREDENTIALS_KEY = "credentials";
 
@@ -21,7 +25,7 @@ type FetchVerifiedCredentialsResult = {
   cas: SupportedVerifiedCas;
   origin: string;
   url: string;
-  frames: FrameCredentials[];
+  framesCas: FrameVerifiedCas[];
 };
 
 /**
@@ -57,26 +61,34 @@ async function fetchVerifiedCredentials([, tabId, sp]: [
   }
   verifiedOps.push(...verifiedSiteOps);
   const verifiedCasResults = await Promise.all(
-    [page, ...frames].map((frame) =>
+    [page, ...frames].map(({ cas, ops: _, ...frame }) =>
       verifyCas<SupportedCa>(
-        frame.cas,
+        cas,
         verifiedOps,
         frame.url,
         FrameIntegrityVerifier(tabId, frame.frameId),
-      ),
+      ).then((result) => ({ result, frame })),
     ),
   );
-  for (const verifiedCas of verifiedCasResults) {
-    if (verifiedCas instanceof CasVerifyFailed) {
-      throw verifiedCas;
+  for (const { result } of verifiedCasResults) {
+    if (result instanceof CasVerifyFailed) {
+      throw result;
     }
   }
   return {
     ops: verifiedOps,
-    cas: verifiedCasResults.flat() as SupportedVerifiedCas,
+    cas: verifiedCasResults.flatMap(
+      ({ result }) => result as SupportedVerifiedCas,
+    ),
     origin: page.origin,
     url: page.url,
-    frames,
+    framesCas: verifiedCasResults
+      .slice(1) // page は除外
+      .filter(({ result }) => Array.isArray(result) && result.length > 0)
+      .map(({ result, frame }) => ({
+        cas: result as SupportedVerifiedCas,
+        ...frame,
+      })),
   };
 }
 
@@ -97,12 +109,12 @@ export function useCredentials() {
     Error,
     [typeof CREDENTIALS_KEY, number, VerifiedSp?]
   >([CREDENTIALS_KEY, tabId, siteProfile], fetchVerifiedCredentials);
-  const { ops, cas, origin, frames } = credentials ?? {};
+  const { ops, cas, origin, framesCas } = credentials ?? {};
 
   return {
     cas,
     error,
-    frames,
+    framesCas,
     isLoading,
     ops,
     origin,

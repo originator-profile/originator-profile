@@ -1,0 +1,44 @@
+import { GetDataType } from "@webext-core/messaging";
+
+/** window & targetOrigin 指定可能な defineWindowMessaging() */
+export function defineWindowMessaging<T extends Record<string, unknown>>() {
+  const listeners: Array<(event: MessageEvent) => void> = [];
+  function sendMessage<TType extends keyof T>(
+    type: TType,
+    data: GetDataType<T[TType]>,
+    window?: Window | null,
+    targetOrigin?: URL["origin"],
+  ): void {
+    if (targetOrigin) {
+      window?.postMessage({ type, data }, targetOrigin);
+    } else {
+      window?.postMessage({ type, data });
+    }
+  }
+  function onMessage<TType extends keyof T>(
+    type: TType,
+    handler: (event: MessageEvent<GetDataType<T[TType]>>) => void,
+  ) {
+    function listener(
+      event: MessageEvent<{
+        type: keyof T;
+        data: GetDataType<T[TType]>;
+      }>,
+    ) {
+      if (!(event.isTrusted && event.data.type === type)) return;
+      handler({ ...event, data: event.data.data });
+    }
+    window.addEventListener("message", listener);
+    listeners.push(listener);
+  }
+  function removeAllListeners() {
+    for (const listener of listeners) {
+      window.removeEventListener("message", listener);
+    }
+  }
+  return {
+    sendMessage,
+    onMessage,
+    removeAllListeners,
+  };
+}

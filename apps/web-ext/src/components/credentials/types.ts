@@ -29,17 +29,19 @@ export type FetchCredentialsMessageResponse = FrameLocation & {
   cas: FetchCredentialsMessageResult<ContentAttestationSet, VerifyFailed>;
 };
 
-export type FrameResponse<T = unknown> = T & {
+export type FrameResponse = {
   frameId: number;
   parentFrameId: number;
 };
-export type FrameCredentials = FrameResponse<
-  {
+export type FrameCredentials = FrameResponse &
+  FrameLocation & {
     ops: OriginatorProfileSet;
     cas: ContentAttestationSet;
-  } & FrameLocation
->;
+  };
 export type TabCredentials = FrameCredentials & { frames: FrameCredentials[] };
+
+export type FrameVerifiedCas = FrameResponse &
+  FrameLocation & { cas: SupportedVerifiedCas };
 
 export type ArticleLike =
   | ArticleCA["credentialSubject"]

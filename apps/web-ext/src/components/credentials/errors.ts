@@ -20,7 +20,7 @@ export class FetchCredentialsMessagingFailed extends Error {
 
   constructor(
     message: string,
-    public result: FrameResponse<{ error: Error }>,
+    public result: FrameResponse & { error: Error },
   ) {
     super(message);
   }

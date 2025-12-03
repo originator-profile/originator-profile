@@ -3,13 +3,22 @@ import {
   fetchCredentials,
   FetchCredentialSetResult,
 } from "@originator-profile/presentation";
-import { verifyIntegrity } from "@originator-profile/verify";
+import {
+  normalizeCasItem,
+  verifyIntegrity,
+  TargetIntegrityAlgorithm,
+} from "@originator-profile/verify";
 import {
   credentialsMessenger,
   FetchCredentialsMessageResult,
   FrameLocation,
   VerifyFailed,
 } from "./components/credentials";
+import {
+  frameCasExtensionMessenger,
+  frameCasWindowMessenger,
+  type CasCoordinate,
+} from "./components/frameCas";
 import "./utils/cors-basic-auth";
 
 const toFetchCredentialsMessageResult = <T>(
@@ -39,3 +48,72 @@ credentialsMessenger.onMessage("verifyIntegrity", async ({ data }) => {
   const result = await verifyIntegrity(content);
   return result;
 });
+
+frameCasExtensionMessenger.onMessage(
+  "locate",
+  async ({ data: { frameCas, frames } }) => {
+    const casItems = frameCas.cas.map(normalizeCasItem);
+    const cas: CasCoordinate = casItems.map(({ attestation }) => ({
+      id: attestation.doc.credentialSubject.id,
+      target: attestation.doc.target.flatMap((content) => {
+        const elements = TargetIntegrityAlgorithm[content.type].elementSelector(
+          { ...content, document },
+        );
+        return elements.map((el) => el.getBoundingClientRect());
+      }),
+    }));
+    frameCasWindowMessenger.sendMessage(
+      "locate",
+      {
+        frameCas: {
+          frameId: frameCas.frameId,
+          parentFrameId: frameCas.parentFrameId,
+          ancestor: [],
+          scrollX: window.scrollX,
+          scrollY: window.scrollY,
+          cas,
+        },
+        frames,
+      },
+      window.parent,
+      frames.find(({ frameId }) => frameId === frameCas.parentFrameId)?.origin,
+    );
+  },
+);
+
+frameCasWindowMessenger.onMessage(
+  "locate",
+  ({
+    data: {
+      frameCas: { ancestor, ...coordinate },
+      frames,
+    },
+    source,
+    origin,
+  }) => {
+    const frameId = ancestor.at(-1)?.parentFrameId ?? coordinate.parentFrameId;
+    const frame = frames.find((frame) => frame.frameId === frameId);
+    if (!frame) return console.error(`frame not found. frame id: ${frameId}`);
+    if (origin !== frame.origin)
+      return console.error(`origin mismatch: ${origin}`);
+    const iframes = document.getElementsByTagName("iframe");
+    for (const iframe of iframes) {
+      if (source !== iframe.contentWindow) continue;
+      ancestor.push({
+        frameId: frame.frameId,
+        parentFrameId: frame.parentFrameId,
+        scrollX: window.scrollX,
+        scrollY: window.scrollY,
+        rect: iframe.getBoundingClientRect(),
+        visible: true, // TODO あとで書く
+      });
+      break;
+    }
+    frameCasWindowMessenger.sendMessage(
+      "locate",
+      { frameCas: { ancestor, ...coordinate }, frames },
+      window.parent,
+      frames.find(({ frameId }) => frameId === frame.parentFrameId)?.origin,
+    );
+  },
+);
