@@ -6,7 +6,7 @@ This document outlines the security reporting process for this project.
 
 ## Reporting a Vulnerability
 
-This project uses **GitHub Private Vulnerability Reporting** as the official channel for submitting security vulnerabilities.
+This project uses [**GitHub Private Vulnerability Reporting**](https://docs.github.com/en/code-security/security-advisories/guidance-on-reporting-and-writing-information-about-vulnerabilities/privately-reporting-a-security-vulnerability) as the official channel for submitting security vulnerabilities.
 
 If you believe you have discovered a security issue, please submit a report via the  
 **"Report a vulnerability"** button, which can be found in the **"Security"** tab at the top of the GitHub repository page.
