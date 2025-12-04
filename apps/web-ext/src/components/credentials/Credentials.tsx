@@ -131,8 +131,7 @@ export function Credentials(props: CredentialsProps) {
                 <p className="text-sm text-gray-900 font-bold">
                   {isArticleLike(ca.credentialSubject)
                     ? ca.credentialSubject.headline
-                    : (ca.credentialSubject.name ??
-                      "タイトル未設定のコンテンツ")}
+                    : (ca.credentialSubject.name ?? "Untitled Content")}
                 </p>
               </div>
             </div>
