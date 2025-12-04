@@ -38,11 +38,11 @@ function renderAdDisplayRationale(rationale?: {
   description?: string;
 }) {
   if (!rationale) return null;
-  if (rationale.page?.id && rationale.page?.name) {
+  if (rationale.page) {
     return (
       <>
-        <ExternalLink href={rationale.page?.id}>
-          {rationale.page?.name}
+        <ExternalLink href={rationale.page.id}>
+          {rationale.page.name}
         </ExternalLink>
         {rationale.description && <p>{rationale.description}</p>}
       </>
