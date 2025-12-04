@@ -24,27 +24,27 @@ describe("verify-allowed-origin", () => {
         },
         landingPageUrl: "https://ad.landingpage.example.com",
         adReportContact: {
-          "id": "https://ad.example.com/contact",
-          "name": "広告に対する報告窓口"
+          id: "https://ad.example.com/contact",
+          name: "広告に対する報告窓口",
         },
         adReviewGuidelines: {
-          "id": "https://ad.example.com/guidelines",
-          "name": "広告審査ガイドライン"
+          id: "https://ad.example.com/guidelines",
+          name: "広告審査ガイドライン",
         },
         targetingPolicy: {
-          "id": "https://ad.example.com/targeting",
-          "name": "ターゲティング広告に関するポリシー"
+          id: "https://ad.example.com/targeting",
+          name: "ターゲティング広告に関するポリシー",
         },
         adDataHandlingPolicy: {
-          "id": "https://ad.example.com/datahandling",
-          "name": "広告配信に関する情報の取り扱いについての説明"
+          id: "https://ad.example.com/datahandling",
+          name: "広告配信に関する情報の取り扱いについての説明",
         },
         adDisplayRationale: {
           page: {
-            "id": "https://ad.example.com/rationale",
-            "name": "この広告が表示されている理由"
+            id: "https://ad.example.com/rationale",
+            name: "この広告が表示されている理由",
           },
-          description: "現在閲覧中のコンテンツと関連性が高いため。"
+          description: "現在閲覧中のコンテンツと関連性が高いため。",
         },
       },
       allowedOrigin: ["https://ad.example.com", "https://ad.example1.com"],
@@ -83,27 +83,27 @@ describe("verify-allowed-origin", () => {
         },
         landingPageUrl: "https://ad.landingpage.example.com",
         adReportContact: {
-          "id": "https://ad.example.com/contact",
-          "name": "広告に対する報告窓口"
+          id: "https://ad.example.com/contact",
+          name: "広告に対する報告窓口",
         },
         adReviewGuidelines: {
-          "id": "https://ad.example.com/guidelines",
-          "name": "広告審査ガイドライン"
+          id: "https://ad.example.com/guidelines",
+          name: "広告審査ガイドライン",
         },
         targetingPolicy: {
-          "id": "https://ad.example.com/targeting",
-          "name": "ターゲティング広告に関するポリシー"
+          id: "https://ad.example.com/targeting",
+          name: "ターゲティング広告に関するポリシー",
         },
         adDataHandlingPolicy: {
-          "id": "https://ad.example.com/datahandling",
-          "name": "広告配信に関する情報の取り扱いについての説明"
+          id: "https://ad.example.com/datahandling",
+          name: "広告配信に関する情報の取り扱いについての説明",
         },
         adDisplayRationale: {
           page: {
-            "id": "https://ad.example.com/rationale",
-            "name": "この広告が表示されている理由"
+            id: "https://ad.example.com/rationale",
+            name: "この広告が表示されている理由",
           },
-          description: "現在閲覧中のコンテンツと関連性が高いため。"
+          description: "現在閲覧中のコンテンツと関連性が高いため。",
         },
       },
       allowedOrigin: "https://ad.example.com",
@@ -143,27 +143,27 @@ describe("verify-allowed-origin", () => {
         },
         landingPageUrl: "https://ad.landingpage.example.com",
         adReportContact: {
-          "id": "https://ad.example.com/contact",
-          "name": "広告に対する報告窓口"
+          id: "https://ad.example.com/contact",
+          name: "広告に対する報告窓口",
         },
         adReviewGuidelines: {
-          "id": "https://ad.example.com/guidelines",
-          "name": "広告審査ガイドライン"
+          id: "https://ad.example.com/guidelines",
+          name: "広告審査ガイドライン",
         },
         targetingPolicy: {
-          "id": "https://ad.example.com/targeting",
-          "name": "ターゲティング広告に関するポリシー"
+          id: "https://ad.example.com/targeting",
+          name: "ターゲティング広告に関するポリシー",
         },
         adDataHandlingPolicy: {
-          "id": "https://ad.example.com/datahandling",
-          "name": "広告配信に関する情報の取り扱いについての説明"
+          id: "https://ad.example.com/datahandling",
+          name: "広告配信に関する情報の取り扱いについての説明",
         },
         adDisplayRationale: {
           page: {
-            "id": "https://ad.example.com/rationale",
-            "name": "この広告が表示されている理由"
+            id: "https://ad.example.com/rationale",
+            name: "この広告が表示されている理由",
           },
-          description: "現在閲覧中のコンテンツと関連性が高いため。"
+          description: "現在閲覧中のコンテンツと関連性が高いため。",
         },
       },
       allowedOrigin: ["https://ad.example1.com", "https://ad.example2.com"],
@@ -203,27 +203,27 @@ describe("verify-allowed-origin", () => {
         },
         landingPageUrl: "https://ad.landingpage.example.com",
         adReportContact: {
-          "id": "https://ad.example.com/contact",
-          "name": "広告に対する報告窓口"
+          id: "https://ad.example.com/contact",
+          name: "広告に対する報告窓口",
         },
         adReviewGuidelines: {
-          "id": "https://ad.example.com/guidelines",
-          "name": "広告審査ガイドライン"
+          id: "https://ad.example.com/guidelines",
+          name: "広告審査ガイドライン",
         },
         targetingPolicy: {
-          "id": "https://ad.example.com/targeting",
-          "name": "ターゲティング広告に関するポリシー"
+          id: "https://ad.example.com/targeting",
+          name: "ターゲティング広告に関するポリシー",
         },
         adDataHandlingPolicy: {
-          "id": "https://ad.example.com/datahandling",
-          "name": "広告配信に関する情報の取り扱いについての説明"
+          id: "https://ad.example.com/datahandling",
+          name: "広告配信に関する情報の取り扱いについての説明",
         },
         adDisplayRationale: {
           page: {
-            "id": "https://ad.example.com/rationale",
-            "name": "この広告が表示されている理由"
+            id: "https://ad.example.com/rationale",
+            name: "この広告が表示されている理由",
           },
-          description: "現在閲覧中のコンテンツと関連性が高いため。"
+          description: "現在閲覧中のコンテンツと関連性が高いため。",
         },
       },
       allowedOrigin: "https://ad.example1.com",

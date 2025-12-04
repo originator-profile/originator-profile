@@ -47,20 +47,17 @@ const subject = {
       properties: {
         page: Page,
         description: {
-          type: "string"
-        }
+          type: "string",
+        },
       },
-      anyOf: [
-        { "required": ["page"] },
-        { "required": ["description"] }
-      ],
+      anyOf: [{ required: ["page"] }, { required: ["description"] }],
     },
   },
   required: ["id", "type"],
   anyOf: [
-    { "required": ["name"] },
-    { "required": ["description"] },
-    { "required": ["image"] }
+    { required: ["name"] },
+    { required: ["description"] },
+    { required: ["image"] },
   ],
 } as const satisfies JSONSchema;
 
@@ -107,4 +104,5 @@ const AdvertisementCA = {
   ],
 } as const satisfies JSONSchema;
 
+export type AdvertisementSubject = FromSchema<typeof subject>;
 export type AdvertisementCA = FromSchema<typeof AdvertisementCA>;

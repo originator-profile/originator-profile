@@ -10,6 +10,7 @@ export * from "./jwk";
 export * from "./jwks";
 export * from "./op-vc";
 export * from "./originator-profile-set";
+export * from "./page";
 export * from "./request";
 export * from "./site-profile";
 export * from "./target/";

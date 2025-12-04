@@ -11,7 +11,7 @@ function TableRow({ className, header, data }: Props) {
     <tr className={twMerge("text-xs w-full", className)}>
       <th
         className={
-          "whitespace-nowrap text-left pr-5 py-1 text-gray-600 font-normal"
+          "whitespace-normal text-left min-w-40 pr-5 py-1 text-gray-600 font-normal"
         }
       >
         {header}
