@@ -26,7 +26,15 @@ export function defineWindowMessaging<T extends Record<string, unknown>>() {
       }>,
     ) {
       if (!(event.isTrusted && event.data.type === type)) return;
-      handler({ ...event, data: event.data.data });
+      handler(
+        new MessageEvent("message", {
+          data: event.data.data,
+          origin: event.origin,
+          lastEventId: event.lastEventId,
+          source: event.source,
+          ports: [...event.ports],
+        }),
+      );
     }
     window.addEventListener("message", listener);
     listeners.push(listener);

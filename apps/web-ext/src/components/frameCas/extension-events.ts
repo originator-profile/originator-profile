@@ -10,7 +10,7 @@ export type FrameCasExtensionProtocolMap = {
     frameCas: FrameVerifiedCas;
     frames: Array<FrameResponse & FrameLocation>;
   }): Promise<void>;
-  reLocate(): void;
+  reLocate(message: null): void;
 };
 
 export const frameCasExtensionMessenger =

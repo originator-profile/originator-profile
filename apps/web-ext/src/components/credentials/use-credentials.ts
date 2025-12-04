@@ -82,13 +82,10 @@ async function fetchVerifiedCredentials([, tabId, sp]: [
     ),
     origin: page.origin,
     url: page.url,
-    framesCas: verifiedCasResults
-      .slice(1) // page は除外
-      .filter(({ result }) => Array.isArray(result) && result.length > 0)
-      .map(({ result, frame }) => ({
-        cas: result as SupportedVerifiedCas,
-        ...frame,
-      })),
+    framesCas: verifiedCasResults.map(({ result, frame }) => ({
+      cas: result as SupportedVerifiedCas,
+      ...frame,
+    })),
   };
 }
 

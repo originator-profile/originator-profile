@@ -7,7 +7,8 @@ export type FrameCasWindowProtocolMap = {
     frameCas: FrameCasCoordinate;
     frames: Array<FrameResponse & FrameLocation>;
   }): void;
-  reLocate(): void;
+  located(message: FrameCasCoordinate): void;
+  reLocate(message: null): void;
 };
 
 export const frameCasWindowMessenger =

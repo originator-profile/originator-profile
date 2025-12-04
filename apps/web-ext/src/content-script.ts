@@ -1,5 +1,6 @@
 import { serializeIfError } from "@originator-profile/core";
 import { fetchSiteProfile } from "@originator-profile/presentation";
+import { frameCasWindowMessenger } from "./components/frameCas";
 import {
   Overlay,
   OverlayProtocolMap,
@@ -41,4 +42,12 @@ overlayWindowMessenger.onMessage("select", ({ data }) => {
 siteProfileMessenger.onMessage("fetchSiteProfile", async () => {
   const data = await fetchSiteProfile(document);
   return serializeIfError(data) as FetchSiteProfileMessageResult;
+});
+
+frameCasWindowMessenger.onMessage("located", ({ data }) => {
+  frameCasWindowMessenger.sendMessage("located", data, overlay.window);
+});
+
+frameCasWindowMessenger.onMessage("reLocate", () => {
+  // TODO
 });

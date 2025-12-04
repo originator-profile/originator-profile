@@ -2,12 +2,15 @@ import { frameCasExtensionMessenger } from "./extension-events";
 import { type FrameVerifiedCas } from "../credentials";
 import { useEffect, useCallback } from "react";
 
-export function useFrameCasLocation(
+export function useFrameCasLocationProvider(
   tabId: number,
   framesCas: FrameVerifiedCas[],
 ): void {
+  const targetFramesCas = framesCas.filter(
+    (frameCas) => frameCas.cas.length > 0,
+  );
   const handler = useCallback(() => {
-    for (const frameCas of framesCas) {
+    for (const frameCas of targetFramesCas) {
       void frameCasExtensionMessenger.sendMessage(
         "locate",
         {
@@ -20,7 +23,7 @@ export function useFrameCasLocation(
         },
       );
     }
-  }, [tabId, framesCas]);
+  }, [tabId, framesCas, targetFramesCas]);
   useEffect(() => {
     handler();
     const cleanup = frameCasExtensionMessenger.onMessage("reLocate", handler);

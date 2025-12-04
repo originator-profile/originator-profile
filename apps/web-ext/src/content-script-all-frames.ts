@@ -5,8 +5,8 @@ import {
 } from "@originator-profile/presentation";
 import {
   normalizeCasItem,
-  verifyIntegrity,
   TargetIntegrityAlgorithm,
+  verifyIntegrity,
 } from "@originator-profile/verify";
 import {
   credentialsMessenger,
@@ -15,10 +15,10 @@ import {
   VerifyFailed,
 } from "./components/credentials";
 import {
-  frameCasExtensionMessenger,
   frameCasWindowMessenger,
   type CasCoordinate,
 } from "./components/frameCas";
+import { frameCasExtensionMessenger } from "./components/frameCas/extension-events";
 import "./utils/cors-basic-auth";
 
 const toFetchCredentialsMessageResult = <T>(
@@ -92,6 +92,7 @@ frameCasWindowMessenger.onMessage(
     origin,
   }) => {
     const frameId = ancestor.at(-1)?.parentFrameId ?? coordinate.parentFrameId;
+    if (frameId === -1) return;
     const frame = frames.find((frame) => frame.frameId === frameId);
     if (!frame) return console.error(`frame not found. frame id: ${frameId}`);
     if (origin !== frame.origin)
@@ -109,11 +110,22 @@ frameCasWindowMessenger.onMessage(
       });
       break;
     }
-    frameCasWindowMessenger.sendMessage(
-      "locate",
-      { frameCas: { ancestor, ...coordinate }, frames },
-      window.parent,
-      frames.find(({ frameId }) => frameId === frame.parentFrameId)?.origin,
-    );
+    if (frame.frameId === 0) {
+      frameCasWindowMessenger.sendMessage(
+        "located",
+        {
+          ancestor,
+          ...coordinate,
+        },
+        window.self,
+      );
+    } else {
+      frameCasWindowMessenger.sendMessage(
+        "locate",
+        { frameCas: { ancestor, ...coordinate }, frames },
+        window.parent,
+        frames.find(({ frameId }) => frameId === frame.parentFrameId)?.origin,
+      );
+    }
   },
 );

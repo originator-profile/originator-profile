@@ -1,4 +1,4 @@
 export * from "./extension-events";
 export * from "./types";
-export * from "./use-frame-cas-location";
+export * from "./use-frame-cas-location-provider";
 export * from "./window-events";
