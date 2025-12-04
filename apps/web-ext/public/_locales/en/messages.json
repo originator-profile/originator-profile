@@ -179,6 +179,9 @@
   "Credentials_TechnicalInformation": {
     "message": "Technical Information"
   },
+  "Credentials_UntitledContent": {
+    "message": "Untitled Content"
+  },
   "SiteProfile_TechnicalInformation": {
     "message": "Technical Information"
   },

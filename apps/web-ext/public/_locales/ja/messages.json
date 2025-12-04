@@ -179,6 +179,9 @@
   "Credentials_TechnicalInformation": {
     "message": "技術情報"
   },
+  "Credentials_UntitledContent": {
+    "message": "タイトル未設定のコンテンツ"
+  },
   "SiteProfile_TechnicalInformation": {
     "message": "技術情報"
   },
