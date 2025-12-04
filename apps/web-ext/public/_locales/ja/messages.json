@@ -59,20 +59,11 @@
       }
     }
   },
-  "ReliabilityGuide_HasReliabilityInformation": {
-    "message": "$subject$には信頼性情報があります",
-    "placeholders": {
-      "subject": {
-        "content": "$1",
-        "example": "このサイトの運営者"
-      }
-    }
-  },
   "ReliabilityGuide_SiteOperator": {
-    "message": "このサイトの運営者"
+    "message": "このサイトは次の組織が運営しています"
   },
   "ReliabilityGuide_Publisher": {
-    "message": "この$content_type$の発行者",
+    "message": "この$content_type$は次の組織が発信しています",
     "placeholders": {
       "content_type": {
         "content": "$1",
