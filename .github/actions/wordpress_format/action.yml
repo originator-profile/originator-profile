@@ -7,6 +7,12 @@ runs:
       run: docker compose exec -w /var/www/html/wp-content/plugins/ca-manager wordpress composer run format
       working-directory: packages/wordpress
       shell: bash
+    - name: setup git config
+      run: |
+        git config user.name "bot"
+        git config user.email "bot@originator-profile.org"
+        git config core.hooksPath .githooks
+      shell: bash
     - name: Commit
       run: |-
         if git commit -am 'bot: format [skip ci]'; then

@@ -32,7 +32,7 @@ import { isArticleLike } from "./is-articlelike";
 
 export function Credentials(props: CredentialsProps) {
   const [caListType, setCaListType] =
-    useState<Parameters<typeof listCas>[1]>("Article");
+    useState<Parameters<typeof listCas>[1]>("All");
   const { tabId } = useParams<{ tabId: string }>();
 
   const dialog = useModalDialog();

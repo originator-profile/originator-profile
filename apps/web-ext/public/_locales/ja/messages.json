@@ -5,8 +5,11 @@
   "CaFilter_MainContent": {
     "message": "メインコンテンツ"
   },
-  "CaFilter_Other": {
-    "message": "その他コンテンツ"
+  "CaFilter_Article": {
+    "message": "記事"
+  },
+  "CaFilter_Advertorial": {
+    "message": "記事広告"
   },
   "CaFilter_Advertisements": {
     "message": "広告"
@@ -56,20 +59,11 @@
       }
     }
   },
-  "ReliabilityGuide_HasReliabilityInformation": {
-    "message": "$subject$には信頼性情報があります",
-    "placeholders": {
-      "subject": {
-        "content": "$1",
-        "example": "このサイトの運営者"
-      }
-    }
-  },
   "ReliabilityGuide_SiteOperator": {
-    "message": "このサイトの運営者"
+    "message": "このサイトは次の組織が運営しています"
   },
   "ReliabilityGuide_Publisher": {
-    "message": "この$content_type$の発行者",
+    "message": "この$content_type$は次の組織が発信しています",
     "placeholders": {
       "content_type": {
         "content": "$1",

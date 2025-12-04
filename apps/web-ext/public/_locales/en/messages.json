@@ -5,8 +5,11 @@
   "CaFilter_MainContent": {
     "message": "Main Content"
   },
-  "CaFilter_Other": {
-    "message": "Other"
+  "CaFilter_Article": {
+    "message": "Articles"
+  },
+  "CaFilter_Advertorial": {
+    "message": "Advertorials"
   },
   "CaFilter_Advertisements": {
     "message": "Advertisements"
@@ -56,20 +59,11 @@
       }
     }
   },
-  "ReliabilityGuide_HasReliabilityInformation": {
-    "message": "$subject$ has reliability information",
-    "placeholders": {
-      "subject": {
-        "content": "$1",
-        "example": "The operator of this site"
-      }
-    }
-  },
   "ReliabilityGuide_SiteOperator": {
-    "message": "The operator of this site"
+    "message": "This site is operated by the following organizations"
   },
   "ReliabilityGuide_Publisher": {
-    "message": "The publisher of this $content_type$",
+    "message": "This $content_type$ is published by the following organizations",
     "placeholders": {
       "content_type": {
         "content": "$1",

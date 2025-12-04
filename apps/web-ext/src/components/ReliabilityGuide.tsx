@@ -12,12 +12,9 @@ export default function ReliabilityGuide(props: Props) {
   return (
     <div className={clsx("text-center space-y-1", props.className)}>
       <p className="whitespace-pre-line text-base font-bold text-primary-800">
-        {_(
-          "ReliabilityGuide_HasReliabilityInformation",
-          props.contentType === "ContentType_Site"
-            ? _("ReliabilityGuide_SiteOperator")
-            : _("ReliabilityGuide_Publisher", _(props.contentType)),
-        )}
+        {props.contentType === "ContentType_Site"
+          ? _("ReliabilityGuide_SiteOperator")
+          : _("ReliabilityGuide_Publisher", _(props.contentType))}
       </p>
       <button
         className="text-xs text-primary-700 px-3 py-2 inline-flex items-center gap-1 hover:bg-primary-100 rounded-full"

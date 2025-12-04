@@ -36,6 +36,7 @@ jobs:
         run: |
           git config user.email "${GITHUB_ACTOR}@users.noreply.github.com"
           git config user.name "${GITHUB_ACTOR}"
+          git config core.hooksPath .githooks
           pnpm exec lerna version --yes "${{ github.event.inputs.version }}"
       - name: Build
         id: build

@@ -17,7 +17,8 @@ type FilterOption = {
 const FILTER_OPTIONS: FilterOption[] = [
   { value: "All", title: _("CaFilter_All") },
   { value: "Main", title: _("CaFilter_MainContent") },
-  { value: "Other", title: _("CaFilter_Other") },
+  { value: "Article", title: _("CaFilter_Article") },
+  { value: "Advertorial", title: _("CaFilter_Advertorial") },
   { value: "OnlineAd", title: _("CaFilter_Advertisements") },
 ];
 
