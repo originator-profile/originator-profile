@@ -49,7 +49,7 @@ function CaSelector({ filteredCas, onClickCa }: Props) {
                     ) {
                       return subject.headline;
                     }
-                    if (subject.type === "OnlineAd") {
+                    if (subject.type === "OnlineAd" && subject.name) {
                       return subject.name;
                     }
                     return "";

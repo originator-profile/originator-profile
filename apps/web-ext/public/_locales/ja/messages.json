@@ -179,6 +179,9 @@
   "Credentials_TechnicalInformation": {
     "message": "技術情報"
   },
+  "Credentials_UntitledContent": {
+    "message": "タイトル未設定のコンテンツ"
+  },
   "SiteProfile_TechnicalInformation": {
     "message": "技術情報"
   },
@@ -334,6 +337,24 @@
   },
   "ArticleTable_Category": {
     "message": "ジャンル"
+  },
+  "AdvertisementTable_LandingPage": {
+    "message": "ランディングページ"
+  },
+  "AdvertisementTable_AdReportContact": {
+    "message": "広告に対する報告窓口"
+  },
+  "AdvertisementTable_AdReviewGuidelines": {
+    "message": "広告審査ガイドライン"
+  },
+  "AdvertisementTable_TargetingPolicy": {
+    "message": "ターゲティング広告に関するポリシー"
+  },
+  "AdvertisementTable_AdDataHandlingPolicy": {
+    "message": "広告配信に関する情報の取り扱いについての説明"
+  },
+  "AdvertisementTable_AdDisplayRationale": {
+    "message": "この広告が表示されている理由"
   },
   "Profile_Failed": {
     "message": "失敗"

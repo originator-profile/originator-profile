@@ -5,6 +5,7 @@ import {
   ArticleCA,
 } from "@originator-profile/model";
 import {
+  AdvertisementTable,
   ArticleTable,
   Description,
   Image,
@@ -130,7 +131,8 @@ export function Credentials(props: CredentialsProps) {
                 <p className="text-sm text-gray-900 font-bold">
                   {isArticleLike(ca.credentialSubject)
                     ? ca.credentialSubject.headline
-                    : ca.credentialSubject.name}
+                    : (ca.credentialSubject.name ??
+                      _("Credentials_UntitledContent"))}
                 </p>
               </div>
             </div>
@@ -140,15 +142,21 @@ export function Credentials(props: CredentialsProps) {
                 article={ca as ArticleCA | AdvertorialCA}
               />
             )}
+            {ca.credentialSubject.type === "OnlineAd" && (
+              <>
+                <AdvertisementTable
+                  className="mb-1 w-full"
+                  advertisement={ca as AdvertisementCA}
+                />
+                <BidResponse
+                  className="w-full py-1"
+                  tabId={Number(tabId)}
+                  advertisement={ca as AdvertisementCA}
+                />
+              </>
+            )}
             {ca.credentialSubject.description && (
               <Description description={ca.credentialSubject.description} />
-            )}
-            {ca.credentialSubject.type === "OnlineAd" && (
-              <BidResponse
-                className="w-full py-1"
-                tabId={Number(tabId)}
-                advertisement={ca as AdvertisementCA}
-              />
             )}
           </div>
         </div>

@@ -179,6 +179,9 @@
   "Credentials_TechnicalInformation": {
     "message": "Technical Information"
   },
+  "Credentials_UntitledContent": {
+    "message": "Untitled Content"
+  },
   "SiteProfile_TechnicalInformation": {
     "message": "Technical Information"
   },
@@ -334,6 +337,24 @@
   },
   "ArticleTable_Category": {
     "message": "Genre"
+  },
+  "AdvertisementTable_LandingPage": {
+    "message": "LandingPage"
+  },
+  "AdvertisementTable_AdReportContact": {
+    "message": "Reporting Contact for Advertisements"
+  },
+  "AdvertisementTable_AdReviewGuidelines": {
+    "message": "Advertising Review Guidelines"
+  },
+  "AdvertisementTable_TargetingPolicy": {
+    "message": "Policy on Targeted Advertising"
+  },
+  "AdvertisementTable_AdDataHandlingPolicy": {
+    "message": "Explanation of Information Handling in Advertising"
+  },
+  "AdvertisementTable_AdDisplayRationale": {
+    "message": "Why this Ad"
   },
   "Profile_Failed": {
     "message": "Failed"
