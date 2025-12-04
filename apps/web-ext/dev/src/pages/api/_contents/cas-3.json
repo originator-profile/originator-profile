@@ -1,0 +1,55 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://originator-profile.org/ns/credentials/v1",
+    "https://originator-profile.org/ns/cip/v1",
+    {
+      "@language": "ja-JP"
+    }
+  ],
+  "type": ["VerifiableCredential", "ContentAttestation"],
+  "issuer": "dns:localhost",
+  "credentialSubject": {
+    "type": "OnlineAd",
+    "name": "<広告のタイトル>",
+    "image": {
+      "id": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg=="
+    },
+    "description": "<広告の説明>",
+    "author": ["山田花子"],
+    "editor": ["山田太郎"],
+    "genre": "Arts & Entertainment",
+    "landingPageUrl": "https://advertiser.example.com",
+    "adReportContact": {
+      "id": "https://ad.example.com/contact",
+      "name": "報告窓口"
+    },
+    "adReviewGuidelines": {
+      "id": "https://ad.example.com/guidelines",
+      "name": "広告審査ガイドライン"
+    },
+    "targetingPolicy": {
+      "id": "https://ad.example.com/targeting",
+      "name": "ターゲティング広告ポリシー"
+    },
+    "adDataHandlingPolicy": {
+      "id": "https://ad.example.com/datahandling",
+      "name": "広告配信に関する情報の取り扱いについて"
+    },
+    "adDisplayRationale": {
+      "page": {
+        "id": "https://ad.example.com/rationale",
+        "name": "なぜこの広告が表示されますか？"
+      },
+      "description": "現在閲覧中のコンテンツと関連性が高いため。"
+    }
+  },
+  "allowedUrl": "http://localhost:8080/*",
+  "target": [
+    {
+      "type": "TextTargetIntegrity",
+      "content": "<p id=\"text-target-integrity\">広告CA</p>",
+      "cssSelector": "#text-target-integrity"
+    }
+  ]
+}
