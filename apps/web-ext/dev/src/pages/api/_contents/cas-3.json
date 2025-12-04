@@ -51,9 +51,5 @@
       "content": "<p id=\"text-target-integrity\">広告CA</p>",
       "cssSelector": "#text-target-integrity"
     }
-  ],
-  "iss": "dns:localhost",
-  "sub": "urn:uuid:d38aa461-3738-402e-806a-4e14c1d0307f",
-  "iat": 1764815514,
-  "exp": 2080391490
+  ]
 }
