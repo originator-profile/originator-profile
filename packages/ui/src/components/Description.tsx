@@ -4,7 +4,7 @@ import { _ } from "../utils/get-message";
 
 type Props = {
   className?: string;
-  description: string;
+  description: string | object;
   onlyBody?: boolean;
 };
 
