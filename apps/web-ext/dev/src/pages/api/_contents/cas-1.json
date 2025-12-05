@@ -11,7 +11,7 @@
   "issuer": "dns:localhost",
   "credentialSubject": {
     "type": "Article",
-    "headline": "<Webページのタイトル>",
+    "headline": "OPSとCASがあるWebページ",
     "image": {
       "id": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg=="
     },
@@ -26,7 +26,7 @@
   "target": [
     {
       "type": "TextTargetIntegrity",
-      "cssSelector": "#text-target-integrity",
+      "cssSelector": "#text-target-integrity-1",
       "integrity": "sha256-TL6t/lWLByyNME0lFhb6JrT3RaTF+f2md84n5YTQtx4="
     }
   ]

@@ -5,8 +5,6 @@ import {
   SupportedVerifiedCa,
   SupportedVerifiedCas,
 } from "../components/credentials";
-import { frameCasWindowMessenger } from "../components/frameCas/window-events";
-import { useFrameCasLocationConsumer } from "../components/frameCas/use-frame-cas-location-consumer";
 import {
   CasMap,
   ContentsArea,
@@ -60,11 +58,8 @@ function App() {
       handleClose();
     });
 
-    frameCasWindowMessenger.onMessage("located", console.log);
-
     return () => {
       overlayWindowMessenger.removeAllListeners();
-      frameCasWindowMessenger.removeAllListeners();
     };
   });
 
@@ -76,7 +71,6 @@ function App() {
       window.parent,
     );
   }
-  useFrameCasLocationConsumer();
 
   // NOTE: dialog ロールが非対話的要素とみなされる
   // see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/issues/932

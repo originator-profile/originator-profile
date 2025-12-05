@@ -16,7 +16,7 @@ const opsText = await opsApi.GET().then((res) => res.text());
   <body>
     <script type="application/ops+json" set:html={opsText} />
     <script type="application/cas+json" set:html={casText} />
-    <p id="text-target-integrity">OPSとCASがあるWebページ</p>
+    <p id="text-target-integrity-1">OPSとCASがあるWebページ</p>
     <iframe srcdoc='<iframe src="./cas-2.html"></iframe>' />
   </body>
 </html>

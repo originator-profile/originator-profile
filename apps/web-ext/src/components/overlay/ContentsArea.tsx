@@ -1,10 +1,12 @@
 import { Target } from "@originator-profile/model";
 import { useId } from "react";
 import { useWindowSize } from "react-use";
+import { useAbsoluteRects } from "../frameCas/use-absolute-rects";
+import { useLocatedCasCoordinate } from "../frameCas/use-located-cas-coordinate";
 import useElements from "./use-elements";
 import useRect from "./use-rect";
 
-function Rect({
+function ElementRect({
   element,
   className,
   ...props
@@ -33,8 +35,23 @@ type Props = {
 
 export function ContentsArea(props: Props) {
   const { width, height } = useWindowSize();
+  const { frameCasCoordinate } = useLocatedCasCoordinate();
   const { elements } = useElements(props.contents);
   const id = useId();
+
+  const absoluteTargets =
+    frameCasCoordinate?.cas.flatMap((ca) => ca.target) ?? [];
+
+  const absoluteRects = useAbsoluteRects(
+    frameCasCoordinate?.ancestor ?? [],
+    {
+      scrollX: frameCasCoordinate?.scrollX ?? 0,
+      scrollY: frameCasCoordinate?.scrollY ?? 0,
+    },
+    absoluteTargets,
+  );
+  console.log(frameCasCoordinate);
+
   return (
     <svg
       className={props.className}
@@ -47,7 +64,21 @@ export function ContentsArea(props: Props) {
         <mask id={id}>
           <rect className="fill-white" x="0" y="0" width="100%" height="100%" />
           {elements.map((element, index) => (
-            <Rect key={index} className="fill-black" element={element} />
+            <ElementRect
+              key={`element-${index}`}
+              className="fill-black"
+              element={element}
+            />
+          ))}
+          {absoluteRects.map((rect, index) => (
+            <rect
+              key={`absolute-${index}`}
+              className="fill-black"
+              x={rect.x}
+              y={rect.y}
+              width={rect.width}
+              height={rect.height}
+            />
           ))}
         </mask>
       </defs>
@@ -60,10 +91,21 @@ export function ContentsArea(props: Props) {
         mask={`url(#${id})`}
       />
       {elements.map((element, index) => (
-        <Rect
-          key={index}
+        <ElementRect
+          key={`element-${index}`}
           className="fill-transparent stroke-[#bc15ac] stroke-1"
           element={element}
+          strokeDasharray="4"
+        />
+      ))}
+      {absoluteRects.map((rect, index) => (
+        <rect
+          key={`absolute-${index}`}
+          className="fill-transparent stroke-[#bc15ac] stroke-1"
+          x={rect.x}
+          y={rect.y}
+          width={rect.width}
+          height={rect.height}
           strokeDasharray="4"
         />
       ))}
