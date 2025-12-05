@@ -32,13 +32,13 @@ export default function ReliabilityGuide(props: Props) {
           <section className="jumpu-card p-5 rounded-2xl rounded-b-none space-y-3">
             <h2
               id={titleId}
-              className="whitespace-pre-line text-base font-bold mb-1.5"
+              className="whitespace-pre-line text-base font-bold mb-1.5 text-start"
             >
-              {_("ReliabilityGuide_AboutReliabilityInformation")}
+              {_("ReliabilityGuide_VerifiedOrganizationStatementTitle")}
             </h2>
             <p
               id={descriptionId}
-              className="whitespace-pre-line text-sm text-gray-600"
+              className="whitespace-pre-line text-sm text-gray-600 text-start"
             >
               {_("ReliabilityGuide_VerifiedOrganizationStatement")}
             </p>

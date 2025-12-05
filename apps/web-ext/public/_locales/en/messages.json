@@ -72,10 +72,13 @@
     }
   },
   "ReliabilityGuide_AboutReliabilityInformation": {
-    "message": "About reliability information"
+    "message": "How is it verified"
+  },
+  "ReliabilityGuide_VerifiedOrganizationStatementTitle": {
+    "message": "Mechanism for verifying authenticity and trustworthiness"
   },
   "ReliabilityGuide_VerifiedOrganizationStatement": {
-    "message": "The existence of this organization and the certificates it holds have been verified by the OP Registry operator. You can view the organization's basic information and certificates to help assess the organization's reliability."
+    "message": "The displayed images, text, and other data are accompanied by a signature, and the validity of the signature confirms that the content has not been tampered with. As indicators of this organization's trustworthiness, you can view both its self-defined information disclosure policy and supplementary information issued by third parties. This supplementary information shows the organization's existence and its eligibility according to its industry and business type."
   },
   "Unsupported_ERR_SITE_PROFILE_FETCH_FAILED": {
     "message": "The data regarding the authenticity and trustworthiness of the site's content originator could not be retrieved. Please check your network communication environment and try using the extension again."
