@@ -1,4 +1,4 @@
-import { CaMarker } from "./CaMarker";
+import { ElementCaMarker } from "./ElementCaMarker";
 import { WebMediaProfile } from "@originator-profile/model";
 import { SupportedVerifiedCas, SupportedVerifiedCa } from "../credentials";
 
@@ -17,7 +17,7 @@ function CaMapFragment(props: CaMapFragmentProps) {
     props.ca.attestation.doc.credentialSubject.id ===
     props.activeCa?.attestation.doc.credentialSubject.id;
   return (
-    <CaMarker
+    <ElementCaMarker
       ca={props.ca}
       active={active}
       onClickCa={props.onClickCa}
