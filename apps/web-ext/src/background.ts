@@ -1,4 +1,5 @@
 import "./utils/cors-basic-auth";
+import { frameCasExtensionMessenger } from "./components/frameCas";
 
 const windowSize = {
   width: 520,
@@ -27,6 +28,26 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
     // const granted = await chrome.permissions.request({
     //   origins: ["<all_urls>"],
     // });
+  }
+});
+
+frameCasExtensionMessenger.onMessage("prepareReLocate", ({ data }) => {
+  const { tabId, framesCas } = data;
+  const targetFramesCas = framesCas.filter(
+    (frameCas) => frameCas.cas.length > 0,
+  );
+  for (const frameCas of targetFramesCas) {
+    void frameCasExtensionMessenger.sendMessage(
+      "locate",
+      {
+        frameCas,
+        frames: framesCas.map(({ cas: _, ...frame }) => frame),
+      },
+      {
+        tabId,
+        frameId: frameCas.frameId,
+      },
+    );
   }
 });
 

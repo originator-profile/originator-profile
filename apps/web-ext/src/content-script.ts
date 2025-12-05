@@ -1,11 +1,15 @@
 import { serializeIfError } from "@originator-profile/core";
 import { fetchSiteProfile } from "@originator-profile/presentation";
-import { frameCasWindowMessenger } from "./components/frameCas";
+import {
+  frameCasExtensionMessenger,
+  frameCasWindowMessenger,
+} from "./components/frameCas";
 import {
   Overlay,
   OverlayProtocolMap,
   overlayWindowMessenger,
 } from "./components/overlay";
+import { type FrameVerifiedCas } from "./components/credentials";
 import { overlayExtensionMessenger } from "./components/overlay/extension-events";
 import { siteProfileMessenger } from "./components/siteProfile";
 import { FetchSiteProfileMessageResult } from "./components/siteProfile/types";
@@ -44,10 +48,21 @@ siteProfileMessenger.onMessage("fetchSiteProfile", async () => {
   return serializeIfError(data) as FetchSiteProfileMessageResult;
 });
 
+let tabId: number;
+let framesCas: FrameVerifiedCas[] = [];
+
+frameCasExtensionMessenger.onMessage("prepareReLocate", ({ data }) => {
+  tabId = data.tabId;
+  framesCas = data.framesCas;
+});
+
 frameCasWindowMessenger.onMessage("located", ({ data }) => {
   frameCasWindowMessenger.sendMessage("located", data, overlay.window);
 });
 
 frameCasWindowMessenger.onMessage("reLocate", () => {
-  // TODO
+  void frameCasExtensionMessenger.sendMessage("prepareReLocate", {
+    tabId,
+    framesCas,
+  });
 });
