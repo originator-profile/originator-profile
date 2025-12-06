@@ -5,12 +5,16 @@ type DescriptionObject = {
   encodingFormat: "text/plain" | "text/html";
 }
 
-function isDescriptionObject(value:unknown): value is DescriptionObject {
+function isDescriptionObject(value: unknown): value is DescriptionObject {
+  if(typeof value !== "object" || value === null) return false;
+
+  if(!Object.hasOwn(value, "text")) return false;
+  if(!Object.hasOwn(value, "encodingFormat")) return false;
+
+  const v = value as {text: unknown; encodingFormat:unknown};
   return (
-    typeof value === "object" &&
-    value !== null &&
-    typeof (value as any).text === "string" &&
-    typeof (value as any).encodingFormat === "string"
+    typeof v.text === "string" &&
+    (v.encodingFormat === "text/plain" || v.encodingFormat === "text/html")
   );
 }
 
