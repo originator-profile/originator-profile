@@ -1,100 +1,28 @@
-import DOMPurify, { Config as DOMPurifyConfig } from "dompurify";
-
-type DescriptionObject = {
-  text: string;
-  encodingFormat: "text/plain" | "text/html";
-}
-
-function isDescriptionObject(value: unknown): value is DescriptionObject {
-  if (typeof value !== "object" || value === null) return false;
-
-  if (!Object.hasOwn(value, "text")) return false;
-  if (!Object.hasOwn(value, "encodingFormat")) return false;
-
-  const v = value as { text: unknown; encodingFormat: unknown };
-  return (
-    typeof v.text === "string" &&
-    (v.encodingFormat === "text/plain" || v.encodingFormat === "text/html")
-  );
-}
-
-// "text/plain" のescape 対応
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#39;");
-}
-
-const HTML_DESCRIPTION_CONFIG: DOMPurifyConfig = {
-  // 許可するタグをホワイトリストで限定
-  ALLOWED_TAGS:[
-    "br", "p", "ol", "ul", "li",
-    // MEMO :
-    // "a" は 元実装に afterSanitizeAttributes 使って処理してるため一旦許可する
-    // 許可しない場合、FORBID_TAGS に移動します
-    "a"
-  ],
-  // 属性は一切許可しない
-  ALLOWED_ATTR:[],
-  // data-* も許可しない
-  ALLOW_DATA_ATTR: false,
-  // 外部リソース系タグを明示的に禁止
-  FORBID_TAGS:[
-    //"a",
-    "img",
-    "script",
-    "link",
-    "iframe",
-    "object",
-    "embed",
-    "video",
-    "audio",
-    "source",
-    "svg",
-    "math",
-  ],
-  // 削除した要素の中身テキストは保持(default:true)
-  // KEEP_CONTENT: true
-}
-
-function sanitizedHtml(raw : string): string {
-    const parser = new DOMParser();
-    const descriptionDocument = parser.parseFromString(
-      raw,
-      "text/html",
-    );
-    DOMPurify.addHook("afterSanitizeAttributes", (node) => {
-      if (node.tagName !== "A") return;
-      node.setAttribute("target", "_blank");
-      node.setAttribute("rel", "noopener noreferrer");
-    });
-    const res = DOMPurify.sanitize(descriptionDocument.body.innerHTML, HTML_DESCRIPTION_CONFIG);
-    // addHook はグローバル登録されるため、remove しないと複数回登録されてしまう
-    DOMPurify.removeAllHooks();
-    return res;
-}
+import DOMPurify from "dompurify";
 
 /** HTML文字列をサニタイズするカスタムフック */
 export default function useSanitizedHtml(
-  dangerousHtml?: string | object,
+  dangerousHtml?: string,
 ): string | undefined {
-  let desc : DescriptionObject | null = null;
 
-  if(typeof dangerousHtml === "string") {
-    desc = {text: dangerousHtml, encodingFormat:"text/plain"};
-  } else if(isDescriptionObject(dangerousHtml)) {
-    desc = dangerousHtml;
-  }
+  if(dangerousHtml === undefined) return;
 
-  if(!desc) return;
+  const parser = new DOMParser();
+  const descriptionDocument = parser.parseFromString(
+    dangerousHtml,
+    "text/html",
+  );
 
-  if(desc.encodingFormat === "text/html") {
-    return sanitizedHtml(desc.text);
-  }
+  DOMPurify.addHook("afterSanitizeAttributes", (node) => {
+    if (node.tagName !== "A") return;
+    node.setAttribute("target", "_blank");
+    node.setAttribute("rel", "noopener noreferrer");
+  });
 
-  // "text/plain"
-  return escapeHtml(desc.text).replace(/\r?\n/g, "<br>");
+  const res = DOMPurify.sanitize(descriptionDocument.body.innerHTML);
+
+  // addHook はグローバル登録されるため、remove しないと複数回登録されてしまう
+  DOMPurify.removeAllHooks();
+
+  return res;
 }
