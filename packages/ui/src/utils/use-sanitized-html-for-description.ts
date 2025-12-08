@@ -17,13 +17,7 @@ function escapeHtml(text: string): string {
 
 const HTML_DESCRIPTION_CONFIG: DOMPurifyConfig = {
   // 許可するタグをホワイトリストで限定
-  ALLOWED_TAGS: [
-    "br",
-    "p",
-    "ol",
-    "ul",
-    "li",
-  ],
+  ALLOWED_TAGS: ["br", "p", "ol", "ul", "li"],
   // 属性は一切許可しない
   ALLOWED_ATTR: [],
   // data-* も許可しない
@@ -51,9 +45,8 @@ const HTML_DESCRIPTION_CONFIG: DOMPurifyConfig = {
 export default function useSanitizedHtmlForDescription(
   dangerousHtml?: string | DescriptionObject,
 ): string | undefined {
-
   // if null or undefined return
-  if(dangerousHtml === null || dangerousHtml === undefined) return;
+  if (dangerousHtml === null || dangerousHtml === undefined) return;
 
   let desc: DescriptionObject;
 
@@ -66,7 +59,10 @@ export default function useSanitizedHtmlForDescription(
   if (desc.encodingFormat === "text/html") {
     const parser = new DOMParser();
     const descriptionDocument = parser.parseFromString(desc.text, "text/html");
-    const res = DOMPurify.sanitize( descriptionDocument.body.innerHTML, HTML_DESCRIPTION_CONFIG);
+    const res = DOMPurify.sanitize(
+      descriptionDocument.body.innerHTML,
+      HTML_DESCRIPTION_CONFIG,
+    );
     return res;
   }
   // "text/plain"

@@ -4,7 +4,9 @@ import { _ } from "../utils/get-message";
 
 type Props = {
   className?: string;
-  description: string | {text:string, encodingFormat:"text/plain" | "text/html"};
+  description:
+    | string
+    | { text: string; encodingFormat: "text/plain" | "text/html" };
   onlyBody?: boolean;
 };
 
