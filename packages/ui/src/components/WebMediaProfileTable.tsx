@@ -103,9 +103,7 @@ function WebMediaProfileTable({ className, wmp }: Props) {
         <TableRow
           header={_("WebMediaProfileTable_Principle")}
           data={
-            <ExternalLink
-              href={wmp.credentialSubject.publishingPrinciple.id}
-            >
+            <ExternalLink href={wmp.credentialSubject.publishingPrinciple.id}>
               {wmp.credentialSubject.publishingPrinciple.name}
             </ExternalLink>
           }
