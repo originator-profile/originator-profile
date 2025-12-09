@@ -11,7 +11,7 @@ export function useFrameCaRects(
       let x = targetRect.x;
       let y = targetRect.y;
 
-      for (const frame of [...frameCoordinate.ancestor].reverse()) {
+      for (const frame of frameCoordinate.ancestor.toReversed()) {
         x += frame.rect.x;
         y += frame.rect.y;
       }
