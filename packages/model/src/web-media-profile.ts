@@ -49,7 +49,24 @@ const subject = {
       },
       required: ["id", "name"],
     },
-    description: { title: "組織に関する説明", type: "string" },
+    description: {
+      title: "組織に関する説明",
+      type: ["string", "object"],
+      properties: {
+        text: {
+          type: "string",
+          description: "Text value.",
+        },
+        encodingFormat: {
+          type: "string",
+          title: "Encoding format",
+          description:
+            "MIME type. Allowed values: 'text/plain' and 'text/html' (only br, p, ol, ul, li allowed).",
+          enum: ["text/plain", "text/html"],
+        },
+      },
+      required: ["text", "encodingFormat"],
+    },
   },
   required: ["id", "type", "url", "name"],
 } as const satisfies JSONSchema;

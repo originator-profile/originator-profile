@@ -1,15 +1,18 @@
 import { twMerge } from "tailwind-merge";
-import useSanitizedHtml from "../utils/use-sanitized-html";
+import useSanitizedHtmlForDescription from "../utils/use-sanitized-html-for-description";
 import { _ } from "../utils/get-message";
 
 type Props = {
   className?: string;
-  description: string;
+  description:
+    | string
+    | { text: string; encodingFormat: "text/plain" | "text/html" };
   onlyBody?: boolean;
 };
 
 function Description({ className, description, onlyBody = false }: Props) {
-  const html = useSanitizedHtml(description);
+  const html = useSanitizedHtmlForDescription(description);
+
   const body = (
     <div
       className="prose prose-xs text-xs break-words"
