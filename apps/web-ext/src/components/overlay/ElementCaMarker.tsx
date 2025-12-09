@@ -43,17 +43,15 @@ export function ElementCaMarker(props: Props) {
   if (!element) return null;
   const handleClick = () => props.onClickCa(props.ca);
   return (
-    <>
-      <Rect element={element} active={props.active} scroll>
-        {({ rect }) => (
-          <CaMarker
-            rect={rect}
-            active={props.active}
-            onClick={handleClick}
-            wmp={props.wmp}
-          />
-        )}
-      </Rect>
-    </>
+    <Rect element={element} active={props.active} scroll>
+      {({ rect }) => (
+        <CaMarker
+          rect={rect}
+          active={props.active}
+          onClick={handleClick}
+          wmp={props.wmp}
+        />
+      )}
+    </Rect>
   );
 }

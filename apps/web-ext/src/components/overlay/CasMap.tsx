@@ -1,7 +1,7 @@
-import { AbsoluteCaMarker } from "./AbsoluteCaMarker";
-import { ElementCaMarker } from "./ElementCaMarker";
 import { WebMediaProfile } from "@originator-profile/model";
 import { FramesVerifiedCas, SupportedVerifiedCa } from "../credentials";
+import { ElementCaMarker } from "./ElementCaMarker";
+import { FrameCaMarker } from "./FrameCaMarker";
 
 type CaMapFragmentProps = {
   ca: SupportedVerifiedCa;
@@ -9,6 +9,7 @@ type CaMapFragmentProps = {
   onClickCa: (ca: SupportedVerifiedCa) => void;
   wmps: WebMediaProfile[];
   page: boolean;
+  frameId: number;
 };
 
 function CaMapFragment(props: CaMapFragmentProps) {
@@ -29,11 +30,12 @@ function CaMapFragment(props: CaMapFragmentProps) {
     );
   }
   return (
-    <AbsoluteCaMarker
+    <FrameCaMarker
       ca={props.ca}
       active={active}
       onClickCa={props.onClickCa}
       wmp={wmp}
+      frameId={props.frameId}
     />
   );
 }
@@ -51,12 +53,13 @@ export function CasMap(props: Props) {
       {props.framesCas.flatMap((frameCas) =>
         frameCas.cas.map((ca) => (
           <CaMapFragment
-            key={ca.attestation.doc.credentialSubject.id}
+            key={`${frameCas.frameId}-${ca.attestation.doc.credentialSubject.id}`}
             ca={ca}
             activeCa={props.activeCa}
             onClickCa={props.onClickCa}
             wmps={props.wmps}
             page={frameCas.parentFrameId === -1}
+            frameId={frameCas.frameId}
           />
         )),
       )}

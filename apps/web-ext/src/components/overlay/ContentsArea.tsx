@@ -1,7 +1,9 @@
 import { Target } from "@originator-profile/model";
 import { useId } from "react";
 import { useWindowSize } from "react-use";
-import { useAbsoluteRects } from "../frameCas/use-absolute-rects";
+import { twMerge } from "tailwind-merge";
+import { CaCoordinate, FrameCoordinate } from "../frameCas/types";
+import { useFrameCaRects } from "../frameCas/use-frame-ca-rects";
 import { useLocatedCasCoordinate } from "../frameCas/use-located-cas-coordinate";
 import useElements from "./use-elements";
 import useRect from "./use-rect";
@@ -28,6 +30,34 @@ function ElementRect({
   );
 }
 
+function FrameRect({
+  frame,
+  ca,
+  className,
+  ...props
+}: {
+  frame: FrameCoordinate;
+  ca: CaCoordinate;
+  className?: string;
+} & React.SVGAttributes<SVGRectElement>) {
+  const rects = useFrameCaRects(frame, ca);
+  return (
+    <>
+      {rects.map((rect, index) => (
+        <rect
+          key={`${frame.frameId}-${ca.id}-${index}`}
+          className={className}
+          x={rect.x}
+          y={rect.y}
+          width={rect.width}
+          height={rect.height}
+          {...props}
+        />
+      ))}
+    </>
+  );
+}
+
 type Props = {
   className?: string;
   contents: Target[];
@@ -35,21 +65,9 @@ type Props = {
 
 export function ContentsArea(props: Props) {
   const { width, height } = useWindowSize();
-  const { frameCasCoordinate } = useLocatedCasCoordinate();
+  const { framesCasCoordinate, isLocating } = useLocatedCasCoordinate();
   const { elements } = useElements(props.contents);
   const id = useId();
-
-  const absoluteTargets =
-    frameCasCoordinate?.cas.flatMap((ca) => ca.target) ?? [];
-
-  const absoluteRects = useAbsoluteRects(
-    frameCasCoordinate?.ancestor ?? [],
-    {
-      scrollX: frameCasCoordinate?.scrollX ?? 0,
-      scrollY: frameCasCoordinate?.scrollY ?? 0,
-    },
-    absoluteTargets,
-  );
 
   return (
     <svg
@@ -69,16 +87,20 @@ export function ContentsArea(props: Props) {
               element={element}
             />
           ))}
-          {absoluteRects.map((rect, index) => (
-            <rect
-              key={`absolute-${index}`}
-              className="fill-black"
-              x={rect.x}
-              y={rect.y}
-              width={rect.width}
-              height={rect.height}
-            />
-          ))}
+          {framesCasCoordinate.flatMap((frameCasCoordinate) =>
+            frameCasCoordinate.cas.map((ca) => (
+              <FrameRect
+                key={`${frameCasCoordinate.frameId}-${ca.id}`}
+                className={twMerge(
+                  "transition-colors",
+                  isLocating ? "fill-transparent" : "fill-black",
+                )}
+                frame={frameCasCoordinate}
+                ca={ca}
+              />
+            )),
+          )}
+          ))
         </mask>
       </defs>
       <rect
@@ -97,17 +119,20 @@ export function ContentsArea(props: Props) {
           strokeDasharray="4"
         />
       ))}
-      {absoluteRects.map((rect, index) => (
-        <rect
-          key={`absolute-${index}`}
-          className="fill-transparent stroke-[#bc15ac] stroke-1"
-          x={rect.x}
-          y={rect.y}
-          width={rect.width}
-          height={rect.height}
-          strokeDasharray="4"
-        />
-      ))}
+      {framesCasCoordinate.flatMap((frameCasCoordinate) =>
+        frameCasCoordinate.cas.map((ca) => (
+          <FrameRect
+            key={`${frameCasCoordinate.frameId}-${ca.id}}`}
+            className={twMerge(
+              "transition-colors fill-transparent stroke-1",
+              isLocating ? "stroke-transparent" : "stroke-[#bc15ac]",
+            )}
+            frame={frameCasCoordinate}
+            ca={ca}
+            strokeDasharray="4"
+          />
+        )),
+      )}
     </svg>
   );
 }

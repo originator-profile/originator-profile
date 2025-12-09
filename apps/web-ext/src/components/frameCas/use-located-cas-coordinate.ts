@@ -1,18 +1,24 @@
 import { startTransition, useEffect, useState } from "react";
 import { useFrameCasLocationConsumer } from "./use-frame-cas-location-consumer";
 import { frameCasWindowMessenger } from "./window-events";
-import { FrameCasCoordinate } from "./types";
+import { FrameCasCoordinate, FramesCasCoordinate } from "./types";
 
 export function useLocatedCasCoordinate(): {
-  frameCasCoordinate: FrameCasCoordinate | null;
+  framesCasCoordinate: FramesCasCoordinate;
+  isLocating: boolean;
 } {
-  const [frameCasCoordinate, setFrameCasCoordinate] =
-    useState<FrameCasCoordinate | null>(null);
+  const [frameCasCoordinateMap, setFrameCasCoordinateMap] = useState<
+    Map<number, FrameCasCoordinate>
+  >(new Map());
+  const [isLocating, setIsLocating] = useState(true);
 
   useEffect(() => {
     const handler = ({ data }: MessageEvent<FrameCasCoordinate>) => {
       startTransition(() => {
-        setFrameCasCoordinate(data);
+        setFrameCasCoordinateMap((prev) =>
+          new Map(prev).set(data.frameId, data),
+        );
+        setIsLocating(false);
       });
     };
     frameCasWindowMessenger.onMessage("located", handler);
@@ -21,7 +27,12 @@ export function useLocatedCasCoordinate(): {
     };
   }, []);
 
-  useFrameCasLocationConsumer();
+  useFrameCasLocationConsumer({}, (isLocating) => {
+    setIsLocating(isLocating);
+  });
 
-  return { frameCasCoordinate };
+  return {
+    framesCasCoordinate: Array.from(frameCasCoordinateMap.values()),
+    isLocating,
+  };
 }

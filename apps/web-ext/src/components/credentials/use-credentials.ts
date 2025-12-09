@@ -77,8 +77,15 @@ async function fetchVerifiedCredentials([, tabId, sp]: [
   }
   return {
     ops: verifiedOps,
-    cas: verifiedCasResults.flatMap(
-      ({ result }) => result as SupportedVerifiedCas,
+    cas: Array.from(
+      new Map(
+        verifiedCasResults.flatMap(({ result }) =>
+          (result as SupportedVerifiedCas).map((ca) => [
+            ca.attestation.doc.credentialSubject.id,
+            ca,
+          ]),
+        ),
+      ).values(),
     ),
     origin: page.origin,
     url: page.url,

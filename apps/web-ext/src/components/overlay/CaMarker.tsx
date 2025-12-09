@@ -1,9 +1,10 @@
 import { WebMediaProfile } from "@originator-profile/model";
 import { Image } from "@originator-profile/ui";
 import placeholderLogoMainUrl from "@originator-profile/ui/src/assets/placeholder-logo-main.png";
-import clsx from "clsx";
+import { twMerge } from "tailwind-merge";
 
 export function CaMarker(props: {
+  className?: string;
   rect: DOMRect;
   active: boolean;
   onClick: () => void;
@@ -22,7 +23,7 @@ export function CaMarker(props: {
         viewBox={`0 0 ${tailWidth} ${tailHeight}`}
         width={tailWidth}
         height={tailHeight}
-        className={clsx(
+        className={twMerge(
           "absolute left-1/2 stroke-transparent -translate-x-1/2",
           isTopOverflow
             ? "top-0 -translate-y-full rotate-180"
@@ -37,7 +38,7 @@ export function CaMarker(props: {
 
   return (
     <div
-      className="absolute"
+      className={twMerge(props.className, "absolute")}
       style={{
         top: isTopOverflow
           ? props.rect.top - border + tailHeight
@@ -46,7 +47,7 @@ export function CaMarker(props: {
       }}
     >
       <button
-        className={clsx(
+        className={twMerge(
           "relative rounded-sm",
           props.active ? "bg-blue-500" : "bg-white",
         )}

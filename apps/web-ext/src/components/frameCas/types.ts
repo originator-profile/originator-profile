@@ -32,3 +32,5 @@ export type CasCoordinate = CaCoordinate[];
 export type FrameCasCoordinate = FrameCoordinate & {
   cas: CasCoordinate;
 };
+
+export type FramesCasCoordinate = FrameCasCoordinate[];
