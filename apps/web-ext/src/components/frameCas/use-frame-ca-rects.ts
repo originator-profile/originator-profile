@@ -8,13 +8,16 @@ export function useFrameCaRects(
   return useMemo(() => {
     if (!frameCoordinate.ancestor.every((a) => a.visible)) return [];
     return caCoordinate.target.map((targetRect) => {
-      let x = targetRect.x;
-      let y = targetRect.y;
+      const initialX = targetRect.x;
+      const initialY = targetRect.y;
 
-      for (const frame of frameCoordinate.ancestor.toReversed()) {
-        x += frame.rect.x;
-        y += frame.rect.y;
-      }
+      const { x, y } = frameCoordinate.ancestor.reduceRight(
+        (acc, frame) => ({
+          x: acc.x + frame.rect.x,
+          y: acc.y + frame.rect.y,
+        }),
+        { x: initialX, y: initialY },
+      );
 
       return new DOMRect(x, y, targetRect.width, targetRect.height);
     });
