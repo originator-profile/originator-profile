@@ -35,6 +35,9 @@
   "ContentType_Site": {
     "message": "Website"
   },
+  "WebMediaProfileSummary_InformationTransmissionPolicy": {
+    "message": "Information Transmission Policy"
+  },
   "WebMediaProfileSummary_EditorialGuidelines": {
     "message": "Editorial Guidelines"
   },
@@ -164,6 +167,9 @@
   "Base_ContentsInformation": {
     "message": "Content Information"
   },
+  "Org_InformationTransmissionPolicy": {
+    "message": "Information Transmission Policy"
+  },
   "Org_EditorialGuidelines": {
     "message": "Editorial Guidelines"
   },
@@ -171,7 +177,7 @@
     "message": "Privacy Policy"
   },
   "Org_CredentialInformation": {
-    "message": "Certificate Information"
+    "message": "Verified Attribute"
   },
   "Org_OrganizationInformation": {
     "message": "Organization Information"
