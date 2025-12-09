@@ -8,14 +8,12 @@ export function useFrameCaRects(
   return useMemo(() => {
     if (!frameCoordinate.ancestor.every((a) => a.visible)) return [];
     return caCoordinate.target.map((targetRect) => {
-      let x = targetRect.x - scrollX;
-      let y = targetRect.y - scrollY;
+      let x = targetRect.x;
+      let y = targetRect.y;
 
       for (const frame of [...frameCoordinate.ancestor].reverse()) {
         x += frame.rect.x;
         y += frame.rect.y;
-        x -= frame.scrollX;
-        y -= frame.scrollY;
       }
 
       return new DOMRect(x, y, targetRect.width, targetRect.height);

@@ -70,8 +70,6 @@ frameCasExtensionMessenger.onMessage(
           frameId: frameCas.frameId,
           parentFrameId: frameCas.parentFrameId,
           ancestor: [],
-          scrollX: window.scrollX,
-          scrollY: window.scrollY,
           cas,
         },
         frames,
@@ -105,8 +103,6 @@ frameCasWindowMessenger.onMessage(
       ancestor.push({
         frameId: frame.frameId,
         parentFrameId: frame.parentFrameId,
-        scrollX: window.scrollX,
-        scrollY: window.scrollY,
         rect,
         visible: isFrameVisible(rect),
       });
