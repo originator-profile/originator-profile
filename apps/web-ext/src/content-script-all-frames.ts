@@ -16,6 +16,7 @@ import {
 } from "./components/credentials";
 import {
   frameCasWindowMessenger,
+  isFrameVisible,
   type CasCoordinate,
 } from "./components/frameCas";
 import { frameCasExtensionMessenger } from "./components/frameCas/extension-events";
@@ -100,13 +101,14 @@ frameCasWindowMessenger.onMessage(
     const iframes = document.getElementsByTagName("iframe");
     for (const iframe of iframes) {
       if (source !== iframe.contentWindow) continue;
+      const rect = iframe.getBoundingClientRect();
       ancestor.push({
         frameId: frame.frameId,
         parentFrameId: frame.parentFrameId,
         scrollX: window.scrollX,
         scrollY: window.scrollY,
-        rect: iframe.getBoundingClientRect(),
-        visible: true, // TODO あとで書く
+        rect,
+        visible: isFrameVisible(rect),
       });
       break;
     }

@@ -33,10 +33,7 @@ export function FrameCaMarker(props: Props) {
   const frameCasCoordinate = framesCasCoordinate.find(
     (frameCasCoordinate) => frameCasCoordinate.frameId === props.frameId,
   );
-  if (
-    !(frameCasCoordinate && frameCasCoordinate.ancestor.every((a) => a.visible))
-  )
-    return null;
+  if (!frameCasCoordinate) return null;
   const { cas, ...frame } = frameCasCoordinate;
 
   const caCoordinate = cas.find(

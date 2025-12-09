@@ -80,7 +80,7 @@ function App() {
   /* eslint jsx-a11y/no-noninteractive-element-interactions: "off" */
   return (
     <dialog
-      className="block w-screen h-screen bg-transparent transition-opacity duration-300 ease-in-out opacity-0 open:opacity-100 z-[calc(infinity)]"
+      className="block w-screen h-screen bg-transparent transition-opacity duration-300 ease-in-out opacity-0 open:opacity-100 z-[calc(infinity)] overflow-hidden"
       onClick={handleClose}
       onKeyDown={handleKeyDown}
       onTransitionEnd={handleTransitionEnd}

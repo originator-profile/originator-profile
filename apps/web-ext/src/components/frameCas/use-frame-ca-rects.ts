@@ -6,6 +6,7 @@ export function useFrameCaRects(
   caCoordinate: CaCoordinate,
 ): DOMRect[] {
   return useMemo(() => {
+    if (!frameCoordinate.ancestor.every((a) => a.visible)) return [];
     return caCoordinate.target.map((targetRect) => {
       let x = targetRect.x - scrollX;
       let y = targetRect.y - scrollY;
