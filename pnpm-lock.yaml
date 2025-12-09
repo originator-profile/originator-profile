@@ -192,12 +192,18 @@ importers:
       fast-glob:
         specifier: ^3.3.3
         version: 3.3.3
+      jose:
+        specifier: ^5.9.6
+        version: 5.9.6
       jsdom:
         specifier: ^27.0.0
         version: 27.0.0(postcss@8.5.6)
       nuxt:
         specifier: ^4.0.0
         version: 4.1.0(@netlify/blobs@9.1.2)(@parcel/watcher@2.5.1)(@types/node@24.10.1)(@vue/compiler-sfc@3.5.25)(db0@0.3.4)(encoding@0.1.13)(eslint@9.29.0(jiti@2.6.1))(ioredis@5.8.2)(lightningcss@1.30.1)(magicast@0.5.1)(meow@13.2.0)(optionator@0.9.4)(rolldown@1.0.0-beta.52)(rollup@4.53.3)(terser@5.44.1)(typescript@5.8.3)(vite@7.2.4(@types/node@24.10.1)(jiti@2.6.1)(lightningcss@1.30.1)(terser@5.44.1)(yaml@2.8.2))(xml2js@0.6.2)(yaml@2.8.2)
+      openid-client:
+        specifier: ^6.6.2
+        version: 6.8.1
       tailwindcss:
         specifier: ^4.1.7
         version: 4.1.10
@@ -6565,6 +6571,9 @@ packages:
   jose@6.0.11:
     resolution: {integrity: sha512-QxG7EaliDARm1O1S8BGakqncGT9s25bKL1WSf6/oa17Tkqwi8D2ZNglqCF+DsYF88/rV66Q/Q2mFAy697E1DUg==}
 
+  jose@6.1.3:
+    resolution: {integrity: sha512-0TpaTfihd4QMNwrz/ob2Bp7X04yuxJkjRGi4aKmOqwhov54i6u79oCv7T+C7lo70MKH6BesI3vscD1yb/yzKXQ==}
+
   jpeg-js@0.4.4:
     resolution: {integrity: sha512-WZzeDOEtTOBK4Mdsar0IqEU5sMr3vSV2RqkAIzUEV2BHnUfKGyswWFPFwK5EeDo93K3FohSHbLAjj0s1Wzd+dg==}
 
@@ -7451,6 +7460,9 @@ packages:
     engines: {node: ^14.16.0 || >=16.10.0}
     hasBin: true
 
+  oauth4webapi@3.8.3:
+    resolution: {integrity: sha512-pQ5BsX3QRTgnt5HxgHwgunIRaDXBdkT23tf8dfzmtTIL2LTpdmxgbpbBm0VgFWAIDlezQvQCTgnVIUmHupXHxw==}
+
   obj-props@1.4.0:
     resolution: {integrity: sha512-p7p/7ltzPDiBs6DqxOrIbtRdwxxVRBj5ROukeNb9RgA+fawhrz5n2hpNz8DDmYR//tviJSj7nUnlppGmONkjiQ==}
     engines: {node: '>=0.10.0'}
@@ -7529,6 +7541,9 @@ packages:
   open@8.4.2:
     resolution: {integrity: sha512-7x81NCL719oNbsq/3mh+hVrAWmFuEYUqrq/Iw3kUzH8ReypT9QQ0BLoJS7/G9k6N81XjW4qHWtjWwe/9eLy1EQ==}
     engines: {node: '>=12'}
+
+  openid-client@6.8.1:
+    resolution: {integrity: sha512-VoYT6enBo6Vj2j3Q5Ec0AezS+9YGzQo1f5Xc42lreMGlfP4ljiXPKVDvCADh+XHCV/bqPu/wWSiCVXbJKvrODw==}
 
   optionator@0.9.4:
     resolution: {integrity: sha512-6IpQ7mKUxRcZNLIObR0hz7lxsapSSIYNZJwXPGeF0mTVqGKFIXj1DQcMoT22S3ROcLyY/rz0PWaWZ9ayWmad9g==}
@@ -17192,6 +17207,8 @@ snapshots:
 
   jose@6.0.11: {}
 
+  jose@6.1.3: {}
+
   jpeg-js@0.4.4: {}
 
   js-cookie@2.2.1: {}
@@ -18528,6 +18545,8 @@ snapshots:
       pkg-types: 2.3.0
       tinyexec: 1.0.2
 
+  oauth4webapi@3.8.3: {}
+
   obj-props@1.4.0: {}
 
   object-assign@4.1.1: {}
@@ -18643,6 +18662,11 @@ snapshots:
       define-lazy-prop: 2.0.0
       is-docker: 2.2.1
       is-wsl: 2.2.0
+
+  openid-client@6.8.1:
+    dependencies:
+      jose: 6.1.3
+      oauth4webapi: 3.8.3
 
   optionator@0.9.4:
     dependencies:

@@ -1,8 +1,23 @@
 <template>
   <div class="container h-dvh flex flex-col py-4 gap-y-4">
     <div class="jumpu-card p-4 shrink-0">
-      <h2 class="font-bold text-2xl mb-2">Generate Content Attestation Set</h2>
-      <div class="flex items-center gap-x-4">
+      <div class="flex items-center justify-between gap-x-1">
+        <h2 class="font-bold text-2xl mb-2">
+          Generate Content Attestation Set
+        </h2>
+        <div class="flex items-center gap-x-2">
+          <template v-if="!isLoggedIn">
+            <button class="jumpu-button" @click="login">Login</button>
+          </template>
+          <template v-else>
+            <span class="text-xs text-gray-600" v-if="userEmail">{{
+              userEmail
+            }}</span>
+            <button class="jumpu-text-button" @click="logout">Logout</button>
+          </template>
+        </div>
+      </div>
+      <div class="flex items-center justify-between gap-x-4">
         <div class="grow">
           <div class="text-sm flex gap-x-4">
             <div class="jumpu-card p-4">
@@ -53,25 +68,26 @@
           ></progress>
         </div>
         <div class="shrink-0">
-          <p>
-            <button
-              class="jumpu-button inline-flex items-center gap-x-2"
-              @click="fetchChatStream(selectedFiles)"
-              :disabled="generating || selectedFiles.length === 0"
+          <button
+            class="jumpu-button inline-flex items-center gap-x-2"
+            @click="fetchChatStream(selectedFiles)"
+            :disabled="generating || selectedFiles.length === 0 || !isLoggedIn"
+          >
+            <span v-if="!generating"
+              >生成を始める ({{ selectedFiles.length }}件)</span
             >
-              <span v-if="!generating"
-                >生成を始める ({{ selectedFiles.length }}件)</span
-              >
-              <div class="flex items-center gap-x-2" v-else>
-                <div class="jumpu-spinner w-4 h-4">
-                  <svg viewBox="25 25 50 50">
-                    <circle cx="50" cy="50" r="20"></circle>
-                  </svg>
-                </div>
-                <span>生成中...</span>
+            <div class="flex items-center gap-x-2" v-else>
+              <div class="jumpu-spinner w-4 h-4">
+                <svg viewBox="25 25 50 50">
+                  <circle cx="50" cy="50" r="20"></circle>
+                </svg>
               </div>
-            </button>
-          </p>
+              <span>生成中...</span>
+            </div>
+          </button>
+          <div class="text-xs text-amber-600 mt-1" v-if="!isLoggedIn">
+            ログインが必要です
+          </div>
         </div>
       </div>
     </div>
@@ -220,6 +236,31 @@ const allowedURLOrigins = useStorage(
 const tempAllowedURLOrigins = ref([]);
 
 const { data: settingItems } = useFetch("/api/settings");
+const { data: session, refresh: refreshSession } = useFetch(
+  "/api/auth/session",
+  {
+    credentials: "include",
+  },
+);
+
+const isLoggedIn = computed(() => session.value?.isLoggedIn ?? false);
+
+const userEmail = computed(() => session.value?.email || "");
+
+function login() {
+  navigateTo("/login", { external: true });
+}
+
+async function logout() {
+  try {
+    await fetch("/api/auth/logout", {
+      method: "POST",
+      credentials: "include",
+    });
+  } finally {
+    await refreshSession();
+  }
+}
 
 // 選択されたファイルを取得するcomputed
 const selectedFiles = computed(() => {
@@ -264,6 +305,7 @@ async function fetchChatStream(prompt, callback) {
     headers: {
       "Content-Type": "application/json",
     },
+    credentials: "include",
     body: JSON.stringify({
       htmlFiles: prompt,
       allowedURLOrigins: allowedURLOrigins.value,
