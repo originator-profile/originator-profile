@@ -16,7 +16,7 @@ import { FetchSiteProfileMessageResult } from "./components/siteProfile/types";
 
 const overlay = new Overlay();
 let enter: Parameters<OverlayProtocolMap["enter"]>[0] = {
-  cas: [],
+  framesCas: [],
   activeCa: null,
   wmps: [],
 };

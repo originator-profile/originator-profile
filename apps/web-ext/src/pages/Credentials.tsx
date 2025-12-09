@@ -13,9 +13,9 @@ export default function Credentials() {
     issuer?: string;
     subject?: string;
   }>();
-  const { ops, cas, isLoading } = useCredentials();
+  const { ops, cas, framesCas, isLoading } = useCredentials();
   if (isLoading) return <Loading />;
-  if (!(ops && cas)) return null;
+  if (!(ops && cas && framesCas)) return null;
   const ca = cas.find(
     (ca) =>
       ca.attestation.doc.issuer === issuer &&
@@ -41,6 +41,7 @@ export default function Credentials() {
         search: queryParams.toString(),
       }}
       wmp={op.media.doc}
+      framesCas={framesCas}
     />
   );
 }

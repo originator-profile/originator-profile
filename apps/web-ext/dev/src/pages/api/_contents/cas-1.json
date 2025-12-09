@@ -26,7 +26,7 @@
   "target": [
     {
       "type": "TextTargetIntegrity",
-      "cssSelector": "#text-target-integrity-1",
+      "cssSelector": "#text-target-integrity",
       "integrity": "sha256-TL6t/lWLByyNME0lFhb6JrT3RaTF+f2md84n5YTQtx4="
     }
   ]

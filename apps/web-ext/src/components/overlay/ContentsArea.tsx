@@ -50,7 +50,6 @@ export function ContentsArea(props: Props) {
     },
     absoluteTargets,
   );
-  console.log(frameCasCoordinate);
 
   return (
     <svg

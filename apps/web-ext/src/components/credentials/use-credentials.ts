@@ -13,9 +13,9 @@ import { getRegistryKeys } from "../../utils/get-registry-keys";
 import { useSiteProfile } from "../siteProfile";
 import { FrameIntegrityVerifier, fetchTabCredentials } from "./messaging";
 import type {
+  FramesVerifiedCas,
   SupportedCa,
   SupportedVerifiedCas,
-  FrameVerifiedCas,
 } from "./types";
 
 const CREDENTIALS_KEY = "credentials";
@@ -25,7 +25,7 @@ type FetchVerifiedCredentialsResult = {
   cas: SupportedVerifiedCas;
   origin: string;
   url: string;
-  framesCas: FrameVerifiedCas[];
+  framesCas: FramesVerifiedCas;
 };
 
 /**

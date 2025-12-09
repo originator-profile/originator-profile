@@ -1,11 +1,11 @@
 import { WebMediaProfile } from "@originator-profile/model";
-import { SupportedVerifiedCa, SupportedVerifiedCas } from "../credentials";
+import { FramesVerifiedCas, SupportedVerifiedCa } from "../credentials";
 import { defineWindowMessaging } from "../windowMessaging";
 
 export type OverlayProtocolMap = {
   /** オーバーレイの開始・更新 */
   enter(message: {
-    cas: SupportedVerifiedCas;
+    framesCas: FramesVerifiedCas;
     activeCa: SupportedVerifiedCa | null;
     wmps: WebMediaProfile[];
   }): void;

@@ -21,7 +21,7 @@ import Loading from "../components/Loading";
 import Unsupported from "../components/Unsupported";
 import {
   FetchCredentialsMessagingFailed,
-  SupportedVerifiedCas,
+  FramesVerifiedCas,
   useCredentials,
 } from "../components/credentials";
 import { useFrameCasLocationProvider } from "../components/frameCas";
@@ -32,19 +32,21 @@ import { buildPublUrl, routes } from "../utils/routes";
 function Redirect({
   tabId,
   ops,
-  cas,
+  framesCas,
 }: {
   tabId: number;
   ops?: VerifiedOps;
-  cas?: SupportedVerifiedCas;
+  framesCas?: FramesVerifiedCas;
 }) {
-  const [ca] = cas ?? [];
+  const pageCas =
+    framesCas?.find((frameCas) => frameCas.parentFrameId === -1)?.cas ?? [];
+  const [ca] = pageCas ?? [];
   useMount(() => {
-    if (cas) {
+    if (pageCas) {
       void overlayExtensionMessenger.sendMessage(
         "enter",
         {
-          cas,
+          framesCas: framesCas ?? [],
           activeCa: ca ?? null,
           wmps: flush(ops?.map((op) => op.media?.doc) ?? []),
         },
@@ -130,7 +132,7 @@ function Base() {
 
   // NOTE: SP と CAS のいずれかが閲覧可能なら表示する
   if (siteProfile || (cas && cas.length > 0)) {
-    return <Redirect tabId={tabId} ops={ops} cas={cas} />;
+    return <Redirect tabId={tabId} ops={ops} framesCas={framesCas} />;
   }
 
   const errors = [sp_error, credentials_error].filter(

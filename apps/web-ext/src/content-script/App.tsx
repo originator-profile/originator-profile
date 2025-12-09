@@ -2,8 +2,8 @@ import { WebMediaProfile } from "@originator-profile/model";
 import { useEffect, useState, useRef } from "react";
 import { useMount } from "react-use";
 import {
+  FramesVerifiedCas,
   SupportedVerifiedCa,
-  SupportedVerifiedCas,
 } from "../components/credentials";
 import {
   CasMap,
@@ -23,7 +23,7 @@ function Panel(props: { children?: React.ReactNode }) {
 }
 
 function App() {
-  const [cas, setCas] = useState<SupportedVerifiedCas>([]);
+  const [framesCas, setFramesCas] = useState<FramesVerifiedCas>([]);
   const [activeCa, setActiveCa] = useState<SupportedVerifiedCa | null>(null);
   const [wmps, setWmps] = useState<WebMediaProfile[]>([]);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -41,14 +41,14 @@ function App() {
   useMount(() => {
     overlayWindowMessenger.sendMessage(
       "enter",
-      { cas, activeCa, wmps },
+      { framesCas, activeCa, wmps },
       window.parent,
     );
   });
 
   useEffect(() => {
     overlayWindowMessenger.onMessage("enter", ({ data }) => {
-      setCas(data.cas);
+      setFramesCas(data.framesCas);
       setActiveCa(data.activeCa);
       setWmps(data.wmps);
       handleOpen();
@@ -72,6 +72,9 @@ function App() {
     );
   }
 
+  const pageCas =
+    framesCas?.find((frameCas) => frameCas.parentFrameId === -1)?.cas ?? [];
+
   // NOTE: dialog ロールが非対話的要素とみなされる
   // see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/issues/932
   /* eslint jsx-a11y/no-noninteractive-element-interactions: "off" */
@@ -85,11 +88,11 @@ function App() {
     >
       <ContentsArea
         className="absolute top-0 left-0"
-        contents={cas.flatMap((ca) => ca.attestation.doc.target)}
+        contents={pageCas.flatMap((ca) => ca.attestation.doc.target)}
       />
       <Panel>
         <CasMap
-          cas={cas}
+          framesCas={framesCas}
           activeCa={activeCa}
           onClickCa={handleClickCa}
           wmps={wmps}

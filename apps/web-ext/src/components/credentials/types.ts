@@ -18,6 +18,7 @@ export type CredentialsProps = {
   ops: VerifiedOps;
   orgPath: { pathname: string; search: string };
   wmp: WebMediaProfile;
+  framesCas: FramesVerifiedCas;
 };
 export type FrameLocation = { origin: string; url: string };
 export type FetchCredentialsMessageResult<T, E> = T | E;
@@ -42,6 +43,7 @@ export type TabCredentials = FrameCredentials & { frames: FrameCredentials[] };
 
 export type FrameVerifiedCas = FrameResponse &
   FrameLocation & { cas: SupportedVerifiedCas };
+export type FramesVerifiedCas = FrameVerifiedCas[];
 
 export type ArticleLike =
   | ArticleCA["credentialSubject"]
