@@ -93,7 +93,7 @@ export function ContentsArea(props: Props) {
                 key={`${frameCasCoordinate.frameId}-${ca.id}`}
                 className={twMerge(
                   "transition transition-discrete fill-black starting:opacity-0",
-                  isLocating ? "opacity-0 none" : "opacity-100",
+                  isLocating ? "opacity-0 hidden" : "opacity-100",
                 )}
                 frame={frameCasCoordinate}
                 ca={ca}
