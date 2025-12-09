@@ -12,12 +12,9 @@ export default function ReliabilityGuide(props: Props) {
   return (
     <div className={clsx("text-center space-y-1", props.className)}>
       <p className="whitespace-pre-line text-base font-bold text-primary-800">
-        {_(
-          "ReliabilityGuide_HasReliabilityInformation",
-          props.contentType === "ContentType_Site"
-            ? _("ReliabilityGuide_SiteOperator")
-            : _("ReliabilityGuide_Publisher", _(props.contentType)),
-        )}
+        {props.contentType === "ContentType_Site"
+          ? _("ReliabilityGuide_SiteOperator")
+          : _("ReliabilityGuide_Publisher", _(props.contentType))}
       </p>
       <button
         className="text-xs text-primary-700 px-3 py-2 inline-flex items-center gap-1 hover:bg-primary-100 rounded-full"
@@ -35,13 +32,13 @@ export default function ReliabilityGuide(props: Props) {
           <section className="jumpu-card p-5 rounded-2xl rounded-b-none space-y-3">
             <h2
               id={titleId}
-              className="whitespace-pre-line text-base font-bold mb-1.5"
+              className="whitespace-pre-line text-base font-bold mb-1.5 text-start"
             >
-              {_("ReliabilityGuide_AboutReliabilityInformation")}
+              {_("ReliabilityGuide_VerifiedOrganizationStatementTitle")}
             </h2>
             <p
               id={descriptionId}
-              className="whitespace-pre-line text-sm text-gray-600"
+              className="whitespace-pre-line text-sm text-gray-600 text-start"
             >
               {_("ReliabilityGuide_VerifiedOrganizationStatement")}
             </p>

@@ -43,6 +43,10 @@ const webMediaProfile = {
       id: "https://wmp-holder.example.jp/statement",
       name: "新聞倫理綱領",
     },
+    publishingPrinciple: {
+      id: "https://wmp-holder.example.jp/editorial-guidelines",
+      name: "編集ガイドライン",
+    },
     description: "この文章はこの Web メディアに関する補足情報です。",
   },
 } as const satisfies WebMediaProfile;

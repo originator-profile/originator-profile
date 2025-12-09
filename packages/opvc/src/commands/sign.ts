@@ -88,6 +88,10 @@ const exampleWebMediaProfile = {
       id: "https://wmp-holder.example.jp/statement",
       name: "情報発信ポリシー",
     },
+    publishingPrinciple: {
+      id: "https://wmp-holder.example.jp/editorial-guidelines",
+      name: "編集ガイドライン",
+    },
     privacyPolicy: {
       id: "https://wmp-holder.example.jp/privacy",
       name: "プライバシーポリシー",

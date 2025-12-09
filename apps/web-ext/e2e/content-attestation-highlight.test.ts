@@ -29,7 +29,7 @@ test("拡張機能画面での認証および対象ページのオーバーレ�
   await expect(ext.getByTestId("site-profile")).toBeVisible();
   expect(
     await ext
-      .getByText("このメインコンテンツの発行者には信頼性情報があります")
+      .getByText("このメインコンテンツは次の組織が発信しています")
       .count(),
   ).toEqual(1);
 

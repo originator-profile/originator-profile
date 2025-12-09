@@ -84,6 +84,10 @@ describe("WMP", () => {
           id: "https://wmp-holder.example.jp/statement",
           name: "新聞倫理綱領",
         },
+        publishingPrinciple: {
+          id: "https://wmp-holder.example.jp/editorial-guidelines",
+          name: "編集ガイドライン",
+        },
         description: "この文章はこの Web メディアに関する補足情報です。",
       },
     };
@@ -124,6 +128,29 @@ describe("CA", () => {
         },
         genre: "Arts & Entertainment",
         landingPageUrl: "https://ad.landingpage.example.com",
+        adReportContact: {
+          id: "https://ad.example.com/contact",
+          name: "広告に対する報告窓口",
+        },
+        adReviewGuidelines: {
+          id: "https://ad.example.com/guidelines",
+          name: "広告審査ガイドライン",
+        },
+        targetingPolicy: {
+          id: "https://ad.example.com/targeting",
+          name: "ターゲティング広告に関するポリシー",
+        },
+        adDataHandlingPolicy: {
+          id: "https://ad.example.com/datahandling",
+          name: "広告配信に関する情報の取り扱いについての説明",
+        },
+        adDisplayRationale: {
+          page: {
+            id: "https://ad.example.com/rationale",
+            name: "この広告が表示されている理由",
+          },
+          description: "現在閲覧中のコンテンツと関連性が高いため。",
+        },
       },
       allowedOrigin: ["https://ad.example.com"],
       target: [

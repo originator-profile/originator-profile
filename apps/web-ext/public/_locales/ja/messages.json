@@ -5,8 +5,11 @@
   "CaFilter_MainContent": {
     "message": "メインコンテンツ"
   },
-  "CaFilter_Other": {
-    "message": "その他コンテンツ"
+  "CaFilter_Article": {
+    "message": "記事"
+  },
+  "CaFilter_Advertorial": {
+    "message": "記事広告"
   },
   "CaFilter_Advertisements": {
     "message": "広告"
@@ -32,6 +35,9 @@
   "ContentType_Site": {
     "message": "ウェブサイト"
   },
+  "WebMediaProfileSummary_InformationTransmissionPolicy": {
+    "message": "情報発信ポリシー"
+  },
   "WebMediaProfileSummary_EditorialGuidelines": {
     "message": "編集ガイドライン"
   },
@@ -56,20 +62,11 @@
       }
     }
   },
-  "ReliabilityGuide_HasReliabilityInformation": {
-    "message": "$subject$には信頼性情報があります",
-    "placeholders": {
-      "subject": {
-        "content": "$1",
-        "example": "このサイトの運営者"
-      }
-    }
-  },
   "ReliabilityGuide_SiteOperator": {
-    "message": "このサイトの運営者"
+    "message": "このサイトは次の組織が運営しています"
   },
   "ReliabilityGuide_Publisher": {
-    "message": "この$content_type$の発行者",
+    "message": "この$content_type$は次の組織が発信しています",
     "placeholders": {
       "content_type": {
         "content": "$1",
@@ -78,10 +75,13 @@
     }
   },
   "ReliabilityGuide_AboutReliabilityInformation": {
-    "message": "信頼性情報について"
+    "message": "どのように確認されますか"
+  },
+  "ReliabilityGuide_VerifiedOrganizationStatementTitle": {
+    "message": "真正性・信頼性を確認する仕組み"
   },
   "ReliabilityGuide_VerifiedOrganizationStatement": {
-    "message": "この組織の実在性と組織が保有する証明書は OP レジストリ運用者によって確認済みです。組織の信頼性の判断に資するものとして組織の基本情報と証明書を閲覧することができます。"
+    "message": "表示されている画像、テキスト等は署名をともなうデータであり、署名の正しさによって改ざんされていないことが確認されました。この組織の信頼性の判断指標として、自ら定める情報発信ポリシーのほか、第三者によって発行された追加情報が閲覧できます。追加情報には、組織の実在性、業種・業態に応じた適格性等が示されます。"
   },
   "Unsupported_ERR_SITE_PROFILE_FETCH_FAILED": {
     "message": "サイトのコンテンツ発信者の信憑性、信頼性に関するデータが取得できませんでした。ネットワーク通信環境を確認し、再度拡張機能をご利用ください。"
@@ -167,6 +167,9 @@
   "Base_ContentsInformation": {
     "message": "コンテンツ情報"
   },
+  "Org_InformationTransmissionPolicy": {
+    "message": "情報発信ポリシー"
+  },
   "Org_EditorialGuidelines": {
     "message": "編集ガイドライン"
   },
@@ -174,7 +177,7 @@
     "message": "プライバシーポリシー"
   },
   "Org_CredentialInformation": {
-    "message": "証明書"
+    "message": "検証済み属性"
   },
   "Org_OrganizationInformation": {
     "message": "組織情報"
@@ -184,6 +187,9 @@
   },
   "Credentials_TechnicalInformation": {
     "message": "技術情報"
+  },
+  "Credentials_UntitledContent": {
+    "message": "タイトル未設定のコンテンツ"
   },
   "SiteProfile_TechnicalInformation": {
     "message": "技術情報"
@@ -340,6 +346,24 @@
   },
   "ArticleTable_Category": {
     "message": "ジャンル"
+  },
+  "AdvertisementTable_LandingPage": {
+    "message": "ランディングページ"
+  },
+  "AdvertisementTable_AdReportContact": {
+    "message": "広告に対する報告窓口"
+  },
+  "AdvertisementTable_AdReviewGuidelines": {
+    "message": "広告審査ガイドライン"
+  },
+  "AdvertisementTable_TargetingPolicy": {
+    "message": "ターゲティング広告に関するポリシー"
+  },
+  "AdvertisementTable_AdDataHandlingPolicy": {
+    "message": "広告配信に関する情報の取り扱いについての説明"
+  },
+  "AdvertisementTable_AdDisplayRationale": {
+    "message": "この広告が表示されている理由"
   },
   "Profile_Failed": {
     "message": "失敗"

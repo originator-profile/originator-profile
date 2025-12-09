@@ -1,4 +1,5 @@
 export { default as ArticleTable } from "./ArticleTable";
+export { default as AdvertisementTable } from "./AdvertisementTable";
 export { default as CertificateDetail } from "./CertificateDetail";
 export { default as CertificateSummary } from "./CertificateSummary";
 export { default as CredentialTable } from "./CredentialTable";

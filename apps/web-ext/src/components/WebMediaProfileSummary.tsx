@@ -35,6 +35,14 @@ function WebMediaProfileSummary({ wmp }: Props) {
             <div className="bg-gray-100 rounded-full px-1 py-1 mx-1 my-1">
               <p className="inline-flex items-center align-middle text-xs text-gray-600 px-1">
                 <Icon className="inline mr-1" icon="gg:check-o" />
+                {_("WebMediaProfileSummary_InformationTransmissionPolicy")}
+              </p>
+            </div>
+          )}
+          {wmp.credentialSubject.publishingPrinciple && (
+            <div className="bg-gray-100 rounded-full px-1 py-1 mx-1 my-1">
+              <p className="inline-flex items-center align-middle text-xs text-gray-600 px-1">
+                <Icon className="inline mr-1" icon="gg:check-o" />
                 {_("WebMediaProfileSummary_EditorialGuidelines")}
               </p>
             </div>
