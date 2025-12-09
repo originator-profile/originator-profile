@@ -31,14 +31,14 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   }
 });
 
-frameCasExtensionMessenger.onMessage("prepareReLocate", ({ data }) => {
+frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
   const { tabId, framesCas } = data;
   const targetFramesCas = framesCas.filter(
     (frameCas) => frameCas.cas.length > 0,
   );
   for (const frameCas of targetFramesCas) {
     void frameCasExtensionMessenger.sendMessage(
-      "locate",
+      "locating",
       {
         frameCas,
         frames: framesCas.map(({ cas: _, ...frame }) => frame),

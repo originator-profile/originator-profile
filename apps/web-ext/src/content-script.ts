@@ -51,7 +51,7 @@ siteProfileMessenger.onMessage("fetchSiteProfile", async () => {
 let tabId: number;
 let framesCas: FrameVerifiedCas[] = [];
 
-frameCasExtensionMessenger.onMessage("prepareReLocate", ({ data }) => {
+frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
   tabId = data.tabId;
   framesCas = data.framesCas;
 });
@@ -60,8 +60,8 @@ frameCasWindowMessenger.onMessage("located", ({ data }) => {
   frameCasWindowMessenger.sendMessage("located", data, overlay.window);
 });
 
-frameCasWindowMessenger.onMessage("reLocate", () => {
-  void frameCasExtensionMessenger.sendMessage("prepareReLocate", {
+frameCasWindowMessenger.onMessage("startLocate", () => {
+  void frameCasExtensionMessenger.sendMessage("prepareLocate", {
     tabId,
     framesCas,
   });

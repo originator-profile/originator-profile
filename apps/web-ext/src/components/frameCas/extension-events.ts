@@ -6,11 +6,11 @@ import type {
 } from "../credentials";
 
 export type FrameCasExtensionProtocolMap = {
-  prepareReLocate(message: {
+  prepareLocate(message: {
     tabId: number;
     framesCas: FrameVerifiedCas[];
   }): void;
-  locate(message: {
+  locating(message: {
     frameCas: FrameVerifiedCas;
     frames: Array<FrameResponse & FrameLocation>;
   }): void;

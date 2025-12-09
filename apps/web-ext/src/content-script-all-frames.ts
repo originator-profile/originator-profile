@@ -50,7 +50,7 @@ credentialsMessenger.onMessage("verifyIntegrity", async ({ data }) => {
 });
 
 frameCasExtensionMessenger.onMessage(
-  "locate",
+  "locating",
   async ({ data: { frameCas, frames } }) => {
     const casItems = frameCas.cas.map(normalizeCasItem);
     const cas: CasCoordinate = casItems.map(({ attestation }) => ({
@@ -63,7 +63,7 @@ frameCasExtensionMessenger.onMessage(
       }),
     }));
     frameCasWindowMessenger.sendMessage(
-      "locate",
+      "locating",
       {
         frameCas: {
           frameId: frameCas.frameId,
@@ -82,7 +82,7 @@ frameCasExtensionMessenger.onMessage(
 );
 
 frameCasWindowMessenger.onMessage(
-  "locate",
+  "locating",
   ({
     data: {
       frameCas: { ancestor, ...coordinate },
@@ -121,7 +121,7 @@ frameCasWindowMessenger.onMessage(
       );
     } else {
       frameCasWindowMessenger.sendMessage(
-        "locate",
+        "locating",
         { frameCas: { ancestor, ...coordinate }, frames },
         window.parent,
         frames.find(({ frameId }) => frameId === frame.parentFrameId)?.origin,

@@ -8,15 +8,11 @@ export function useFrameCasLocationProvider(
 ): void {
   useEffect(() => {
     void frameCasExtensionMessenger.sendMessage(
-      "prepareReLocate",
+      "prepareLocate",
       { tabId, framesCas },
       {
         tabId,
       },
     );
-    void frameCasExtensionMessenger.sendMessage("prepareReLocate", {
-      tabId,
-      framesCas,
-    });
   }, [tabId, framesCas]);
 }
