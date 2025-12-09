@@ -29,6 +29,14 @@ const subject = {
       },
       required: ["id", "name"],
     },
+    publishingPrinciple: {
+      type: "object",
+      properties: {
+        id: { title: "編集ガイドライン URL", type: "string", format: "uri" },
+        name: { title: "編集ガイドライン表示名", type: "string" },
+      },
+      required: ["id", "name"],
+    },
     privacyPolicy: {
       type: "object",
       properties: {

@@ -99,6 +99,18 @@ function WebMediaProfileTable({ className, wmp }: Props) {
           }
         />
       )}
+      {wmp.credentialSubject.publishingPrinciple && (
+        <TableRow
+          header={_("WebMediaProfileTable_Principle")}
+          data={
+            <ExternalLink
+              href={wmp.credentialSubject.publishingPrinciple.id}
+            >
+              {wmp.credentialSubject.publishingPrinciple.name}
+            </ExternalLink>
+          }
+        />
+      )}
     </Table>
   );
 }

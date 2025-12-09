@@ -62,6 +62,18 @@ function ReliabilityInfo(props: {
           </ExternalLink>
         </section>
       )}
+      {props.wmp.credentialSubject.publishingPrinciple && (
+        <section>
+          <h2 className="whitespace-pre-line text-xs text-gray-600 mb-3">
+            {_("Org_EditorialGuidelines")}
+          </h2>
+          <ExternalLink
+            href={props.wmp.credentialSubject.publishingPrinciple.id}
+          >
+            {props.wmp.credentialSubject.publishingPrinciple.name}
+          </ExternalLink>
+        </section>
+      )}
       {props.wmp.credentialSubject.privacyPolicy && (
         <section>
           <h2 className="whitespace-pre-line text-xs text-gray-600 mb-3">
