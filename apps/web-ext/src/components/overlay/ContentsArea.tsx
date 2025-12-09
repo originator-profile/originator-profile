@@ -92,15 +92,14 @@ export function ContentsArea(props: Props) {
               <FrameRect
                 key={`${frameCasCoordinate.frameId}-${ca.id}`}
                 className={twMerge(
-                  "transition-colors",
-                  isLocating ? "fill-transparent" : "fill-black",
+                  "transition transition-discrete fill-black starting:opacity-0",
+                  isLocating ? "opacity-0 none" : "opacity-100",
                 )}
                 frame={frameCasCoordinate}
                 ca={ca}
               />
             )),
           )}
-          ))
         </mask>
       </defs>
       <rect
@@ -124,8 +123,8 @@ export function ContentsArea(props: Props) {
           <FrameRect
             key={`${frameCasCoordinate.frameId}-${ca.id}}`}
             className={twMerge(
-              "transition-colors fill-transparent stroke-1",
-              isLocating ? "stroke-transparent" : "stroke-[#bc15ac]",
+              "transition transition-discrete fill-transparent stroke-[#bc15ac] stroke-1 starting:opacity-0",
+              isLocating ? "opacity-0 hidden" : "opacity-100",
             )}
             frame={frameCasCoordinate}
             ca={ca}

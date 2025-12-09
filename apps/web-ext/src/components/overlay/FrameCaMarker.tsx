@@ -53,8 +53,8 @@ export function FrameCaMarker(props: Props) {
           <CaMarker
             key={`${frame.frameId}-${caCoordinate.id}-${index}`}
             className={twMerge(
-              "transition-opacity",
-              isLocating ? "opacity-0" : "opacity-100",
+              "transition transition-discrete starting:opacity-0",
+              isLocating ? "opacity-0 hidden" : "opacity-100",
             )}
             rect={rect}
             active={props.active}
