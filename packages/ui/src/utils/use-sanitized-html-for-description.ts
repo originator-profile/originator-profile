@@ -22,31 +22,13 @@ const HTML_DESCRIPTION_CONFIG: DOMPurifyConfig = {
   ALLOWED_ATTR: [],
   // data-* も許可しない
   ALLOW_DATA_ATTR: false,
-  // 外部リソース系タグを明示的に禁止
-  FORBID_TAGS: [
-    "a",
-    "img",
-    "script",
-    "link",
-    "iframe",
-    "object",
-    "embed",
-    "video",
-    "audio",
-    "source",
-    "svg",
-    "math",
-  ],
-  // 削除した要素の中身テキストは保持(default:true)
-  // KEEP_CONTENT: true
 };
 
 /** HTML文字列をサニタイズするカスタムフック for Description */
 export default function useSanitizedHtmlForDescription(
   dangerousHtml?: string | DescriptionObject,
 ): string | undefined {
-  // if null or undefined return
-  if (dangerousHtml === null || dangerousHtml === undefined) return;
+  if (dangerousHtml === undefined) return;
 
   let desc: DescriptionObject;
 
