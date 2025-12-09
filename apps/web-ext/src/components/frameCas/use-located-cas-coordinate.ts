@@ -21,9 +21,9 @@ export function useLocatedCasCoordinate(): {
         setIsLocating(false);
       });
     };
-    frameCasWindowMessenger.onMessage("located", handler);
+    const cleanup = frameCasWindowMessenger.onMessage("located", handler);
     return () => {
-      window.removeEventListener("message", handler);
+      cleanup();
     };
   }, []);
 

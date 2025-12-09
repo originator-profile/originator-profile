@@ -47,19 +47,23 @@ function App() {
   });
 
   useEffect(() => {
-    overlayWindowMessenger.onMessage("enter", ({ data }) => {
-      setFramesCas(data.framesCas);
-      setActiveCa(data.activeCa);
-      setWmps(data.wmps);
-      handleOpen();
-    });
+    const cleanupEnter = overlayWindowMessenger.onMessage(
+      "enter",
+      ({ data }) => {
+        setFramesCas(data.framesCas);
+        setActiveCa(data.activeCa);
+        setWmps(data.wmps);
+        handleOpen();
+      },
+    );
 
-    overlayWindowMessenger.onMessage("leave", () => {
+    const cleanupLeave = overlayWindowMessenger.onMessage("leave", () => {
       handleClose();
     });
 
     return () => {
-      overlayWindowMessenger.removeAllListeners();
+      cleanupEnter();
+      cleanupLeave();
     };
   });
 
