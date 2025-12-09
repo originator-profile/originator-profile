@@ -35,6 +35,9 @@
   "ContentType_Site": {
     "message": "ウェブサイト"
   },
+  "WebMediaProfileSummary_InformationTransmissionPolicy": {
+    "message": "情報発信ポリシー"
+  },
   "WebMediaProfileSummary_EditorialGuidelines": {
     "message": "編集ガイドライン"
   },
@@ -164,6 +167,9 @@
   "Base_ContentsInformation": {
     "message": "コンテンツ情報"
   },
+  "Org_InformationTransmissionPolicy": {
+    "message": "情報発信ポリシー"
+  },
   "Org_EditorialGuidelines": {
     "message": "編集ガイドライン"
   },
@@ -171,7 +177,7 @@
     "message": "プライバシーポリシー"
   },
   "Org_CredentialInformation": {
-    "message": "証明書"
+    "message": "検証済み属性"
   },
   "Org_OrganizationInformation": {
     "message": "組織情報"

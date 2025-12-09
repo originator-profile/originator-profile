@@ -33,7 +33,6 @@ function Org(props: Props) {
       certificates={op.annotations ?? []}
       wsp={siteProfile?.credential.doc}
       wmp={op.media.doc}
-      verifiedCp={op.core}
     />
   );
 }
