@@ -13,9 +13,9 @@ export default function Credentials() {
     issuer?: string;
     subject?: string;
   }>();
-  const { ops, cas, framesCas, isLoading } = useCredentials();
+  const { ops, cas, framesCas, isLoading, error } = useCredentials();
   if (isLoading) return <Loading />;
-  if (!(ops && cas && framesCas)) return null;
+  if (error) return null;
   const ca = cas.find(
     (ca) =>
       ca.attestation.doc.issuer === issuer &&
