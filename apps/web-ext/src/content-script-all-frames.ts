@@ -94,8 +94,14 @@ frameCasWindowMessenger.onMessage(
     if (frameId === -1) return;
     const frame = frames.find((frame) => frame.frameId === frameId);
     if (!frame) return console.error(`frame not found. frame id: ${frameId}`);
-    if (origin !== frame.origin)
-      return console.error(`origin mismatch: ${origin}`);
+    const senderOrigin = frames.find(
+      (f) => f.frameId === (ancestor.at(-1)?.frameId ?? coordinate.frameId),
+    )?.origin;
+    if (origin !== senderOrigin) {
+      return console.error(
+        `origin mismatch. sender: ${senderOrigin}, receiver: ${origin}`,
+      );
+    }
     const iframes = document.getElementsByTagName("iframe");
     for (const iframe of iframes) {
       if (source !== iframe.contentWindow) continue;
