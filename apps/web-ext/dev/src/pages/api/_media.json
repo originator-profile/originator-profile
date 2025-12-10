@@ -13,6 +13,13 @@
     "id": "dns:localhost",
     "type": "OnlineBusiness",
     "name": "Example OP Holder",
-    "url": "http://localhost:8080/"
+    "url": "http://localhost:8080/",
+    "description": [
+      "これはサンプルの WebMediaProfile です。",
+      {
+        "encodingFormat": "text/html",
+        "text": "<p>これはサンプルの WebMediaProfile です。</p><p>ご覧のようにHTMLをサポートしています。</p>"
+      }
+    ]
   }
 }
