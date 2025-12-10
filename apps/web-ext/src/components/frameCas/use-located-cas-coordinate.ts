@@ -1,5 +1,6 @@
 import { startTransition, useEffect, useState } from "react";
 import { useFrameCasLocationConsumer } from "./use-frame-cas-location-consumer";
+import { useMap } from "react-use";
 import { frameCasWindowMessenger } from "./window-events";
 import { FrameCasCoordinate, FramesCasCoordinate } from "./types";
 
@@ -7,17 +8,14 @@ export function useLocatedCasCoordinate(): {
   framesCasCoordinate: FramesCasCoordinate;
   isLocating: boolean;
 } {
-  const [frameCasCoordinateMap, setFrameCasCoordinateMap] = useState<
-    Map<number, FrameCasCoordinate>
-  >(new Map());
+  const [frameCasCoordinateMap, update] =
+    useMap<Record<number, FrameCasCoordinate>>();
   const [isLocating, setIsLocating] = useState(true);
 
   useEffect(() => {
     const handler = ({ data }: MessageEvent<FrameCasCoordinate>) => {
       startTransition(() => {
-        setFrameCasCoordinateMap((prev) =>
-          new Map(prev).set(data.frameId, data),
-        );
+        update.set(data.frameId, data);
         setIsLocating(false);
       });
     };
@@ -32,7 +30,7 @@ export function useLocatedCasCoordinate(): {
   });
 
   return {
-    framesCasCoordinate: Array.from(frameCasCoordinateMap.values()),
+    framesCasCoordinate: Object.values(frameCasCoordinateMap),
     isLocating,
   };
 }
