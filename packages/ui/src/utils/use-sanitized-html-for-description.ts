@@ -1,3 +1,4 @@
+import { WebMediaProfile } from "@originator-profile/model";
 import DOMPurify, { Config as DOMPurifyConfig } from "dompurify";
 
 type DescriptionObject = {
@@ -26,8 +27,14 @@ const HTML_DESCRIPTION_CONFIG: DOMPurifyConfig = {
 
 /** HTML文字列をサニタイズするカスタムフック for Description */
 export default function useSanitizedHtmlForDescription(
-  dangerousHtml?: string | DescriptionObject,
+  description: WebMediaProfile["credentialSubject"]["description"],
 ): string | undefined {
+  const dangerousHtml = Array.isArray(description)
+    ? (description.find(
+        (d) => typeof d === "object" && d.encodingFormat === "text/html",
+      ) ?? description[0])
+    : description;
+
   if (dangerousHtml === undefined) return;
 
   let desc: DescriptionObject;

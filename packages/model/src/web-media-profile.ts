@@ -1,4 +1,5 @@
 import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { Description } from "./description";
 import { Image } from "./image";
 import { OpVc } from "./op-vc";
 
@@ -50,22 +51,7 @@ const subject = {
       required: ["id", "name"],
     },
     description: {
-      title: "組織に関する説明",
-      type: ["string", "object"],
-      properties: {
-        text: {
-          type: "string",
-          description: "Text value.",
-        },
-        encodingFormat: {
-          type: "string",
-          title: "Encoding format",
-          description:
-            "MIME type. Allowed values: 'text/plain' and 'text/html' (only br, p, ol, ul, li allowed).",
-          enum: ["text/plain", "text/html"],
-        },
-      },
-      required: ["text", "encodingFormat"],
+      anyOf: [Description, { type: "array", items: Description }],
     },
   },
   required: ["id", "type", "url", "name"],

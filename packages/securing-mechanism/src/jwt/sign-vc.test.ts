@@ -88,7 +88,12 @@ describe("WMP", () => {
           id: "https://wmp-holder.example.jp/editorial-guidelines",
           name: "編集ガイドライン",
         },
-        description: "この文章はこの Web メディアに関する補足情報です。",
+        description: [
+          {
+            encodingFormat: "text/plain",
+            text: "この文章はこの Web メディアに関する補足情報です。",
+          },
+        ],
       },
     };
     const { publicKey, privateKey } = await generateKey();
