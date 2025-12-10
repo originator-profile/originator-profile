@@ -12,12 +12,15 @@ import {
   credentialsMessenger,
   FetchCredentialsMessageResult,
   FrameLocation,
+  FrameResponse,
   VerifyFailed,
 } from "./components/credentials";
 import {
   frameCasWindowMessenger,
   isFrameVisible,
+  type AncestorFrameCoordinate,
   type CasCoordinate,
+  type FrameCasCoordinate,
 } from "./components/frameCas";
 import { frameCasExtensionMessenger } from "./components/frameCas/extension-events";
 import "./utils/cors-basic-auth";
@@ -80,56 +83,77 @@ frameCasExtensionMessenger.onMessage(
   },
 );
 
+const updateAncestor = (
+  source: WindowProxy | MessagePort | ServiceWorker | null,
+  frame: { frameId: number; parentFrameId: number },
+  input: AncestorFrameCoordinate[],
+): AncestorFrameCoordinate[] => {
+  const ancestor = [...input];
+  const iframes = document.getElementsByTagName("iframe");
+  for (const iframe of iframes) {
+    if (source !== iframe.contentWindow) continue;
+    const rect = iframe.getBoundingClientRect();
+    ancestor.push({
+      frameId: frame.frameId,
+      parentFrameId: frame.parentFrameId,
+      rect,
+      visible: isFrameVisible(rect),
+    });
+    break;
+  }
+  return ancestor;
+};
+
+const sendFrameCasMessage = (
+  frame: FrameResponse,
+  ancestor: AncestorFrameCoordinate[],
+  coordinate: Omit<FrameCasCoordinate, "ancestor">,
+  frames: Array<FrameResponse & FrameLocation>,
+) => {
+  if (frame.frameId === 0) {
+    frameCasWindowMessenger.sendMessage(
+      "located",
+      {
+        ancestor,
+        ...coordinate,
+      },
+      window.self,
+    );
+  } else {
+    frameCasWindowMessenger.sendMessage(
+      "locating",
+      { frameCas: { ancestor, ...coordinate }, frames },
+      window.parent,
+      frames.find(({ frameId }) => frameId === frame.parentFrameId)?.origin,
+    );
+  }
+};
+
 frameCasWindowMessenger.onMessage(
   "locating",
   ({
     data: {
-      frameCas: { ancestor, ...coordinate },
+      frameCas: { ancestor: senderAncestor, ...coordinate },
       frames,
     },
     source,
     origin,
   }) => {
-    const frameId = ancestor.at(-1)?.parentFrameId ?? coordinate.parentFrameId;
+    const frameId =
+      senderAncestor.at(-1)?.parentFrameId ?? coordinate.parentFrameId;
     if (frameId === -1) return;
     const frame = frames.find((frame) => frame.frameId === frameId);
     if (!frame) return console.error(`frame not found. frame id: ${frameId}`);
     const senderOrigin = frames.find(
-      (f) => f.frameId === (ancestor.at(-1)?.frameId ?? coordinate.frameId),
+      (f) =>
+        f.frameId === (senderAncestor.at(-1)?.frameId ?? coordinate.frameId),
     )?.origin;
     if (origin !== senderOrigin) {
       return console.error(
         `origin mismatch. sender: ${senderOrigin}, receiver: ${origin}`,
       );
     }
-    const iframes = document.getElementsByTagName("iframe");
-    for (const iframe of iframes) {
-      if (source !== iframe.contentWindow) continue;
-      const rect = iframe.getBoundingClientRect();
-      ancestor.push({
-        frameId: frame.frameId,
-        parentFrameId: frame.parentFrameId,
-        rect,
-        visible: isFrameVisible(rect),
-      });
-      break;
-    }
-    if (frame.frameId === 0) {
-      frameCasWindowMessenger.sendMessage(
-        "located",
-        {
-          ancestor,
-          ...coordinate,
-        },
-        window.self,
-      );
-    } else {
-      frameCasWindowMessenger.sendMessage(
-        "locating",
-        { frameCas: { ancestor, ...coordinate }, frames },
-        window.parent,
-        frames.find(({ frameId }) => frameId === frame.parentFrameId)?.origin,
-      );
-    }
+    const ancestor = updateAncestor(source, frame, senderAncestor);
+    sendFrameCasMessage(frame, ancestor, coordinate, frames);
   },
 );
