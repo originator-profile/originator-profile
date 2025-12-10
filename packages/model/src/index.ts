@@ -5,6 +5,7 @@ export * from "./content-attestation";
 export * from "./content-attestation-set";
 export * from "./core-profile";
 export * from "./deprecated";
+export * from "./description";
 export * from "./image";
 export * from "./jwk";
 export * from "./jwks";

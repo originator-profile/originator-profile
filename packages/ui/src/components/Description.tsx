@@ -1,12 +1,11 @@
+import type { WebMediaProfile } from "@originator-profile/model";
 import { twMerge } from "tailwind-merge";
-import useSanitizedHtmlForDescription from "../utils/use-sanitized-html-for-description";
 import { _ } from "../utils/get-message";
+import useSanitizedHtmlForDescription from "../utils/use-sanitized-html-for-description";
 
 type Props = {
   className?: string;
-  description:
-    | string
-    | { text: string; encodingFormat: "text/plain" | "text/html" };
+  description: WebMediaProfile["credentialSubject"]["description"];
   onlyBody?: boolean;
 };
 
