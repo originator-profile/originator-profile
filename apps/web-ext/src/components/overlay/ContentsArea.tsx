@@ -121,7 +121,7 @@ export function ContentsArea(props: Props) {
       {framesCasCoordinate.flatMap((frameCasCoordinate) =>
         frameCasCoordinate.cas.map((ca) => (
           <FrameRect
-            key={`${frameCasCoordinate.frameId}-${ca.id}}`}
+            key={`${frameCasCoordinate.frameId}-${ca.id}`}
             className={twMerge(
               "transition transition-discrete fill-transparent stroke-[#bc15ac] stroke-1 starting:opacity-0",
               isLocating ? "opacity-0 hidden" : "opacity-100",
