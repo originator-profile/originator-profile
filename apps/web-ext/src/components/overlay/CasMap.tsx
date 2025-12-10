@@ -1,12 +1,15 @@
-import { CaMarker } from "./CaMarker";
 import { WebMediaProfile } from "@originator-profile/model";
-import { SupportedVerifiedCas, SupportedVerifiedCa } from "../credentials";
+import { FramesVerifiedCas, SupportedVerifiedCa } from "../credentials";
+import { ElementCaMarker } from "./ElementCaMarker";
+import { FrameCaMarker } from "./FrameCaMarker";
 
 type CaMapFragmentProps = {
   ca: SupportedVerifiedCa;
   activeCa: SupportedVerifiedCa | null;
   onClickCa: (ca: SupportedVerifiedCa) => void;
   wmps: WebMediaProfile[];
+  page: boolean;
+  frameId: number;
 };
 
 function CaMapFragment(props: CaMapFragmentProps) {
@@ -16,18 +19,29 @@ function CaMapFragment(props: CaMapFragmentProps) {
   const active =
     props.ca.attestation.doc.credentialSubject.id ===
     props.activeCa?.attestation.doc.credentialSubject.id;
+  if (props.page) {
+    return (
+      <ElementCaMarker
+        ca={props.ca}
+        active={active}
+        onClickCa={props.onClickCa}
+        wmp={wmp}
+      />
+    );
+  }
   return (
-    <CaMarker
+    <FrameCaMarker
       ca={props.ca}
       active={active}
       onClickCa={props.onClickCa}
       wmp={wmp}
+      frameId={props.frameId}
     />
   );
 }
 
 type Props = {
-  cas: SupportedVerifiedCas;
+  framesCas: FramesVerifiedCas;
   activeCa: SupportedVerifiedCa | null;
   onClickCa: (ca: SupportedVerifiedCa) => void;
   wmps: WebMediaProfile[];
@@ -36,15 +50,19 @@ type Props = {
 export function CasMap(props: Props) {
   return (
     <>
-      {props.cas.map((ca) => (
-        <CaMapFragment
-          key={ca.attestation.doc.credentialSubject.id}
-          ca={ca}
-          activeCa={props.activeCa}
-          onClickCa={props.onClickCa}
-          wmps={props.wmps}
-        />
-      ))}
+      {props.framesCas.flatMap((frameCas) =>
+        frameCas.cas.map((ca) => (
+          <CaMapFragment
+            key={`${frameCas.frameId}-${ca.attestation.doc.credentialSubject.id}`}
+            ca={ca}
+            activeCa={props.activeCa}
+            onClickCa={props.onClickCa}
+            wmps={props.wmps}
+            page={frameCas.parentFrameId === -1}
+            frameId={frameCas.frameId}
+          />
+        )),
+      )}
     </>
   );
 }

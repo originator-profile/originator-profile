@@ -21,11 +21,13 @@ async function fetchAllFramesCredentials(
           frameId: frame.frameId,
           parentFrameId: frame.parentFrameId,
         };
-        const result = await credentialsMessenger.compatSendMessage(
+        const result = await credentialsMessenger.sendMessage(
           "fetchCredentials",
           null,
-          tabId,
-          frame.frameId,
+          {
+            tabId,
+            frameId: frame.frameId,
+          },
         );
         if (result instanceof Error) {
           throw new FetchCredentialsMessagingFailed(
@@ -111,9 +113,7 @@ export async function fetchTabCredentials(
 export const FrameIntegrityVerifier =
   (tabId: number, frameId: number): VerifyIntegrity =>
   (content) =>
-    credentialsMessenger.compatSendMessage(
-      "verifyIntegrity",
-      [content],
+    credentialsMessenger.sendMessage("verifyIntegrity", [content], {
       tabId,
       frameId,
-    );
+    });

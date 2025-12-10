@@ -1,49 +1,11 @@
-import { GetDataType } from "@webext-core/messaging";
 import { WebMediaProfile } from "@originator-profile/model";
-import { SupportedVerifiedCa, SupportedVerifiedCas } from "../credentials";
-
-/** window 指定可能な defineWindowMessaging() */
-function defineWindowMessaging<T extends Record<string, unknown>>() {
-  const listeners: Array<(event: MessageEvent) => void> = [];
-  function sendMessage<TType extends keyof T>(
-    type: TType,
-    data: GetDataType<T[TType]>,
-    window?: Window | null,
-  ): void {
-    window?.postMessage({ type, data });
-  }
-  function onMessage<TType extends keyof T>(
-    type: TType,
-    handler: (event: MessageEvent<GetDataType<T[TType]>>) => void,
-  ) {
-    function listener(
-      event: MessageEvent<{
-        type: keyof T;
-        data: GetDataType<T[TType]>;
-      }>,
-    ) {
-      if (!(event.isTrusted && event.data.type === type)) return;
-      handler({ ...event, data: event.data.data });
-    }
-    window.addEventListener("message", listener);
-    listeners.push(listener);
-  }
-  function removeAllListeners() {
-    for (const listener of listeners) {
-      window.removeEventListener("message", listener);
-    }
-  }
-  return {
-    sendMessage,
-    onMessage,
-    removeAllListeners,
-  };
-}
+import { FramesVerifiedCas, SupportedVerifiedCa } from "../credentials";
+import { defineWindowMessaging } from "../windowMessaging";
 
 export type OverlayProtocolMap = {
   /** オーバーレイの開始・更新 */
   enter(message: {
-    cas: SupportedVerifiedCas;
+    framesCas: FramesVerifiedCas;
     activeCa: SupportedVerifiedCa | null;
     wmps: WebMediaProfile[];
   }): void;

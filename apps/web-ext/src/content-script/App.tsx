@@ -2,8 +2,8 @@ import { WebMediaProfile } from "@originator-profile/model";
 import { useEffect, useState, useRef } from "react";
 import { useMount } from "react-use";
 import {
+  FramesVerifiedCas,
   SupportedVerifiedCa,
-  SupportedVerifiedCas,
 } from "../components/credentials";
 import {
   CasMap,
@@ -23,7 +23,7 @@ function Panel(props: { children?: React.ReactNode }) {
 }
 
 function App() {
-  const [cas, setCas] = useState<SupportedVerifiedCas>([]);
+  const [framesCas, setFramesCas] = useState<FramesVerifiedCas>([]);
   const [activeCa, setActiveCa] = useState<SupportedVerifiedCa | null>(null);
   const [wmps, setWmps] = useState<WebMediaProfile[]>([]);
   const dialog = useRef<HTMLDialogElement>(null);
@@ -41,24 +41,29 @@ function App() {
   useMount(() => {
     overlayWindowMessenger.sendMessage(
       "enter",
-      { cas, activeCa, wmps },
+      { framesCas, activeCa, wmps },
       window.parent,
     );
   });
 
   useEffect(() => {
-    overlayWindowMessenger.onMessage("enter", ({ data }) => {
-      setCas(data.cas);
-      setActiveCa(data.activeCa);
-      setWmps(data.wmps);
-      handleOpen();
-    });
+    const cleanupEnter = overlayWindowMessenger.onMessage(
+      "enter",
+      ({ data }) => {
+        setFramesCas(data.framesCas);
+        setActiveCa(data.activeCa);
+        setWmps(data.wmps);
+        handleOpen();
+      },
+    );
 
-    overlayWindowMessenger.onMessage("leave", () => {
+    const cleanupLeave = overlayWindowMessenger.onMessage("leave", () => {
       handleClose();
     });
+
     return () => {
-      overlayWindowMessenger.removeAllListeners();
+      cleanupEnter();
+      cleanupLeave();
     };
   });
 
@@ -71,12 +76,15 @@ function App() {
     );
   }
 
+  const pageCas =
+    framesCas?.find((frameCas) => frameCas.parentFrameId === -1)?.cas ?? [];
+
   // NOTE: dialog ロールが非対話的要素とみなされる
   // see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/issues/932
   /* eslint jsx-a11y/no-noninteractive-element-interactions: "off" */
   return (
     <dialog
-      className="block w-screen h-screen bg-transparent transition-opacity duration-300 ease-in-out opacity-0 open:opacity-100 z-[calc(infinity)]"
+      className="block w-screen h-screen bg-transparent transition-opacity duration-300 ease-in-out opacity-0 open:opacity-100 z-[calc(infinity)] overflow-hidden"
       onClick={handleClose}
       onKeyDown={handleKeyDown}
       onTransitionEnd={handleTransitionEnd}
@@ -84,11 +92,11 @@ function App() {
     >
       <ContentsArea
         className="absolute top-0 left-0"
-        contents={cas.flatMap((ca) => ca.attestation.doc.target)}
+        contents={pageCas.flatMap((ca) => ca.attestation.doc.target)}
       />
       <Panel>
         <CasMap
-          cas={cas}
+          framesCas={framesCas}
           activeCa={activeCa}
           onClickCa={handleClickCa}
           wmps={wmps}

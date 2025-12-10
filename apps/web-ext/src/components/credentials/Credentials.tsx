@@ -53,7 +53,7 @@ export function Credentials(props: CredentialsProps) {
     void overlayExtensionMessenger.sendMessage(
       "enter",
       {
-        cas: props.cas,
+        framesCas: props.framesCas,
         activeCa: ca,
         wmps: flush(props.ops.map((op) => op.media?.doc)),
       },
