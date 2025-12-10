@@ -24,7 +24,7 @@ export function defineWindowMessaging<T extends Record<string, unknown>>() {
         data: GetDataType<T[TType]>;
       }>,
     ) {
-      if (!(event.isTrusted && event.data.type === type)) return;
+      if (!event.isTrusted || event.data.type !== type) return;
       handler(
         new MessageEvent("message", {
           data: event.data.data,
