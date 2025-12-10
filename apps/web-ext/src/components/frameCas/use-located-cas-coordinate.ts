@@ -27,8 +27,8 @@ export function useLocatedCasCoordinate(): {
     };
   }, []);
 
-  useFrameCasLocationConsumer({}, (isLocating) => {
-    setIsLocating(isLocating);
+  useFrameCasLocationConsumer({}, () => {
+    setIsLocating(true);
   });
 
   return {

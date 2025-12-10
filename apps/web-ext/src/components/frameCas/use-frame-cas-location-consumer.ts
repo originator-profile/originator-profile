@@ -1,5 +1,6 @@
-import { startTransition, useCallback, useRef, useEffect } from "react";
+import { startTransition, useEffect } from "react";
 import { useEvent, useMount } from "react-use";
+import { useDebouncedCallback } from "use-debounce";
 import { frameCasWindowMessenger } from "./window-events";
 
 type DebounceOptions = {
@@ -12,48 +13,30 @@ const DEFAULT_OPTIONS: DebounceOptions = {
 
 export function useFrameCasLocationConsumer(
   options: Partial<DebounceOptions> = {},
-  onLocatingChange?: (isLocating: boolean) => void,
+  onLocating?: () => void,
 ): void {
   const { debounceMs } = { ...DEFAULT_OPTIONS, ...options };
-  const debounceTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-  const sendStartLocate = useCallback(() => {
+  const sendStartLocate = useDebouncedCallback(() => {
     startTransition(() => {
       frameCasWindowMessenger.sendMessage("startLocate", null, window.parent);
     });
-  }, []);
+  }, debounceMs);
 
-  const handler = useCallback(() => {
-    // デバウンスタイマーをクリア
-    if (debounceTimerRef.current) {
-      clearTimeout(debounceTimerRef.current);
-    }
-
-    // ローディング開始を通知
-    onLocatingChange?.(true);
-
-    // デバウンス: イベント停止後に更新
-    debounceTimerRef.current = setTimeout(() => {
-      sendStartLocate();
-      debounceTimerRef.current = null;
-    }, debounceMs);
-  }, [debounceMs, sendStartLocate, onLocatingChange]);
-
-  useMount(() => {
-    // マウント時は即座に実行
-    onLocatingChange?.(true);
+  const handler = () => {
+    onLocating?.();
     sendStartLocate();
-  });
+  };
 
   useEvent("resize", handler, window.parent);
   useEvent("scroll", handler, window.parent);
 
-  // クリーンアップ
+  useMount(() => {});
+
   useEffect(() => {
+    handler();
     return () => {
-      if (debounceTimerRef.current) {
-        clearTimeout(debounceTimerRef.current);
-      }
+      sendStartLocate.flush();
     };
-  }, []);
+  }, [sendStartLocate]);
 }

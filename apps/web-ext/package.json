@@ -60,6 +60,7 @@
     "tailwindcss": "^4.1.7",
     "typed-url-params": "^1.0.1",
     "typescript": "^5.8.3",
+    "use-debounce": "^10.0.6",
     "vitest": "^4.0.0",
     "web-ext": "^9.0.0"
   },
