@@ -1,5 +1,5 @@
-import { startTransition, useEffect } from "react";
-import { useEvent, useMount } from "react-use";
+import { startTransition } from "react";
+import { useEvent, useMount, useUnmount } from "react-use";
 import { useDebouncedCallback } from "use-debounce";
 import { frameCasWindowMessenger } from "./window-events";
 
@@ -31,12 +31,11 @@ export function useFrameCasLocationConsumer(
   useEvent("resize", handler, window.parent);
   useEvent("scroll", handler, window.parent);
 
-  useMount(() => {});
-
-  useEffect(() => {
+  useMount(() => {
     handler();
-    return () => {
-      sendStartLocate.flush();
-    };
-  }, [sendStartLocate]);
+  });
+
+  useUnmount(() => {
+    sendStartLocate.flush();
+  });
 }
