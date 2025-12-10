@@ -7,11 +7,12 @@ import {
   Description,
   ModalDialog,
   _,
+  sortCertificates,
   useModalDialog,
 } from "@originator-profile/ui";
 import { Certificate } from "@originator-profile/verify";
 import clsx from "clsx";
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import BackHeader from "../components/BackHeader";
 import ReliabilityGuide from "../components/ReliabilityGuide";
 import WebMediaProfileSummary from "../components/WebMediaProfileSummary";
@@ -41,8 +42,12 @@ function ReliabilityInfo(props: {
   certificates: VerifiedVc<Certificate>[];
 }) {
   const dialog = useModalDialog();
+  const sortedCertificates = useMemo(
+    () => sortCertificates(props.certificates),
+    [props.certificates],
+  );
   const [certificate, setCertificate] =
-    useState<VerifiedVc<Certificate> | null>(props.certificates[0] ?? null);
+    useState<VerifiedVc<Certificate> | null>(sortedCertificates[0] ?? null);
   return (
     <div className="space-y-4">
       <Description
@@ -88,7 +93,7 @@ function ReliabilityInfo(props: {
           {_("Org_CredentialInformation")}
         </h2>
         <ul className="space-y-2">
-          {props.certificates.map((certificate, index) => (
+          {sortedCertificates.map((certificate, index) => (
             <li key={index}>
               <CertificateSummary
                 className="w-full"
