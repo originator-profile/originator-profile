@@ -20,6 +20,18 @@
         "encodingFormat": "text/html",
         "text": "<p>これはサンプルの WebMediaProfile です。</p><p>ご覧のようにHTMLをサポートしています。</p><p>改行<br>つきの段落</p><ul><li>項目</li><li>項目</li><li>項目</li></li><ol><li>項目</li><li>項目</li><li>項目</li></ol></ul>"
       }
-    ]
+    ],
+    "informationTransmissionPolicy": {
+      "id": "https://wmp-holder.example.jp/statement",
+      "name": "情報発信ポリシー"
+    },
+    "publishingPrinciple": {
+      "id": "https://wmp-holder.example.jp/editorial-guidelines",
+      "name": "編集ガイドライン"
+    },
+    "privacyPolicy": {
+      "id": "https://wmp-holder.example.jp/privacy",
+      "name": "プライバシーポリシー"
+    }
   }
 }
