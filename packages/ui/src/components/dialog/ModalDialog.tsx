@@ -120,6 +120,7 @@ export function useModalDialog() {
       // ダイアログ内の要素にフォーカスがある場合のみ blur
       document.activeElement.blur();
     }
+    beforeActiveElement.current = null;
 
     dialog.ariaHidden = "true";
 
@@ -128,7 +129,6 @@ export function useModalDialog() {
     });
 
     dialog.classList.add("invisible");
-    beforeActiveElement.current = null;
   }
 
   return { ref, open, close };
