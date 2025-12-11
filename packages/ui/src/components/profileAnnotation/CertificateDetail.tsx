@@ -2,10 +2,10 @@ import { Icon } from "@iconify/react";
 import { VerifiedVc } from "@originator-profile/securing-mechanism";
 import { Certificate } from "@originator-profile/verify";
 import { twMerge } from "tailwind-merge";
-import placeholderLogoMainUrl from "../assets/placeholder-logo-main.png";
-import { _ } from "../utils/get-message";
-import Image from "./Image";
-import Spinner from "./Spinner";
+import { _ } from "../../utils/get-message";
+import Image from "../Image";
+import Spinner from "../Spinner";
+import placeholderLogoMainUrl from "../../assets/placeholder-logo-main.png";
 
 type Props = {
   className?: string;
@@ -79,12 +79,10 @@ function CertificateDetailContent({ certificate }: Props) {
   );
 }
 
-function CertificateDetail({ className, certificate }: Props) {
+export function CertificateDetail({ className, certificate }: Props) {
   return (
     <div className={twMerge("jumpu-card p-5 rounded-2xl space-y-3", className)}>
       <CertificateDetailContent certificate={certificate} />
     </div>
   );
 }
-
-export default CertificateDetail;

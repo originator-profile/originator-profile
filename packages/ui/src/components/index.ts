@@ -1,7 +1,5 @@
-export { default as ArticleTable } from "./ArticleTable";
 export { default as AdvertisementTable } from "./AdvertisementTable";
-export { default as CertificateDetail } from "./CertificateDetail";
-export { default as CertificateSummary } from "./CertificateSummary";
+export { default as ArticleTable } from "./ArticleTable";
 export { default as CredentialTable } from "./CredentialTable";
 export { default as Description } from "./Description";
 export { default as Header } from "./Header";
@@ -15,3 +13,4 @@ export { default as TechInfo } from "./TechInfo";
 export { default as WebMediaProfileTable } from "./WebMediaProfileTable";
 export * from "./dialog";
 export * from "./link";
+export * from "./profileAnnotation";

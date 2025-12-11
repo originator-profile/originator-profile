@@ -1,9 +1,9 @@
 import { VerifiedVc } from "@originator-profile/securing-mechanism";
 import { Certificate } from "@originator-profile/verify";
 import { twMerge } from "tailwind-merge";
-import placeholderLogoMainUrl from "../assets/placeholder-logo-main.png";
-import Image from "../components/Image";
-import { _ } from "../utils/get-message";
+import { _ } from "../../utils/get-message";
+import Image from "../Image";
+import placeholderLogoMainUrl from "../../assets/placeholder-logo-main.png";
 
 type Props = {
   className?: string;
@@ -11,7 +11,7 @@ type Props = {
   onClick: (certificate: VerifiedVc<Certificate>) => void;
 };
 
-function CertificateSummary({ className, certificate, onClick }: Props) {
+export function CertificateSummary({ className, certificate, onClick }: Props) {
   const handleClick = () => onClick(certificate);
   return (
     <button
@@ -49,5 +49,3 @@ function CertificateSummary({ className, certificate, onClick }: Props) {
     </button>
   );
 }
-
-export default CertificateSummary;
