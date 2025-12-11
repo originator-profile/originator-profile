@@ -29,13 +29,12 @@ test("CAS/OPSの取得に成功するがSPの検証に失敗した場合閲覧�
   const ext = await popup(context);
   await expect(ext?.getByTestId("p-elm-prohibition-message")).toBeVisible();
 
-  await expect(ext.getByText("アクセスにはご注意ください")).toHaveCount(1);
-  await expect(ext.getByText("このサイトの発信元が確認できません")).toHaveCount(
-    1,
-  );
+  await expect(
+    ext.getByText("正規のコンテンツではない可能性があります"),
+  ).toHaveCount(1);
   await expect(
     ext.getByText(
-      "本物そっくりの偽サイトにログインしたり個人情報を登録したり支払いをしてしまい被害に合うケースが多発しています。このページではサイトの運営者情報が確認できませんでした。そのため、このサイトが本物かどうかは充分に注意してください。",
+      "発信者の詐称やコンテンツの改竄（かいざん）がされている可能性があります",
     ),
   ).toHaveCount(1);
 });

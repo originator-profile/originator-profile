@@ -1,6 +1,4 @@
-import {
-  _,
-} from "@originator-profile/ui";
+import { _ } from "@originator-profile/ui";
 import GlobalHeader from "./GlobalHeader";
 
 function Unsupported() {
@@ -24,7 +22,7 @@ function Unsupported() {
               target="_blank"
               rel="noreferrer noopener"
             >
-            {_("Link_OriginatorProfile")}
+              {_("Link_OriginatorProfile")}
             </a>
           </p>
         </article>

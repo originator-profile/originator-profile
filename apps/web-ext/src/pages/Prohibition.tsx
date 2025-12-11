@@ -1,9 +1,7 @@
 import Template from "../templates/Prohibition";
 
 function Prohibition() {
-  return (
-    <Template />
-  );
+  return <Template />;
 }
 
 export default Prohibition;

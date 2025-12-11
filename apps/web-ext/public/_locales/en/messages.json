@@ -102,10 +102,10 @@
     "message": "Failed to retrieve organization reliability information and publication distribution channel"
   },
   "Unsupported_ReliabilityInformationReadError": {
-    "message": "Please contact the site operator regarding the originator of this web page."
+    "message": "Please contact the site operator regarding the originator of this web page"
   },
   "Unsupported_FollowingCausesConsidered": {
-    "message": "Failed to retrieve data to verify the site operator or content creator."
+    "message": "Failed to retrieve data to verify the site operator or content creator"
   },
   "ErrorCheckList_ErrorDetails": {
     "message": "Error details"
