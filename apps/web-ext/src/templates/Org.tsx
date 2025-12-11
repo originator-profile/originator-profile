@@ -53,6 +53,7 @@ function ReliabilityInfo(props: {
       <Description
         description={props.wmp.credentialSubject.description ?? ""}
         onlyBody={true}
+        className="text-black [&_:where(p,ul,ol,li)]:my-2 [&_:where(p,ul,ol,li):first-child]:mt-0"
       />
       {props.wmp.credentialSubject.informationTransmissionPolicy && (
         <section>
