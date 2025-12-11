@@ -18,7 +18,7 @@
       "これはサンプルの WebMediaProfile です。",
       {
         "encodingFormat": "text/html",
-        "text": "<p>これはサンプルの WebMediaProfile です。</p><p>ご覧のようにHTMLをサポートしています。</p><p>改行<br>つきの段落</p><ul><li>項目</li><li>項目</li><li>項目</li></li><ol><li>項目</li><li>項目</li><li>項目</li></ol></ul>"
+        "text": "<p>これはサンプルの WebMediaProfile です。</p><p>ご覧のようにHTMLをサポートしています。</p><p>改行<br>つきの段落</p><ul><li>項目</li><li>項目</li><li>項目</li></ul><ol><li>項目</li><li>項目</li><li>項目</li></ol>"
       }
     ],
     "informationTransmissionPolicy": {
