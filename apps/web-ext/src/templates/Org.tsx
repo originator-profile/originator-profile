@@ -21,7 +21,7 @@ function ExternalLink(props: React.ComponentProps<"a">) {
   return (
     <a
       className={clsx(
-        "jumpu-card flex items-center gap-2.5 px-3 py-5 text-sm hover:bg-blue-50",
+        "jumpu-card flex items-center gap-2.5 px-5 py-3 text-sm hover:bg-blue-50",
         props.className,
       )}
       target="_blank"
