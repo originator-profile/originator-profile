@@ -44,10 +44,7 @@ function CertificateDetailContent({
   certificate,
   ops,
 }: Props & Required<Pick<Props, "certificate">>) {
-  const paWmp = useProfileAnnotatorWmp(
-    ops ?? [],
-    certificate.doc.issuer,
-  );
+  const paWmp = useProfileAnnotatorWmp(ops ?? [], certificate.doc.issuer);
   return (
     <>
       <header className="flex items-center gap-3 mb-4">
