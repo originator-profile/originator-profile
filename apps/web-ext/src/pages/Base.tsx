@@ -14,10 +14,7 @@ import { Navigate } from "react-router";
 import { useMount, useTitle } from "react-use";
 import Loading from "../components/Loading";
 import Unsupported from "../components/Unsupported";
-import {
-  FramesVerifiedCas,
-  useCredentials,
-} from "../components/credentials";
+import { FramesVerifiedCas, useCredentials } from "../components/credentials";
 import { useFrameCasLocationProvider } from "../components/frameCas";
 import { overlayExtensionMessenger } from "../components/overlay/extension-events";
 import { useSiteProfile } from "../components/siteProfile";
