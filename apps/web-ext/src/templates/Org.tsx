@@ -50,11 +50,13 @@ function ReliabilityInfo(props: {
     useState<VerifiedVc<Certificate> | null>(sortedCertificates[0] ?? null);
   return (
     <div className="space-y-4">
-      <Description
-        description={props.wmp.credentialSubject.description ?? ""}
-        onlyBody={true}
-        className="text-black [&_:where(p,ul,ol,li)]:my-2 [&_:where(p,ul,ol,li):first-child]:mt-0"
-      />
+      {props.wmp.credentialSubject.description && (
+        <Description
+          description={props.wmp.credentialSubject.description}
+          onlyBody={true}
+          className="text-black [&_:where(p,ul,ol,li)]:my-2 [&_:where(p,ul,ol,li):first-child]:mt-0"
+        />
+      )}
       {props.wmp.credentialSubject.informationTransmissionPolicy && (
         <section>
           <h2 className="whitespace-pre-line text-xs text-gray-600 mb-3">
