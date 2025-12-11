@@ -96,15 +96,30 @@ export function useModalDialog() {
     });
     beforeActiveElement.current = document.activeElement;
     unsetInert.current = setInert(dialog);
-    const focusableElement = dialog.querySelector('a, button, [tabindex="0"]');
-    if (focusableElement instanceof HTMLElement) {
-      focusableElement.focus();
-    }
+    const focusableElement = dialog.querySelector<HTMLElement>(
+      'a, button, [tabindex="0"]',
+    );
+    focusableElement?.focus();
   }
 
   async function close() {
     const dialog = ref.current;
     if (!dialog) return;
+
+    // inert を先に解除してフォーカスを戻せるようにする
+    unsetInert.current?.();
+    unsetInert.current = null;
+
+    // フォーカスを戻せる要素がある場合はそこに戻す
+    if (beforeActiveElement.current instanceof HTMLElement) {
+      beforeActiveElement.current.focus();
+    } else if (
+      document.activeElement instanceof HTMLElement &&
+      dialog.contains(document.activeElement)
+    ) {
+      // ダイアログ内の要素にフォーカスがある場合のみ blur
+      document.activeElement.blur();
+    }
 
     dialog.ariaHidden = "true";
 
@@ -112,12 +127,7 @@ export function useModalDialog() {
       dialog.addEventListener("transitionend", r, { once: true });
     });
 
-    unsetInert.current?.();
-    unsetInert.current = null;
     dialog.classList.add("invisible");
-    if (beforeActiveElement.current instanceof HTMLElement) {
-      beforeActiveElement.current.focus();
-    }
     beforeActiveElement.current = null;
   }
 
