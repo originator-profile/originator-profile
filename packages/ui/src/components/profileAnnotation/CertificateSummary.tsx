@@ -1,18 +1,26 @@
 import { VerifiedVc } from "@originator-profile/securing-mechanism";
-import { Certificate } from "@originator-profile/verify";
+import { Certificate, VerifiedOps } from "@originator-profile/verify";
 import { twMerge } from "tailwind-merge";
-import placeholderLogoMainUrl from "../assets/placeholder-logo-main.png";
-import Image from "../components/Image";
-import { _ } from "../utils/get-message";
+import { _ } from "../../utils/get-message";
+import Image from "../Image";
+import placeholderLogoMainUrl from "../../assets/placeholder-logo-main.png";
+import { useProfileAnnotatorWmp } from "./use-profile-annotator-wmp";
 
 type Props = {
   className?: string;
   certificate: VerifiedVc<Certificate>;
   onClick: (certificate: VerifiedVc<Certificate>) => void;
+  ops?: VerifiedOps;
 };
 
-function CertificateSummary({ className, certificate, onClick }: Props) {
+export function CertificateSummary({
+  className,
+  certificate,
+  ops,
+  onClick,
+}: Props) {
   const handleClick = () => onClick(certificate);
+  const paWmp = useProfileAnnotatorWmp(ops ?? [], certificate.doc.issuer);
   return (
     <button
       className={twMerge(
@@ -39,15 +47,10 @@ function CertificateSummary({ className, certificate, onClick }: Props) {
         <span className="text-xs text-gray-600">
           {_(
             "CertificateSummary_IssuedBy",
-            certificate.doc.credentialSubject.type === "CertificateProperties"
-              ? (certificate.doc.credentialSubject.certifier ??
-                  certificate.doc.issuer)
-              : certificate.doc.issuer,
+            paWmp?.credentialSubject.name ?? certificate.doc.issuer,
           )}
         </span>
       </span>
     </button>
   );
 }
-
-export default CertificateSummary;
