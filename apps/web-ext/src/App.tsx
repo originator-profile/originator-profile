@@ -7,6 +7,7 @@ import Org from "./pages/Org";
 import Prohibition from "./pages/Prohibition";
 import SiteProfile from "./pages/SiteProfile";
 import { buildPublUrl, paths } from "./utils/routes";
+import DetailInfo from "./pages/DetailInfo";
 
 function App() {
   useEffect(() => {
@@ -48,6 +49,7 @@ function App() {
             <Route path={paths.org} element={<Org back="../.." />} />
           </Route>
           <Route path={paths.prohibition} element={<Prohibition />} />
+          <Route path={paths.detail} element={<DetailInfo back=".." />} />
         </Route>
       </Route>
     </Routes>

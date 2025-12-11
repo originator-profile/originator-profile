@@ -4,11 +4,10 @@ import {
   ProjectSummary,
   useSanitizedHtml,
 } from "@originator-profile/ui";
-import { Icon } from "@iconify/react";
 import { Link } from "react-router";
 import { buildPublUrl } from "../utils/routes";
 import ErrorCheckList from "../components/ErrorCheckList";
-import GlobalHeader from "../components/GlobalHeader";
+import BackHeader from "../components/BackHeader";
 
 function WarningDetails({ tabId }: { tabId: number }) {
   return (
@@ -31,32 +30,25 @@ function WarningDetails({ tabId }: { tabId: number }) {
   );
 }
 
-type ProhibitionProps = {
+type DetailInfoProps = {
   errors: Error[];
   tabId: number;
+  backPath: {
+    pathname: string;
+    search: string;
+  };
 };
 
-function Prohibition({ errors, tabId }: ProhibitionProps) {
+function DetailInfo({ errors, tabId, backPath }: DetailInfoProps) {
   const prohibitionStatement =
     useSanitizedHtml(_("Prohibition_Statement_HTML")) ?? "";
   return (
     <>
-      <GlobalHeader className="sticky top-0 z-10" />
+      <BackHeader className="sticky top-0 z-10" to={backPath}>
+        {_("DetailInfo")}
+      </BackHeader>
       <main className="min-h-screen bg-white overflow-y-auto px-4 py-12">
         <ProjectTitle className="mb-12" as="header" />
-        <h1 className="flex items-center flex-col gap-4 mb-12">
-          <span className="text-red-700 h-7 text-base font-normal tracking-normal text-center whitespace-nowrap inline-block align-middle">
-            <Icon
-              icon="clarity:exclamation-triangle-line"
-              className="text-red-700 text-5xl font-normal tracking-normal leading-10 text-center w-11 h-11 inline-block vertical-align"
-            />{" "}
-            {_("Prohibition_Warning")}
-          </span>
-          <br />
-          <span className="whitespace-pre-line text-red-700 text-xl font-bold tracking-normal text-center w-96 h-6 inline-block align-middle">
-            {_("Prohibition_Site")}
-          </span>
-        </h1>
         <article className="mb-12 max-w-sm mx-auto">
           <ErrorCheckList errors={errors} />
           <p
@@ -79,4 +71,4 @@ function Prohibition({ errors, tabId }: ProhibitionProps) {
   );
 }
 
-export default Prohibition;
+export default DetailInfo;

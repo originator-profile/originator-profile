@@ -373,5 +373,8 @@
   },
   "BackHeader_Back": {
     "message": "戻る"
+  },
+  "DetailInfo": {
+    "message": "詳細情報"
   }
 }
