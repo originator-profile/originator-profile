@@ -31,6 +31,7 @@ function Org(props: Props) {
       backPath={backPath}
       contentType={contentType ?? "ContentType_Document"}
       certificates={op.annotations ?? []}
+      ops={ops}
       wsp={siteProfile?.credential.doc}
       wmp={op.media.doc}
     />

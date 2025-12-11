@@ -10,7 +10,7 @@ import {
   sortCertificates,
   useModalDialog,
 } from "@originator-profile/ui";
-import { Certificate } from "@originator-profile/verify";
+import { Certificate, VerifiedOps } from "@originator-profile/verify";
 import clsx from "clsx";
 import { useState, useMemo } from "react";
 import BackHeader from "../components/BackHeader";
@@ -40,6 +40,7 @@ function ExternalLink(props: React.ComponentProps<"a">) {
 function ReliabilityInfo(props: {
   wmp: WebMediaProfile;
   certificates: VerifiedVc<Certificate>[];
+  ops?: VerifiedOps;
 }) {
   const dialog = useModalDialog();
   const sortedCertificates = useMemo(
@@ -105,6 +106,7 @@ function ReliabilityInfo(props: {
                   setCertificate(certificate);
                   dialog.open();
                 }}
+                ops={props.ops}
               />
             </li>
           ))}
@@ -121,6 +123,7 @@ function ReliabilityInfo(props: {
         <CertificateDetail
           className="rounded-b-none"
           certificate={certificate ?? undefined}
+          ops={props.ops}
         />
       </ModalDialog>
     </div>
@@ -132,13 +135,14 @@ type Props = {
     pathname: string;
     search: string;
   };
+  ops?: VerifiedOps;
   certificates: VerifiedVc<Certificate>[];
   contentType: string;
   wmp: WebMediaProfile;
   wsp?: WebsiteProfile;
 };
 
-function Org({ backPath, certificates, contentType, wmp, wsp }: Props) {
+function Org({ backPath, certificates, ops, contentType, wmp, wsp }: Props) {
   return (
     <article className="bg-gray-50 flex flex-col min-h-dvh">
       <BackHeader className="sticky top-0 z-10" to={backPath}>
@@ -151,7 +155,7 @@ function Org({ backPath, certificates, contentType, wmp, wsp }: Props) {
         </div>
       </div>
       <div className="p-4">
-        <ReliabilityInfo certificates={certificates} wmp={wmp} />
+        <ReliabilityInfo certificates={certificates} wmp={wmp} ops={ops} />
       </div>
     </article>
   );

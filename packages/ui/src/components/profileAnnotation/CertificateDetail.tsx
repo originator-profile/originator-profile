@@ -1,18 +1,24 @@
 import { Icon } from "@iconify/react";
 import { VerifiedVc } from "@originator-profile/securing-mechanism";
-import { Certificate } from "@originator-profile/verify";
+import { Certificate, VerifiedOps } from "@originator-profile/verify";
 import { twMerge } from "tailwind-merge";
 import { _ } from "../../utils/get-message";
 import Image from "../Image";
 import Spinner from "../Spinner";
 import placeholderLogoMainUrl from "../../assets/placeholder-logo-main.png";
+import { useProfileAnnotatorWmp } from "./use-profile-annotator-wmp";
 
 type Props = {
   className?: string;
   certificate?: VerifiedVc<Certificate>;
+  ops?: VerifiedOps;
 };
 
-function CertificateDetailContent({ certificate }: Props) {
+function CertificateDetailContent({ certificate, ops }: Props) {
+  const paWmp = useProfileAnnotatorWmp(
+    ops ?? [],
+    certificate?.doc.issuer ?? "",
+  );
   if (!certificate)
     return (
       <div className="flex flex-col justify-center items-center gap-4 pt-6 pb-4">
@@ -39,7 +45,10 @@ function CertificateDetailContent({ certificate }: Props) {
             {certificate.doc.credentialSubject.certificationSystem.name}
           </h2>
           <p className="text-xs text-gray-600">
-            {_("CertificateDetail_IssuedBy", certificate.doc.issuer)}
+            {_(
+              "CertificateDetail_IssuedBy",
+              paWmp?.credentialSubject.name ?? certificate.doc.issuer,
+            )}
           </p>
         </div>
       </header>
@@ -79,10 +88,10 @@ function CertificateDetailContent({ certificate }: Props) {
   );
 }
 
-export function CertificateDetail({ className, certificate }: Props) {
+export function CertificateDetail({ className, certificate, ops }: Props) {
   return (
     <div className={twMerge("jumpu-card p-5 rounded-2xl space-y-3", className)}>
-      <CertificateDetailContent certificate={certificate} />
+      <CertificateDetailContent certificate={certificate} ops={ops} />
     </div>
   );
 }
