@@ -46,7 +46,7 @@ function CertificateDetailContent({
 }: Props & Required<Pick<Props, "certificate">>) {
   const paWmp = useProfileAnnotatorWmp(
     ops ?? [],
-    certificate?.doc.issuer ?? "",
+    certificate.doc.issuer,
   );
   return (
     <>
