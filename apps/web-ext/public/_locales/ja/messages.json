@@ -224,21 +224,6 @@
   "CertificateDetail_Loading": {
     "message": "証明書を読み込み中です..."
   },
-  "CertificateDetail_CredentialName": {
-    "message": "証明書名"
-  },
-  "CertificateDetail_Certifier": {
-    "message": "認証機関"
-  },
-  "CertificateDetail_Verifier": {
-    "message": "検証機関"
-  },
-  "CertificateDetail_IssuedAt": {
-    "message": "発行日"
-  },
-  "CertificateDetail_ExpiredAt": {
-    "message": "有効期限"
-  },
   "CertificateDetail_Details": {
     "message": "くわしくはこちら"
   },

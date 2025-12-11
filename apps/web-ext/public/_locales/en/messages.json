@@ -224,21 +224,6 @@
   "CertificateDetail_Loading": {
     "message": "Loading Certificate..."
   },
-  "CertificateDetail_CredentialName": {
-    "message": "Certificate Name"
-  },
-  "CertificateDetail_Certifier": {
-    "message": "Certifier"
-  },
-  "CertificateDetail_Verifier": {
-    "message": "Verifier"
-  },
-  "CertificateDetail_IssuedAt": {
-    "message": "Issue Date"
-  },
-  "CertificateDetail_ExpiredAt": {
-    "message": "Expiration Date"
-  },
   "CertificateDetail_Details": {
     "message": "For more details"
   },
