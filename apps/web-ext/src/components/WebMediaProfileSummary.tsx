@@ -19,41 +19,29 @@ function WebMediaProfileSummary({ wmp }: Props) {
         width={52}
         height={52}
       />
-      <div className="flex flex-col">
-        <div className="flex flex-row">
+      <div className="flex flex-col space-y-1">
+        <div className="flex flex-row space-x-1">
           <p className="text-base font-bold">{wmp.credentialSubject.name}</p>
-          <img
-            className="ml-1"
-            src={logomarkUrl}
-            alt=""
-            width={18}
-            height={16}
-          />
+          <img src={logomarkUrl} alt="" width={18} height={16} />
         </div>
-        <div className="flex flex-row">
+        <div className="flex flex-row flex-wrap gap-1">
           {wmp.credentialSubject.informationTransmissionPolicy && (
-            <div className="bg-gray-100 rounded-full px-1 py-1 mx-1 my-1">
-              <p className="inline-flex items-center align-middle text-xs text-gray-600 px-1">
-                <Icon className="inline mr-1" icon="gg:check-o" />
-                {_("WebMediaProfileSummary_InformationTransmissionPolicy")}
-              </p>
-            </div>
+            <p className="jumpu-tag rounded-full px-2 text-xs text-gray-600">
+              <Icon className="inline mr-1" icon="gg:check-o" />
+              {_("WebMediaProfileSummary_InformationTransmissionPolicy")}
+            </p>
           )}
           {wmp.credentialSubject.publishingPrinciple && (
-            <div className="bg-gray-100 rounded-full px-1 py-1 mx-1 my-1">
-              <p className="inline-flex items-center align-middle text-xs text-gray-600 px-1">
-                <Icon className="inline mr-1" icon="gg:check-o" />
-                {_("WebMediaProfileSummary_EditorialGuidelines")}
-              </p>
-            </div>
+            <p className="jumpu-tag rounded-full px-2 text-xs text-gray-600">
+              <Icon className="inline mr-1" icon="gg:check-o" />
+              {_("WebMediaProfileSummary_EditorialGuidelines")}
+            </p>
           )}
           {wmp.credentialSubject.privacyPolicy && (
-            <div className="bg-gray-100 rounded-full px-1 py-1 mx-1 my-1">
-              <p className="inline-flex items-center align-middle text-xs text-gray-600 px-1">
-                <Icon className="inline mr-1" icon="gg:check-o" />
-                {_("WebMediaProfileSummary_PrivacyPolicy")}
-              </p>
-            </div>
+            <p className="jumpu-tag rounded-full px-2 text-xs text-gray-600">
+              <Icon className="inline mr-1" icon="gg:check-o" />
+              {_("WebMediaProfileSummary_PrivacyPolicy")}
+            </p>
           )}
         </div>
       </div>

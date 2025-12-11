@@ -21,7 +21,7 @@ function ExternalLink(props: React.ComponentProps<"a">) {
   return (
     <a
       className={clsx(
-        "jumpu-card flex items-center gap-2.5 px-3 py-5 text-sm hover:bg-blue-50",
+        "jumpu-card flex items-center gap-2.5 px-5 py-3 text-sm hover:bg-blue-50",
         props.className,
       )}
       target="_blank"
@@ -50,10 +50,13 @@ function ReliabilityInfo(props: {
     useState<VerifiedVc<Certificate> | null>(sortedCertificates[0] ?? null);
   return (
     <div className="space-y-4">
-      <Description
-        description={props.wmp.credentialSubject.description ?? ""}
-        onlyBody={true}
-      />
+      {props.wmp.credentialSubject.description && (
+        <Description
+          description={props.wmp.credentialSubject.description}
+          onlyBody={true}
+          className="text-black [&_:where(p,ul,ol,li)]:my-2 [&_:first-child]:mt-0"
+        />
+      )}
       {props.wmp.credentialSubject.informationTransmissionPolicy && (
         <section>
           <h2 className="whitespace-pre-line text-xs text-gray-600 mb-3">

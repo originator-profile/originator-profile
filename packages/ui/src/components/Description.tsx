@@ -14,7 +14,10 @@ function Description({ className, description, onlyBody = false }: Props) {
 
   const body = (
     <div
-      className="prose prose-xs text-xs break-words"
+      className={twMerge(
+        "prose prose-xs text-xs break-words",
+        onlyBody && className,
+      )}
       dangerouslySetInnerHTML={{
         __html: html ?? "",
       }}
