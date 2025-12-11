@@ -150,7 +150,7 @@ function Base() {
       return error instanceof Error || "code" in error;
     },
   );
-  return <Unsupported errors={errors} />;
+  return <Unsupported />;
 }
 
 export default Base;

@@ -102,10 +102,10 @@
     "message": "組織の信頼性情報と出版物の流通経路の取得に失敗しました"
   },
   "Unsupported_ReliabilityInformationReadError": {
-    "message": "組織の信頼性情報と出版物の流通経路が\n正しく読み取れませんでした"
+    "message": "このWebページの発信者は\nサイト運営者にお問い合わせください"
   },
   "Unsupported_FollowingCausesConsidered": {
-    "message": "以下のような原因が考えられます"
+    "message": "サイトの運営者またはコンテンツ作成者を\n検証するためのデータが取得できませんでした"
   },
   "ErrorCheckList_ErrorDetails": {
     "message": "エラーの詳細"
@@ -210,10 +210,10 @@
     "message": "上記を理解して組織情報や出版物の内容を閲覧する"
   },
   "Prohibition_Warning": {
-    "message": "アクセスにはご注意ください"
+    "message": "正規のコンテンツではない可能性があります"
   },
   "Prohibition_Site": {
-    "message": "このサイトの発信元が確認できません"
+    "message": "発信者の詐称やコンテンツの改竄（かいざん）がされている可能性があります"
   },
   "Prohibition_Statement_HTML": {
     "message": "本物そっくりの偽サイトにログインしたり個人情報を登録したり支払いをしてしまい被害に合うケースが多発しています。<br />このページではサイトの運営者情報が確認できませんでした。そのため、この<strong className=\"font-bold\">サイトが本物かどうかは充分に注意してください。</strong>"
@@ -376,5 +376,8 @@
   },
   "DetailInfo": {
     "message": "詳細情報"
+  },
+  "Link_OriginatorProfile": {
+    "message": "Originator Profile についてより詳しく（外部サイト）"
   }
 }

@@ -102,10 +102,10 @@
     "message": "Failed to retrieve organization reliability information and publication distribution channel"
   },
   "Unsupported_ReliabilityInformationReadError": {
-    "message": "Organization reliability information and publication distribution channel could not be read correctly"
+    "message": "Please contact the site operator regarding the originator of this web page."
   },
   "Unsupported_FollowingCausesConsidered": {
-    "message": "The following causes are considered"
+    "message": "Failed to retrieve data to verify the site operator or content creator."
   },
   "ErrorCheckList_ErrorDetails": {
     "message": "Error details"
@@ -210,10 +210,10 @@
     "message": "Understand the above and view the organization information and publication content"
   },
   "Prohibition_Warning": {
-    "message": "Please be cautious when accessing"
+    "message": "This content may not be legitimate"
   },
   "Prohibition_Site": {
-    "message": "The source of this site cannot be confirmed"
+    "message": "There is a possibility of sender spoofing or content tampering"
   },
   "Prohibition_Statement_HTML": {
     "message": "Many cases have occurred where people have fallen victim to logging in, registering personal information, or making payments on fake sites that look exactly like the real ones.<br />On this page, we could not confirm the site operator's information. Therefore, please <strong className=\"font-bold\">be very careful about whether this site is genuine.</strong>"
@@ -373,5 +373,11 @@
   },
   "BackHeader_Back": {
     "message": "Back"
+  },
+  "DetailInfo": {
+    "message": "Detailed Information"
+  },
+  "Link_OriginatorProfile": {
+    "message": "Learn more about Originator Profile (external site)"
   }
 }
