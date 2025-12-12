@@ -3,6 +3,9 @@ on:
   workflow_dispatch:
 jobs:
   update-baselines:
+    environment:
+      name: test
+      url: ${{ steps.build.outputs.artifact-url }}
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     permissions:
@@ -22,6 +25,7 @@ jobs:
         uses: "./.github/actions/setup"
 
       - name: Build
+        id: build
         uses: "./.github/actions/build"
         with:
           BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
