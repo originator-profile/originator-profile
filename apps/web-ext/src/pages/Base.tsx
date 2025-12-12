@@ -22,7 +22,7 @@ import Unsupported from "../components/Unsupported";
 import {
   FetchCredentialsMessagingFailed,
   FramesVerifiedCas,
-  useCredentials 
+  useCredentials,
 } from "../components/credentials";
 import { useFrameCasLocationProvider } from "../components/frameCas";
 import { overlayExtensionMessenger } from "../components/overlay/extension-events";
@@ -150,7 +150,7 @@ function Base() {
       return error instanceof Error || "code" in error;
     },
   );
-  return <Unsupported errors={errors}/>;
+  return <Unsupported errors={errors} />;
 }
 
 export default Base;

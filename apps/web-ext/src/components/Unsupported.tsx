@@ -1,19 +1,15 @@
 import { _ } from "@originator-profile/ui";
 import GlobalHeader from "./GlobalHeader";
 
-function Messages({
-  errors
-}: {
-  errors: Error[];
-}) {
+function Messages({ errors }: { errors: Error[] }) {
   const errorWithCode = errors.filter((error) => "code" in error);
   const hasOtherErrors = errors.length !== errorWithCode.length;
 
   return (
     <>
       {errorWithCode.length > 0 ? (
-        errorWithCode.map((error) => (
-          <p>{_(`Unsupported_${error.code as string}`)}</p>
+        errorWithCode.map((error, index) => (
+          <p key={index}>{_(`Unsupported_${error.code as string}`)}</p>
         ))
       ) : hasOtherErrors ? (
         <p>{_("Unsupported_UnknownError")}</p>

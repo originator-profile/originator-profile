@@ -11,7 +11,7 @@ export default function SiteProfile() {
   const [queryParams] = useSearchParams();
   const { siteProfile, isLoading } = useSiteProfile();
   if (isLoading) return <Loading />;
-  if (!siteProfile) return <GlobalHeader className="sticky top-0 z-11"/>;
+  if (!siteProfile) return <GlobalHeader className="sticky top-0 z-11" />;
   const op = siteProfile.originators.find(
     (originator) =>
       originator.media?.doc.credentialSubject.id ===
