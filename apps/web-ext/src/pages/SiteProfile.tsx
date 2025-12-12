@@ -5,12 +5,13 @@ import {
   useSiteProfile,
 } from "../components/siteProfile";
 import { routes } from "../utils/routes";
+import GlobalHeader from "../components/GlobalHeader";
 
 export default function SiteProfile() {
   const [queryParams] = useSearchParams();
   const { siteProfile, isLoading } = useSiteProfile();
   if (isLoading) return <Loading />;
-  if (!siteProfile) return null;
+  if (!siteProfile) return <GlobalHeader className="sticky top-0 z-11"/>;
   const op = siteProfile.originators.find(
     (originator) =>
       originator.media?.doc.credentialSubject.id ===

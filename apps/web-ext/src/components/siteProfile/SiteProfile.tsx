@@ -16,7 +16,7 @@ export function SiteProfile(props: SiteProfileProps) {
   const dialog = useModalDialog();
   return (
     <>
-      <GlobalHeader className="sticky top-0 z-10">
+      <GlobalHeader className="sticky top-0 z-11">
         {props.wsp && (
           <h1 className="text-sm">{props.wsp?.credentialSubject.name}</h1>
         )}
