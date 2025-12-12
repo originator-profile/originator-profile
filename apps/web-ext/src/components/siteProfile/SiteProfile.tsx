@@ -16,6 +16,7 @@ export function SiteProfile(props: SiteProfileProps) {
   const dialog = useModalDialog();
   return (
     <>
+      {/* Credential での CaSelector 部分とスタッキングコンテキストで下に重なってしまうため z-11 に設定 */}
       <GlobalHeader className="sticky top-0 z-11">
         {props.wsp && (
           <h1 className="text-sm">{props.wsp?.credentialSubject.name}</h1>

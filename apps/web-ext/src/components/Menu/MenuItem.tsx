@@ -1,5 +1,6 @@
 import { useEffect, useRef } from "react";
 import clsx from "clsx";
+import { Link } from "react-router";
 
 interface MenuItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   role?: "menuitem";
@@ -7,6 +8,8 @@ interface MenuItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   active?: boolean;
   value: string;
   ref?: React.Ref<HTMLButtonElement>;
+  variant?: "button" | "link";
+  to?: string;
 }
 
 export const MenuItem = ({
@@ -16,6 +19,8 @@ export const MenuItem = ({
   active = false,
   value: _value,
   ref,
+  variant = "button",
+  to,
   ...props
 }: MenuItemProps) => {
   const internalRef = useRef<HTMLButtonElement>(null);
@@ -38,23 +43,39 @@ export const MenuItem = ({
   }, [active]);
   return (
     <li role="none">
-      <button
-        ref={setRefs}
-        type="button"
-        role="menuitem"
-        className={clsx(
-          "w-full py-2 text-left text-sm",
-          "flex items-center",
-          "focus:outline-none",
-          {
-            "font-bold": active, // Active state shows bold text like original
-          },
-          className,
-        )}
-        {...props}
-      >
-        {children}
-      </button>
+      {variant === "link" && to ? (
+        <Link
+          to={to}
+          role="menuitem"
+          className={clsx(
+            "w-full py-2 text-left text-sm",
+            "flex items-center",
+            "focus:outline-none",
+            { "font-bold": active },
+            className,
+          )}
+        >
+          {children}
+        </Link>
+      ) : (
+        <button
+          ref={setRefs}
+          type="button"
+          role="menuitem"
+          className={clsx(
+            "w-full py-2 text-left text-sm",
+            "flex items-center",
+            "focus:outline-none",
+            {
+              "font-bold": active, // Active state shows bold text like original
+            },
+            className,
+          )}
+          {...props}
+        >
+          {children}
+        </button>
+      )}
     </li>
   );
 };

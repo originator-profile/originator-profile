@@ -1,4 +1,4 @@
-import { Link, useParams } from "react-router";
+import { useParams } from "react-router";
 import { Header, _ } from "@originator-profile/ui";
 import { buildDetailUrl } from "../utils/routes";
 import { Menu, MenuButton, MenuItem, useMenuButton } from "./Menu";
@@ -64,14 +64,11 @@ function GlobalHeader({ className, children }: Props) {
               active={activeIndex === 0}
               onKeyDown={(e) => handleMenuKeyDown(e, "detail")}
               onMouseEnter={() => handleItemMouseEnter(0)}
-              className="px-4 py-2 hover:bg-gray-100"
+              variant="link"
+              to={buildDetailUrl(tabId ?? "")}
+              className="px-4 py-2 hover:bg-gray-100 font-light"
             >
-              <Link
-                to={buildDetailUrl(tabId ?? "")}
-                className="block w-full h-full text-left font-light"
-              >
-                {_("DetailInfo")}
-              </Link>
+              {_("DetailInfo")}
             </MenuItem>
           </Menu>
         )}

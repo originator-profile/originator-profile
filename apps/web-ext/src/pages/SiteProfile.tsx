@@ -11,6 +11,7 @@ export default function SiteProfile() {
   const [queryParams] = useSearchParams();
   const { siteProfile, isLoading } = useSiteProfile();
   if (isLoading) return <Loading />;
+  // Credential での CaSelector 部分とスタッキングコンテキストで下に重なってしまうため z-11 に設定
   if (!siteProfile) return <GlobalHeader className="sticky top-0 z-11" />;
   const op = siteProfile.originators.find(
     (originator) =>
