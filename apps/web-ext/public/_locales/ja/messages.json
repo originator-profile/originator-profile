@@ -84,16 +84,19 @@
     "message": "表示されている画像、テキスト等は署名をともなうデータであり、署名の正しさによって改ざんされていないことが確認されました。この組織の信頼性の判断指標として、自ら定める情報発信ポリシーのほか、第三者によって発行された追加情報が閲覧できます。追加情報には、組織の実在性、業種・業態に応じた適格性等が示されます。"
   },
   "Unsupported_ERR_SITE_PROFILE_FETCH_FAILED": {
-    "message": "サイトのコンテンツ発信者の信憑性、信頼性に関するデータが取得できませんでした。ネットワーク通信環境を確認し、再度拡張機能をご利用ください。"
+    "message": "サイトの運営者またはコンテンツ作成者を\n検証するためのデータが取得できませんでした"
   },
   "Unsupported_ERR_SITE_PROFILE_FETCH_INVALID": {
-    "message": "サイトのコンテンツ発信者の信憑性、信頼性に関するデータの形式が無効です。サイト管理者にお問い合わせください。"
+    "message": "サイトの運営者またはコンテンツ作成者を\n検証するためのデータの形式が無効です"
   },
   "Unsupported_ERR_ORIGINATOR_PROFILE_SET_INVALID": {
-    "message": "コンテンツ発信者の信憑性、信頼性に関するデータの形式が無効です。サイト管理者にお問い合わせください。"
+    "message": "サイトの運営者またはコンテンツ作成者を\n検証するためのデータの形式が無効です"
   },
   "Unsupported_ERR_FETCH_CREDENTIALS_MESSAGING_FAILED": {
-    "message": "サイトのコンテンツの信憑性、信頼性に関するデータが取得できませんでした。ネットワーク通信環境を確認し、再度拡張機能をご利用ください。"
+    "message": "コンテンツ作成者を検証するための\nデータが取得できませんでした"
+  },
+  "Unsupported_UnknownError": {
+    "message": "サイトの運営者またはコンテンツ作成者を\n検証するためのデータが存在しないか、取得できませんでした"
   },
   "Unsupported_NoReliabilityInformationYet": {
     "message": "組織の信頼性情報と出版物の流通経路がまだありません"
@@ -101,11 +104,11 @@
   "Unsupported_ReliabilityInformationRetrievalFailed": {
     "message": "組織の信頼性情報と出版物の流通経路の取得に失敗しました"
   },
-  "Unsupported_ReliabilityInformationReadError": {
+  "Unsupported_ContactSiteOperator": {
     "message": "このWebページの発信者は\nサイト運営者にお問い合わせください"
   },
   "Unsupported_FollowingCausesConsidered": {
-    "message": "サイトの運営者またはコンテンツ作成者を\n検証するためのデータが取得できませんでした"
+    "message": "以下のような原因が考えられます"
   },
   "ErrorCheckList_ErrorDetails": {
     "message": "エラーの詳細"

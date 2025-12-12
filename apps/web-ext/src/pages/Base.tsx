@@ -1,6 +1,11 @@
+import {
+  SiteProfileFetchFailed,
+  SiteProfileFetchInvalid,
+} from "@originator-profile/presentation";
 import { _ } from "@originator-profile/ui";
 import {
   CasVerifyFailed,
+  OpsInvalid,
   OpsVerifyFailed,
   SiteProfileInvalid,
   SiteProfileVerifyFailed,
@@ -14,7 +19,11 @@ import { Navigate } from "react-router";
 import { useMount, useTitle } from "react-use";
 import Loading from "../components/Loading";
 import Unsupported from "../components/Unsupported";
-import { FramesVerifiedCas, useCredentials } from "../components/credentials";
+import {
+  FetchCredentialsMessagingFailed,
+  FramesVerifiedCas,
+  useCredentials 
+} from "../components/credentials";
 import { useFrameCasLocationProvider } from "../components/frameCas";
 import { overlayExtensionMessenger } from "../components/overlay/extension-events";
 import { useSiteProfile } from "../components/siteProfile";
@@ -126,7 +135,22 @@ function Base() {
     return <Redirect tabId={tabId} ops={ops} framesCas={framesCas} />;
   }
 
-  return <Unsupported />;
+  const errors = [sp_error, credentials_error].filter(
+    (
+      error,
+    ): error is
+      | SiteProfileFetchFailed
+      | SiteProfileFetchInvalid
+      | OpsInvalid
+      | FetchCredentialsMessagingFailed => {
+      if (!error) {
+        return false;
+      }
+      // NOTE: デシリアライズされたが Error インスタンスでないエラーが得られうる
+      return error instanceof Error || "code" in error;
+    },
+  );
+  return <Unsupported errors={errors}/>;
 }
 
 export default Base;

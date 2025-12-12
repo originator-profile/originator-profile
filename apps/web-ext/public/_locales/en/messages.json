@@ -84,16 +84,19 @@
     "message": "The displayed images, text, and other data are accompanied by a signature, and the validity of the signature confirms that the content has not been tampered with. As indicators of this organization's trustworthiness, you can view both its self-defined information disclosure policy and supplementary information issued by third parties. This supplementary information shows the organization's existence and its eligibility according to its industry and business type."
   },
   "Unsupported_ERR_SITE_PROFILE_FETCH_FAILED": {
-    "message": "The data regarding the authenticity and trustworthiness of the site's content originator could not be retrieved. Please check your network communication environment and try using the extension again."
+    "message": "Failed to retrieve the data required to verify the site operator or content creator"
   },
   "Unsupported_ERR_SITE_PROFILE_FETCH_INVALID": {
-    "message": "The format of the data regarding the authenticity and trustworthiness of the site's content originator is invalid. Please contact the site administrator."
+    "message": "The data format required to verify the site operator or content creator is invalid"
   },
   "Unsupported_ERR_ORIGINATOR_PROFILE_SET_INVALID": {
-    "message": "The format of the data regarding the authenticity and trustworthiness of the content originator is invalid. Please contact the site administrator."
+    "message": "The data format required to verify the site operator or content creator is invalid"
   },
   "Unsupported_ERR_FETCH_CREDENTIALS_MESSAGING_FAILED": {
-    "message": "The data regarding the authenticity and trustworthiness of the site's content could not be retrieved. Please check your network communication environment and try using the extension again."
+    "message": "Failed to retrieve the data required to verify the content creator"
+  },
+  "Unsupported_UnknownError": {
+    "message": "The data required to verify the site operator or content creator either does not exist or could not be retrieved"
   },
   "Unsupported_NoReliabilityInformationYet": {
     "message": "Organization reliability information and publication distribution channel are not available yet"
@@ -101,11 +104,11 @@
   "Unsupported_ReliabilityInformationRetrievalFailed": {
     "message": "Failed to retrieve organization reliability information and publication distribution channel"
   },
-  "Unsupported_ReliabilityInformationReadError": {
+  "Unsupported_ContactSiteOperator": {
     "message": "Please contact the site operator regarding the originator of this web page"
   },
   "Unsupported_FollowingCausesConsidered": {
-    "message": "Failed to retrieve data to verify the site operator or content creator"
+    "message": "The following causes are considered"
   },
   "ErrorCheckList_ErrorDetails": {
     "message": "Error details"
