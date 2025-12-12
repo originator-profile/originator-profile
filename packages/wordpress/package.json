@@ -12,6 +12,7 @@
   "type": "commonjs",
   "scripts": {
     "e2e": "playwright test",
+    "e2e:update": "playwright test --update-snapshots",
     "version": "shx sed -i 's/(?<= Version: *)[^ ]*$/'${npm_package_version}/ ca-manager.php && git add ca-manager.php"
   },
   "devDependencies": {

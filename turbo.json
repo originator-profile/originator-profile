@@ -20,6 +20,10 @@
       "persistent": false,
       "cache": false
     },
+    "e2e:update": {
+      "persistent": false,
+      "cache": false
+    },
     "test": {
       "dependsOn": ["build"],
       "outputs": []
