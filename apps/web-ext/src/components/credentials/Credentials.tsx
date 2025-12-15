@@ -1,4 +1,3 @@
-import { Icon } from "@iconify/react";
 import {
   AdvertisementCA,
   AdvertorialCA,
@@ -9,10 +8,7 @@ import {
   ArticleTable,
   Description,
   Image,
-  ModalDialog,
-  TechInfo,
   _,
-  useModalDialog,
 } from "@originator-profile/ui";
 import placeholderLogoMainUrl from "@originator-profile/ui/src/assets/placeholder-logo-main.png";
 import flush from "just-flush";
@@ -35,7 +31,6 @@ export function Credentials(props: CredentialsProps) {
     useState<Parameters<typeof listCas>[1]>("All");
   const { tabId } = useParams<{ tabId: string }>();
 
-  const dialog = useModalDialog();
   const navigate = useNavigate();
 
   const filteredCas = listCas(props.cas, caListType);
@@ -74,45 +69,7 @@ export function Credentials(props: CredentialsProps) {
       </div>
       <main className="flex-1">
         <div className="bg-gray-100 min-h-screen p-4">
-          <div>
-            <ModalDialog
-              dialogRef={dialog.ref}
-              className="group-aria-hidden:translate-y-full translate-y-0 bottom-0 w-full"
-              onClose={dialog.close}
-            >
-              <TechInfo
-                className="rounded-b-none max-h-[80svh] overflow-auto"
-                value={{
-                  ops: props.ops,
-                  cas: props.cas,
-                }}
-              />
-            </ModalDialog>
-            <div className="flex items-center justify-center gap-1 mb-3">
-              <p className="whitespace-pre-line jumpu-badge inline-flex items-center gap-1 bg-gray-600 text-xs text-white font-normal border border-gray-300">
-                {contentType === "ContentType_Main" && (
-                  <Icon
-                    className="text-base"
-                    icon="fluent:window-text-20-filled"
-                  />
-                )}
-                {_(contentType)}
-              </p>
-              <button
-                className="jumpu-icon-button text-xs rounded-full bg-gray-100 border-gray-200 w-6 h-6 ml-1 group"
-                aria-describedby="tooltip-2"
-                onClick={dialog.open}
-              >
-                <Icon className="inline" icon={"fa6-solid:wrench"} />
-                <span
-                  id="tooltip-2"
-                  role="tooltip"
-                  className="[transform:translate(-50%,150%)_scale(0)]! group-hover:[transform:translate(-50%,150%)_scale(1)]!"
-                >
-                  {_("Credentials_TechnicalInformation")}
-                </span>
-              </button>
-            </div>
+          <div className="pt-4">
             <ReliabilityGuide className="mb-3" contentType={contentType} />
             <div className="mb-3" data-testid="ps-json-holder">
               <WebMediaProfileSummaryCard to={props.orgPath} wmp={props.wmp} />

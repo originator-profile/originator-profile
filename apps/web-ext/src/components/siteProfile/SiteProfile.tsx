@@ -1,11 +1,4 @@
-import { Icon } from "@iconify/react";
-import {
-  Image,
-  ModalDialog,
-  TechInfo,
-  _,
-  useModalDialog,
-} from "@originator-profile/ui";
+import { Image, _ } from "@originator-profile/ui";
 import placeholderLogoMainUrl from "@originator-profile/ui/src/assets/placeholder-logo-main.png";
 import ReliabilityGuide from "../ReliabilityGuide";
 import WebMediaProfileSummaryCard from "../WebMediaProfileSummaryCard";
@@ -13,7 +6,6 @@ import { SiteProfileProps } from "./types";
 import GlobalHeader from "../GlobalHeader";
 
 export function SiteProfile(props: SiteProfileProps) {
-  const dialog = useModalDialog();
   return (
     <>
       {/* Credential での CaSelector 部分とスタッキングコンテキストで下に重なってしまうため z-11 に設定 */}
@@ -23,36 +15,7 @@ export function SiteProfile(props: SiteProfileProps) {
         )}
       </GlobalHeader>
       <div data-testid="site-profile" className="bg-gray-50 p-4">
-        <div className="flex justify-center">
-          <ModalDialog
-            dialogRef={dialog.ref}
-            className="group-aria-hidden:translate-y-full translate-y-0 bottom-0 w-full"
-            onClose={dialog.close}
-          >
-            <TechInfo
-              className="rounded-b-none max-h-[80svh] overflow-auto"
-              value={props.siteProfile}
-            />
-          </ModalDialog>
-          <p className="whitespace-pre-line jumpu-badge bg-gray-600 text-xs text-white font-normal border border-gray-300 mb-3">
-            {_("ContentType_Site")}
-          </p>
-          <button
-            className="jumpu-icon-button text-xs rounded-full bg-gray-100 border-gray-200 w-6 h-6 ml-1 group"
-            aria-describedby="tooltip-1"
-            onClick={dialog.open}
-          >
-            <Icon className="inline" icon={"fa6-solid:wrench"} />
-            <span
-              id="tooltip-1"
-              role="tooltip"
-              className="[transform:translate(-50%,150%)_scale(0)]! group-hover:[transform:translate(-50%,150%)_scale(1)]!"
-            >
-              {_("SiteProfile_TechnicalInformation")}
-            </span>
-          </button>
-        </div>
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col items-center gap-4 pt-3">
           {props.wsp.credentialSubject.image && (
             <Image
               className="shrink-0 w-fit"

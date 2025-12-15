@@ -6,6 +6,7 @@ type Props = {
   value: unknown;
 };
 
+/** @deprecated */
 function TechInfo({ className, value }: Props) {
   return (
     <div className={twMerge("jumpu-card p-5 rounded-2xl text-sm", className)}>

@@ -40,7 +40,7 @@ function App() {
             <Route
               index
               element={
-                <div className="flex flex-col">
+                <div className="flex flex-col divide-y divide-gray-200">
                   <SiteProfile />
                   <Credentials />
                 </div>

@@ -29,12 +29,12 @@ function Unsupported({ errors }: Props) {
           <h1 className="whitespace-pre-line text-lg mb-2 text-center font-bold">
             {_("Unsupported_ContactSiteOperator")}
           </h1>
-          <p
+          <div
             className="whitespace-pre-line text-sm text-gray-700 text-center mb-2"
             data-testid="p-elm-unsupported-message"
           >
             <Messages errors={errors} />
-          </p>
+          </div>
           <p className="text-sm text-center underline">
             <a
               href="https://originator-profile.org/"
