@@ -197,32 +197,11 @@
   "SiteProfile_TechnicalInformation": {
     "message": "Technical Information"
   },
-  "Prohibition_DetailStatement": {
-    "message": "Originator Profile verifies whether this site is genuine using electronic certification called 'authentication key'. If this message is displayed, two causes are possible"
-  },
-  "Prohibition_DetailReason_1": {
-    "message": "A legitimate organization representative has made some error in handling the authentication key without malicious intent"
-  },
-  "Prohibition_DetailReason_2": {
-    "message": "A malicious third party has tampered with the authentication key to make a fake site appear genuine"
-  },
-  "Prohibition_DetailAdditional": {
-    "message": "Especially in case 2, it is considered a dangerous site that may deceive you and cause harm. For these reasons, we are informing you of the possibility that this site may be fake. Please note that the certificate may have been tampered with or forged."
-  },
-  "Prohibition_DetailProceed": {
-    "message": "Understand the above and view the organization information and publication content"
-  },
   "Prohibition_Warning": {
     "message": "This content may not be legitimate"
   },
   "Prohibition_Site": {
     "message": "There is a possibility of sender spoofing or content tampering"
-  },
-  "Prohibition_Statement_HTML": {
-    "message": "Many cases have occurred where people have fallen victim to logging in, registering personal information, or making payments on fake sites that look exactly like the real ones.<br />On this page, we could not confirm the site operator's information. Therefore, please <strong className=\"font-bold\">be very careful about whether this site is genuine.</strong>"
-  },
-  "Prohibition_StatementDetail": {
-    "message": "Learn more about why this message is displayed..."
   },
   "CertificateDetail_Loading": {
     "message": "Loading Certificate..."

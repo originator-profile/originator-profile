@@ -6,7 +6,7 @@ import { useSearchParams } from "react-router";
 type Props = { back: string };
 
 function DetailInfo(props: Props) {
-  const { tabId, error: sp_error } = useSiteProfile();
+  const { error: sp_error } = useSiteProfile();
   const { error: credentials_error } = useCredentials();
   const [queryParams] = useSearchParams();
   const backPath = {
@@ -16,7 +16,6 @@ function DetailInfo(props: Props) {
   return (
     <Template
       errors={[sp_error, credentials_error].filter((x) => x !== undefined)}
-      tabId={tabId}
       backPath={backPath}
     />
   );

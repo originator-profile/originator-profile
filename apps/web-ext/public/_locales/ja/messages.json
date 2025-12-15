@@ -197,32 +197,11 @@
   "SiteProfile_TechnicalInformation": {
     "message": "技術情報"
   },
-  "Prohibition_DetailStatement": {
-    "message": "Originator Profile ではこのサイトが本物であるかの確認を「認証鍵」という電子証明によって行っています。\nこのメッセージが表示されている場合、以下の2つの原因が考えられます"
-  },
-  "Prohibition_DetailReason_1": {
-    "message": "(悪意のない正当な組織担当者が)認証鍵の取り扱いについて何らかの誤りがある"
-  },
-  "Prohibition_DetailReason_2": {
-    "message": "(悪意のある第三者が)認証鍵を改ざんし、偽サイトを本物のように見せようとしている"
-  },
-  "Prohibition_DetailAdditional": {
-    "message": "特に 2. の場合はあなたを欺き不利益を与える危険なサイトと考えられます。\nこれらの理由によりこのサイトが偽サイトである可能性をあなたにお伝えしています。\n証明書は改ざん・偽装されている可能性があるのでご注意ください。\n"
-  },
-  "Prohibition_DetailProceed": {
-    "message": "上記を理解して組織情報や出版物の内容を閲覧する"
-  },
   "Prohibition_Warning": {
     "message": "正規のコンテンツではない可能性があります"
   },
   "Prohibition_Site": {
     "message": "発信者の詐称やコンテンツの改竄（かいざん）がされている可能性があります"
-  },
-  "Prohibition_Statement_HTML": {
-    "message": "本物そっくりの偽サイトにログインしたり個人情報を登録したり支払いをしてしまい被害に合うケースが多発しています。<br />このページではサイトの運営者情報が確認できませんでした。そのため、この<strong className=\"font-bold\">サイトが本物かどうかは充分に注意してください。</strong>"
-  },
-  "Prohibition_StatementDetail": {
-    "message": "このメッセージが表示される理由についてもっと詳しく..."
   },
   "CertificateDetail_Loading": {
     "message": "証明書を読み込み中です..."
