@@ -3,6 +3,7 @@ import { Header, _ } from "@originator-profile/ui";
 import { buildDetailUrl } from "../utils/routes";
 import { Menu, MenuButton, MenuItem, useMenuButton } from "./Menu";
 import { Icon } from "@iconify/react";
+import { twMerge } from "tailwind-merge";
 
 type Props = {
   className?: string;
@@ -34,7 +35,7 @@ function GlobalHeader({ className, children }: Props) {
   });
 
   return (
-    <Header className={className}>
+    <Header className={twMerge("border-gray-200", className)}>
       {children}
       <div className="ml-auto relative">
         <MenuButton
