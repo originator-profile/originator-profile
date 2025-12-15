@@ -27,7 +27,7 @@ function DetailInfo({ sp, ops, framesCas, errors, backPath }: DetailInfoProps) {
         <ProjectTitle className="mb-12" as="header" />
         <article className="mb-12 max-w-6xl mx-auto">
           <div className="mb-8">
-            <h2 className="pl-4 mb-4 text-sm font-bold text-gray-700 ">
+            <h2 className="pl-4 mb-4 text-sm font-bold text-gray-700">
               {_("DetailInfo_VerificationResults")}
             </h2>
             <ErrorCheckList errors={errors} />
@@ -44,8 +44,8 @@ function DetailInfo({ sp, ops, framesCas, errors, backPath }: DetailInfoProps) {
                 "Content Attestation Set (Per Frame)": framesCas ?? null,
               }),
             )}
-            shouldExpandNodeInitially={(isExpaned, { level }) =>
-              level > 2 ? false : isExpaned
+            shouldExpandNodeInitially={(isExpanded, { level }) =>
+              level > 2 ? false : isExpanded
             }
           />
           <ProjectSummary as="footer" />
