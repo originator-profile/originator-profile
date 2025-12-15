@@ -27,8 +27,14 @@ function DetailInfo({ sp, ops, framesCas, errors, backPath }: DetailInfoProps) {
         <ProjectTitle className="mb-12" as="header" />
         <article className="mb-12 max-w-6xl mx-auto">
           <div className="mb-8">
+            <h2 className="pl-4 mb-4 text-sm font-bold text-gray-700 ">
+              {_("DetailInfo_VerificationResults")}
+            </h2>
             <ErrorCheckList errors={errors} />
           </div>
+          <h2 className="pl-4 mb-4 text-sm font-bold text-gray-700">
+            {_("DetailInfo")}
+          </h2>
           <JsonView
             className="pl-4 mb-8 overflow-auto"
             value={JSON.parse(

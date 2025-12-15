@@ -338,6 +338,9 @@
   "DetailInfo": {
     "message": "詳細情報"
   },
+  "DetailInfo_VerificationResults": {
+    "message": "検証結果"
+  },
   "Link_OriginatorProfile": {
     "message": "Originator Profile についてより詳しく（外部サイト）"
   }

@@ -338,6 +338,9 @@
   "DetailInfo": {
     "message": "Detailed Information"
   },
+  "DetailInfo_VerificationResults": {
+    "message": "Verification Results"
+  },
   "Link_OriginatorProfile": {
     "message": "Learn more about Originator Profile (external site)"
   }
