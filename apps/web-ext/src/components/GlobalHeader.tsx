@@ -1,9 +1,9 @@
-import { useParams } from "react-router";
+import { Icon } from "@iconify/react";
 import { Header, _ } from "@originator-profile/ui";
+import { useParams } from "react-router";
+import { twMerge } from "tailwind-merge";
 import { buildDetailUrl } from "../utils/routes";
 import { Menu, MenuButton, MenuItem, useMenuButton } from "./Menu";
-import { Icon } from "@iconify/react";
-import { twMerge } from "tailwind-merge";
 
 type Props = {
   className?: string;

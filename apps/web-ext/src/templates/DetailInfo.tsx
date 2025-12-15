@@ -1,10 +1,10 @@
-import { _, ProjectTitle, ProjectSummary } from "@originator-profile/ui";
-import ErrorCheckList from "../components/ErrorCheckList";
-import BackHeader from "../components/BackHeader";
-import JsonView from "@uiw/react-json-view";
 import { stringifyWithError } from "@originator-profile/core";
+import { _, ProjectSummary, ProjectTitle } from "@originator-profile/ui";
+import type { VerifiedOps, VerifiedSp } from "@originator-profile/verify";
+import JsonView from "@uiw/react-json-view";
+import BackHeader from "../components/BackHeader";
 import type { FrameVerifiedCas } from "../components/credentials";
-import type { VerifiedSp, VerifiedOps } from "@originator-profile/verify";
+import ErrorCheckList from "../components/ErrorCheckList";
 
 type DetailInfoProps = {
   sp?: VerifiedSp;
