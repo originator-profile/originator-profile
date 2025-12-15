@@ -188,14 +188,8 @@
   "Org_ReliabilityInformation": {
     "message": "信頼性情報"
   },
-  "Credentials_TechnicalInformation": {
-    "message": "技術情報"
-  },
   "Credentials_UntitledContent": {
     "message": "タイトル未設定のコンテンツ"
-  },
-  "SiteProfile_TechnicalInformation": {
-    "message": "技術情報"
   },
   "Prohibition_Warning": {
     "message": "正規のコンテンツではない可能性があります"

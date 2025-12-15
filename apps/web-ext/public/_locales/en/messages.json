@@ -188,14 +188,8 @@
   "Org_ReliabilityInformation": {
     "message": "Reliability Information"
   },
-  "Credentials_TechnicalInformation": {
-    "message": "Technical Information"
-  },
   "Credentials_UntitledContent": {
     "message": "Untitled Content"
-  },
-  "SiteProfile_TechnicalInformation": {
-    "message": "Technical Information"
   },
   "Prohibition_Warning": {
     "message": "This content may not be legitimate"
