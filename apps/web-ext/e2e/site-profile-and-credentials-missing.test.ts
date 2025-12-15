@@ -17,7 +17,7 @@ test("Site Profile と OPS/CAS が取得できない場合非サポートが表�
   await expect(ext?.getByTestId("p-elm-unsupported-message")).toBeVisible();
   await expect(
     ext.getByText(
-      "組織の信頼性情報と出版物の流通経路が\n正しく読み取れませんでした",
+      "このWebページの発信者は\nサイト運営者にお問い合わせください",
     ),
   ).toHaveCount(1);
 });

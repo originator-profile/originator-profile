@@ -56,6 +56,7 @@ export const paths = {
   publ: "publ/:issuer/:subject",
   site: "site",
   prohibition: "prohibition",
+  detail: "detail",
 } as const;
 
 export const routes = {
@@ -64,6 +65,7 @@ export const routes = {
   publ: urlParamsRoute(paths.publ, getPublParams),
   site: route(paths.site),
   prohibition: route(paths.prohibition),
+  detail: route(paths.detail),
 } as const;
 
 export function buildPublUrl(
@@ -73,5 +75,12 @@ export function buildPublUrl(
   return [
     routes.base.build({ tabId: String(tabId) }),
     ca ? routes.publ.build(routes.publ.getParams(ca)) : routes.site.build({}),
+  ].join("/");
+}
+
+export function buildDetailUrl(tabId: number | string | undefined) {
+  return [
+    routes.base.build({ tabId: String(tabId) }),
+    routes.detail.build({}),
   ].join("/");
 }
