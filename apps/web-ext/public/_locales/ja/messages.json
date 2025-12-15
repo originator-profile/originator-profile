@@ -84,19 +84,19 @@
     "message": "表示されている画像、テキスト等は署名をともなうデータであり、署名の正しさによって改ざんされていないことが確認されました。この組織の信頼性の判断指標として、自ら定める情報発信ポリシーのほか、第三者によって発行された追加情報が閲覧できます。追加情報には、組織の実在性、業種・業態に応じた適格性等が示されます。"
   },
   "Unsupported_ERR_SITE_PROFILE_FETCH_FAILED": {
-    "message": "サイトの運営者またはコンテンツ作成者を\n検証するためのデータが取得できませんでした"
+    "message": "サイトの運営者またはコンテンツ作成者を検証するためのデータが取得できませんでした"
   },
   "Unsupported_ERR_SITE_PROFILE_FETCH_INVALID": {
-    "message": "サイトの運営者またはコンテンツ作成者を\n検証するためのデータの形式が無効です"
+    "message": "サイトの運営者またはコンテンツ作成者を検証するためのデータの形式が無効です"
   },
   "Unsupported_ERR_ORIGINATOR_PROFILE_SET_INVALID": {
-    "message": "サイトの運営者またはコンテンツ作成者を\n検証するためのデータの形式が無効です"
+    "message": "サイトの運営者またはコンテンツ作成者を検証するためのデータの形式が無効です"
   },
   "Unsupported_ERR_FETCH_CREDENTIALS_MESSAGING_FAILED": {
-    "message": "コンテンツ作成者を検証するための\nデータが取得できませんでした"
+    "message": "コンテンツ作成者を検証するためのデータが取得できませんでした"
   },
   "Unsupported_UnknownError": {
-    "message": "サイトの運営者またはコンテンツ作成者を\n検証するためのデータが存在しないか、取得できませんでした"
+    "message": "サイトの運営者またはコンテンツ作成者を検証するためのデータが存在しないか、取得できませんでした"
   },
   "Unsupported_NoReliabilityInformationYet": {
     "message": "組織の信頼性情報と出版物の流通経路がまだありません"

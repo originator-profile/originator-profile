@@ -6,15 +6,13 @@ function Messages({ errors }: { errors: Error[] }) {
   const hasOtherErrors = errors.length !== errorWithCode.length;
 
   return (
-    <>
-      {errorWithCode.length > 0 ? (
+    <ul className="list-disc list-inside text-sm max-w-xs mx-auto">
+      {errorWithCode.length > 0 &&
         errorWithCode.map((error, index) => (
-          <p key={index}>{_(`Unsupported_${error.code as string}`)}</p>
-        ))
-      ) : hasOtherErrors ? (
-        <p>{_("Unsupported_UnknownError")}</p>
-      ) : null}
-    </>
+          <li key={index}>{_(`Unsupported_${error.code as string}`)}</li>
+        ))}
+      {hasOtherErrors && <li>{_("Unsupported_UnknownError")}</li>}
+    </ul>
   );
 }
 
