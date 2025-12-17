@@ -5,10 +5,10 @@ import { addYears, fromUnixTime, getUnixTime } from "date-fns";
 import { diffApply } from "just-diff-apply";
 import { describe, expect, test } from "vitest";
 import { createIntegrityMetadata } from "websri";
+import { verifyIntegrity } from "../integrity";
 import { CaInvalid, CaVerifyFailed } from "./errors";
 import { VerifiedCa } from "./types";
 import { CaVerifier } from "./verify-content-attestation";
-import { verifyIntegrity } from "../integrity";
 
 const issuedAt = fromUnixTime(getUnixTime(new Date()));
 const expiredAt = addYears(issuedAt, 10);

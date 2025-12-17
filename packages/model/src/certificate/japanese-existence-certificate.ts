@@ -1,7 +1,7 @@
 import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { OpCipContext } from "../context/op-cip-context";
 import { OpVc } from "../op-vc";
 import { CertificationSystem } from "./cert-system";
-import { OpCipContext } from "../context/op-cip-context";
 
 export const JapaneseExistenceCertificateProperties = {
   type: "object",

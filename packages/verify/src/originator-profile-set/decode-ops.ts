@@ -1,21 +1,21 @@
 import {
   CoreProfile,
-  WebMediaProfile,
   OriginatorProfileSet,
+  WebMediaProfile,
 } from "@originator-profile/model";
 import {
   JwtVcDecoder,
   JwtVcDecodingResult,
   UnverifiedJwtVc,
 } from "@originator-profile/securing-mechanism";
+import { OpInvalid, OpsInvalid } from "./errors";
 import {
   Certificate,
-  DecodedOps,
-  OpsDecodingResult,
   DecodedOp,
+  DecodedOps,
   OpDecodingResult,
+  OpsDecodingResult,
 } from "./types";
-import { OpInvalid, OpsInvalid } from "./errors";
 
 const isEveryDecodedPa = (
   annotations: JwtVcDecodingResult<Certificate>[],

@@ -1,9 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { HashRouter } from "react-router";
+import App from "./App";
 import "./style.css";
 import "./utils/cors-basic-auth";
-import App from "./App";
 
 const init = () => {
   const root = document.getElementById("root");

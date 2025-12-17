@@ -3,8 +3,8 @@ import { UnverifiedJwtVc } from "@originator-profile/securing-mechanism";
 import {
   OpDecodingFailure,
   OpsDecodingFailure,
-  OpVerificationFailure,
   OpsVerificationFailure,
+  OpVerificationFailure,
 } from "./types";
 
 /**

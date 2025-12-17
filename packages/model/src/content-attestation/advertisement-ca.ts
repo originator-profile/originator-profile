@@ -3,8 +3,8 @@ import { AllowedOrigin } from "../allowed-origin";
 import { AllowedUrl } from "../allowed-url";
 import { OpCipContext } from "../context/op-cip-context";
 import { Image } from "../image";
-import { ContentAttestation } from "./content-attestation";
 import { Page } from "../page";
+import { ContentAttestation } from "./content-attestation";
 
 const subject = {
   type: "object",

@@ -1,13 +1,13 @@
 import { useEffect } from "react";
-import { Routes, Route, Navigate } from "react-router";
+import { Navigate, Route, Routes } from "react-router";
 import { overlayExtensionMessenger } from "./components/overlay/extension-events";
 import Base from "./pages/Base";
 import Credentials from "./pages/Credentials";
+import DetailInfo from "./pages/DetailInfo";
 import Org from "./pages/Org";
 import Prohibition from "./pages/Prohibition";
 import SiteProfile from "./pages/SiteProfile";
 import { buildPublUrl, paths } from "./utils/routes";
-import DetailInfo from "./pages/DetailInfo";
 
 function App() {
   useEffect(() => {

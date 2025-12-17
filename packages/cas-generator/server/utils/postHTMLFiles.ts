@@ -1,7 +1,9 @@
 import fs from "fs";
+import {
+  ContentAttestationModel,
+  createDefaultContentAttestation,
+} from "../domain/contentAttestation";
 import { OpSiteInfo } from "../domain/originatorProfileSite";
-import { ContentAttestationModel } from "../domain/contentAttestation";
-import { createDefaultContentAttestation } from "../domain/contentAttestation";
 
 type PostHTMLFilesParams = {
   htmlFiles: OpSiteInfo[];

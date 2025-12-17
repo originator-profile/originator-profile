@@ -1,6 +1,6 @@
-import { expect, test } from "vitest";
-import crypto from "node:crypto";
 import { ProfilePair } from "@originator-profile/verify";
+import crypto from "node:crypto";
+import { expect, test } from "vitest";
 import { AdNode, AdTree, collectAdFromTree, makeAdTree } from "./ad-tree";
 
 test("collectAdFromTree()は根が先頭・自身が先・親が先になるように配列を整列して返す", () => {

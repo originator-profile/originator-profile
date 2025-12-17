@@ -1,5 +1,5 @@
 import { mergeTests } from "@playwright/test";
-import { expect, popup, test as base } from "./fixtures";
+import { test as base, expect, popup } from "./fixtures";
 import { test as siteProfileTest } from "./site-profile-fixtures";
 import { test as staticHtmlTest } from "./static-html-fixtures";
 

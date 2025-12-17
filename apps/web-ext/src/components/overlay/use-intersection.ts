@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
 
 /** 交差中か判定するフック関数 */
 function useIntersection(

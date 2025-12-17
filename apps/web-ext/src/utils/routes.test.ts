@@ -1,4 +1,4 @@
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { route } from "./routes";
 
 const exampleRoute = route("/a/:b/c/d/:e");

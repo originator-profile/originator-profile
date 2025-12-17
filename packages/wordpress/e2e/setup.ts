@@ -1,8 +1,8 @@
+import type { FullConfig } from "@playwright/test";
 import child_process from "node:child_process";
 import crypto from "node:crypto";
 import path from "node:path";
 import util from "node:util";
-import type { FullConfig } from "@playwright/test";
 
 const exec = util.promisify(child_process.exec);
 

@@ -1,9 +1,9 @@
 import { VerifiedVc } from "@originator-profile/securing-mechanism";
 import { Certificate, VerifiedOps } from "@originator-profile/verify";
 import { twMerge } from "tailwind-merge";
+import placeholderLogoMainUrl from "../../assets/placeholder-logo-main.png";
 import { _ } from "../../utils/get-message";
 import Image from "../Image";
-import placeholderLogoMainUrl from "../../assets/placeholder-logo-main.png";
 import { useProfileAnnotatorWmp } from "./use-profile-annotator-wmp";
 
 type Props = {

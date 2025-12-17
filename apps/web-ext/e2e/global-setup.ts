@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process";
+import { mkdirSync, writeFileSync } from "node:fs";
 import { platform } from "node:os";
-import { writeFileSync, mkdirSync } from "node:fs";
 import { join } from "node:path";
 
 // 現在のブラウザ言語設定を取得

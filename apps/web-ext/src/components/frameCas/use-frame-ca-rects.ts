@@ -1,5 +1,5 @@
 import { useMemo } from "react";
-import { FrameCoordinate, CaCoordinate } from "./types";
+import { CaCoordinate, FrameCoordinate } from "./types";
 
 export function useFrameCaRects(
   frameCoordinate: FrameCoordinate,

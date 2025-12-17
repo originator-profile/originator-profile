@@ -1,4 +1,4 @@
-import { validate, v5 as uuid5 } from "uuid";
+import { v5 as uuid5, validate } from "uuid";
 
 /**
  * 会員 ID またはドメイン名の解析

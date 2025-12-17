@@ -1,5 +1,5 @@
 import { createThumbprint } from "@originator-profile/cryptography";
-import { OpVc, Jwk } from "@originator-profile/model";
+import { Jwk, OpVc } from "@originator-profile/model";
 import { getUnixTime } from "date-fns";
 import { importJWK, SignJWT } from "jose";
 

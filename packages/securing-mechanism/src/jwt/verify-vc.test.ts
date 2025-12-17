@@ -2,9 +2,9 @@ import { generateKey, LocalKeys } from "@originator-profile/cryptography";
 import { OpVc } from "@originator-profile/model";
 import { addYears, subDays, subYears } from "date-fns";
 import { describe, expect, test } from "vitest";
+import { VcVerifyFailed } from "../errors";
 import { signJwtVc } from "./sign-vc";
 import { JwtVcVerifier } from "./verify-vc";
-import { VcVerifyFailed } from "../errors";
 
 const issuedAt = new Date();
 const expiredAt = addYears(new Date(), 10);

@@ -1,9 +1,9 @@
 import { FromSchema, JSONSchema } from "json-schema-to-ts";
-import DpVisibleText from "./dp-visible-text";
-import DpText from "./dp-text";
-import DpHtml from "./dp-html";
-import OgWebsite from "./og-website";
 import Advertisement from "./advertisement";
+import DpHtml from "./dp-html";
+import DpText from "./dp-text";
+import DpVisibleText from "./dp-visible-text";
+import OgWebsite from "./og-website";
 
 /** @deprecated */
 const DpItem = {

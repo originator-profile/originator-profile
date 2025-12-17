@@ -1,6 +1,6 @@
 import { execSync } from "node:child_process";
+import { existsSync, readFileSync, rmSync } from "node:fs";
 import { platform } from "node:os";
-import { readFileSync, existsSync, rmSync } from "node:fs";
 import { join } from "node:path";
 
 interface LanguageBackup {

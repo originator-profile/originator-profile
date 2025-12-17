@@ -1,16 +1,16 @@
+import { generateKey, LocalKeys } from "@originator-profile/cryptography";
 import {
   Certificate,
   JapaneseExistenceCertificate,
 } from "@originator-profile/model";
 import {
-  signJwtVc,
   JwtVcVerifier,
+  signJwtVc,
   VcValidator,
   VerifiedJwtVc,
 } from "@originator-profile/securing-mechanism";
 import { addYears } from "date-fns";
 import { describe, expect, test } from "vitest";
-import { generateKey, LocalKeys } from "@originator-profile/cryptography";
 
 const VERIFIER_ID = "dns:pa-issuer.example.org";
 const issuedAt = new Date();

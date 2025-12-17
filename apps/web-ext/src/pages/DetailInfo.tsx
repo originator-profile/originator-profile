@@ -1,7 +1,7 @@
-import Template from "../templates/DetailInfo";
-import { useSiteProfile } from "../components/siteProfile";
-import { useCredentials } from "../components/credentials";
 import { useSearchParams } from "react-router";
+import { useCredentials } from "../components/credentials";
+import { useSiteProfile } from "../components/siteProfile";
+import Template from "../templates/DetailInfo";
 
 type Props = { back: string };
 

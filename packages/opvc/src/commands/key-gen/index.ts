@@ -1,6 +1,6 @@
 import { Command, Flags } from "@oclif/core";
-import fs from "node:fs/promises";
 import { generateKey } from "@originator-profile/cryptography";
+import fs from "node:fs/promises";
 
 export class KeyGen extends Command {
   static description = "鍵ペアの生成";

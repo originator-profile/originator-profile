@@ -1,5 +1,7 @@
+import { Icon } from "@iconify/react";
+import { stringifyWithError } from "@originator-profile/core";
+import { ContentAttestation } from "@originator-profile/model";
 import { _ } from "@originator-profile/ui";
-import JsonView from "@uiw/react-json-view";
 import {
   CaInvalid,
   CasVerificationFailure,
@@ -13,10 +15,8 @@ import {
   SiteProfileInvalid,
   SiteProfileVerifyFailed,
 } from "@originator-profile/verify";
-import { Icon } from "@iconify/react";
-import { stringifyWithError } from "@originator-profile/core";
+import JsonView from "@uiw/react-json-view";
 import { SupportedCa } from "./credentials";
-import { ContentAttestation } from "@originator-profile/model";
 import { isArticleLike } from "./credentials/is-articlelike";
 
 interface CodedError extends Error {

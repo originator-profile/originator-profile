@@ -1,18 +1,18 @@
 import { generateKey } from "@originator-profile/cryptography";
 import {
-  UnverifiedJwtVc,
-  signJwtVc,
-  VcDecodeFailed,
-} from "@originator-profile/securing-mechanism";
-import {
   Certificate,
   CoreProfile,
   OpVc,
   OriginatorProfileSet,
   WebMediaProfile,
 } from "@originator-profile/model";
+import {
+  signJwtVc,
+  UnverifiedJwtVc,
+  VcDecodeFailed,
+} from "@originator-profile/securing-mechanism";
 import { signCp } from "@originator-profile/sign";
-import { addYears, getUnixTime, fromUnixTime } from "date-fns";
+import { addYears, fromUnixTime, getUnixTime } from "date-fns";
 import { diffApply } from "just-diff-apply";
 import { describe, expect, test } from "vitest";
 import { decodeOps } from "./decode-ops";

@@ -1,10 +1,10 @@
-import { expect, popup, test as base } from "./fixtures";
+import { mergeTests } from "@playwright/test";
 import privateKey from "./account-key.example.priv.json" with { type: "json" };
 import publicKey from "./account-key.example.pub.json" with { type: "json" };
-import { mergeTests } from "@playwright/test";
+import { test as crednetialsTest } from "./credentials-fixtures";
+import { test as base, expect, popup } from "./fixtures";
 import { test as siteProfileTest } from "./site-profile-fixtures";
 import { test as staticHtmlTest } from "./static-html-fixtures";
-import { test as crednetialsTest } from "./credentials-fixtures";
 
 const test = mergeTests(base, siteProfileTest, crednetialsTest, staticHtmlTest);
 test("SiteProfileは検証成功するが、OPS / CASの取得に失敗した時にSiteProfileの表示がされるか", async ({

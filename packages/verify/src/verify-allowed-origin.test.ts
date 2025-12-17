@@ -1,5 +1,5 @@
 import { ContentAttestation } from "@originator-profile/model";
-import { describe, test, expect } from "vitest";
+import { describe, expect, test } from "vitest";
 import { verifyAllowedOrigin } from "./verify-allowed-origin";
 
 describe("verify-allowed-origin", () => {

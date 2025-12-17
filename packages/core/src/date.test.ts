@@ -1,9 +1,9 @@
 import { describe, expect, test, vi } from "vitest";
 import {
   expirationDateTimeLocaleFrom,
+  isExpired,
   parseExpirationDate,
   parseIssuanceDate,
-  isExpired,
 } from "./date";
 
 test("ISO 8601 形式の日付", () => {

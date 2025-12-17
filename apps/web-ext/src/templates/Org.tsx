@@ -12,7 +12,7 @@ import {
 } from "@originator-profile/ui";
 import { Certificate, VerifiedOps } from "@originator-profile/verify";
 import clsx from "clsx";
-import { useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import BackHeader from "../components/BackHeader";
 import ReliabilityGuide from "../components/ReliabilityGuide";
 import WebMediaProfileSummary from "../components/WebMediaProfileSummary";

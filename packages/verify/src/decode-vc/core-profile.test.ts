@@ -1,5 +1,3 @@
-import { test, expect } from "vitest";
-import { addYears } from "date-fns";
 import { generateKey } from "@originator-profile/cryptography";
 import { CoreProfile } from "@originator-profile/model";
 import {
@@ -7,6 +5,8 @@ import {
   VcDecodeFailed,
 } from "@originator-profile/securing-mechanism";
 import { signCp } from "@originator-profile/sign";
+import { addYears } from "date-fns";
+import { expect, test } from "vitest";
 
 const issuedAt = new Date();
 const expiredAt = addYears(new Date(), 10);

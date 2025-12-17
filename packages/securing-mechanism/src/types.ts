@@ -1,4 +1,4 @@
-import { OpVc, Jwk } from "@originator-profile/model";
+import { Jwk, OpVc } from "@originator-profile/model";
 import { ValidationError } from "ajv";
 import { VcDecodeFailed, VcValidateFailed, VcVerifyFailed } from "./errors";
 

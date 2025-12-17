@@ -1,7 +1,7 @@
-import { test, expect } from "vitest";
 import Ajv from "ajv";
-import Op from "../src/deprecated/op";
+import { expect, test } from "vitest";
 import Dp from "../src/deprecated/dp";
+import Op from "../src/deprecated/op";
 
 test("op schema is valid", () => {
   const ajv = new Ajv();

@@ -1,7 +1,7 @@
-import { describe, test, expect } from "vitest";
-import sortCertificates from "./sort-certificates";
 import { VerifiedVc } from "@originator-profile/securing-mechanism";
 import { Certificate } from "@originator-profile/verify";
+import { describe, expect, test } from "vitest";
+import sortCertificates from "./sort-certificates";
 
 const makeCertificate = (id: string): VerifiedVc<Certificate> => ({
   doc: {

@@ -1,5 +1,5 @@
-import "./utils/cors-basic-auth";
 import { frameCasExtensionMessenger } from "./components/frameCas";
+import "./utils/cors-basic-auth";
 
 const windowSize = {
   width: 520,

@@ -1,5 +1,5 @@
-import { useCallback } from "react";
 import clsx from "clsx";
+import { useCallback } from "react";
 import "./Menu.css";
 
 interface MenuProps extends React.HTMLAttributes<HTMLUListElement> {

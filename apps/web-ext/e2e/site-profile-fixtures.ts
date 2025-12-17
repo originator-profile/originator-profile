@@ -1,3 +1,4 @@
+import { generateKey } from "@originator-profile/cryptography";
 import {
   Certificate,
   CoreProfile,
@@ -16,7 +17,6 @@ import {
   generateWebMediaProfileData,
   generateWebsiteProfileData,
 } from "./data";
-import { generateKey } from "@originator-profile/cryptography";
 
 type TestFixtures = {
   validSiteProfile: (

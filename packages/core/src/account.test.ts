@@ -1,6 +1,6 @@
+import crypto from "node:crypto";
 import { describe, expect, test } from "vitest";
 import { parseAccountId } from "./account";
-import crypto from "node:crypto";
 
 describe("parseAccountId", () => {
   test("UUIDを指定したとき、そのまま返す", () => {
