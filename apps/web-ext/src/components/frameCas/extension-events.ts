@@ -1,8 +1,8 @@
 import { defineExtensionMessaging } from "@webext-core/messaging";
 import type {
-  FrameVerifiedCas,
-  FrameResponse,
   FrameLocation,
+  FrameResponse,
+  FrameVerifiedCas,
 } from "../credentials";
 
 export type FrameCasExtensionProtocolMap = {

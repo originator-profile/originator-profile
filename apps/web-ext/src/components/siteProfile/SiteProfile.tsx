@@ -1,9 +1,9 @@
 import { Image, _ } from "@originator-profile/ui";
 import placeholderLogoMainUrl from "@originator-profile/ui/src/assets/placeholder-logo-main.png";
+import GlobalHeader from "../GlobalHeader";
 import ReliabilityGuide from "../ReliabilityGuide";
 import WebMediaProfileSummaryCard from "../WebMediaProfileSummaryCard";
 import { SiteProfileProps } from "./types";
-import GlobalHeader from "../GlobalHeader";
 
 export function SiteProfile(props: SiteProfileProps) {
   return (

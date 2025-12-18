@@ -1,7 +1,7 @@
-import { OpCredential, CertificationSystem } from "@originator-profile/model";
+import { CertificationSystem, OpCredential } from "@originator-profile/model";
 import {
-  validateCertificationSystem,
   CertificationSystemValidationFailed,
+  validateCertificationSystem,
 } from "@originator-profile/verify";
 import useSWR from "swr";
 

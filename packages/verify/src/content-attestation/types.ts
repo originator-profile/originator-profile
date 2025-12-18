@@ -1,11 +1,11 @@
+import { ContentAttestation } from "@originator-profile/model";
 import {
   JwtVcDecodingResult,
-  UnverifiedJwtVc,
   JwtVcVerificationResult,
+  UnverifiedJwtVc,
   VerifiedJwtVc,
 } from "@originator-profile/securing-mechanism";
-import { ContentAttestation } from "@originator-profile/model";
-import { CaVerifyFailed, CaInvalid } from "./errors";
+import { CaInvalid, CaVerifyFailed } from "./errors";
 
 /** Content Attestation 復号失敗 */
 export type CaDecodingFailure = JwtVcDecodingResult<ContentAttestation>;

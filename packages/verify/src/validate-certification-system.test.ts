@@ -1,7 +1,7 @@
-import { test, describe, expect } from "vitest";
-import { validateCertificationSystem } from "./validate-certification-system";
-import { CertificationSystemValidationFailed } from "./errors";
 import { CertificationSystem } from "@originator-profile/model";
+import { describe, expect, test } from "vitest";
+import { CertificationSystemValidationFailed } from "./errors";
+import { validateCertificationSystem } from "./validate-certification-system";
 
 const certificationSystem: CertificationSystem = {
   type: "CertificationSystem",

@@ -1,12 +1,12 @@
-import { signJwtVc } from "@originator-profile/securing-mechanism";
+import { generateKey } from "@originator-profile/cryptography";
 import {
   Certificate,
   JapaneseExistenceCertificate,
 } from "@originator-profile/model";
+import { signJwtVc } from "@originator-profile/securing-mechanism";
 import { addYears, getUnixTime } from "date-fns";
 import { decodeJwt, decodeProtectedHeader } from "jose";
 import { describe, expect, test } from "vitest";
-import { generateKey } from "@originator-profile/cryptography";
 
 describe("Certificate", () => {
   test("sign a JICDAQ certificate", async () => {

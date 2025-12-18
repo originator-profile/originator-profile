@@ -1,6 +1,6 @@
 import { FromSchema } from "json-schema-to-ts";
-import DpItem from "./dp-item";
 import DpAllowedOrigins from "./dp-allowed-origins";
+import DpItem from "./dp-item";
 
 /** @deprecated */
 const JwtDpPayload = {

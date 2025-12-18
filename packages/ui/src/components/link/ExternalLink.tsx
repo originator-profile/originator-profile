@@ -1,5 +1,5 @@
-import { twMerge } from "tailwind-merge";
 import { ReactNode } from "react";
+import { twMerge } from "tailwind-merge";
 
 export type ExternalLinkProps = {
   className?: string;

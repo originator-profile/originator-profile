@@ -7,9 +7,9 @@ import {
   beforeEach,
   describe,
   expect,
+  MockInstance,
   test,
   vi,
-  MockInstance,
 } from "vitest";
 import { opId } from "../helper";
 import { CaVerifier } from "./verify-content-attestation";

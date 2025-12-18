@@ -1,8 +1,8 @@
 import {
-  createRemoteJWKSet as RemoteKeys,
   createLocalJWKSet as LocalKeys,
+  createRemoteJWKSet as RemoteKeys,
 } from "jose";
 
 export type Keys = ReturnType<typeof RemoteKeys> | ReturnType<typeof LocalKeys>;
 
-export { RemoteKeys, LocalKeys };
+export { LocalKeys, RemoteKeys };

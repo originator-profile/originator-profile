@@ -1,8 +1,8 @@
+import { deserializeIfError } from "@originator-profile/core";
 import { VerifyIntegrity } from "@originator-profile/verify";
 import { FetchCredentialsMessagingFailed } from "./errors";
 import { credentialsMessenger } from "./events";
 import { FrameCredentials, FrameResponse, TabCredentials } from "./types";
-import { deserializeIfError } from "@originator-profile/core";
 
 /**
  * タブ内の各フレームでクレデンシャルを取得する。

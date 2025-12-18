@@ -1,5 +1,5 @@
-import { useEffect, useRef } from "react";
 import clsx from "clsx";
+import { useEffect, useRef } from "react";
 import { Link } from "react-router";
 
 interface MenuItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {

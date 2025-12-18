@@ -1,3 +1,4 @@
+import { generateKey } from "@originator-profile/cryptography";
 import {
   ContentAttestationSet,
   Jwk,
@@ -6,15 +7,14 @@ import {
 import { signJwtVc } from "@originator-profile/securing-mechanism";
 import { test as base, Page } from "@playwright/test";
 import { addYears } from "date-fns";
+import { Window } from "happy-dom";
+import { signCa } from "../../../packages/sign/src/sign-ca";
 import {
+  generateCertificateData,
   generateCoreProfileData,
   generateUnsignedContentAttestation,
-  generateCertificateData,
   generateWebMediaProfileData,
 } from "./data";
-import { signCa } from "../../../packages/sign/src/sign-ca";
-import { Window } from "happy-dom";
-import { generateKey } from "@originator-profile/cryptography";
 
 type TestFixtures = {
   validCredentials: (

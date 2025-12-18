@@ -1,10 +1,10 @@
+import { ogpImageURL, opcipName } from "#shared/constants";
 import { exec } from "child_process";
 import fs from "fs";
 import { createEventStream } from "h3";
-import postHTMLFiles from "../utils/postHTMLFiles";
-import { opcipName, ogpImageURL } from "#shared/constants";
-import { OpSiteInfo } from "../domain/originatorProfileSite";
 import { ContentAttestationModel } from "../domain/contentAttestation";
+import { OpSiteInfo } from "../domain/originatorProfileSite";
+import postHTMLFiles from "../utils/postHTMLFiles";
 
 /**
  * 指定したファイルに対して、createOrUpdateCaを実行する

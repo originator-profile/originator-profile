@@ -23,8 +23,8 @@ import { overlayExtensionMessenger } from "../overlay/extension-events";
 import { BidResponse } from "../rtb";
 import { listCas } from "./cas";
 import { getContentType } from "./get-content-type";
-import { CredentialsProps, SupportedVerifiedCa } from "./types";
 import { isArticleLike } from "./is-articlelike";
+import { CredentialsProps, SupportedVerifiedCa } from "./types";
 
 export function Credentials(props: CredentialsProps) {
   const [caListType, setCaListType] =

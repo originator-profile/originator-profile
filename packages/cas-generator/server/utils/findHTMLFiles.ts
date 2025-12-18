@@ -1,16 +1,16 @@
-import path from "path";
-import fs from "fs";
-import fastGlob from "fast-glob";
-import { JSDOM } from "jsdom";
 import crypto from "crypto";
+import fastGlob from "fast-glob";
+import fs from "fs";
+import { JSDOM } from "jsdom";
+import path from "path";
+import { TargetIntegrity } from "../domain/contentAttestation";
 import {
+  ImageHash,
   OpSiteInfo,
   getCreatedAt,
-  getUpdatedAt,
-  ImageHash,
   getImageHashes,
+  getUpdatedAt,
 } from "../domain/originatorProfileSite";
-import { TargetIntegrity } from "../domain/contentAttestation";
 
 export default async function findHtmlFiles({
   docsPath,

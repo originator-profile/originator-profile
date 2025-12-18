@@ -1,7 +1,7 @@
 import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { CpContext } from "./context/cp-context";
 import { Jwks } from "./jwks";
 import { OpVc } from "./op-vc";
-import { CpContext } from "./context/cp-context";
 
 export const CoreProfile = {
   type: "object",

@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect, startTransition } from "react";
+import { startTransition, useCallback, useEffect, useState } from "react";
 import { useEvent } from "react-use";
 import useIntersection from "./use-intersection";
 

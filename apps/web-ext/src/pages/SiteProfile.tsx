@@ -1,11 +1,11 @@
 import { useSearchParams } from "react-router";
+import GlobalHeader from "../components/GlobalHeader";
 import Loading from "../components/Loading";
 import {
   SiteProfile as Template,
   useSiteProfile,
 } from "../components/siteProfile";
 import { routes } from "../utils/routes";
-import GlobalHeader from "../components/GlobalHeader";
 
 export default function SiteProfile() {
   const [queryParams] = useSearchParams();

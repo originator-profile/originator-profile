@@ -1,7 +1,7 @@
 import { Icon } from "@iconify/react";
 import { _ } from "@originator-profile/ui";
 import clsx from "clsx";
-import { MenuButton, Menu, MenuItem, useMenuButton } from "./Menu";
+import { Menu, MenuButton, MenuItem, useMenuButton } from "./Menu";
 import { listCas } from "./credentials";
 
 type Props = {

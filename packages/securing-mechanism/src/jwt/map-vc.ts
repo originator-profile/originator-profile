@@ -1,6 +1,6 @@
-import { JWTPayload, ProtectedHeaderParameters } from "jose";
+import { Jwk, OpVc } from "@originator-profile/model";
 import { fromUnixTime } from "date-fns";
-import { OpVc, Jwk } from "@originator-profile/model";
+import { JWTPayload, ProtectedHeaderParameters } from "jose";
 import { UnverifiedJwtVc, VerifiedJwtVc } from "./types";
 
 export function toUnverifiedJwtVc<T extends OpVc>(

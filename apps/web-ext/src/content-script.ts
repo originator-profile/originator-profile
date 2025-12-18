@@ -1,5 +1,6 @@
 import { serializeIfError } from "@originator-profile/core";
 import { fetchSiteProfile } from "@originator-profile/presentation";
+import { type FrameVerifiedCas } from "./components/credentials";
 import {
   frameCasExtensionMessenger,
   frameCasWindowMessenger,
@@ -9,7 +10,6 @@ import {
   OverlayProtocolMap,
   overlayWindowMessenger,
 } from "./components/overlay";
-import { type FrameVerifiedCas } from "./components/credentials";
 import { overlayExtensionMessenger } from "./components/overlay/extension-events";
 import { siteProfileMessenger } from "./components/siteProfile";
 import { FetchSiteProfileMessageResult } from "./components/siteProfile/types";

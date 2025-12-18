@@ -1,6 +1,6 @@
-import { getBidResponses } from "./bidresponse";
-import { expect, test } from "vitest";
 import { Window } from "happy-dom";
+import { expect, test } from "vitest";
+import { getBidResponses } from "./bidresponse";
 
 test("getJsonLdNodeObjects()はchrome.scripting ScriptInjectionで使用しているのでシリアル化して呼び出せなければならない", () => {
   /* eslint-disable-next-line @typescript-eslint/no-implied-eval */

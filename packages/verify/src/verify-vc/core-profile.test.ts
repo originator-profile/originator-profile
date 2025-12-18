@@ -1,10 +1,10 @@
 import { generateKey, LocalKeys } from "@originator-profile/cryptography";
+import { CoreProfile } from "@originator-profile/model";
 import {
   JwtVcVerifier,
   VcValidator,
   VerifiedJwtVc,
 } from "@originator-profile/securing-mechanism";
-import { CoreProfile } from "@originator-profile/model";
 import { signCp } from "@originator-profile/sign";
 import { addYears } from "date-fns";
 import { expect, test } from "vitest";

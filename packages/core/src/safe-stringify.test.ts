@@ -1,4 +1,4 @@
-import { test, expect } from "vitest";
+import { expect, test } from "vitest";
 import { parseWithError, stringifyWithError } from "./safe-stringify";
 
 test("stringifyWithError(): An error object is passed", () => {

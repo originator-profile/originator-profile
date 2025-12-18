@@ -1,7 +1,7 @@
 import {
   AdvertisementCA,
-  ArticleCA,
   AdvertorialCA,
+  ArticleCA,
   ContentAttestationSet,
   OriginatorProfileSet,
   WebMediaProfile,

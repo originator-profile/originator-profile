@@ -1,4 +1,4 @@
-import { serializeError, deserializeError, isErrorLike } from "serialize-error";
+import { deserializeError, isErrorLike, serializeError } from "serialize-error";
 
 function replaceErrors(key: string, value: unknown): unknown {
   if (value instanceof Error) {

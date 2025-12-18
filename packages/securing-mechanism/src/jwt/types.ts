@@ -1,14 +1,14 @@
-import { JWTInvalid, JOSEError } from "jose/errors";
 import { OpVc } from "@originator-profile/model";
+import { JOSEError, JWTInvalid } from "jose/errors";
 import {
   UnverifiedVc,
-  VerifiedVc,
   VcDecodingFailure,
-  VcValidationFailure,
-  VcVerificationFailure,
   VcDecodingResult,
+  VcValidationFailure,
   VcValidationResult,
+  VcVerificationFailure,
   VcVerificationResult,
+  VerifiedVc,
 } from "../types";
 
 /** 未復号 VC */

@@ -1,8 +1,8 @@
-import { expect, popup, test as base } from "./fixtures";
+import { mergeTests } from "@playwright/test";
+import { test as crednetialsTest } from "./credentials-fixtures";
+import { test as base, expect, popup } from "./fixtures";
 import { test as siteProfileTest } from "./site-profile-fixtures";
 import { test as staticHtmlTest } from "./static-html-fixtures";
-import { test as crednetialsTest } from "./credentials-fixtures";
-import { mergeTests } from "@playwright/test";
 
 const test = mergeTests(base, siteProfileTest, staticHtmlTest, crednetialsTest);
 test("Site Profile と OPS/CAS が取得できない場合非サポートが表示されるか", async ({

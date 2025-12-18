@@ -1,20 +1,20 @@
 import { Keys } from "@originator-profile/cryptography";
+import { ContentAttestation } from "@originator-profile/model";
 import {
-  VcValidator,
-  VcVerifyFailed,
   JwtVcVerifier,
   VcValidateFailed,
+  VcValidator,
+  VcVerifyFailed,
 } from "@originator-profile/securing-mechanism";
-import { ContentAttestation } from "@originator-profile/model";
-import { CaInvalid, CaVerifyFailed } from "./errors";
-import { CaVerificationResult, VerifiedCa } from "./types";
-import { verifyAllowedOrigin } from "../verify-allowed-origin";
-import { verifyAllowedUrl } from "../verify-allowed-url";
 import {
   IntegrityVerifyResult,
   verifyIntegrity as nativeVerifyIntegrity,
   VerifyIntegrity,
 } from "../integrity";
+import { verifyAllowedOrigin } from "../verify-allowed-origin";
+import { verifyAllowedUrl } from "../verify-allowed-url";
+import { CaInvalid, CaVerifyFailed } from "./errors";
+import { CaVerificationResult, VerifiedCa } from "./types";
 
 type IntegrityResult = {
   index: number;

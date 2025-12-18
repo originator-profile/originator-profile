@@ -1,6 +1,6 @@
+import { CertificationSystem } from "@originator-profile/model";
 import typeOf from "just-typeof";
 import { CertificationSystemValidationFailed } from "./errors";
-import { CertificationSystem } from "@originator-profile/model";
 
 /** 認証制度ペイロードの確認のためのバリデーター */
 export function CertificationSystemValidator() {

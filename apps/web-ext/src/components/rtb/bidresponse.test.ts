@@ -1,7 +1,7 @@
-import { expect, test } from "vitest";
-import { Advertiser, BidResponse } from "./types";
-import { getAdvertiser, getBidResponses } from "./bidresponse";
 import { Window } from "happy-dom";
+import { expect, test } from "vitest";
+import { getAdvertiser, getBidResponses } from "./bidresponse";
+import { Advertiser, BidResponse } from "./types";
 
 test("advertiserが見つかる", () => {
   const template = {

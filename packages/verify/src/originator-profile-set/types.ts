@@ -1,21 +1,21 @@
 import {
-  JwtVcDecodingResult,
-  UnverifiedJwtVc,
-  JwtVcVerificationResult,
-  VerifiedJwtVc,
-} from "@originator-profile/securing-mechanism";
-import {
-  CoreProfile,
   Certificate as BasicCertificate,
+  CoreProfile,
   JapaneseExistenceCertificate,
   WebMediaProfile,
 } from "@originator-profile/model";
 import {
+  JwtVcDecodingResult,
+  JwtVcVerificationResult,
+  UnverifiedJwtVc,
+  VerifiedJwtVc,
+} from "@originator-profile/securing-mechanism";
+import {
   CoreProfileNotFound,
-  OpsVerifyFailed,
-  OpVerifyFailed,
   OpInvalid,
   OpsInvalid,
+  OpsVerifyFailed,
+  OpVerifyFailed,
 } from "./errors";
 
 export type Certificate = BasicCertificate | JapaneseExistenceCertificate;

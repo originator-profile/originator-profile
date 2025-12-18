@@ -7,8 +7,8 @@ import {
 } from "jose";
 import { JWTInvalid } from "jose/errors";
 import { VcDecodeFailed } from "../errors";
-import { JwtVcDecodingFailure, JwtVcDecodingResult } from "./types";
 import { toUnverifiedJwtVc } from "./map-vc";
+import { JwtVcDecodingFailure, JwtVcDecodingResult } from "./types";
 
 /**
  * データモデルの復号器の生成

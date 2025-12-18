@@ -1,4 +1,4 @@
-import { JSONSchema, FromSchema } from "json-schema-to-ts";
+import { FromSchema, JSONSchema } from "json-schema-to-ts";
 
 export const CertificationSystem = {
   type: "object",
