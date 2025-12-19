@@ -16,6 +16,7 @@ import {
 import { getMappedKeys, type MappedKeys } from "../keys";
 import { decodeOps } from "./decode-ops";
 import {
+  CertificateExpired,
   CoreProfileNotFound,
   OpVerifyFailed,
   OpsInvalid,
@@ -45,6 +46,20 @@ function OpVerifier<T extends OpVc>(
   return JwtVcVerifier<T>(cpKeys, issuer, validator);
 }
 
+function validateCertificateExpiry<T extends Certificate>(
+  verifiedVc: VerifiedJwtVc<T>,
+): VerifiedJwtVc<T> | CertificateExpired<T> {
+  const now = new Date();
+  if (verifiedVc.doc.validFrom && now < new Date(verifiedVc.doc.validFrom)) {
+    return new CertificateExpired("Certificate not yet valid", verifiedVc);
+  }
+  if (verifiedVc.doc.validUntil && now > new Date(verifiedVc.doc.validUntil)) {
+    return new CertificateExpired("Certificate expired", verifiedVc);
+  }
+
+  return verifiedVc;
+}
+
 /** annotations プロパティの署名検証 */
 async function verifyAnnotations(
   paIssuerKeys: MappedKeys,
@@ -53,7 +68,7 @@ async function verifyAnnotations(
 ) {
   if (!annotations) return;
   return await Promise.all(
-    annotations.map((annotation) => {
+    annotations.map(async (annotation) => {
       const verify = OpVerifier<Certificate>(
         paIssuerKeys,
         annotation,
@@ -61,7 +76,14 @@ async function verifyAnnotations(
           oneOf: [CertificateSchema, JapaneseExistenceCertificate],
         }),
       );
-      return verify(annotation.source);
+
+      const result = await verify(annotation.source);
+      if (result instanceof Error) {
+        return result;
+      }
+
+      // 有効期限の検証
+      return validateCertificateExpiry(result);
     }),
   );
 }

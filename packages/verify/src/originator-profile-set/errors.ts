@@ -1,5 +1,8 @@
-import { OpVc } from "@originator-profile/model";
-import { UnverifiedJwtVc } from "@originator-profile/securing-mechanism";
+import { Certificate, OpVc } from "@originator-profile/model";
+import {
+  UnverifiedJwtVc,
+  VerifiedJwtVc,
+} from "@originator-profile/securing-mechanism";
 import {
   OpDecodingFailure,
   OpsDecodingFailure,
@@ -118,6 +121,20 @@ export class OpVerifyFailed extends Error {
   constructor(
     message: string,
     public result: OpVerificationFailure,
+  ) {
+    super(message);
+  }
+}
+
+export class CertificateExpired<T extends OpVc> extends Error {
+  static get code() {
+    return "ERR_CERTIFICATE_EXPIRED";
+  }
+  readonly code = CertificateExpired.code;
+
+  constructor(
+    message: string,
+    public result: VerifiedJwtVc<Certificate>,
   ) {
     super(message);
   }
