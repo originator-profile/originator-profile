@@ -1,4 +1,4 @@
-import { Certificate, OpVc } from "@originator-profile/model";
+import { OpVc } from "@originator-profile/model";
 import {
   UnverifiedJwtVc,
   VerifiedJwtVc,
@@ -134,7 +134,7 @@ export class CertificateExpired<T extends OpVc> extends Error {
 
   constructor(
     message: string,
-    public result: VerifiedJwtVc<Certificate>,
+    public result: VerifiedJwtVc<T>,
   ) {
     super(message);
   }
