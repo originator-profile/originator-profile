@@ -1,5 +1,9 @@
 import { generateKey, LocalKeys } from "@originator-profile/cryptography";
-import { CoreProfile, OriginatorProfileSet } from "@originator-profile/model";
+import {
+  Certificate,
+  CoreProfile,
+  OriginatorProfileSet,
+} from "@originator-profile/model";
 import {
   signJwtVc,
   VcVerifyFailed,
@@ -118,6 +122,130 @@ describe("OPSの検証", async () => {
         ),
       },
     ]);
+  });
+
+  test("有効期限が存在功するcertificateがあるOPSの検証に成功", async () => {
+    const certificateWithExpiry: Certificate = structuredClone(certificate);
+    const from = new Date();
+    from.setDate(from.getDate() - 1);
+    const until = new Date();
+    until.setDate(until.getDate() + 1);
+    certificateWithExpiry.validFrom = from.toISOString().replace(".000", "");
+    certificateWithExpiry.validUntil = until.toISOString().replace(".000", "");
+
+    const originatorOp = {
+      core: await signCp(cp, authority.privateKey, signOptions),
+      annotations: [
+        await signJwtVc(
+          certificateWithExpiry,
+          certifier.privateKey,
+          signOptions,
+        ),
+      ],
+      media: await signJwtVc(wmp, authority.privateKey, signOptions),
+    };
+
+    const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
+    const verify = OpsVerifier(
+      ops,
+      LocalKeys({ keys: [authority.publicKey] }),
+      opId.authority,
+    );
+    const resultOps = await verify();
+
+    expect(resultOps).not.instanceOf(OpsInvalid);
+    expect(resultOps).not.instanceOf(OpsVerifyFailed);
+    expect(resultOps).toStrictEqual([
+      {
+        core: verifyResult.create(
+          authorityCp,
+          authorityOp.core,
+          authority.publicKey,
+        ),
+        annotations: undefined,
+        media: undefined,
+      },
+      {
+        core: verifyResult.create(
+          certifierCp,
+          certifierOp.core,
+          authority.publicKey,
+        ),
+        annotations: undefined,
+        media: undefined,
+      },
+      {
+        core: verifyResult.create(cp, originatorOp.core, authority.publicKey),
+        annotations: [
+          verifyResult.create(
+            certificateWithExpiry,
+            originatorOp.annotations[0],
+            certifier.publicKey,
+          ),
+        ],
+        media: verifyResult.create(
+          wmp,
+          originatorOp.media,
+          authority.publicKey,
+        ),
+      },
+    ]);
+  });
+
+  test("有効開始日時が未来のcertificateがあるOPSの検証でOpsVerifyFailedになるか", async () => {
+    const certificateWithExpiry: Certificate = structuredClone(certificate);
+    const from = new Date();
+    from.setDate(from.getDate() + 2);
+    certificateWithExpiry.validFrom = from.toISOString().replace(".000", "");
+
+    const originatorOp = {
+      core: await signCp(cp, authority.privateKey, signOptions),
+      annotations: [
+        await signJwtVc(
+          certificateWithExpiry,
+          certifier.privateKey,
+          signOptions,
+        ),
+      ],
+      media: await signJwtVc(wmp, authority.privateKey, signOptions),
+    };
+
+    const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
+    const verify = OpsVerifier(
+      ops,
+      LocalKeys({ keys: [authority.publicKey] }),
+      opId.authority,
+    );
+    const resultOps = await verify();
+    expect(resultOps).instanceOf(OpsVerifyFailed);
+  });
+
+  test("有効終了日時が過去のcertificateがあるOPSの検証でOpsVerifyFailedになるか", async () => {
+    const certificateWithExpiry: Certificate = structuredClone(certificate);
+    const until = new Date();
+    until.setDate(until.getDate() - 2);
+    certificateWithExpiry.validUntil = until.toISOString().replace(".000", "");
+
+    const originatorOp = {
+      core: await signCp(cp, authority.privateKey, signOptions),
+      annotations: [
+        await signJwtVc(
+          certificateWithExpiry,
+          certifier.privateKey,
+          signOptions,
+        ),
+      ],
+      media: await signJwtVc(wmp, authority.privateKey, signOptions),
+    };
+
+    const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
+    const verify = OpsVerifier(
+      ops,
+      LocalKeys({ keys: [authority.publicKey] }),
+      opId.authority,
+    );
+    const resultOps = await verify();
+    expect(resultOps).instanceOf(OpsVerifyFailed);
   });
 
   test("CPの署名の検証に失敗", async () => {
