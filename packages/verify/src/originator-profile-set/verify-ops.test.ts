@@ -130,8 +130,10 @@ describe("OPSの検証", async () => {
     from.setDate(from.getDate() - 1);
     const until = new Date();
     until.setDate(until.getDate() + 1);
-    certificateWithExpiry.validFrom = from.toISOString().replace(".000", "");
-    certificateWithExpiry.validUntil = until.toISOString().replace(".000", "");
+    certificateWithExpiry.validFrom = from.toISOString().replace(/\.\d{3}/, "");
+    certificateWithExpiry.validUntil = until
+      .toISOString()
+      .replace(/\.\d{3}/, "");
 
     const originatorOp = {
       core: await signCp(cp, authority.privateKey, signOptions),
@@ -196,7 +198,7 @@ describe("OPSの検証", async () => {
     const certificateWithExpiry: Certificate = structuredClone(certificate);
     const from = new Date();
     from.setDate(from.getDate() + 2);
-    certificateWithExpiry.validFrom = from.toISOString().replace(".000", "");
+    certificateWithExpiry.validFrom = from.toISOString().replace(/\.\d{3}/, "");
 
     const originatorOp = {
       core: await signCp(cp, authority.privateKey, signOptions),
@@ -224,7 +226,9 @@ describe("OPSの検証", async () => {
     const certificateWithExpiry: Certificate = structuredClone(certificate);
     const until = new Date();
     until.setDate(until.getDate() - 2);
-    certificateWithExpiry.validUntil = until.toISOString().replace(".000", "");
+    certificateWithExpiry.validUntil = until
+      .toISOString()
+      .replace(/\.\d{3}/, "");
 
     const originatorOp = {
       core: await signCp(cp, authority.privateKey, signOptions),
