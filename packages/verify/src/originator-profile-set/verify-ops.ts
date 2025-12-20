@@ -58,7 +58,7 @@ function validateCertificateExpiry<T extends Certificate>(
     : null;
 
   if (validFrom && now < validFrom) {
-    return new CertificateExpired("Certificate expired", verifiedVc);
+    return new CertificateExpired("Certificate not yet valid", verifiedVc);
   }
   if (validUntil && now > validUntil) {
     return new CertificateExpired("Certificate expired", verifiedVc);
