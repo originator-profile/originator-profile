@@ -124,7 +124,7 @@ describe("OPSの検証", async () => {
     ]);
   });
 
-  test("有効期限が存在するcertificateがあるOPSの検証に成功", async () => {
+  test("有効期間内のcertificateがあるOPSの検証に成功", async () => {
     const certificateWithExpiry: Certificate = structuredClone(certificate);
     const from = new Date();
     from.setDate(from.getDate() - 1);
