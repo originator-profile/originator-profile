@@ -50,10 +50,17 @@ function validateCertificateExpiry<T extends Certificate>(
   verifiedVc: VerifiedJwtVc<T>,
 ): VerifiedJwtVc<T> | CertificateExpired<T> {
   const now = new Date();
-  if (verifiedVc.doc.validFrom && now < new Date(verifiedVc.doc.validFrom)) {
-    return new CertificateExpired("Certificate not yet valid", verifiedVc);
+  const validFrom = verifiedVc.doc.validFrom
+    ? new Date(verifiedVc.doc.validFrom)
+    : null;
+  const validUntil = verifiedVc.doc.validUntil
+    ? new Date(verifiedVc.doc.validUntil)
+    : null;
+
+  if (validFrom && now < validFrom) {
+    return new CertificateExpired("Certificate expired", verifiedVc);
   }
-  if (verifiedVc.doc.validUntil && now > new Date(verifiedVc.doc.validUntil)) {
+  if (validUntil && now > validUntil) {
     return new CertificateExpired("Certificate expired", verifiedVc);
   }
 
