@@ -10,10 +10,7 @@ import {
   fetchTabCredentials,
   FrameIntegrityVerifier,
 } from "../credentials/messaging";
-import type {
-  SupportedCa,
-  SupportedVerifiedCas,
-} from "../credentials/types";
+import type { SupportedCa, SupportedVerifiedCas } from "../credentials/types";
 
 /**
  * タブのクレデンシャルを検証する
