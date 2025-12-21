@@ -5,15 +5,15 @@ import {
   verifyCas,
   CasVerifyFailed,
 } from "@originator-profile/verify";
-import { getRegistryKeys } from "./get-registry-keys";
+import { getRegistryKeys } from "../../utils/get-registry-keys";
 import {
   fetchTabCredentials,
   FrameIntegrityVerifier,
-} from "../components/credentials/messaging";
+} from "../credentials/messaging";
 import type {
   SupportedCa,
   SupportedVerifiedCas,
-} from "../components/credentials/types";
+} from "../credentials/types";
 
 /**
  * タブのクレデンシャルを検証する

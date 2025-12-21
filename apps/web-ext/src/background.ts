@@ -1,6 +1,5 @@
 import "./utils/cors-basic-auth";
-import { updateBadge } from "./utils/update-badge";
-import { verifyTabCredentials } from "./utils/verify-tab-credentials";
+import { updateBadge, verifyTabCredentials } from "./components/tabBadge";
 
 const windowSize = {
   width: 520,
