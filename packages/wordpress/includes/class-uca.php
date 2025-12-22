@@ -9,7 +9,12 @@ require_once __DIR__ . '/debug.php';
 use function Profile\Debug\debug;
 
 
-/** 未署名 Content Attestation */
+/**
+ * 未署名 Content Attestation
+ *
+ * @link https://docs.originator-profile.org/en/opb/ca-model/article/
+ */
+
 final class Uca {
 	/**
 	 * 未署名 Content Attestation
@@ -21,10 +26,10 @@ final class Uca {
 	 * @param string  $target_type 検証対象の種別
 	 * @param string  $target_css_selector 検証する対象の要素 CSS セレクター
 	 * @param array   $external_resources 外部リソース
+	 * @param string  $headline タイトル
+	 * @param string  $description 説明
 	 * @param ?string $subject CA ID
-	 * @param ?string $headline (optional) タイトル
 	 * @param ?string $image (optional) 画像URL
-	 * @param ?string $description (optional) 説明
 	 * @param ?string $author (optional) 著者
 	 * @param ?string $date_published (optional) 公開日時
 	 * @param ?string $date_modified (optional) 最終更新日時
@@ -37,10 +42,10 @@ final class Uca {
 		public string $target_type,
 		public string $target_css_selector,
 		public array $external_resources,
+		public string $headline,
+		public string $description,
 		public ?string $subject = null,
-		public ?string $headline = null,
 		public ?string $image = null,
-		public ?string $description = null,
 		public ?string $author = null,
 		public ?string $date_published = null,
 		public ?string $date_modified = null,
