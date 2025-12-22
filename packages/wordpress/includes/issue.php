@@ -22,9 +22,15 @@ use function Profile\Debug\debug;
 require_once __DIR__ . '/url.php';
 use function Profile\Url\add_page_query;
 
-/** 投稿への署名処理の初期化 */
+/** 投稿への署名処理の初期化
+ * transition_post_status について
+ * sign_post: 公開への遷移時のみの処理。非公開遷移時は何もしない。
+ * private_post: 公開から非公開など公開以外の状態への遷移時の処理。
+ */
 function init() {
 	\add_action( 'transition_post_status', '\Profile\Issue\sign_post', 10, 3 );
+	\add_action( 'transition_post_status', '\Profile\Issue\private_post', 20, 3 );
+	\add_action( 'before_delete_post', '\Profile\Issue\delete_post', 10, 1 );
 	\add_filter( 'wp_generate_attachment_metadata', '\Profile\Issue\update_attachment_integrity_metadata', 10, 2 );
 }
 
@@ -47,25 +53,22 @@ function sign_post( string $new_status, string $old_status, \WP_Post $post ) {
 	}
 
 	$admin_secret = \get_option( 'profile_ca_server_admin_secret' );
-	$hostname     = \get_option( 'profile_ca_server_hostname', PROFILE_DEFAULT_CA_SERVER_HOSTNAME );
 	$issuer_id    = \get_option( 'profile_ca_issuer_id' );
-	$endpoint     = "https://{$hostname}/ca";
 
 	if ( ! $admin_secret || ! $issuer_id ) {
 		debug( 'Missing required CA server configuration (admin_secret or issuer_id)' );
 		return;
 	}
 
-	if ( defined( 'WP_DEBUG' ) && WP_DEBUG && 'localhost' === $hostname ) {
-		$in_docker = \file_exists( '/.dockerenv' );
-		if ( $in_docker ) {
-			$endpoint = 'http://host.docker.internal:8080/ca';
-		} else {
-			$endpoint = 'http://localhost:8080/ca';
-		}
+	$uuid = extract_uuid_from_cas( $post );
+
+	if ( false === $uuid ) {
+		debug( "UUID found but failed to decode UUID for post ID {$post->ID}. Continuing with new UCA issuance" );
+		$uca_list = create_uca_list( $post, $issuer_id ); // UUIDなしで新規発行
+	} else {
+		$uca_list = create_uca_list( $post, $issuer_id, $uuid );
 	}
 
-	$uca_list = create_uca_list( $post, $issuer_id );
 	if ( empty( $uca_list ) ) {
 		debug( "UCA list is empty for post ID: {$post->ID}" );
 	}
@@ -84,7 +87,7 @@ function sign_post( string $new_status, string $old_status, \WP_Post $post ) {
 			}
 		}
 
-		$cas = issue_ca( $uca, $endpoint, $admin_secret );
+		$cas = issue_ca( $uca, $admin_secret );
 		if ( false === $cas || empty( $cas ) ) {
 			debug( "Failed to issue CA for post ID: {$post->ID}, page: {$page}" );
 		}
@@ -93,6 +96,45 @@ function sign_post( string $new_status, string $old_status, \WP_Post $post ) {
 	}
 
 	\update_post_meta( $post->ID, '_profile_post_cas', $post_cas );
+}
+
+/**
+ * 投稿が公開状態から非公開状態になった場合
+ *
+ * @param string   $new_status New post status.
+ * @param string   $old_status Old post status.
+ * @param \WP_Post $post Post object.
+ */
+function private_post( string $new_status, string $old_status, \WP_Post $post ) {
+	if ( 'publish' === $old_status && 'publish' !== $new_status ) {
+		$admin_secret = \get_option( 'profile_ca_server_admin_secret' );
+		if ( ! $admin_secret ) {
+			debug( 'Missing CA server admin secret for deletion' );
+			return;
+		}
+		delete_ca( $admin_secret, $post );
+		delete_post_meta( $post->ID, '_profile_post_cas' );
+	}
+}
+
+/**
+ * 投稿が削除された場合
+ *
+ * @param int $post_id Post ID.
+ */
+function delete_post( int $post_id ) {
+	$post = \get_post( $post_id );
+	if ( ! $post ) {
+		debug( "Post not found for ID: {$post_id}" );
+		return;
+	}
+
+	$admin_secret = \get_option( 'profile_ca_server_admin_secret' );
+	if ( ! $admin_secret ) {
+		debug( 'Missing CA server admin secret for deletion' );
+		return;
+	}
+	delete_ca( $admin_secret, $post );
 }
 
 /**
@@ -125,6 +167,86 @@ function update_attachment_integrity_metadata( array $metadata, int $attachment_
 }
 
 /**
+ * JWTを受け取り、CA ID を返す関数。
+ *
+ * @param string $jwt JWT
+ * @return string CA ID
+ */
+function base64url_decode( string $jwt ) {
+	if ( '' === $jwt ) {
+		debug( 'base64url_decode: empty JWT string' );
+		return false;
+	}
+
+	$parts = explode( '.', $jwt );
+	if ( count( $parts ) !== 3 ) {
+		debug( 'base64url_decode: invalid JWT format (expected 3 parts)' );
+		return false;
+	}
+
+	$payload_encoded = $parts[1];
+	$base64          = strtr( $payload_encoded, '-_', '+/' );
+	$padding         = strlen( $base64 ) % 4;
+	if ( $padding > 0 ) {
+		$base64 .= str_repeat( '=', 4 - $padding );
+	}
+
+	// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+	$payload_json = \base64_decode( $base64, true );
+	if ( false === $payload_json ) {
+		debug( 'base64url_decode: base64_decode failed' );
+		return false;
+	}
+
+	$payload = json_decode( $payload_json, true );
+	if ( ! is_array( $payload ) ) {
+		debug( 'base64url_decode: json_decode failed (not an array)' );
+		return false;
+	}
+
+	if (
+		! isset( $payload['credentialSubject'] ) ||
+		! is_array( $payload['credentialSubject'] ) ||
+		! isset( $payload['credentialSubject']['id'] ) ||
+		! is_string( $payload['credentialSubject']['id'] ) ||
+		'' === $payload['credentialSubject']['id']
+	) {
+		debug( 'base64url_decode: credentialSubject.id not found' );
+		return false;
+	}
+
+	return $payload['credentialSubject']['id'];
+}
+
+/**
+ * CAS から UUID を抽出する関数
+ *
+ * @param \WP_Post $post Post object.
+ * @return string|false UUID(取得できなければ false)
+ */
+function extract_uuid_from_cas( \WP_Post $post ) {
+	$cas  = \get_post_meta( $post->ID, '_profile_post_cas', true );
+	$page = \max( 1, \get_query_var( 'page' ) );
+	$cas  = is_array( $cas ) ? $cas[ $page - 1 ] : $cas;
+
+	if ( is_array( $cas ) && isset( $cas[0] ) && is_string( $cas[0] ) ) {
+		$jwt = $cas[0];
+	} else {
+		// cas が存在しない場合はここで吸収される
+		debug( " No CAS found for post ID {$post->ID}, page {$page}" );
+		$jwt = null;
+	}
+
+	if ( null !== $jwt ) {
+		$uuid = base64url_decode( $jwt );
+	} else {
+		$uuid = false;
+	}
+
+	return $uuid;
+}
+
+/**
  * Integrity の計算
  *
  * @param string $file ファイルパス
@@ -143,9 +265,10 @@ function create_integrity( string $file ): string {
  *
  * @param \WP_Post $post Post object.
  * @param string   $issuer_id CA 発行者 ID
+ * @param ?string  $uuid CA ID uuid
  * @return list<Uca> 未署名 Content Attestation の一覧
  */
-function create_uca_list( \WP_Post $post, string $issuer_id ): array {
+function create_uca_list( \WP_Post $post, string $issuer_id, ?string $uuid = null ): array {
 	global $wp_rewrite;
 
 	/**
@@ -199,6 +322,7 @@ function create_uca_list( \WP_Post $post, string $issuer_id ): array {
 
 		$uca = new Uca(
 			issuer: $issuer_id,
+			subject: $uuid,
 			url: $permalink,
 			locale: $locale,
 			html: $html,
@@ -258,22 +382,89 @@ function external_resources_from_html( string $html, string $xpath_query ): arra
 }
 
 /**
+ * Content Attestation サーバーのベース URL を返す
+ *
+ * @return string ベース URL
+ */
+function build_ca_base_endpoint(): string {
+	$hostname = \get_option( 'profile_ca_server_hostname', PROFILE_DEFAULT_CA_SERVER_HOSTNAME );
+	if ( defined( 'WP_DEBUG' ) && WP_DEBUG && 'localhost' === $hostname ) {
+		$in_docker = \file_exists( '/.dockerenv' );
+		if ( $in_docker ) {
+			return 'http://host.docker.internal:8080';
+		} else {
+			return 'http://localhost:8080';
+		}
+	}
+	return "https://{$hostname}";
+}
+
+/**
+ * エンドポイントの構築
+ *
+ * @param string $path Content Attestation の発行または削除のエンドポイントの共通でない部分のパス
+ * @return string エンドポイント
+ */
+function build_ca_endpoint( string $path ): string {
+	return build_ca_base_endpoint() . $path;
+}
+
+/**
  * Content Attestation の発行
  *
  * @param Uca    $uca 未署名 Content Attestation オブジェクト
- * @param string $endpoint Content Attestation サーバー CA 登録・更新エンドポイント
  * @param string $admin_secret Content Attestation サーバー認証情報
  * @return mixed 成功した場合は Content Attestation Set、失敗した場合は false
  */
-function issue_ca( Uca $uca, string $endpoint, string $admin_secret ): mixed {
+function issue_ca( Uca $uca, string $admin_secret ): mixed {
+	$endpoint = build_ca_endpoint( '/ca' );
+	return request_ca( $endpoint, $admin_secret, 'POST', $uca->to_json() );
+}
+
+/**
+ * Content Attestation の削除
+ *
+ * @param string   $admin_secret Content Attestation サーバー認証情報
+ * @param \WP_Post $post 投稿オブジェクト
+ * @return bool
+ */
+function delete_ca( string $admin_secret, \WP_Post $post ): bool {
+	$uuid = extract_uuid_from_cas( $post );
+	if ( false === $uuid ) {
+		debug( "delete_ca: UUID not found for post ID {$post->ID}. Skipping deletion." );
+		return false;
+	}
+	$endpoint = build_ca_endpoint( "/ca/{$uuid}" );
+	$res      = request_ca( $endpoint, $admin_secret, 'DELETE' );
+
+	if ( false === $res ) {
+		debug( "Failed to delete CA for post ID {$post->ID}" );
+		return false;
+	}
+	debug( "Successfully deleted CA for post ID {$post->ID}" );
+	return true;
+}
+
+/**
+ * Content Attestation サーバーへのリクエスト
+ *
+ * @param string  $endpoint Content Attestation サーバー CA 登録・更新・削除エンドポイント
+ * @param string  $admin_secret Content Attestation サーバー認証情報
+ * @param string  $method Content Attestation サーバーへのリクエストメソッド
+ * @param ?string $body (optional) Content Attestation サーバーへのリクエストボディ
+ * @return mixed 成功した場合はレスポンスボディをデコードした結果（POST なら Content Attestation Set、DELETE なら null など）、失敗した場合は false
+ */
+function request_ca( string $endpoint, string $admin_secret, string $method = 'POST', ?string $body = null ): mixed {
 	$args = array(
-		'method'  => 'POST',
+		'method'  => $method,
 		'timeout' => PROFILE_DEFAULT_CA_SERVER_REQUEST_TIMEOUT,
-		'headers' => array(
-			'content-type' => 'application/json',
-		),
-		'body'    => $uca->to_json(),
+		'headers' => array(),
 	);
+
+	if ( null !== $body ) {
+		$args['headers']['content-type'] = 'application/json';
+		$args['body']                    = $body;
+	}
 
 	$secret_arr = explode( ':', $admin_secret );
 	$username   = $secret_arr[0] ?? '';
@@ -290,19 +481,16 @@ function issue_ca( Uca $uca, string $endpoint, string $admin_secret ): mixed {
 			$args['headers']['authorization'] = 'Basic ' . \sodium_bin2base64( $admin_secret, SODIUM_BASE64_VARIANT_ORIGINAL );
 			break;
 	}
-
 	$res = \wp_remote_request( $endpoint, $args );
-
 	if ( \is_wp_error( $res ) ) {
 		$error_message = $res->get_error_message();
 		debug( 'Failed to request error: ' . $error_message );
 		return false;
 	}
 
-	if ( 200 !== $res['response']['code'] ) {
-		debug( 'HTTP error: ' . $res['response']['code'] );
+	if ( 200 !== $res['response']['code'] && 204 !== $res['response']['code'] ) {
+		debug( "HTTP {$res['response']['code']}: {$res['body']}" );
 		return false;
 	}
-
 	return \json_decode( $res['body'], true );
 }

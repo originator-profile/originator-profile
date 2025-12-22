@@ -296,8 +296,11 @@ participant CAサーバー
 
 管理者->>WordPress: プラグインのインストール
 管理者->>WordPress: 投稿・更新
+管理者->>WordPress: 非公開・削除
 WordPress->>プラグイン: transition_post_status
+WordPress->>プラグイン: before_delete_post
 プラグイン->>CAサーバー: CAの登録・更新
+プラグイン->>CAサーバー: CAの削除
 
 利用者->>WordPress: 投稿の閲覧
 WordPress->>プラグイン: wp_head
@@ -311,7 +314,9 @@ WordPress-->>利用者: CAS
 
 [Hooks](https://developer.wordpress.org/plugins/hooks/) に応じた処理を実行します。
 
-- `transition_post_status` : 投稿・更新のタイミングでトリガーされ、そのコンテンツの内容を変換し、CAサーバーの登録・更新エンドポイントに送信します
+- `transition_post_status` : 投稿・更新のタイミングでトリガーされ、そのコンテンツの内容を変換し、CAサーバーの登録・更新エンドポイントに送信します  
+また、公開から非公開や下書きなど公開以外の状態になったタイミングでトリガーされ、対象コンテンツのCA IDを利用してCAサーバーの削除エンドポイントに送信します
+- `before_delete_post` : 投稿が削除されるタイミングでトリガーされ、対象コンテンツのCA IDを利用してCAサーバーの削除エンドポイントに送信します
 - `wp_head` : 投稿の閲覧のタイミングでトリガーされ、埋め込まれた `<script>` 要素を介して利用者はCASを取得します
 
 以上の処理により、投稿したコンテンツは自動的に管理され、利用者はその真正性を確認できます。
