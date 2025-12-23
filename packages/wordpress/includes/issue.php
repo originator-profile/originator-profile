@@ -174,13 +174,13 @@ function update_attachment_integrity_metadata( array $metadata, int $attachment_
  */
 function extract_uuid_from_jwt( string $jwt ) {
 	if ( '' === $jwt ) {
-		debug( 'base64url_decode: empty JWT string' );
+		debug( 'extract_uuid_from_jwt: empty JWT string' );
 		return false;
 	}
 
 	$parts = explode( '.', $jwt );
 	if ( count( $parts ) !== 3 ) {
-		debug( 'base64url_decode: invalid JWT format (expected 3 parts)' );
+		debug( 'extract_uuid_from_jwt: invalid JWT format (expected 3 parts)' );
 		return false;
 	}
 
@@ -194,13 +194,13 @@ function extract_uuid_from_jwt( string $jwt ) {
 	// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 	$payload_json = \base64_decode( $base64, true );
 	if ( false === $payload_json ) {
-		debug( 'base64url_decode: base64_decode failed' );
+		debug( 'extract_uuid_from_jwt: base64_decode failed' );
 		return false;
 	}
 
 	$payload = json_decode( $payload_json, true );
 	if ( ! is_array( $payload ) ) {
-		debug( 'base64url_decode: json_decode failed (not an array)' );
+		debug( 'extract_uuid_from_jwt: json_decode failed (not an array)' );
 		return false;
 	}
 
@@ -211,7 +211,7 @@ function extract_uuid_from_jwt( string $jwt ) {
 		! is_string( $payload['credentialSubject']['id'] ) ||
 		'' === $payload['credentialSubject']['id']
 	) {
-		debug( 'base64url_decode: credentialSubject.id not found' );
+		debug( 'extract_uuid_from_jwt: credentialSubject.id not found' );
 		return false;
 	}
 
@@ -402,7 +402,7 @@ function build_ca_base_endpoint(): string {
 /**
  * エンドポイントの構築
  *
- * @param string $endpoint_path Content Attestation の発行または削除のエンドポイントの共通でない部分のパス
+ * @param string $endpoint_path エンドポイントのパス（例: '/ca' または '/ca/{uuid}'）
  * @return string エンドポイント
  */
 function build_ca_endpoint( string $endpoint_path ): string {
