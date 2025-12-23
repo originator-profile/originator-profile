@@ -15,13 +15,13 @@ final class Uca {
 	 * 未署名 Content Attestation
 	 *
 	 * @param string  $issuer CA 発行者
-	 * @param ?string $subject CA ID
 	 * @param string  $url 投稿のパーマリンクURL
 	 * @param string  $locale ロケール
 	 * @param string  $html HTML
 	 * @param string  $target_type 検証対象の種別
 	 * @param string  $target_css_selector 検証する対象の要素 CSS セレクター
 	 * @param array   $external_resources 外部リソース
+	 * @param ?string $subject CA ID
 	 * @param ?string $headline (optional) タイトル
 	 * @param ?string $image (optional) 画像URL
 	 * @param ?string $description (optional) 説明
@@ -31,13 +31,13 @@ final class Uca {
 	 */
 	public function __construct(
 		public string $issuer,
-		public ?string $subject = null,
 		public string $url,
 		public string $locale,
 		public string $html,
 		public string $target_type,
 		public string $target_css_selector,
 		public array $external_resources,
+		public ?string $subject = null,
 		public ?string $headline = null,
 		public ?string $image = null,
 		public ?string $description = null,
