@@ -14,7 +14,6 @@ use function Profile\Debug\debug;
  *
  * @link https://docs.originator-profile.org/en/opb/ca-model/article/
  */
-
 final class Uca {
 	/**
 	 * 未署名 Content Attestation

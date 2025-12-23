@@ -113,7 +113,7 @@ function private_post( string $new_status, string $old_status, \WP_Post $post ) 
 			return;
 		}
 		delete_ca( $admin_secret, $post );
-		delete_post_meta( $post->ID, '_profile_post_cas' );
+		\delete_post_meta( $post->ID, '_profile_post_cas' );
 	}
 }
 
@@ -172,7 +172,7 @@ function update_attachment_integrity_metadata( array $metadata, int $attachment_
  * @param string $jwt JWT
  * @return string CA ID
  */
-function base64url_decode( string $jwt ) {
+function extract_uuid_from_jwt( string $jwt ) {
 	if ( '' === $jwt ) {
 		debug( 'base64url_decode: empty JWT string' );
 		return false;
@@ -232,13 +232,13 @@ function extract_uuid_from_cas( \WP_Post $post ) {
 	if ( is_array( $cas ) && isset( $cas[0] ) && is_string( $cas[0] ) ) {
 		$jwt = $cas[0];
 	} else {
-		// cas が存在しない場合はここで吸収される
-		debug( " No CAS found for post ID {$post->ID}, page {$page}" );
+		// CAS が存在しないか、予期した形式でない場合はここで処理される
+		debug( "No CAS found for post ID {$post->ID}, page {$page}" );
 		$jwt = null;
 	}
 
 	if ( null !== $jwt ) {
-		$uuid = base64url_decode( $jwt );
+		$uuid = extract_uuid_from_jwt( $jwt );
 	} else {
 		$uuid = false;
 	}
@@ -402,11 +402,11 @@ function build_ca_base_endpoint(): string {
 /**
  * エンドポイントの構築
  *
- * @param string $path Content Attestation の発行または削除のエンドポイントの共通でない部分のパス
+ * @param string $endpoint_path Content Attestation の発行または削除のエンドポイントの共通でない部分のパス
  * @return string エンドポイント
  */
-function build_ca_endpoint( string $path ): string {
-	return build_ca_base_endpoint() . $path;
+function build_ca_endpoint( string $endpoint_path ): string {
+	return build_ca_base_endpoint() . $endpoint_path;
 }
 
 /**
@@ -452,7 +452,7 @@ function delete_ca( string $admin_secret, \WP_Post $post ): bool {
  * @param string  $admin_secret Content Attestation サーバー認証情報
  * @param string  $method Content Attestation サーバーへのリクエストメソッド
  * @param ?string $body (optional) Content Attestation サーバーへのリクエストボディ
- * @return mixed 成功した場合はレスポンスボディをデコードした結果（POST なら Content Attestation Set、DELETE なら null など）、失敗した場合は false
+ * @return mixed 成功した場合はレスポンスボディをデコードした結果または true 、失敗した場合は false
  */
 function request_ca( string $endpoint, string $admin_secret, string $method = 'POST', ?string $body = null ): mixed {
 	$args = array(
@@ -492,5 +492,10 @@ function request_ca( string $endpoint, string $admin_secret, string $method = 'P
 		debug( "HTTP {$res['response']['code']}: {$res['body']}" );
 		return false;
 	}
+
+	if ( 204 === $res['response']['code'] ) {
+		return true;
+	}
+
 	return \json_decode( $res['body'], true );
 }
