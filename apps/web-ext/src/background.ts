@@ -1,14 +1,41 @@
-import { frameCasExtensionMessenger } from "./components/frameCas";
 import "./utils/cors-basic-auth";
+import { updateBadge, verifyTabCredentials } from "./components/tabBadge";
 
 const windowSize = {
   width: 520,
   height: 640,
 } as const;
 
-chrome.action.onClicked.addListener(async function (tab) {
+chrome.action.onClicked.addListener(async (tab) => {
   const url = `${chrome.runtime.getURL("index.html")}#/tab/${tab.id}`;
   await chrome.windows.create({ url, type: "popup", ...windowSize });
+});
+
+/**
+ * タブのバッジを更新する
+ * @param tabId タブID
+ */
+async function updateTabBadge(tabId: number): Promise<void> {
+  const result = await verifyTabCredentials(tabId);
+
+  if (result === null) {
+    await updateBadge(tabId, 0);
+    return;
+  }
+
+  await updateBadge(tabId, result.count);
+}
+
+// タブ切り替え時にバッジを更新
+chrome.tabs.onActivated.addListener(({ tabId }) => {
+  void updateTabBadge(tabId);
+});
+
+// ページ遷移完了時にバッジを更新
+chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  if (changeInfo.status === "complete") {
+    void updateTabBadge(tabId);
+  }
 });
 
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
@@ -30,29 +57,6 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
     // });
   }
 });
-
-frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
-  const { tabId, framesCas } = data;
-  const targetFramesCas = framesCas.filter(
-    (frameCas) => frameCas.cas.length > 0,
-  );
-  for (const frameCas of targetFramesCas) {
-    void frameCasExtensionMessenger.sendMessage(
-      "locating",
-      {
-        frameCas,
-        frames: framesCas.map(({ cas: _, ...frame }) => frame),
-      },
-      {
-        tabId,
-        frameId: frameCas.frameId,
-      },
-    );
-  }
-});
-
-// https://www.typescriptlang.org/tsconfig#non-module-files
-export {};
 
 // NOTE: gh-1583
 if (import.meta.env.MODE === "development") {
