@@ -63,7 +63,7 @@ function sign_post( string $new_status, string $old_status, \WP_Post $post ) {
 	$uuid = extract_uuid_from_cas( $post );
 
 	if ( false === $uuid ) {
-		debug( "UUID found but failed to decode UUID for post ID {$post->ID}. Continuing with new UCA issuance" );
+		debug( "UUID not available or failed to decode UUID for post ID {$post->ID}. Continuing with new UCA issuance" );
 		$uca_list = create_uca_list( $post, $issuer_id ); // UUIDなしで新規発行
 	} else {
 		$uca_list = create_uca_list( $post, $issuer_id, $uuid );
@@ -231,6 +231,8 @@ function extract_uuid_from_cas( \WP_Post $post ) {
 
 	if ( is_array( $cas ) && isset( $cas[0] ) && is_string( $cas[0] ) ) {
 		$jwt = $cas[0];
+	} elseif ( is_string( $cas ) ) {
+		$jwt = $cas;
 	} else {
 		// CAS が存在しないか、予期した形式でない場合はここで処理される
 		debug( "No CAS found for post ID {$post->ID}, page {$page}" );
