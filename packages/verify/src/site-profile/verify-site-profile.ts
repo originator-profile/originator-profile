@@ -50,7 +50,10 @@ const decodeWebsiteProfiles = (
     });
   }
 
-  return { decodedWsps: decodedWsps as UnverifiedJwtVc<WebsiteProfile>[], wspSources };
+  return {
+    decodedWsps: decodedWsps as UnverifiedJwtVc<WebsiteProfile>[],
+    wspSources,
+  };
 };
 
 /**
@@ -124,7 +127,8 @@ export function SpVerifier(
         if (verifyOrigin) {
           const allowedOrigin =
             "allowedOrigin" in decodedWsp.doc.credentialSubject
-              ? (decodedWsp.doc.credentialSubject.allowedOrigin as AllowedOrigin)
+              ? (decodedWsp.doc.credentialSubject
+                  .allowedOrigin as AllowedOrigin)
               : decodedWsp.doc.credentialSubject.url; // NOTE: 後方互換性のため 2026-10-01 まで url プロパティを許容
 
           if (!verifyAllowedOrigin(origin, allowedOrigin)) {

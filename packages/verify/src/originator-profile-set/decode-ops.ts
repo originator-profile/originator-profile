@@ -35,7 +35,11 @@ const validateDecodedOp = (
   media: JwtVcDecodingResult<WebMediaProfile>[] | undefined,
   resultOp: OpDecodingFailure,
 ):
-  | { type: "valid"; annotations?: UnverifiedJwtVc<Certificate>[]; media?: UnverifiedJwtVc<WebMediaProfile>[] }
+  | {
+      type: "valid";
+      annotations?: UnverifiedJwtVc<Certificate>[];
+      media?: UnverifiedJwtVc<WebMediaProfile>[];
+    }
   | OpInvalid => {
   if (annotations && !isEveryDecodedPa(annotations)) {
     return new OpInvalid("Profile Annotation decode failed", resultOp);
@@ -105,7 +109,11 @@ export function decodeOps(ops: OriginatorProfileSet): OpsDecodingResult {
       return validated;
     }
 
-    return { core, annotations: validated.annotations, media: validated.media } as DecodedOp;
+    return {
+      core,
+      annotations: validated.annotations,
+      media: validated.media,
+    } as DecodedOp;
   });
   if (!isDecodedOps(resultOps)) {
     return new OpsInvalid("Invalid Originator Profile Set", resultOps);

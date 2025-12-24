@@ -424,11 +424,7 @@ describe("Site Profileの検証", async () => {
           ),
         ],
         media: [
-          verifyResult.create(
-            wmp,
-            originatorOp.media[0],
-            authority.publicKey,
-          ),
+          verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
         ],
       },
     ]);
