@@ -14,7 +14,7 @@ const server = setupServer();
 const ops: OriginatorProfileSetItem = {
   core: "eyJ...",
   annotations: ["eyJ..."],
-  media: "eyJ...",
+  media: ["eyJ..."],
 };
 
 const credential = "eyJ...";

@@ -83,13 +83,13 @@ describe("Site Profileの検証", async () => {
     annotations: [
       await signJwtVc(certificate, certifier.privateKey, signOptions),
     ],
-    media: await signJwtVc(wmp, authority.privateKey, signOptions),
+    media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
   };
   const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
-  const sp: SiteProfile = {
+  const sp = {
     originators: ops,
     credential: await signJwtVc(wsp, originator.privateKey, signOptions),
-  };
+  } satisfies SiteProfile;
 
   test("SiteProfileの検証に成功", async () => {
     const verify = SpVerifier(
@@ -135,11 +135,13 @@ describe("Site Profileの検証", async () => {
               certifier.publicKey,
             ),
           ],
-          media: verifyResult.create(
-            wmp,
-            originatorOp.media,
-            authority.publicKey,
-          ),
+          media: [
+            verifyResult.create(
+              wmp,
+              originatorOp.media[0],
+              authority.publicKey,
+            ),
+          ],
         },
       ],
       credential: verifyResult.create(wsp, sp.credential, originator.publicKey),
@@ -196,12 +198,14 @@ describe("Site Profileの検証", async () => {
               true,
             ),
           ],
-          media: verifyResult.create(
-            wmp,
-            originatorOp.media,
-            authority.publicKey,
-            true,
-          ),
+          media: [
+            verifyResult.create(
+              wmp,
+              originatorOp.media[0],
+              authority.publicKey,
+              true,
+            ),
+          ],
         },
       ],
       credential: verifyResult.create(
@@ -258,11 +262,13 @@ describe("Site Profileの検証", async () => {
               certifier.publicKey,
             ),
           ],
-          media: verifyResult.create(
-            wmp,
-            originatorOp.media,
-            authority.publicKey,
-          ),
+          media: [
+            verifyResult.create(
+              wmp,
+              originatorOp.media[0],
+              authority.publicKey,
+            ),
+          ],
         },
       ],
       credential: verifyResult.create(wsp, sp.credential, originator.publicKey),
@@ -361,9 +367,9 @@ describe("Site Profileの検証", async () => {
         certifier.publicKey,
       ),
     );
-    expect(resultOp[2].result.media).toStrictEqual(
-      verifyResult.create(wmp, originatorOp.media, authority.publicKey),
-    );
+    expect(resultOp[2].result.media).toStrictEqual([
+      verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+    ]);
   });
 
   test("SiteProfileのうちWSP部分の署名の検証に失敗", async () => {
@@ -417,11 +423,13 @@ describe("Site Profileの検証", async () => {
             certifier.publicKey,
           ),
         ],
-        media: verifyResult.create(
-          wmp,
-          originatorOp.media,
-          authority.publicKey,
-        ),
+        media: [
+          verifyResult.create(
+            wmp,
+            originatorOp.media[0],
+            authority.publicKey,
+          ),
+        ],
       },
     ]);
     expect(resultWsp).instanceOf(VcVerifyFailed);
@@ -489,7 +497,9 @@ describe("Site Profileの検証", async () => {
           certifier.publicKey,
         ),
       ],
-      media: verifyResult.create(wmp, originatorOp.media, authority.publicKey),
+      media: [
+        verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+      ],
     });
     expect(resultWsp).instanceOf(CoreProfileNotFound);
   });

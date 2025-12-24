@@ -69,7 +69,7 @@ describe("OPSの検証", async () => {
     annotations: [
       await signJwtVc(certificate, certifier.privateKey, signOptions),
     ],
-    media: await signJwtVc(wmp, authority.privateKey, signOptions),
+    media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
   };
   const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
 
@@ -111,11 +111,13 @@ describe("OPSの検証", async () => {
             certifier.publicKey,
           ),
         ],
-        media: verifyResult.create(
-          wmp,
-          originatorOp.media,
-          authority.publicKey,
-        ),
+        media: [
+          verifyResult.create(
+            wmp,
+            originatorOp.media[0],
+            authority.publicKey,
+          ),
+        ],
       },
     ]);
   });
@@ -168,9 +170,9 @@ describe("OPSの検証", async () => {
         certifier.publicKey,
       ),
     );
-    expect(resultOp[2].result.media).toStrictEqual(
-      verifyResult.create(wmp, originatorOp.media, authority.publicKey),
-    );
+    expect(resultOp[2].result.media).toStrictEqual([
+      verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+    ]);
   });
 
   test("PAの署名の検証に失敗", async () => {
@@ -224,9 +226,9 @@ describe("OPSの検証", async () => {
       ),
     );
     expect(resultOp[2].result.annotations[1]).instanceOf(VcVerifyFailed);
-    expect(resultOp[2].result.media).toStrictEqual(
-      verifyResult.create(wmp, originatorOp.media, authority.publicKey),
-    );
+    expect(resultOp[2].result.media).toStrictEqual([
+      verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+    ]);
   });
 
   test("WMPの署名の検証に失敗", async () => {
@@ -236,7 +238,7 @@ describe("OPSの検証", async () => {
       {
         op: "replace",
         path: [2, "media"],
-        value: evilWmp,
+        value: [evilWmp],
       },
     ]);
     const verify = OpsVerifier(
@@ -279,7 +281,7 @@ describe("OPSの検証", async () => {
         certifier.publicKey,
       ),
     );
-    expect(resultOp[2].result.media).instanceOf(VcVerifyFailed);
+    expect(resultOp[2].result.media[0]).instanceOf(VcVerifyFailed);
   });
 
   test("CPの発行者と署名者が不一致", async () => {
@@ -333,9 +335,9 @@ describe("OPSの検証", async () => {
         certifier.publicKey,
       ),
     );
-    expect(resultOp[2].result.media).toStrictEqual(
-      verifyResult.create(wmp, originatorOp.media, authority.publicKey),
-    );
+    expect(resultOp[2].result.media).toStrictEqual([
+      verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+    ]);
   });
 
   test("CPとWMPの保有者が不一致", async () => {
@@ -354,7 +356,7 @@ describe("OPSの検証", async () => {
       {
         op: "replace",
         path: [2, "media"],
-        value: invalidWmp,
+        value: [invalidWmp],
       },
     ]);
     const verify = OpsVerifier(
@@ -472,9 +474,9 @@ describe("OPSの検証", async () => {
       verifyResult.create(cp, originatorOp.core, authority.publicKey),
     );
     expect(resultOp[1].result.annotations[0]).instanceOf(CoreProfileNotFound);
-    expect(resultOp[1].result.media).toStrictEqual(
-      verifyResult.create(wmp, originatorOp.media, authority.publicKey),
-    );
+    expect(resultOp[1].result.media).toStrictEqual([
+      verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+    ]);
   });
 
   test("WMP発行者のOPがOPSに存在しない", async () => {
@@ -510,6 +512,6 @@ describe("OPSの検証", async () => {
         certifier.publicKey,
       ),
     );
-    expect(resultOp[1].result.media).instanceOf(CoreProfileNotFound);
+    expect(resultOp[1].result.media[0]).instanceOf(CoreProfileNotFound);
   });
 });
