@@ -19,8 +19,21 @@ export const OriginatorProfileSetItem = {
       },
     },
     media: {
-      title: "Web Media Profile",
-      type: "string",
+      title: "Web Media Profile または Web Media Profile の配列",
+      // NOTE: 後方互換性のため単数形も許容。将来的には配列のみに移行予定
+      oneOf: [
+        {
+          type: "string",
+          title: "Web Media Profile",
+        },
+        {
+          type: "array",
+          items: {
+            type: "string",
+            title: "Web Media Profile",
+          },
+        },
+      ],
     },
   },
   required: ["core"],

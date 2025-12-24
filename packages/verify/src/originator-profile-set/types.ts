@@ -24,13 +24,13 @@ export type Certificate = BasicCertificate | JapaneseExistenceCertificate;
 export type OpDecodingFailure = {
   core: JwtVcDecodingResult<CoreProfile>;
   annotations?: JwtVcDecodingResult<Certificate>[];
-  media?: JwtVcDecodingResult<WebMediaProfile>;
+  media?: JwtVcDecodingResult<WebMediaProfile>[];
 };
 /** 復号済み Originator Profile */
 export type DecodedOp = {
   core: UnverifiedJwtVc<CoreProfile>;
   annotations?: UnverifiedJwtVc<Certificate>[];
-  media: UnverifiedJwtVc<WebMediaProfile>;
+  media?: UnverifiedJwtVc<WebMediaProfile>[];
 };
 /** Originator Profile 復号結果 */
 export type OpDecodingResult = DecodedOp | OpInvalid;
@@ -49,15 +49,16 @@ export type OpVerificationFailure = {
     | JwtVcVerificationResult<Certificate>
     | CoreProfileNotFound<Certificate>
   )[];
-  media?:
+  media?: (
     | JwtVcVerificationResult<WebMediaProfile>
-    | CoreProfileNotFound<WebMediaProfile>;
+    | CoreProfileNotFound<WebMediaProfile>
+  )[];
 };
 /** 検証済み Originator Profile */
 export type VerifiedOp = {
   core: VerifiedJwtVc<CoreProfile>;
   annotations?: VerifiedJwtVc<Certificate>[];
-  media?: VerifiedJwtVc<WebMediaProfile>;
+  media?: VerifiedJwtVc<WebMediaProfile>[];
 };
 /** Originator Profile 検証結果 */
 export type OpVerificationResult = VerifiedOp | OpVerifyFailed;

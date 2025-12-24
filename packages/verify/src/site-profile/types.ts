@@ -14,6 +14,11 @@ import { SiteProfileInvalid, SiteProfileVerifyFailed } from "./verify-errors";
 /** Site Profile 検証失敗 */
 export type SpVerificationFailure = {
   originators: OpsVerificationResult;
+  sites?: (
+    | JwtVcVerificationResult<WebsiteProfile>
+    | JwtVcDecodingResult<WebsiteProfile>
+    | CoreProfileNotFound<WebsiteProfile>
+  )[];
   credential?:
     | JwtVcVerificationResult<WebsiteProfile>
     | JwtVcDecodingResult<WebsiteProfile>
@@ -22,7 +27,8 @@ export type SpVerificationFailure = {
 
 export type VerifiedSp = {
   originators: VerifiedOps;
-  credential: VerifiedJwtVc<WebsiteProfile>;
+  sites?: VerifiedJwtVc<WebsiteProfile>[];
+  credential?: VerifiedJwtVc<WebsiteProfile>;
 };
 
 export type SpVerificationResult =
