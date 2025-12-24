@@ -184,7 +184,7 @@ function profile_ca_target_type_field() {
 			style="width: 320px;"
 		>
 		<datalist id="target_integrity_type">
-			<option>HTMLTargetIntegrity</option>
+			<option>HtmlTargetIntegrity</option>
 			<option>TextTargetIntegrity</option>
 			<option>VisibleTextTargetIntegrity</option>
 		</datalist>
