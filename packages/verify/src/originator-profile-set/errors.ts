@@ -126,6 +126,17 @@ export class OpVerifyFailed extends Error {
   }
 }
 
+/**
+ * 証明書の有効期限エラー
+ *
+ * 証明書の有効期限チェックに失敗しました。次の原因で使用されます。
+ *
+ * - 証明書の有効期限が開始していない (validFrom より前)
+ * - 証明書の有効期限が切れている (validUntil より後)
+ *
+ * なお、validFrom と validUntil はオプショナルフィールドのため、
+ * 片方のみが指定されている場合もあります。
+ **/
 export class CertificateExpired<T extends OpVc> extends Error {
   static get code() {
     return "ERR_CERTIFICATE_EXPIRED";
