@@ -236,6 +236,49 @@ describe("OPSの検証", async () => {
     });
   });
 
+  test("validUntilのみ設定され有効期間内のcertificateがあるOPSの検証に成功", async () => {
+    const certificateWithExpiry: Certificate = structuredClone(certificate);
+    const until = new Date();
+    until.setDate(until.getDate() + 1);
+    certificateWithExpiry.validUntil = until.toISOString();
+
+    const originatorOp = {
+      core: await signCp(cp, authority.privateKey, signOptions),
+      annotations: [
+        await signJwtVc(
+          certificateWithExpiry,
+          certifier.privateKey,
+          signOptions,
+        ),
+      ],
+      media: await signJwtVc(wmp, authority.privateKey, signOptions),
+    };
+
+    const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
+    const verify = OpsVerifier(
+      ops,
+      LocalKeys({ keys: [authority.publicKey] }),
+      opId.authority,
+    );
+    const resultOps = await verify();
+
+    expect(resultOps).not.instanceOf(OpsInvalid);
+    expect(resultOps).not.instanceOf(OpsVerifyFailed);
+
+    const verifiedOps = resultOps as VerifiedOps;
+    expect(verifiedOps[2]).toStrictEqual({
+      core: verifyResult.create(cp, originatorOp.core, authority.publicKey),
+      annotations: [
+        verifyResult.create(
+          certificateWithExpiry,
+          originatorOp.annotations[0],
+          certifier.publicKey,
+        ),
+      ],
+      media: verifyResult.create(wmp, originatorOp.media, authority.publicKey),
+    });
+  });
+
   test("有効開始日時が未来のcertificateがあるOPSの検証でOpsVerifyFailedになるか", async () => {
     const certificateWithExpiry: Certificate = structuredClone(certificate);
     const from = new Date();
