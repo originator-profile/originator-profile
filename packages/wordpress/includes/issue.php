@@ -15,6 +15,7 @@ use const Profile\Config\PROFILE_DEFAULT_CA_TARGET_HTML;
 
 require_once __DIR__ . '/class-casapiauthclient.php';
 use Profile\CasApiAuthClient\CasApiAuthClient;
+use Profile\CasApiAuthClient\CasApiAuthCCSP;
 
 require_once __DIR__ . '/debug.php';
 use function Profile\Debug\debug;
@@ -282,6 +283,14 @@ function issue_ca( Uca $uca, string $endpoint, string $admin_secret ): mixed {
 			$api_auth = new CasApiAuthClient();
 			if ( ! $api_auth->init_oidc( $admin_secret ) ) {
 				debug( 'Failed to initialize OIDC client.' );
+				return false;
+			}
+			$args['headers']['authorization'] = 'Bearer ' . $api_auth->getApiToken();
+			break;
+		case 'CCSP': // CCSPの場合はCA Server認証(CCSP)を行う
+			$api_auth = new CasApiAuthCCSP();
+			if ( ! $api_auth->init_ccsp( $admin_secret ) ) {
+				debug( 'Failed to initialize CCSP client.' );
 				return false;
 			}
 			$args['headers']['authorization'] = 'Bearer ' . $api_auth->getApiToken();
