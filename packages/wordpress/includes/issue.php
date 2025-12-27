@@ -285,7 +285,7 @@ function issue_ca( Uca $uca, string $endpoint, string $admin_secret ): mixed {
 				debug( 'Failed to initialize OIDC client.' );
 				return false;
 			}
-			$args['headers']['authorization'] = 'Bearer ' . $api_auth->getApiToken();
+			$args['headers']['authorization'] = 'Bearer ' . $api_auth->get_api_token();
 			break;
 		case 'CCSP': // CCSPの場合はCA Server認証(CCSP)を行う
 			$api_auth = new CasApiAuthCCSP();
@@ -293,7 +293,7 @@ function issue_ca( Uca $uca, string $endpoint, string $admin_secret ): mixed {
 				debug( 'Failed to initialize CCSP client.' );
 				return false;
 			}
-			$args['headers']['authorization'] = 'Bearer ' . $api_auth->getApiToken();
+			$args['headers']['authorization'] = 'Bearer ' . $api_auth->get_api_token();
 			break;
 		default: // それ以外の場合は、Basic 認証を使う
 			$args['headers']['authorization'] = 'Basic ' . \sodium_bin2base64( $admin_secret, SODIUM_BASE64_VARIANT_ORIGINAL );

@@ -88,7 +88,7 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	 * @param string|null $id_token The ID token to store.
 	 * @return void
 	 */
-	private function storeIdToken( $id_token ) {
+	private function store_id_token( $id_token ) {
 		// Store it in the WordPress options
 		\update_option( CA_SERVER_ID_TOKEN, $id_token );
 	}
@@ -99,7 +99,7 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	 * @param string|null $refresh_token The refresh token to store.
 	 * @return void
 	 */
-	private function storeRefreshToken( $refresh_token ) {
+	private function store_refresh_token( $refresh_token ) {
 		// Store it in the WordPress options
 		\update_option( CA_SERVER_REFRESH_TOKEN, $refresh_token );
 	}
@@ -109,7 +109,7 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	 *
 	 * @return string|null The stored id_token or null if not set
 	 */
-	private function getStoredIdToken() {
+	private function get_stored_id_token() {
 		return \get_option( CA_SERVER_ID_TOKEN, null );
 	}
 
@@ -118,7 +118,7 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	 *
 	 * @return string|null The stored refresh_token or null if not set
 	 */
-	private function getStoredRefreshToken() {
+	private function get_stored_refresh_token() {
 		return \get_option( CA_SERVER_REFRESH_TOKEN, null );
 	}
 
@@ -127,17 +127,17 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	 *
 	 * @return void
 	 */
-	private function storeTokens() {
+	private function store_tokens() {
 		// Store the id_token and refresh_token in WordPress options
 		$id_token = $this->getIdToken();
 		if ( $id_token ) {
-			$this->storeIdToken( $id_token );
+			$this->store_id_token( $id_token );
 		} else {
 			debug( 'No id_token received(OIDC)' );
 		}
 		$refresh_token = $this->getRefreshToken();
 		if ( $refresh_token ) {
-			$this->storeRefreshToken( $refresh_token );
+			$this->store_refresh_token( $refresh_token );
 		} else {
 			debug( 'No refresh_token received(OIDC)' );
 		}
@@ -204,7 +204,7 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			if ( $result && isset( $_REQUEST['code'] ) ) {
 				// Store the id_token and refresh_token after successful authentication
-				$this->storeTokens();
+				$this->store_tokens();
 				$msg = 'API authentication successful(OIDC)';
 				debug( $msg );
 				return true;
@@ -226,7 +226,7 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	 * @param string $id_token The id_token to check
 	 * @return bool True if the token is expired, false otherwise
 	 */
-	private function expiredToken( $id_token ) {
+	private function expired_token( $id_token ) {
 		// Decode the JWT id_token to check expiration
 		$parts = explode( '.', $id_token );
 		if ( count( $parts ) !== 3 ) {
@@ -258,9 +258,9 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	 *
 	 * @return bool True if the token was refreshed successfully, false otherwise
 	 */
-	private function refreshIdToken() {
+	private function refresh_id_token() {
 		// Get the current refresh_token
-		$refresh_token = $this->getStoredRefreshToken();
+		$refresh_token = $this->get_stored_refresh_token();
 		if ( null === $refresh_token ) {
 			debug( 'No refreshToken available(OIDC). Please authenticate again!!!' );
 			return false;
@@ -270,10 +270,10 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 		if ( isset( $json->id_token ) ) {
 			debug( 'Id token refreshed successfully(OIDC)' );
 			// Store the new id_token
-			$this->storeIdToken( $json->id_token );
+			$this->store_id_token( $json->id_token );
 			// Also store the new refresh_token
 			if ( isset( $json->refresh_token ) ) {
-				$this->storeRefreshToken( $json->refresh_token );
+				$this->store_refresh_token( $json->refresh_token );
 			} else {
 				// If no new refresh token is provided, keep the old one
 				debug( 'No new refresh token provided, keeping the old one(OIDC)' );
@@ -290,13 +290,13 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	 *
 	 * @return string|null The id_token if available, null if not
 	 */
-	public function getApiToken() {
-		$id_token = $this->getStoredIdToken();
-		if ( null === $id_token || $this->expiredToken( $id_token ) ) {
+	public function get_api_token() {
+		$id_token = $this->get_stored_id_token();
+		if ( null === $id_token || $this->expired_token( $id_token ) ) {
 			debug( 'Id token is not available, refreshing(OIDC)...' );
-			if ( $this->refreshIdToken() ) {
+			if ( $this->refresh_id_token() ) {
 				// Get the refreshed id_token
-				$id_token = $this->getStoredIdToken();
+				$id_token = $this->get_stored_id_token();
 			} else {
 				// Failed refresh, set id_token to null
 				$id_token = null;
@@ -400,7 +400,7 @@ final class CasApiAuthCCSP {
 	 * @param string|null $access_token The access token to store.
 	 * @return void
 	 */
-	private function storeAccessToken( $accessToken ) {
+	private function store_access_token( $accessToken ) {
 		// Store it in the WordPress options
 		\update_option( CA_SERVER_ID_TOKEN, $accessToken );
 		// No refresh token in CCSP
@@ -412,7 +412,7 @@ final class CasApiAuthCCSP {
 	 *
 	 * @return string|null The stored access_token or null if not set
 	 */
-	private function getStoredAccessToken() {
+	private function get_stored_access_token() {
 		return \get_option( CA_SERVER_ID_TOKEN, null );
 	}
 
@@ -421,28 +421,28 @@ final class CasApiAuthCCSP {
 	 *
 	 * @return void
 	 */
-	private function storeTokens( $accessToken ) {
+	private function store_tokens( $accessToken ) {
 		$this->accessToken = $accessToken;
 		// Store the accessToken in WordPress options
 		if ( $this->accessToken ) {
-			$this->storeAccessToken( $this->accessToken );
+			$this->store_access_token( $this->accessToken );
 		} else {
 			debug( 'No accessToken received(CCSP)' );
 		}
 	}
 
-	protected function requestToken() {
+	protected function request_token() {
 		// Prepare token request
 		$tokenEndpoint = $this->tokenUrl;
-		$tokenParams = [
+		$tokenParams   = array(
 			'grant_type'    => 'client_credentials',
 			'client_id'     => $this->clientID,
 			'client_secret' => $this->clientSecret,
-		];
+		);
 
 		// Convert parameters to URL-encoded query string
 		$postData = http_build_query( $tokenParams, '', '&' );
-		$args = array(
+		$args     = array(
 			'method'  => 'POST',
 			'headers' => array(
 				'content-type' => 'application/x-www-form-urlencoded',
@@ -459,7 +459,7 @@ final class CasApiAuthCCSP {
 		}
 
 		if ( 200 !== $res['response']['code'] ) {
-			debug( 'requestToken() HTTP error(CCSP): ' . $res['response']['code'] );
+			debug( 'request_token() HTTP error(CCSP): ' . $res['response']['code'] );
 			return null;
 		}
 
@@ -473,10 +473,10 @@ final class CasApiAuthCCSP {
 	 */
 	public function authenticate(): bool {
 		try {
-			$result = $this->requestToken();
+			$result = $this->request_token();
 			if ( $result && isset( $result['access_token'] ) ) {
 				// Store the access_token after successful authentication
-				$this->storeTokens( $result['access_token'] );
+				$this->store_tokens( $result['access_token'] );
 				$msg = 'API token received successfully(CCSP)';
 				debug( $msg );
 				return true;
@@ -496,7 +496,7 @@ final class CasApiAuthCCSP {
 	 * @param string $accessToken The accessToken to check
 	 * @return bool True if the token is expired, false otherwise
 	 */
-	private function expiredToken( $accessToken ) {
+	private function expired_token( $accessToken ) {
 		// Decode the JWT accessToken to check expiration
 		$parts = explode( '.', $accessToken );
 		if ( count( $parts ) !== 3 ) {
@@ -527,13 +527,13 @@ final class CasApiAuthCCSP {
 	 *
 	 * @return string|null The access_token if available, null if not
 	 */
-	public function getApiToken() {
-		$this->accessToken = $this->getStoredAccessToken();
-		if ( null === $this->accessToken || $this->expiredToken( $this->accessToken ) ) {
+	public function get_api_token() {
+		$this->accessToken = $this->get_stored_access_token();
+		if ( null === $this->accessToken || $this->expired_token( $this->accessToken ) ) {
 			debug( 'Access token is not available, refreshing(CCSP)...' );
 			if ( $this->authenticate() ) {
 				// Get the accessToken
-				$this->accessToken = $this->getStoredAccessToken();
+				$this->accessToken = $this->get_stored_access_token();
 			} else {
 				// Failed refresh, set access_token to null
 				$this->accessToken = null;
