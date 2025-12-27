@@ -15,6 +15,8 @@ use const Profile\Config\PROFILE_DEFAULT_CA_TARGET_HTML;
 
 require_once __DIR__ . '/class-casapiauthclient.php';
 use Profile\CasApiAuthClient\CasApiAuthClient;
+
+require_once __DIR__ . '/class-casapiauthccsp.php';
 use Profile\CasApiAuthClient\CasApiAuthCCSP;
 
 require_once __DIR__ . '/debug.php';
