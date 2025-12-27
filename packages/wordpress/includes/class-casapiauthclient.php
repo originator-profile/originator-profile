@@ -322,11 +322,11 @@ final class CasApiAuthCCSP {
 	private $leeway = 300;
 
 	/**
-	 * ID Token
+	 * Access Token
 	 *
 	 * @var string | null
 	 */
-	private $idToken = null;
+	private $accessToken = null;
 
 	/**
 	 * Client ID
@@ -362,6 +362,11 @@ final class CasApiAuthCCSP {
 		}
 		// Extract the secret parts
 		$secret_arr = explode( ':', $secret );
+		// Validate secret format
+		if ( ! isset( $secret_arr[1] ) || '' === $secret_arr[1] ) {
+			debug( 'Invalid secret format(CCSP): missing encoded part' );
+			return false;
+		}
 		// Decode the secret
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 		$sec = \base64_decode( $secret_arr[1], true );
@@ -390,24 +395,24 @@ final class CasApiAuthCCSP {
 	}
 
 	/**
-	 * Store the id_token in WordPress options
+	 * Store the access_token in WordPress options
 	 *
-	 * @param string|null $id_token The ID token to store.
+	 * @param string|null $access_token The access token to store.
 	 * @return void
 	 */
-	private function storeIdToken( $idToken ) {
+	private function storeAccessToken( $accessToken ) {
 		// Store it in the WordPress options
-		\update_option( CA_SERVER_ID_TOKEN, $idToken );
+		\update_option( CA_SERVER_ID_TOKEN, $accessToken );
 		// No refresh token in CCSP
 		\update_option( CA_SERVER_REFRESH_TOKEN, null );
 	}
 
 	/**
-	 * Get the stored id_token from WordPress options
+	 * Get the stored access_token from WordPress options
 	 *
-	 * @return string|null The stored id_token or null if not set
+	 * @return string|null The stored access_token or null if not set
 	 */
-	private function getStoredIdToken() {
+	private function getStoredAccessToken() {
 		return \get_option( CA_SERVER_ID_TOKEN, null );
 	}
 
@@ -416,13 +421,13 @@ final class CasApiAuthCCSP {
 	 *
 	 * @return void
 	 */
-	private function storeTokens( $idToken ) {
-		$this->idToken = $idToken;
-		// Store the idToken in WordPress options
-		if ( $this->idToken ) {
-			$this->storeIdToken( $this->idToken );
+	private function storeTokens( $accessToken ) {
+		$this->accessToken = $accessToken;
+		// Store the accessToken in WordPress options
+		if ( $this->accessToken ) {
+			$this->storeAccessToken( $this->accessToken );
 		} else {
-			debug( 'No idToken received(CCSP)' );
+			debug( 'No accessToken received(CCSP)' );
 		}
 	}
 
@@ -449,7 +454,7 @@ final class CasApiAuthCCSP {
 
 		if ( \is_wp_error( $res ) ) {
 			$error_message = $res->get_error_message();
-			debug( 'Failed to request error(CCSP): ' . $error_message );
+			debug( 'Failed to request token(CCSP): ' . $error_message );
 			return null;
 		}
 
@@ -470,8 +475,8 @@ final class CasApiAuthCCSP {
 		try {
 			$result = $this->requestToken();
 			if ( $result && isset( $result['access_token'] ) ) {
-				// Store the id_token after successful authentication
-				$this->storeTokens($result['access_token']);
+				// Store the access_token after successful authentication
+				$this->storeTokens( $result['access_token'] );
 				$msg = 'API token received successfully(CCSP)';
 				debug( $msg );
 				return true;
@@ -486,26 +491,26 @@ final class CasApiAuthCCSP {
 	}
 
 	/**
-	 * Check if the idToken is expired
+	 * Check if the accessToken is expired
 	 *
-	 * @param string $idToken The idToken to check
+	 * @param string $accessToken The accessToken to check
 	 * @return bool True if the token is expired, false otherwise
 	 */
-	private function expiredToken( $idToken ) {
-		// Decode the JWT idToken to check expiration
-		$parts = explode( '.', $idToken );
+	private function expiredToken( $accessToken ) {
+		// Decode the JWT accessToken to check expiration
+		$parts = explode( '.', $accessToken );
 		if ( count( $parts ) !== 3 ) {
-			debug( 'Invalid idToken format(CCSP)' );
+			debug( 'Invalid accessToken format(CCSP)' );
 			return true; // Treat as expired if invalid
 		}
 		$payload = \base64_decode( strtr( $parts[1], '-_', '+/' ) );
 		if ( false === $payload ) {
-			debug( 'Failed to decode idToken payload(CCSP)' );
+			debug( 'Failed to decode accessToken payload(CCSP)' );
 			return true;
 		}
 		$data = \json_decode( $payload, true );
 		if ( ! isset( $data['exp'] ) ) {
-			debug( 'No exp field in idToken(CCSP)' );
+			debug( 'No exp field in accessToken(CCSP)' );
 			return true;
 		}
 		// If the token is expired or will expire within allowed seconds
@@ -518,22 +523,22 @@ final class CasApiAuthCCSP {
 	}
 
 	/**
-	 * Get the API token (idToken) and refresh it if necessary
+	 * Get the API token (access_token) and refresh it if necessary
 	 *
-	 * @return string|null The idToken if available, null if not
+	 * @return string|null The access_token if available, null if not
 	 */
 	public function getApiToken() {
-		$this->idToken = $this->getStoredIdToken();
-		if ( null === $this->idToken || $this->expiredToken( $this->idToken ) ) {
-			debug( 'Id token is not available, refreshing(CCSP)...' );
+		$this->accessToken = $this->getStoredAccessToken();
+		if ( null === $this->accessToken || $this->expiredToken( $this->accessToken ) ) {
+			debug( 'Access token is not available, refreshing(CCSP)...' );
 			if ( $this->authenticate() ) {
-				// Get the idToken
-				$this->getStoredIdToken();
+				// Get the accessToken
+				$this->accessToken = $this->getStoredAccessToken();
 			} else {
-				// Failed refresh, set id_token to null
-				$this->idToken = null;
+				// Failed refresh, set access_token to null
+				$this->accessToken = null;
 			}
 		}
-		return $this->idToken;
+		return $this->accessToken;
 	}
 }
