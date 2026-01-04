@@ -6,9 +6,6 @@ namespace Profile\CasApiAuthClient;
 require_once __DIR__ . '/debug.php';
 use function Profile\Debug\debug;
 
-const CA_SERVER_ID_TOKEN      = 'profile_ca_server_id_token';
-const CA_SERVER_REFRESH_TOKEN = 'profile_ca_server_refresh_token';
-
 /**
  * Class CA-Server Authentication for Client (client secret post)
  *
