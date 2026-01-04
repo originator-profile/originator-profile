@@ -9,7 +9,7 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   webServer: {
     command: "docker compose --env-file .env.development up",
-    url: "http://localhost:9000/wp-json/",
+    url: "http://localhost:9000",
     reuseExistingServer: true, // CI環境では https://github.com/originator-profile/originator-profile/blob/e8e5b4f0f473833b352649527a88fb7692b908da/.github/actions/wordpress_setup/action.yml#L6-L11
   },
   use: {
