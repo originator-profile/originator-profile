@@ -40,6 +40,11 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 		}
 		// Extract the secret parts
 		$secret_arr = explode( ':', $secret );
+		// Validate secret format
+		if ( ! isset( $secret_arr[1] ) || '' === $secret_arr[1] ) {
+			debug( 'Invalid secret format(CCSP): missing encoded part' );
+			return false;
+		}
 		// Decode the secret
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 		$sec = \base64_decode( $secret_arr[1], true );
