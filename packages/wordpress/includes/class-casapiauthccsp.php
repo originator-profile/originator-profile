@@ -6,6 +6,8 @@ namespace Profile\CasApiAuthClient;
 require_once __DIR__ . '/debug.php';
 use function Profile\Debug\debug;
 
+const CA_SERVER_ACCESS_TOKEN = 'profile_ca_server_access_token';
+
 /**
  * Class CA-Server Authentication for Client (client secret post)
  *
@@ -102,9 +104,7 @@ final class CasApiAuthCCSP {
 	 */
 	private function store_access_token( $access_token ) {
 		// Store it in the WordPress options
-		\update_option( CA_SERVER_ID_TOKEN, $access_token );
-		// No refresh token in CCSP
-		\update_option( CA_SERVER_REFRESH_TOKEN, null );
+		\update_option( CA_SERVER_ACCESS_TOKEN, $access_token );
 	}
 
 	/**
@@ -113,7 +113,7 @@ final class CasApiAuthCCSP {
 	 * @return string|null The stored access_token or null if not set
 	 */
 	private function get_stored_access_token() {
-		return \get_option( CA_SERVER_ID_TOKEN, null );
+		return \get_option( CA_SERVER_ACCESS_TOKEN, null );
 	}
 
 	/**
