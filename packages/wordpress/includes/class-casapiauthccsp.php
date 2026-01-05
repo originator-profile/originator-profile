@@ -9,7 +9,7 @@ use function Profile\Debug\debug;
 /**
  * Class CA-Server Authentication for Client (client secret post)
  *
- * This class handle authentication for the CA Server.
+ * This class handles authentication for the CA Server.
  * It initializes the client with the client_id, client_secret, and handles token refresh.
  */
 final class CasApiAuthCCSP {
