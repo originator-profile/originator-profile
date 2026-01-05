@@ -24,7 +24,7 @@ final class CasApiAuthCCSP {
 	/**
 	 * Access Token
 	 *
-	 * @var string | null
+	 * @var string|null
 	 */
 	private $access_token = null;
 
