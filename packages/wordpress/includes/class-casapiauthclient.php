@@ -42,7 +42,7 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 		$secret_arr = explode( ':', $secret );
 		// Validate secret format
 		if ( ! isset( $secret_arr[1] ) || '' === $secret_arr[1] ) {
-			debug( 'Invalid secret format(CCSP): missing encoded part' );
+			debug( 'Invalid secret format(OIDC): missing encoded part' );
 			return false;
 		}
 		// Decode the secret
