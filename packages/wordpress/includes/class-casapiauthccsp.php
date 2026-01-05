@@ -160,7 +160,7 @@ final class CasApiAuthCCSP {
 
 		if ( \is_wp_error( $res ) ) {
 			$error_message = $res->get_error_message();
-			debug( 'Failed to request token(CCSP): ' . $error_message );
+			debug( 'Failed to request(CCSP): ' . $error_message );
 			return null;
 		}
 

@@ -306,7 +306,7 @@ function issue_ca( Uca $uca, string $endpoint, string $admin_secret ): mixed {
 
 	if ( \is_wp_error( $res ) ) {
 		$error_message = $res->get_error_message();
-		debug( 'Failed to request error: ' . $error_message );
+		debug( 'Failed to request: ' . $error_message );
 		return false;
 	}
 
