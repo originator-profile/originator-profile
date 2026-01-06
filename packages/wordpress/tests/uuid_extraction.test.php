@@ -29,7 +29,7 @@ final class Uuid_Extraction extends TestCase {
 		$json = json_encode( array( 'credentialSubject' => array() ) );
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 		$payload = base64_encode( $json );
-		$jwt     = 'test.' . rtrim( strtr( $payload, '+/', '-_' ), '=' ) . 'test';
+		$jwt     = 'test.' . rtrim( strtr( $payload, '+/', '-_' ), '=' ) . '.test';
 		$this->assertFalse( extract_uuid_from_jwt( $jwt ) );
 	}
 
