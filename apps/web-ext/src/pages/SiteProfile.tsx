@@ -6,6 +6,7 @@ import {
   useSiteProfile,
 } from "../components/siteProfile";
 import { routes } from "../utils/routes";
+import { selectByLocale } from "../utils/select-by-locale";
 
 export default function SiteProfile() {
   const [queryParams] = useSearchParams();
@@ -13,11 +14,23 @@ export default function SiteProfile() {
   if (isLoading) return <Loading />;
   // Credential での CaSelector 部分とスタッキングコンテキストで下に重なってしまうため z-11 に設定
   if (!siteProfile) return <GlobalHeader className="sticky top-0 z-11" />;
-  const op = siteProfile.originators.find(
-    (originator) =>
-      originator.media?.doc.credentialSubject.id ===
-      siteProfile.credential.doc.issuer,
+
+  // sitesから適切なWebsiteProfileを選択
+  const selectedWsp = selectByLocale(
+    siteProfile.sites.map((s) => s.doc),
   );
+  if (!selectedWsp) return <GlobalHeader className="sticky top-0 z-11" />;
+
+  // 選択されたWebsiteProfileの発行者に対応するOriginatorを検索
+  const op = siteProfile.originators.find((originator) =>
+    originator.media?.some(
+      (m) => m.doc.credentialSubject.id === selectedWsp.issuer,
+    ),
+  );
+
+  const selectedWmp = (op?.media &&
+    selectByLocale(op.media.map((m) => m.doc)));
+
   const orgPath = op && {
     pathname: routes.org.build(
       routes.org.getParams({
@@ -32,8 +45,8 @@ export default function SiteProfile() {
     <Template
       siteProfile={siteProfile}
       orgPath={orgPath}
-      wmp={op?.media?.doc}
-      wsp={siteProfile.credential.doc}
+      wmp={selectedWmp}
+      wsp={selectedWsp}
     />
   );
 }

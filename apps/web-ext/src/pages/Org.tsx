@@ -3,6 +3,7 @@ import Loading from "../components/Loading";
 import { useCredentials } from "../components/credentials";
 import { useSiteProfile } from "../components/siteProfile";
 import Template from "../templates/Org";
+import { selectByLocale } from "../utils/select-by-locale";
 
 type Props = { back: string };
 
@@ -16,12 +17,24 @@ function Org(props: Props) {
   const { siteProfile } = useSiteProfile();
   const { ops, isLoading } = useCredentials();
   if (isLoading) return <Loading />;
-  const op = ops?.find(
-    (op) =>
-      op.media?.doc.issuer === orgIssuer &&
-      op.media?.doc.credentialSubject.id === orgSubject,
+  const op = ops?.find((op) =>
+    op.media?.some(
+      (m) =>
+        m.doc.issuer === orgIssuer &&
+        m.doc.credentialSubject.id === orgSubject,
+    ),
   );
   if (!op?.media) return null;
+  const selectedWmp = selectByLocale(
+    op.media.map((m) => m.doc),
+  );
+  if (!selectedWmp) return null;
+
+  // sitesから適切なWebsiteProfileを選択
+  const selectedWsp = siteProfile?.sites
+    ? (selectByLocale(siteProfile.sites.map((s) => s.doc)))
+    : undefined;
+
   const backPath = {
     pathname: props.back,
     search: queryParams.toString(),
@@ -32,8 +45,8 @@ function Org(props: Props) {
       contentType={contentType ?? "ContentType_Document"}
       certificates={op.annotations ?? []}
       ops={ops}
-      wsp={siteProfile?.credential.doc}
-      wmp={op.media.doc}
+      wsp={selectedWsp}
+      wmp={selectedWmp}
     />
   );
 }

@@ -35,6 +35,7 @@ const decodeWebsiteProfiles = (
   if (wspSources.length === 0) {
     return new SiteProfileInvalid("No Website Profile found", {
       originators: opsVerified,
+      sites: [],
     });
   }
 
@@ -46,7 +47,7 @@ const decodeWebsiteProfiles = (
   if (firstDecoded instanceof Error) {
     return new SiteProfileInvalid("Website Profile invalid", {
       originators: opsVerified,
-      credential: firstDecoded,
+      sites: [firstDecoded],
     });
   }
 
@@ -80,12 +81,13 @@ export function SpVerifier(
     if (opsVerified instanceof OpsInvalid) {
       return new SiteProfileInvalid("Originator Profile Set invalid", {
         originators: opsVerified,
+        sites: [],
       });
     }
     if (opsVerified instanceof OpsVerifyFailed) {
       return new SiteProfileVerifyFailed(
         "Originator Profile Set verify failed",
-        { originators: opsVerified },
+        { originators: opsVerified, sites: [] },
       );
     }
 
@@ -145,7 +147,7 @@ export function SpVerifier(
     if (firstResult instanceof CoreProfileNotFound) {
       return new SiteProfileInvalid("Appropriate Core Profile not found", {
         originators: opsVerified,
-        credential: firstResult,
+        sites: [firstResult],
       });
     }
 
@@ -157,20 +159,10 @@ export function SpVerifier(
           | JwtVcVerificationResult<WebsiteProfile>
           | CoreProfileNotFound<WebsiteProfile>
         )[],
-        credential: verifiedWsps[0] as
-          | JwtVcVerificationResult<WebsiteProfile>
-          | CoreProfileNotFound<WebsiteProfile>, // 後方互換性のため最初のWSPをcredentialにも設定
       });
     }
 
-    // NOTE: 後方互換性のため、単一のcredentialの場合は credential プロパティに設定
-    if (sp.credential && !sp.sites) {
-      return {
-        originators: opsVerified,
-        credential: verifiedWsps[0] as VerifiedJwtVc<WebsiteProfile>,
-      };
-    }
-
+    // 常に新仕様（sites配列）で返す
     return {
       originators: opsVerified,
       sites: verifiedWsps as VerifiedJwtVc<WebsiteProfile>[],

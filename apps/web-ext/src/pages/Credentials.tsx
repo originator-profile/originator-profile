@@ -6,6 +6,7 @@ import {
   useCredentials,
 } from "../components/credentials";
 import { routes } from "../utils/routes";
+import { selectByLocale } from "../utils/select-by-locale";
 
 export default function Credentials() {
   const [queryParams] = useSearchParams();
@@ -22,10 +23,16 @@ export default function Credentials() {
       ca.attestation.doc.credentialSubject.id === subject,
   );
   if (!ca) return null;
-  const op = ops.find(
-    (op) => op.media?.doc.credentialSubject.id === ca.attestation.doc.issuer,
+  const op = ops.find((op) =>
+    op.media?.some(
+      (m) => m.doc.credentialSubject.id === ca.attestation.doc.issuer,
+    ),
   );
   if (!op?.media) return null;
+  const selectedWmp = selectByLocale(
+    op.media.map((m) => m.doc),
+  );
+  if (!selectedWmp) return null;
   return (
     <Template
       ca={ca}
@@ -40,7 +47,7 @@ export default function Credentials() {
         ),
         search: queryParams.toString(),
       }}
-      wmp={op.media.doc}
+      wmp={selectedWmp}
       framesCas={framesCas}
     />
   );
