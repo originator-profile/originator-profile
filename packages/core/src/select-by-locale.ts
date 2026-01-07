@@ -36,9 +36,7 @@ export function selectByLocale<T extends { "@context": unknown }>(
 
   // ユーザーロケール取得 (例: "ja-JP" → "ja")
   const userLocale =
-    typeof navigator !== "undefined"
-      ? navigator.language.split("-")[0]
-      : "en";
+    typeof navigator !== "undefined" ? navigator.language.split("-")[0] : "en";
 
   // 1. ユーザーロケールで検索
   const byLocale = items.find((item) => getLanguage(item) === userLocale);

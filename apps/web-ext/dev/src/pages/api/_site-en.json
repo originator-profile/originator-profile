@@ -7,10 +7,7 @@
       "@language": "en"
     }
   ],
-  "type": [
-    "VerifiableCredential",
-    "WebsiteProfile"
-  ],
+  "type": ["VerifiableCredential", "WebsiteProfile"],
   "issuer": "dns:localhost",
   "credentialSubject": {
     "id": "http://localhost:8080",
