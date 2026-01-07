@@ -42,12 +42,12 @@ const decodeWebsiteProfiles = (
   const decodeWsp = JwtVcDecoder<WebsiteProfile>();
   const decodedWsps = wspSources.map(decodeWsp);
 
-  // デコードエラーチェック
-  const firstDecoded = decodedWsps[0];
-  if (firstDecoded instanceof Error) {
+  // デコードエラーチェック（配列全体を確認）
+  const decodeErrors = decodedWsps.filter((wsp) => wsp instanceof Error);
+  if (decodeErrors.length > 0) {
     return new SiteProfileInvalid("Website Profile invalid", {
       originators: opsVerified,
-      sites: [firstDecoded],
+      sites: decodeErrors,
     });
   }
 
