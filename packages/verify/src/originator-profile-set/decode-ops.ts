@@ -91,13 +91,7 @@ export function decodeOps(ops: OriginatorProfileSet): OpsDecodingResult {
       ? op.annotations.map(decodePa)
       : undefined;
     // NOTE: 後方互換性のため単数・配列両方を受け入れ、内部的には配列に正規化
-    const mediaInput = op.media;
-    const mediaArray = mediaInput
-      ? Array.isArray(mediaInput)
-        ? mediaInput
-        : [mediaInput]
-      : undefined;
-    const media = mediaArray ? mediaArray.map(decodeWmp) : undefined;
+    const media = op.media ? [op.media].flat().map(decodeWmp) : undefined;
     const resultOp = { core, annotations, media };
 
     if (core instanceof Error) {
