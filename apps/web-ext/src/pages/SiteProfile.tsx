@@ -16,9 +16,7 @@ export default function SiteProfile() {
   if (!siteProfile) return <GlobalHeader className="sticky top-0 z-11" />;
 
   // sitesから適切なWebsiteProfileを選択
-  const selectedWsp = selectByLocale(
-    siteProfile.sites.map((s) => s.doc),
-  );
+  const selectedWsp = selectByLocale(siteProfile.sites.map((s) => s.doc));
   if (!selectedWsp) return <GlobalHeader className="sticky top-0 z-11" />;
 
   // 選択されたWebsiteProfileの発行者に対応するOriginatorを検索
@@ -28,8 +26,7 @@ export default function SiteProfile() {
     ),
   );
 
-  const selectedWmp = (op?.media &&
-    selectByLocale(op.media.map((m) => m.doc)));
+  const selectedWmp = op?.media && selectByLocale(op.media.map((m) => m.doc));
 
   const orgPath = op && {
     pathname: routes.org.build(

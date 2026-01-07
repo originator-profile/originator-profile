@@ -20,19 +20,16 @@ function Org(props: Props) {
   const op = ops?.find((op) =>
     op.media?.some(
       (m) =>
-        m.doc.issuer === orgIssuer &&
-        m.doc.credentialSubject.id === orgSubject,
+        m.doc.issuer === orgIssuer && m.doc.credentialSubject.id === orgSubject,
     ),
   );
   if (!op?.media) return null;
-  const selectedWmp = selectByLocale(
-    op.media.map((m) => m.doc),
-  );
+  const selectedWmp = selectByLocale(op.media.map((m) => m.doc));
   if (!selectedWmp) return null;
 
   // sitesから適切なWebsiteProfileを選択
   const selectedWsp = siteProfile?.sites
-    ? (selectByLocale(siteProfile.sites.map((s) => s.doc)))
+    ? selectByLocale(siteProfile.sites.map((s) => s.doc))
     : undefined;
 
   const backPath = {

@@ -27,9 +27,7 @@ function selectByLocale<T extends { "@context": unknown }>(
   if (items.length === 1) return items[0];
 
   const userLocale =
-    typeof navigator !== "undefined"
-      ? navigator.language.split("-")[0]
-      : "en";
+    typeof navigator !== "undefined" ? navigator.language.split("-")[0] : "en";
 
   const byLocale = items.find((item) => getLanguage(item) === userLocale);
   if (byLocale) return byLocale;

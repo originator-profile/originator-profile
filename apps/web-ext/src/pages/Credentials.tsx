@@ -29,9 +29,7 @@ export default function Credentials() {
     ),
   );
   if (!op?.media) return null;
-  const selectedWmp = selectByLocale(
-    op.media.map((m) => m.doc),
-  );
+  const selectedWmp = selectByLocale(op.media.map((m) => m.doc));
   if (!selectedWmp) return null;
   return (
     <Template

@@ -50,7 +50,9 @@ export function Credentials(props: CredentialsProps) {
       {
         framesCas: props.framesCas,
         activeCa: ca,
-        wmps: flush(props.ops.flatMap((op) => op.media?.map((m) => m.doc) ?? [])),
+        wmps: flush(
+          props.ops.flatMap((op) => op.media?.map((m) => m.doc) ?? []),
+        ),
       },
       Number(tabId),
     );
