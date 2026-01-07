@@ -1,5 +1,5 @@
-import { selectByLocale } from "@originator-profile/core";
 import { describe, expect, test, vi } from "vitest";
+import { selectByLocale } from "./select-by-locale";
 
 describe("selectByLocale", () => {
   const vcJa = {

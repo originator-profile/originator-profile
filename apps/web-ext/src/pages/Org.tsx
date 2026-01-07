@@ -1,9 +1,9 @@
+import { selectByLocale } from "@originator-profile/core";
 import { useParams, useSearchParams } from "react-router";
 import Loading from "../components/Loading";
 import { useCredentials } from "../components/credentials";
 import { useSiteProfile } from "../components/siteProfile";
 import Template from "../templates/Org";
-import { selectByLocale } from "../utils/select-by-locale";
 
 type Props = { back: string };
 
@@ -20,16 +20,19 @@ function Org(props: Props) {
   const op = ops?.find((op) =>
     op.media?.some(
       (m) =>
-        m.doc.issuer === orgIssuer && m.doc.credentialSubject.id === orgSubject,
+        m.doc.issuer === orgIssuer &&
+        m.doc.credentialSubject.id === orgSubject,
     ),
   );
   if (!op?.media) return null;
-  const selectedWmp = selectByLocale(op.media.map((m) => m.doc));
+  const selectedWmp = selectByLocale(
+    op.media.map((m) => m.doc),
+  );
   if (!selectedWmp) return null;
 
   // sitesから適切なWebsiteProfileを選択
   const selectedWsp = siteProfile?.sites
-    ? selectByLocale(siteProfile.sites.map((s) => s.doc))
+    ? (selectByLocale(siteProfile.sites.map((s) => s.doc)))
     : undefined;
 
   const backPath = {

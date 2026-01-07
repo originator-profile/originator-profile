@@ -1,3 +1,4 @@
+import { selectByLocale } from "@originator-profile/core";
 import { useParams, useSearchParams } from "react-router";
 import Loading from "../components/Loading";
 import {
@@ -6,7 +7,6 @@ import {
   useCredentials,
 } from "../components/credentials";
 import { routes } from "../utils/routes";
-import { selectByLocale } from "../utils/select-by-locale";
 
 export default function Credentials() {
   const [queryParams] = useSearchParams();
@@ -29,7 +29,9 @@ export default function Credentials() {
     ),
   );
   if (!op?.media) return null;
-  const selectedWmp = selectByLocale(op.media.map((m) => m.doc));
+  const selectedWmp = selectByLocale(
+    op.media.map((m) => m.doc),
+  );
   if (!selectedWmp) return null;
   return (
     <Template

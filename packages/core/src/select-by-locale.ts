@@ -9,7 +9,9 @@ function getLanguage(vc: { "@context": unknown }): string | undefined {
 
   for (const item of context) {
     if (typeof item === "object" && item !== null && "@language" in item) {
-      return item["@language"] as string;
+      const lang = item["@language"] as string;
+      // 地域コードを含む場合は言語コードのみを返す (例: "ja-JP" → "ja")
+      return lang.split("-")[0];
     }
   }
   return undefined;
@@ -33,7 +35,10 @@ export function selectByLocale<T extends { "@context": unknown }>(
   if (items.length === 1) return items[0];
 
   // ユーザーロケール取得 (例: "ja-JP" → "ja")
-  const userLocale = navigator.language.split("-")[0];
+  const userLocale =
+    typeof navigator !== "undefined"
+      ? navigator.language.split("-")[0]
+      : "en";
 
   // 1. ユーザーロケールで検索
   const byLocale = items.find((item) => getLanguage(item) === userLocale);
