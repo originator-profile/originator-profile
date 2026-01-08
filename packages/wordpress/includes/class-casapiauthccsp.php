@@ -17,11 +17,14 @@ const CA_SERVER_ACCESS_TOKEN = 'profile_ca_server_access_token';
 final class CasApiAuthCCSP {
 
 	/**
-	 * Time leeway for token validation
+	 * Time buffer before token expiration to trigger refresh
 	 *
-	 * @var int leeway (seconds)
+	 * Tokens are proactively refreshed when they have less than this many seconds
+	 * remaining before expiration. This prevents using tokens that are about to expire.
+	 *
+	 * @var int refresh_buffer (seconds)
 	 */
-	private $leeway = 300;
+	private $refresh_buffer = 300;
 
 	/**
 	 * Access Token
@@ -220,9 +223,9 @@ final class CasApiAuthCCSP {
 			debug( 'No exp field in access_token(CCSP)' );
 			return true;
 		}
-		// If the token is expired or will expire within allowed seconds
+		// If the token is expired or will expire soon, trigger refresh
 		$now = \time();
-		if ( $data['exp'] < $now + $this->leeway ) { // Allow buffer time
+		if ( $data['exp'] < $now + $this->refresh_buffer ) {
 			debug( 'access_token has expired(CCSP)' );
 			return true;
 		}
