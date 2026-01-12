@@ -16,6 +16,9 @@ use const Profile\Config\PROFILE_DEFAULT_CA_TARGET_HTML;
 require_once __DIR__ . '/class-casapiauthclient.php';
 use Profile\CasApiAuthClient\CasApiAuthClient;
 
+require_once __DIR__ . '/class-casapiauthccsp.php';
+use Profile\CasApiAuthClient\CasApiAuthCCSP;
+
 require_once __DIR__ . '/debug.php';
 use function Profile\Debug\debug;
 
@@ -284,7 +287,15 @@ function issue_ca( Uca $uca, string $endpoint, string $admin_secret ): mixed {
 				debug( 'Failed to initialize OIDC client.' );
 				return false;
 			}
-			$args['headers']['authorization'] = 'Bearer ' . $api_auth->getApiToken();
+			$args['headers']['authorization'] = 'Bearer ' . $api_auth->get_api_token();
+			break;
+		case 'CCSP': // CCSPの場合はCA Server認証(CCSP)を行う
+			$api_auth = new CasApiAuthCCSP();
+			if ( ! $api_auth->init_ccsp( $admin_secret ) ) {
+				debug( 'Failed to initialize CCSP client.' );
+				return false;
+			}
+			$args['headers']['authorization'] = 'Bearer ' . $api_auth->get_api_token();
 			break;
 		default: // それ以外の場合は、Basic 認証を使う
 			$args['headers']['authorization'] = 'Basic ' . \sodium_bin2base64( $admin_secret, SODIUM_BASE64_VARIANT_ORIGINAL );
@@ -295,7 +306,7 @@ function issue_ca( Uca $uca, string $endpoint, string $admin_secret ): mixed {
 
 	if ( \is_wp_error( $res ) ) {
 		$error_message = $res->get_error_message();
-		debug( 'Failed to request error: ' . $error_message );
+		debug( 'Failed to request: ' . $error_message );
 		return false;
 	}
 

@@ -40,16 +40,21 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 		}
 		// Extract the secret parts
 		$secret_arr = explode( ':', $secret );
+		// Validate secret format
+		if ( ! isset( $secret_arr[1] ) || '' === $secret_arr[1] ) {
+			debug( 'Invalid secret format(OIDC): missing encoded part' );
+			return false;
+		}
 		// Decode the secret
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 		$sec = \base64_decode( $secret_arr[1], true );
 		if ( false === $sec ) {
-			debug( 'Failed to decode base64 secret' );
+			debug( 'Failed to decode base64 secret(OIDC)' );
 			return false;
 		}
 		$s_ar = \json_decode( $sec, true );
 		if ( null === $s_ar ) {
-			debug( 'Failed to decode json secret' );
+			debug( 'Failed to decode json secret(OIDC)' );
 			return false;
 		} elseif ( ! array_key_exists( 'providerUrl', $s_ar )
 				|| ! array_key_exists( 'provider', $s_ar )
@@ -59,7 +64,7 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 				|| ! array_key_exists( 'clientId', $s_ar )
 				|| ! array_key_exists( 'clientSec', $s_ar )
 				|| ! array_key_exists( 'jwksUri', $s_ar ) ) {
-			debug( 'Invalid secret format' );
+			debug( 'Invalid secret format(OIDC)' );
 			return false;
 		}
 
@@ -88,7 +93,7 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	 * @param string|null $id_token The ID token to store.
 	 * @return void
 	 */
-	private function storeIdToken( $id_token ) {
+	private function store_id_token( $id_token ) {
 		// Store it in the WordPress options
 		\update_option( CA_SERVER_ID_TOKEN, $id_token );
 	}
@@ -99,7 +104,7 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	 * @param string|null $refresh_token The refresh token to store.
 	 * @return void
 	 */
-	private function storeRefreshToken( $refresh_token ) {
+	private function store_refresh_token( $refresh_token ) {
 		// Store it in the WordPress options
 		\update_option( CA_SERVER_REFRESH_TOKEN, $refresh_token );
 	}
@@ -109,7 +114,7 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	 *
 	 * @return string|null The stored id_token or null if not set
 	 */
-	private function getStoredIdToken() {
+	private function get_stored_id_token() {
 		return \get_option( CA_SERVER_ID_TOKEN, null );
 	}
 
@@ -118,7 +123,7 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	 *
 	 * @return string|null The stored refresh_token or null if not set
 	 */
-	private function getStoredRefreshToken() {
+	private function get_stored_refresh_token() {
 		return \get_option( CA_SERVER_REFRESH_TOKEN, null );
 	}
 
@@ -127,19 +132,19 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	 *
 	 * @return void
 	 */
-	private function storeTokens() {
+	private function store_tokens() {
 		// Store the id_token and refresh_token in WordPress options
 		$id_token = $this->getIdToken();
 		if ( $id_token ) {
-			$this->storeIdToken( $id_token );
+			$this->store_id_token( $id_token );
 		} else {
-			debug( 'No id_token received' );
+			debug( 'No id_token received(OIDC)' );
 		}
 		$refresh_token = $this->getRefreshToken();
 		if ( $refresh_token ) {
-			$this->storeRefreshToken( $refresh_token );
+			$this->store_refresh_token( $refresh_token );
 		} else {
-			debug( 'No refresh_token received' );
+			debug( 'No refresh_token received(OIDC)' );
 		}
 	}
 
@@ -153,7 +158,7 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	protected function verifyJWTClaims( $claims, ?string $access_token = null ): bool {
 		// Verify that sub is set
 		if ( ! isset( $claims->sub ) ) {
-			debug( 'JWT claims verification failed: sub claim is missing' );
+			debug( 'JWT claims verification failed: sub claim is missing(OIDC)' );
 			return false;
 		}
 
@@ -172,7 +177,7 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 
 		if ( isset( $claims->firebase ) ) {
 			// Override the JWT claims verification for firebase authentication.
-			debug( 'Firebase authentication detected, using custom claims verification' );
+			debug( 'Firebase authentication detected, using custom claims verification(OIDC)' );
 			return ( ( $this->validateIssuer( $claims->iss ) )
 				&& ( $claims->sub === $this->getIdTokenPayload()->sub )
 				&& ( ! isset( $claims->exp ) || ( ( is_int( $claims->exp ) ) && ( $claims->exp >= time() - $this->leeway ) ) )
@@ -204,16 +209,16 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 			// phpcs:ignore WordPress.Security.NonceVerification.Recommended
 			if ( $result && isset( $_REQUEST['code'] ) ) {
 				// Store the id_token and refresh_token after successful authentication
-				$this->storeTokens();
-				$msg = 'API authentication successful';
+				$this->store_tokens();
+				$msg = 'API authentication successful(OIDC)';
 				debug( $msg );
 				return true;
 			} else {
-				debug( 'Authentication result did not include authorization code' );
+				debug( 'Authentication result did not include authorization code(OIDC)' );
 			}
 		} catch ( \Exception $e ) {
 			$err = $e->getMessage();
-			$msg = 'API authentication failed: ' . $err;
+			$msg = 'API authentication failed(OIDC): ' . $err;
 			debug( $msg );
 			return false;
 		}
@@ -226,28 +231,28 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	 * @param string $id_token The id_token to check
 	 * @return bool True if the token is expired, false otherwise
 	 */
-	private function expiredToken( $id_token ) {
+	private function expired_token( $id_token ) {
 		// Decode the JWT id_token to check expiration
 		$parts = explode( '.', $id_token );
 		if ( count( $parts ) !== 3 ) {
-			debug( 'Invalid id_token format' );
+			debug( 'Invalid id_token format(OIDC)' );
 			return true; // Treat as expired if invalid
 		}
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 		$payload = \base64_decode( strtr( $parts[1], '-_', '+/' ) );
 		if ( false === $payload ) {
-			debug( 'Failed to decode id_token payload' );
+			debug( 'Failed to decode id_token payload(OIDC)' );
 			return true;
 		}
 		$data = \json_decode( $payload, true );
 		if ( ! isset( $data['exp'] ) ) {
-			debug( 'No exp field in id_token' );
+			debug( 'No exp field in id_token(OIDC)' );
 			return true;
 		}
 		// If the token is expired or will expire within allowed seconds
 		$now = \time();
 		if ( $data['exp'] < $now + $this->leeway ) { // Allow buffer time
-			debug( 'id_token has expired' );
+			debug( 'id_token has expired(OIDC)' );
 			return true;
 		}
 		return false;
@@ -258,28 +263,28 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	 *
 	 * @return bool True if the token was refreshed successfully, false otherwise
 	 */
-	private function refreshIdToken() {
+	private function refresh_id_token() {
 		// Get the current refresh_token
-		$refresh_token = $this->getStoredRefreshToken();
+		$refresh_token = $this->get_stored_refresh_token();
 		if ( null === $refresh_token ) {
-			debug( 'No refreshToken available' );
+			debug( 'No refreshToken available(OIDC). Please authenticate again!!!' );
 			return false;
 		}
 		// Refresh the id_token using the refresh token
 		$json = $this->refreshToken( $refresh_token );
 		if ( isset( $json->id_token ) ) {
-			debug( 'Id token refreshed successfully' );
+			debug( 'Id token refreshed successfully(OIDC)' );
 			// Store the new id_token
-			$this->storeIdToken( $json->id_token );
+			$this->store_id_token( $json->id_token );
 			// Also store the new refresh_token
 			if ( isset( $json->refresh_token ) ) {
-				$this->storeRefreshToken( $json->refresh_token );
+				$this->store_refresh_token( $json->refresh_token );
 			} else {
 				// If no new refresh token is provided, keep the old one
-				debug( 'No new refresh token provided, keeping the old one' );
+				debug( 'No new refresh token provided, keeping the old one(OIDC)' );
 			}
 		} else {
-			debug( 'Failed to refresh id token' );
+			debug( 'Failed to refresh id token(OIDC)' );
 			return false;
 		}
 		return true; // Token is refreshed successfully
@@ -290,13 +295,13 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	 *
 	 * @return string|null The id_token if available, null if not
 	 */
-	public function getApiToken() {
-		$id_token = $this->getStoredIdToken();
-		if ( null === $id_token || $this->expiredToken( $id_token ) ) {
-			debug( 'Id token is not available, refreshing...' );
-			if ( $this->refreshIdToken() ) {
+	public function get_api_token() {
+		$id_token = $this->get_stored_id_token();
+		if ( null === $id_token || $this->expired_token( $id_token ) ) {
+			debug( 'Id token is not available, refreshing(OIDC)...' );
+			if ( $this->refresh_id_token() ) {
 				// Get the refreshed id_token
-				$id_token = $this->getStoredIdToken();
+				$id_token = $this->get_stored_id_token();
 			} else {
 				// Failed refresh, set id_token to null
 				$id_token = null;
