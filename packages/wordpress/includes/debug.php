@@ -18,7 +18,7 @@ function debug( string $message ) {
 		\error_log( $message );
 	}
 	// プラグイン専用ログ
-	if ( \get_option( 'profile_ca_log_option' ) === '1' ) {
+	if ( function_exists( 'get_option' ) && \get_option( 'profile_ca_log_option' ) === '1' ) {
 		global $wp_filesystem;
 		if ( ! $wp_filesystem ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php';

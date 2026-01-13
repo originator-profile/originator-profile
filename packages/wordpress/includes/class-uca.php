@@ -5,6 +5,10 @@ namespace Profile\Uca;
 
 require_once __DIR__ . '/config.php';
 
+require_once __DIR__ . '/debug.php';
+use function Profile\Debug\debug;
+
+
 /**
  * 未署名 Content Attestation
  *
@@ -23,6 +27,7 @@ final class Uca {
 	 * @param array   $external_resources 外部リソース
 	 * @param string  $headline タイトル
 	 * @param string  $description 説明
+	 * @param ?string $subject CA ID
 	 * @param ?string $image (optional) 画像URL
 	 * @param ?string $author (optional) 著者
 	 * @param ?string $date_published (optional) 公開日時
@@ -38,6 +43,7 @@ final class Uca {
 		public array $external_resources,
 		public string $headline,
 		public string $description,
+		public ?string $subject = null,
 		public ?string $image = null,
 		public ?string $author = null,
 		public ?string $date_published = null,
@@ -63,6 +69,7 @@ final class Uca {
 			'type'              => array( 'VerifiableCredential', 'ContentAttestation' ),
 			'issuer'            => $this->issuer,
 			'credentialSubject' => array(
+				'id'            => $this->subject,
 				'type'          => 'Article',
 				'headline'      => $this->headline,
 				'image'         => $this->image ? array( 'id' => $this->image ) : null,
