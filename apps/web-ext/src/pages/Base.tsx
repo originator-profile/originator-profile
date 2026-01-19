@@ -40,7 +40,7 @@ function Redirect({
   framesCas?: FramesVerifiedCas;
 }) {
   const cas: SupportedVerifiedCas | undefined = framesCas
-    ?.sort((frameCas) => frameCas.parentFrameId)
+    ?.sort((a, b) => a.parentFrameId - b.parentFrameId)
     ?.flatMap((frame) => frame.cas);
   const ca = cas?.[0];
   useMount(() => {
