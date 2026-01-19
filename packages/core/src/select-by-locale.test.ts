@@ -170,4 +170,55 @@ describe("selectByLocale", () => {
     const result = selectByLocale([vcJaJP, vcEn]);
     expect(result).toBe(vcJaJP);
   });
+
+  // 地域コード優先度のテスト
+  describe("地域コードの優先度 (BCP 47)", () => {
+    const vcEnGB = {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        { "@language": "en-GB" },
+      ],
+      type: ["VerifiableCredential"],
+      credentialSubject: { name: "British English" },
+    };
+
+    const vcEnBase = {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        { "@language": "en" },
+      ],
+      type: ["VerifiableCredential"],
+      credentialSubject: { name: "Generic English" },
+    };
+
+    test("ユーザーロケールがen-GBの場合、en-GB > enの優先度で選択", () => {
+      vi.stubGlobal("navigator", { language: "en-GB" });
+      const result = selectByLocale([vcEnBase, vcEnGB]);
+      expect(result).toBe(vcEnGB);
+    });
+
+    test("ユーザーロケールがenの場合、en > en-GBの優先度で選択", () => {
+      vi.stubGlobal("navigator", { language: "en" });
+      const result = selectByLocale([vcEnGB, vcEnBase]);
+      expect(result).toBe(vcEnBase);
+    });
+
+    test("ユーザーロケールがen-USの場合、enにフォールバック", () => {
+      vi.stubGlobal("navigator", { language: "en-US" });
+      const result = selectByLocale([vcJa, vcEnBase]);
+      expect(result).toBe(vcEnBase);
+    });
+
+    test("ユーザーロケールがen-USの場合、en-GBよりenを優先", () => {
+      vi.stubGlobal("navigator", { language: "en-US" });
+      const result = selectByLocale([vcEnGB, vcEnBase]);
+      expect(result).toBe(vcEnBase);
+    });
+
+    test("ユーザーロケールがen-GBで、en-GBがなければenにフォールバック", () => {
+      vi.stubGlobal("navigator", { language: "en-GB" });
+      const result = selectByLocale([vcJa, vcEnBase]);
+      expect(result).toBe(vcEnBase);
+    });
+  });
 });
