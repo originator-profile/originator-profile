@@ -142,15 +142,7 @@ export function SpVerifier(
       }),
     );
 
-    // エラーチェック - CoreProfileNotFoundはInvalid扱い
-    const firstResult = verifiedWsps[0];
-    if (firstResult instanceof CoreProfileNotFound) {
-      return new SiteProfileInvalid("Appropriate Core Profile not found", {
-        originators: opsVerified,
-        sites: [firstResult],
-      });
-    }
-
+    // エラーチェック - CoreProfileNotFoundを含むエラーはVerifyFailed扱い
     const hasError = verifiedWsps.some((wsp) => wsp instanceof Error);
     if (hasError) {
       return new SiteProfileVerifyFailed("Website Profile verify failed", {
