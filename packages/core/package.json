@@ -37,6 +37,7 @@
   "devDependencies": {
     "@js-temporal/polyfill": "^0.5.1",
     "@originator-profile/tsconfig": "workspace:*",
+    "bcp-47-match": "^2.0.3",
     "date-fns": "^4.1.0",
     "eslint": "^9.25.1",
     "eslint-config-originator-profile": "workspace:*",
@@ -45,8 +46,5 @@
     "typescript": "^5.8.3",
     "uuid": "^13.0.0",
     "vitest": "^4.0.0"
-  },
-  "dependencies": {
-    "bcp-47-match": "^2.0.3"
   }
 }
