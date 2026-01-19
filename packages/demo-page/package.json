@@ -9,6 +9,7 @@
     "url": "git+https://github.com/originator-profile/originator-profile.git",
     "directory": "packages/demo-page"
   },
+  "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "vite build",
@@ -16,10 +17,11 @@
     "format": "prettier --write ."
   },
   "devDependencies": {
+    "@cloudflare/vite-plugin": "^1.21.0",
     "@types/accept-language-parser": "^1.5.8",
     "prettier": "^3.5.3",
     "vite": "^7.0.0",
-    "wrangler": "^4.22.0"
+    "wrangler": "^4.59.2"
   },
   "dependencies": {
     "accept-language-parser": "^1.5.0"
