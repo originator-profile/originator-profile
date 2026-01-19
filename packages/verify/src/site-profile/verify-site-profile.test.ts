@@ -457,8 +457,8 @@ describe("Site Profileの検証", async () => {
     );
     const resultSp = await verify();
 
-    expect(resultSp).instanceOf(SiteProfileVerifyFailed);
-    // @ts-expect-error failed Sp
+    expect(resultSp).instanceOf(SiteProfileInvalid);
+    // @ts-expect-error invalid Sp
     const { originators: resultOps, sites } = resultSp.result;
     const resultWsp = sites?.[0];
     expect(resultOps[0]).toStrictEqual({

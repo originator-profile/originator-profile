@@ -142,15 +142,25 @@ export function SpVerifier(
       }),
     );
 
-    // エラーチェック - CoreProfileNotFoundを含むエラーはVerifyFailed扱い
-    const hasError = verifiedWsps.some((wsp) => wsp instanceof Error);
-    if (hasError) {
-      return new SiteProfileVerifyFailed("Website Profile verify failed", {
+    // エラーチェック - CoreProfileNotFoundはInvalid、その他のエラーはVerifyFailed
+    const hasCoreProfileNotFound = verifiedWsps.some(
+      (wsp) => wsp instanceof CoreProfileNotFound,
+    );
+    if (hasCoreProfileNotFound) {
+      return new SiteProfileInvalid("Appropriate Core Profile not found", {
         originators: opsVerified,
         sites: verifiedWsps as (
           | JwtVcVerificationResult<WebsiteProfile>
           | CoreProfileNotFound<WebsiteProfile>
         )[],
+      });
+    }
+
+    const hasError = verifiedWsps.some((wsp) => wsp instanceof Error);
+    if (hasError) {
+      return new SiteProfileVerifyFailed("Website Profile verify failed", {
+        originators: opsVerified,
+        sites: verifiedWsps as JwtVcVerificationResult<WebsiteProfile>[],
       });
     }
 
