@@ -90,7 +90,7 @@ export function decodeOps(ops: OriginatorProfileSet): OpsDecodingResult {
     const annotations = op.annotations
       ? op.annotations.map(decodePa)
       : undefined;
-    // NOTE: 後方互換性のため単数・配列両方を受け入れ、内部的には配列に正規化
+    // NOTE: 2026-11-01 まで後方互換性のため単数・配列両方を受け入れ、内部的には配列に正規化
     const mediaInput = op.media;
     const mediaArray = mediaInput
       ? Array.isArray(mediaInput)

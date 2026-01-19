@@ -20,7 +20,7 @@ export const SiteProfile = {
       },
     },
     credential: {
-      // NOTE: 後方互換性のため残す。sitesが優先され、存在しない場合にcredentialを使用
+      // NOTE: 後方互換性のため 2026-11-01 まで残す。sitesが優先され、存在しない場合にcredentialを使用
       type: "string",
       title: "Credential",
     },

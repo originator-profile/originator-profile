@@ -30,7 +30,7 @@ const decodeWebsiteProfiles = (
 ):
   | { decodedWsps: UnverifiedJwtVc<WebsiteProfile>[]; wspSources: string[] }
   | SiteProfileInvalid => {
-  // NOTE: 後方互換性のため、sitesが存在しない場合はcredentialを使用
+  // NOTE: 2026-11-01 まで後方互換性のため、sitesが存在しない場合はcredentialを使用
   const wspSources = sp.sites || (sp.credential ? [sp.credential] : []);
   if (wspSources.length === 0) {
     return new SiteProfileInvalid("No Website Profile found", {
