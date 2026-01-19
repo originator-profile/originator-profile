@@ -50,7 +50,9 @@ function Redirect({
         {
           framesCas: framesCas ?? [],
           activeCa: ca ?? null,
-          wmps: flush(ops?.map((op) => op.media?.doc) ?? []),
+          wmps: flush(
+            ops?.flatMap((op) => op.media?.map((m) => m.doc) ?? []) ?? [],
+          ),
         },
         tabId,
       );

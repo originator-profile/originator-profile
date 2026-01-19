@@ -137,7 +137,7 @@ describe("OPSの復号", async () => {
     annotations: [
       await signJwtVc(certificate, certifier.privateKey, signOptions),
     ],
-    media: await signJwtVc(wmp, authority.privateKey, signOptions),
+    media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
   };
   const ops: OriginatorProfileSet = [authorityOp, certifierOp, holderOp];
 
@@ -160,7 +160,7 @@ describe("OPSの復号", async () => {
       {
         core: toDecodeResult(cp, holderOp.core),
         annotations: [toDecodeResult(certificate, holderOp.annotations[0])],
-        media: toDecodeResult(wmp, holderOp.media),
+        media: [toDecodeResult(wmp, holderOp.media[0])],
       },
     ]);
   });
@@ -189,9 +189,9 @@ describe("OPSの復号", async () => {
     expect(resultOp[2].result.annotations[0]).toStrictEqual(
       toDecodeResult(certificate, holderOp.annotations[0]),
     );
-    expect(resultOp[2].result.media).toStrictEqual(
-      toDecodeResult(wmp, holderOp.media),
-    );
+    expect(resultOp[2].result.media).toStrictEqual([
+      toDecodeResult(wmp, holderOp.media[0]),
+    ]);
   });
 
   test("PAの復号に失敗", () => {
@@ -218,9 +218,9 @@ describe("OPSの復号", async () => {
       toDecodeResult(cp, holderOp.core),
     );
     expect(resultOp[2].result.annotations[0]).instanceOf(VcDecodeFailed);
-    expect(resultOp[2].result.media).toStrictEqual(
-      toDecodeResult(wmp, holderOp.media),
-    );
+    expect(resultOp[2].result.media).toStrictEqual([
+      toDecodeResult(wmp, holderOp.media[0]),
+    ]);
   });
 
   test("WMPの復号に失敗", () => {
@@ -249,6 +249,6 @@ describe("OPSの復号", async () => {
     expect(resultOp[2].result.annotations[0]).toStrictEqual(
       toDecodeResult(certificate, holderOp.annotations[0]),
     );
-    expect(resultOp[2].result.media).instanceOf(VcDecodeFailed);
+    expect(resultOp[2].result.media[0]).instanceOf(VcDecodeFailed);
   });
 });

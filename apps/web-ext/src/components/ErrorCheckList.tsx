@@ -55,7 +55,8 @@ function CredentialCheck({
       <DisplayCheck label={"Core Profile"} />
       <DisplayCheck label={"Profile Annotation"} />
       <DisplayCheck label={"Web Media Profile"} />
-      {error.result.credential instanceof Error ? (
+      {error.result.sites &&
+      error.result.sites.some((s) => s instanceof Error) ? (
         <DisplayCancel label={"Website Profile"} />
       ) : (
         <DisplayCheck label={"Website Profile"} />

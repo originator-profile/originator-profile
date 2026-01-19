@@ -98,16 +98,20 @@ async function verifyAnnotations(
 /** media プロパティの署名検証 */
 async function verifyMedia(
   wmpIssuerKeys: MappedKeys,
-  media?: UnverifiedJwtVc<WebMediaProfile>,
+  media?: UnverifiedJwtVc<WebMediaProfile>[],
   validator?: typeof VcValidator,
 ) {
   if (!media) return;
-  const verify = OpVerifier<WebMediaProfile>(
-    wmpIssuerKeys,
-    media,
-    validator?.(WebMediaProfile),
+  return await Promise.all(
+    media.map((m) => {
+      const verify = OpVerifier<WebMediaProfile>(
+        wmpIssuerKeys,
+        m,
+        validator?.(WebMediaProfile),
+      );
+      return verify(m.source);
+    }),
   );
-  return await verify(media.source);
 }
 
 /** 検証済み OPS か否か */
@@ -167,7 +171,7 @@ export function OpsVerifier(
             resultOp,
           );
         }
-        if (media instanceof Error) {
+        if (media && media.some((m) => m instanceof Error)) {
           return new OpVerifyFailed(
             "Web Media Profile verify failed",
             resultOp,

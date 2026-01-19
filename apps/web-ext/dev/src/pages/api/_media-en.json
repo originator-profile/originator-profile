@@ -1,0 +1,37 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://originator-profile.org/ns/credentials/v1",
+    "https://originator-profile.org/ns/cip/v1",
+    {
+      "@language": "en"
+    }
+  ],
+  "type": ["VerifiableCredential", "WebMediaProfile"],
+  "issuer": "dns:localhost",
+  "credentialSubject": {
+    "id": "dns:localhost",
+    "type": "OnlineBusiness",
+    "name": "Example OP Holder",
+    "url": "http://localhost:8080/",
+    "description": [
+      "This is a sample WebMediaProfile.",
+      {
+        "encodingFormat": "text/html",
+        "text": "<p>This is a sample WebMediaProfile.</p><p>As you can see, it supports HTML.</p><p>Paragraph with<br>line breaks</p><ul><li>Item</li><li>Item</li><li>Item</li></ul><ol><li>Item</li><li>Item</li><li>Item</li></ol>"
+      }
+    ],
+    "informationTransmissionPolicy": {
+      "id": "https://wmp-holder.example.jp/statement",
+      "name": "Information Transmission Policy"
+    },
+    "publishingPrinciple": {
+      "id": "https://wmp-holder.example.jp/editorial-guidelines",
+      "name": "Editorial Guidelines"
+    },
+    "privacyPolicy": {
+      "id": "https://wmp-holder.example.jp/privacy",
+      "name": "Privacy Policy"
+    }
+  }
+}

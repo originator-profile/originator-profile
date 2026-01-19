@@ -1,3 +1,4 @@
+import { selectByLocale } from "@originator-profile/core";
 import { useParams, useSearchParams } from "react-router";
 import Loading from "../components/Loading";
 import {
@@ -22,10 +23,14 @@ export default function Credentials() {
       ca.attestation.doc.credentialSubject.id === subject,
   );
   if (!ca) return null;
-  const op = ops.find(
-    (op) => op.media?.doc.credentialSubject.id === ca.attestation.doc.issuer,
+  const op = ops.find((op) =>
+    op.media?.some(
+      (m) => m.doc.credentialSubject.id === ca.attestation.doc.issuer,
+    ),
   );
   if (!op?.media) return null;
+  const selectedWmp = selectByLocale(op.media.map((m) => m.doc));
+  if (!selectedWmp) return null;
   return (
     <Template
       ca={ca}
@@ -40,7 +45,7 @@ export default function Credentials() {
         ),
         search: queryParams.toString(),
       }}
-      wmp={op.media.doc}
+      wmp={selectedWmp}
       framesCas={framesCas}
     />
   );
