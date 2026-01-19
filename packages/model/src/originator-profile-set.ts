@@ -1,5 +1,22 @@
 import { FromSchema, JSONSchema } from "json-schema-to-ts";
 
+/**
+ * 後方互換性のため 2026-11-01 まで非配列 WMP の OP を許容
+ * @deprecated
+ */
+const deprecatedMedia = {
+  type: "string",
+  title: "Web Media Profile",
+} as const satisfies JSONSchema;
+
+const mediaArray = {
+  type: "array",
+  items: {
+    type: "string",
+    title: "Web Media Profile",
+  },
+} as const satisfies JSONSchema;
+
 /** TODO: OriginatorProfile に名前変更 */
 export const OriginatorProfileSetItem = {
   title: "Originator Profile",
@@ -20,20 +37,7 @@ export const OriginatorProfileSetItem = {
     },
     media: {
       title: "Web Media Profile または Web Media Profile の配列",
-      // NOTE: 後方互換性のため単数形も許容。将来的には配列のみに移行予定
-      oneOf: [
-        {
-          type: "string",
-          title: "Web Media Profile",
-        },
-        {
-          type: "array",
-          items: {
-            type: "string",
-            title: "Web Media Profile",
-          },
-        },
-      ],
+      oneOf: [deprecatedMedia, mediaArray],
     },
   },
   required: ["core"],
