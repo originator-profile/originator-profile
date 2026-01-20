@@ -138,7 +138,9 @@ export function OpsVerifier(
         ) {
           const failedPaths = annotations
             .map((annotation, index) =>
-              annotation instanceof Error ? `OP[${opIndex}].PA[${index}]` : null,
+              annotation instanceof Error
+                ? `OP[${opIndex}].PA[${index}]`
+                : null,
             )
             .filter((path): path is string => path !== null);
           return new OpVerifyFailed(

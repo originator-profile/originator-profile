@@ -43,7 +43,10 @@ export function decodeOps(ops: OriginatorProfileSet): OpsDecodingResult {
     const media = op.media ? decodeWmp(op.media) : undefined;
     const resultOp = { core, annotations, media };
     if (core instanceof Error) {
-      return new OpInvalid(`Core Profile decode failed (OP[${opIndex}])`, resultOp);
+      return new OpInvalid(
+        `Core Profile decode failed (OP[${opIndex}])`,
+        resultOp,
+      );
     }
     if (annotations && !isEveryDecodedPa(annotations)) {
       const failedPaths = annotations
@@ -57,7 +60,10 @@ export function decodeOps(ops: OriginatorProfileSet): OpsDecodingResult {
       );
     }
     if (media instanceof Error) {
-      return new OpInvalid(`Web Media Profile decode failed (OP[${opIndex}])`, resultOp);
+      return new OpInvalid(
+        `Web Media Profile decode failed (OP[${opIndex}])`,
+        resultOp,
+      );
     }
     if (
       media &&
