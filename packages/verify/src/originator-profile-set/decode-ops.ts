@@ -35,7 +35,7 @@ export function decodeOps(ops: OriginatorProfileSet): OpsDecodingResult {
   const decodePa = JwtVcDecoder<Certificate>();
   const decodeWmp = JwtVcDecoder<WebMediaProfile>();
   /* eslint complexity: ["error", { "max": 11 }] */
-  const resultOps = ops.map((op): OpDecodingResult => {
+  const resultOps = ops.map((op, opIndex): OpDecodingResult => {
     const core = decodeCp(op.core);
     const annotations = op.annotations
       ? op.annotations.map(decodePa)
@@ -43,20 +43,28 @@ export function decodeOps(ops: OriginatorProfileSet): OpsDecodingResult {
     const media = op.media ? decodeWmp(op.media) : undefined;
     const resultOp = { core, annotations, media };
     if (core instanceof Error) {
-      return new OpInvalid("Core Profile decode failed", resultOp);
+      return new OpInvalid(`Core Profile decode failed (OP[${opIndex}])`, resultOp);
     }
     if (annotations && !isEveryDecodedPa(annotations)) {
-      return new OpInvalid("Profile Annotation decode failed", resultOp);
+      const failedPaths = annotations
+        .map((annotation, index) =>
+          !("doc" in annotation) ? `OP[${opIndex}].PA[${index}]` : null,
+        )
+        .filter((path): path is string => path !== null);
+      return new OpInvalid(
+        `Profile Annotation decode failed (${failedPaths.join(", ")})`,
+        resultOp,
+      );
     }
     if (media instanceof Error) {
-      return new OpInvalid("Web Media Profile decode failed", resultOp);
+      return new OpInvalid(`Web Media Profile decode failed (OP[${opIndex}])`, resultOp);
     }
     if (
       media &&
       core.doc.credentialSubject.id !== media.doc.credentialSubject.id
     ) {
       return new OpInvalid(
-        "Subject mismatch between Core Profile and Web Media Profile",
+        `Subject mismatch between Core Profile and Web Media Profile (OP[${opIndex}])`,
         resultOp,
       );
     }
@@ -67,8 +75,15 @@ export function decodeOps(ops: OriginatorProfileSet): OpsDecodingResult {
           core.doc.credentialSubject.id !== annotation.doc.credentialSubject.id,
       )
     ) {
+      const mismatchedPaths = annotations
+        .map((annotation, index) =>
+          core.doc.credentialSubject.id !== annotation.doc.credentialSubject.id
+            ? `OP[${opIndex}].PA[${index}]`
+            : null,
+        )
+        .filter((path): path is string => path !== null);
       return new OpInvalid(
-        "Subject mismatch between Core Profile and Profile Annotation",
+        `Subject mismatch between Core Profile and Profile Annotation (${mismatchedPaths.join(", ")})`,
         resultOp,
       );
     }

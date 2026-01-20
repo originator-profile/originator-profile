@@ -116,7 +116,7 @@ export function OpsVerifier(
     }
     const paOrWmpIssuerKeys = getMappedKeys(decoded);
     const resultOps = await Promise.all(
-      decoded.map(async (op): Promise<OpVerificationResult> => {
+      decoded.map(async (op, opIndex): Promise<OpVerificationResult> => {
         const core = await verifyCp(op.core.source);
         const annotations = await verifyAnnotations(
           paOrWmpIssuerKeys,
@@ -127,20 +127,28 @@ export function OpsVerifier(
         const resultOp = { core, annotations, media };
 
         if (core instanceof Error) {
-          return new OpVerifyFailed("Core Profile verify failed", resultOp);
+          return new OpVerifyFailed(
+            `Core Profile verify failed (OP[${opIndex}])`,
+            resultOp,
+          );
         }
         if (
           annotations &&
           annotations.some((annotation) => annotation instanceof Error)
         ) {
+          const failedPaths = annotations
+            .map((annotation, index) =>
+              annotation instanceof Error ? `OP[${opIndex}].PA[${index}]` : null,
+            )
+            .filter((path): path is string => path !== null);
           return new OpVerifyFailed(
-            "Profile Annotation verify failed",
+            `Profile Annotation verify failed (${failedPaths.join(", ")})`,
             resultOp,
           );
         }
         if (media instanceof Error) {
           return new OpVerifyFailed(
-            "Web Media Profile verify failed",
+            `Web Media Profile verify failed (OP[${opIndex}])`,
             resultOp,
           );
         }
