@@ -141,7 +141,7 @@ describe("OPSの検証", async () => {
           signOptions,
         ),
       ],
-      media: await signJwtVc(wmp, authority.privateKey, signOptions),
+      media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
     };
 
     const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
@@ -182,11 +182,9 @@ describe("OPSの検証", async () => {
             certifier.publicKey,
           ),
         ],
-        media: verifyResult.create(
-          wmp,
-          originatorOp.media,
-          authority.publicKey,
-        ),
+        media: [
+          verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+        ],
       },
     ]);
   });
@@ -206,7 +204,7 @@ describe("OPSの検証", async () => {
           signOptions,
         ),
       ],
-      media: await signJwtVc(wmp, authority.privateKey, signOptions),
+      media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
     };
 
     const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
@@ -230,7 +228,9 @@ describe("OPSの検証", async () => {
           certifier.publicKey,
         ),
       ],
-      media: verifyResult.create(wmp, originatorOp.media, authority.publicKey),
+      media: [
+        verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+      ],
     });
   });
 
@@ -249,7 +249,7 @@ describe("OPSの検証", async () => {
           signOptions,
         ),
       ],
-      media: await signJwtVc(wmp, authority.privateKey, signOptions),
+      media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
     };
 
     const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
@@ -273,7 +273,9 @@ describe("OPSの検証", async () => {
           certifier.publicKey,
         ),
       ],
-      media: verifyResult.create(wmp, originatorOp.media, authority.publicKey),
+      media: [
+        verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+      ],
     });
   });
 
@@ -295,7 +297,7 @@ describe("OPSの検証", async () => {
             signOptions,
           ),
         ],
-        media: await signJwtVc(wmp, authority.privateKey, signOptions),
+        media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
       };
 
       const ops: OriginatorProfileSet = [
@@ -323,11 +325,9 @@ describe("OPSの検証", async () => {
             certifier.publicKey,
           ),
         ],
-        media: verifyResult.create(
-          wmp,
-          originatorOp.media,
-          authority.publicKey,
-        ),
+        media: [
+          verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+        ],
       });
     } finally {
       vi.useRealTimers();
@@ -352,7 +352,7 @@ describe("OPSの検証", async () => {
             signOptions,
           ),
         ],
-        media: await signJwtVc(wmp, authority.privateKey, signOptions),
+        media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
       };
 
       const ops: OriginatorProfileSet = [
@@ -380,11 +380,9 @@ describe("OPSの検証", async () => {
             certifier.publicKey,
           ),
         ],
-        media: verifyResult.create(
-          wmp,
-          originatorOp.media,
-          authority.publicKey,
-        ),
+        media: [
+          verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+        ],
       });
     } finally {
       vi.useRealTimers();
@@ -434,7 +432,7 @@ describe("OPSの検証", async () => {
           signOptions,
         ),
       ],
-      media: await signJwtVc(wmp, authority.privateKey, signOptions),
+      media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
     };
 
     const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
