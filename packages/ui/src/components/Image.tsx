@@ -10,6 +10,14 @@ type Props = {
   cover?: boolean;
 };
 
+const getDocumentLink = () => {
+  const locale = navigator.language;
+  const ja = locale.startsWith("ja");
+  return `https://docs.originator-profile.org/${ja ? "ja" : "en"}/troubleshooting/image-access-error/`;
+};
+
+const documentLink = getDocumentLink();
+
 function Image({
   className,
   src,
@@ -40,7 +48,6 @@ function Image({
         onError={(e) => {
           const locale = navigator.language;
           const ja = locale.startsWith("ja");
-          const documentLink = `https://docs.originator-profile.org/${ja ? "ja" : "en"}/troubleshooting/image-access-error/`;
           const message = ja
             ? `[Originator Profile] 画像の読み込みに失敗しました: ${e.currentTarget.src}\n対処法: ${documentLink}`
             : `[Originator Profile] Failed to load image: ${e.currentTarget.src}\nTroubleshooting: ${documentLink}`;
