@@ -3,6 +3,7 @@ import {
   AdvertorialCA,
   ArticleCA,
   ContentAttestationSet,
+  OpMeta,
   OriginatorProfileSet,
   WebMediaProfile,
 } from "@originator-profile/model";
@@ -28,6 +29,7 @@ export type VerifyFailed = string;
 export type FetchCredentialsMessageResponse = FrameLocation & {
   ops: FetchCredentialsMessageResult<OriginatorProfileSet, VerifyFailed>;
   cas: FetchCredentialsMessageResult<ContentAttestationSet, VerifyFailed>;
+  opMeta?: OpMeta;
 };
 
 export type FrameResponse = {
@@ -38,8 +40,15 @@ export type FrameCredentials = FrameResponse &
   FrameLocation & {
     ops: OriginatorProfileSet;
     cas: ContentAttestationSet;
+    opMeta?: OpMeta;
   };
 export type TabCredentials = FrameCredentials & { frames: FrameCredentials[] };
+
+export type LinkVerificationResult = {
+  status: "matched" | "mismatched" | "missing_opid" | "error" | "none";
+  expectedOpId?: string;
+  reason?: string;
+};
 
 export type FrameVerifiedCas = FrameResponse &
   FrameLocation & { cas: SupportedVerifiedCas };

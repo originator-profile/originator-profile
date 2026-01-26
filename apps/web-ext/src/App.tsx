@@ -1,6 +1,7 @@
 import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router";
 import { EnvironmentBanner } from "./components/environment";
+import LinkVerification from "./components/LinkVerification";
 import { overlayExtensionMessenger } from "./components/overlay/extension-events";
 import Base from "./pages/Base";
 import Credentials from "./pages/Credentials";
@@ -8,6 +9,7 @@ import DetailInfo from "./pages/DetailInfo";
 import Org from "./pages/Org";
 import Prohibition from "./pages/Prohibition";
 import SiteProfile from "./pages/SiteProfile";
+import Warning from "./pages/Warning";
 import { buildPublUrl, paths } from "./utils/routes";
 
 function App() {
@@ -36,7 +38,15 @@ function App() {
           <Route path={paths.base}>
             <Route index element={<Base />} />
             <Route path={paths.site}>
-              <Route index element={<SiteProfile />} />
+              <Route
+                index
+                element={
+                  <div className="flex flex-col divide-y divide-gray-200">
+                    <LinkVerification />
+                    <SiteProfile />
+                  </div>
+                }
+              />
               <Route path={paths.org} element={<Org back="../.." />} />
             </Route>
             <Route path={paths.publ}>
@@ -44,6 +54,7 @@ function App() {
                 index
                 element={
                   <div className="flex flex-col divide-y divide-gray-200">
+                    <LinkVerification />
                     <SiteProfile />
                     <Credentials />
                   </div>
@@ -54,6 +65,7 @@ function App() {
             <Route path={paths.prohibition} element={<Prohibition />} />
             <Route path={paths.detail} element={<DetailInfo back=".." />} />
           </Route>
+          <Route path={paths.warning} element={<Warning />} />
         </Route>
       </Routes>
     </div>

@@ -1,6 +1,10 @@
+import { fetchTabCredentials } from "./components/credentials";
+import { credentialsMessenger } from "./components/credentials/events";
+import { LinkVerificationResult } from "./components/credentials/types";
 import { frameCasExtensionMessenger } from "./components/frameCas";
 import { updateBadge, verifyTabCredentials } from "./components/tabBadge";
 import "./utils/cors-basic-auth";
+import { decodeOps } from "@originator-profile/verify";
 
 const windowSize = {
   width: 520,
@@ -97,6 +101,91 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   }
 });
 
+let pendingOpIdVerification: { [tabId: number]: string } = {};
+let verificationResults: { [tabId: number]: LinkVerificationResult } = {};
+
+credentialsMessenger.onMessage("adClicked", ({ data, sender }) => {
+  if (sender.tab?.id) {
+    pendingOpIdVerification[sender.tab.id] = data.targetopid;
+  }
+});
+
+credentialsMessenger.onMessage("getVerificationResult", ({ data: tabId }) => {
+  return verificationResults[tabId] ?? { status: "none" };
+});
+
+chrome.webNavigation.onCompleted.addListener(async (details) => {
+  console.log("Navigation completed", details);
+  if (details.frameId !== 0) return;
+
+  // Navigate したら結果をリセット
+  delete verificationResults[details.tabId];
+
+  const targetOpId = pendingOpIdVerification[details.tabId];
+  if (targetOpId) {
+    console.log("Found pending verification for tab", details.tabId, "Target:", targetOpId);
+
+    delete pendingOpIdVerification[details.tabId];
+    try {
+      console.log("Fetching credentials...");
+
+      const { ops } = await fetchTabCredentials(details.tabId);
+
+      console.log("Credentials fetched", ops);
+
+      const decoded = decodeOps(ops);
+      if (decoded instanceof Error) {
+        console.error("Failed to decode OPS", decoded);
+        verificationResults[details.tabId] = {
+          status: "error",
+          expectedOpId: targetOpId,
+          reason: "無効なOPS (デコード失敗)",
+        };
+        return;
+      }
+
+      if (decoded.length === 0) {
+        console.log("Verification result: No OPID found");
+        verificationResults[details.tabId] = {
+          status: "missing_opid",
+          expectedOpId: targetOpId,
+          reason: "OPIDが存在しません",
+        };
+        return;
+      }
+
+      const matched = decoded.some(
+        (p) => p.core.doc.credentialSubject.id === targetOpId,
+      );
+      if (import.meta.env.MODE === "development") {
+        console.log("Verification result: matched =", matched);
+      }
+
+      if (matched) {
+        verificationResults[details.tabId] = {
+          status: "matched",
+          expectedOpId: targetOpId,
+        };
+      } else {
+        verificationResults[details.tabId] = {
+          status: "mismatched",
+          expectedOpId: targetOpId,
+          reason: "OPID不一致",
+        };
+      }
+    } catch (e: unknown) {
+      console.error("Verification failed with error", e);
+      verificationResults[details.tabId] = {
+        status: "error",
+        expectedOpId: targetOpId,
+        reason: "クレデンシャルが見つかりません (取得失敗)",
+      };
+    }
+  } else {
+    console.log("No pending verification for tab", details.tabId, targetOpId);
+  }
+});
+
 // iframeのCAS位置情報をコンテンツスクリプトに配信
 frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
   const { tabId, framesCas } = data;
@@ -117,6 +206,9 @@ frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
     );
   }
 });
+
+// https://www.typescriptlang.org/tsconfig#non-module-files
+export { };
 
 // NOTE: gh-1583
 if (import.meta.env.MODE === "development") {
@@ -140,10 +232,10 @@ if (import.meta.env.BASIC_AUTH) {
         urls:
           credential.domain === "localhost"
             ? [
-                "http://localhost:8080/*",
-                // Firefox のため
-                "http://localhost/*",
-              ]
+              "http://localhost:8080/*",
+              // Firefox のため
+              "http://localhost/*",
+            ]
             : [`https://${credential.domain}/*`],
       },
       ["blocking"],

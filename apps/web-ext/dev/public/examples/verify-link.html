@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="ja">
+
+<head>
+  <meta charset="UTF-8">
+  <title>リンク検証テスト</title>
+  <!-- modified -->
+  <style>
+    iframe {
+      width: 300px;
+      height: 200px;
+      border: 1px solid #ccc;
+      margin: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>リンク検証テスト</h1>
+  <div>
+    <h2>正常なケース</h2>
+    <p>ターゲットOPIDが遷移先サイト (dns:demo.exp.originator-profile.org) と一致します</p>
+    <iframe srcdoc='<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Valid OpMeta Ad</title>
+</head>
+<body>
+  <script type="application/opmeta+json">
+    {
+      "targetopid": "dns:demo.exp.originator-profile.org"
+    }
+  </script>
+  <div style="padding: 20px; background: #e0f7fa; text-align: center;">
+    <p>正常な広告</p>
+    <a href="valid-dest.html" target="_top">正しい遷移先へ (クリック)</a>
+  </div>
+</body>
+</html>'></iframe>
+  </div>
+  <div>
+    <h2>外部サイトへのリンク (クレデンシャルなし)</h2>
+    <p>ターゲットは外部サイト (example.com) です。クレデンシャルが存在しないため、検証に失敗します (アラートが表示されます)。
+    </p>
+    <iframe srcdoc='<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>External Ad</title>
+</head>
+<body>
+  <script type="application/opmeta+json">
+    {
+      "targetopid": "dns:demo.exp.originator-profile.org"
+    }
+  </script>
+  <div style="padding: 20px; background: #f3e5f5; text-align: center;">
+    <p>外部サイト広告</p>
+    <a href="https://example.com" target="_top">外部サイトへ (クリック)</a>
+  </div>
+</body>
+</html>'></iframe>
+  </div>
+  <div>
+    <h2>異常なケース</h2>
+    <p>ターゲットOPIDが一致しません (dns:invalid.example.com)</p>
+    <iframe srcdoc='<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <title>Invalid OpMeta Ad</title>
+</head>
+<body>
+  <script type="application/opmeta+json">
+    {
+      "targetopid": "dns:invalid.example.com"
+    }
+  </script>
+  <div style="padding: 20px; background: #ffebee; text-align: center;">
+    <p>不正な広告</p>
+    <a href="mismatch-dest.html" target="_top">不正な遷移先へ (クリック)</a>
+  </div>
+</body>
+</html>'></iframe>
+  </div>
+</body>
+
+</html>

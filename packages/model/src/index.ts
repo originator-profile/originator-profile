@@ -18,3 +18,4 @@ export * from "./target/";
 export * from "./user";
 export * from "./web-media-profile";
 export * from "./website-profile";
+export * from "./op-meta";

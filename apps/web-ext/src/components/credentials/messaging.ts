@@ -48,6 +48,7 @@ async function fetchAllFramesCredentials(
         return {
           ops: opsResult instanceof Error ? [] : opsResult,
           cas: casResult instanceof Error ? [] : casResult,
+          opMeta: result.opMeta,
           url: result.url,
           origin: result.origin,
           ...frameResponse,
@@ -115,16 +116,22 @@ export async function fetchTabCredentials(
  */
 export const FrameIntegrityVerifier =
   (tabId: number, frameId: number): VerifyIntegrity =>
-  async (content) => {
-    const messageResult = await credentialsMessenger.sendMessage(
-      "verifyIntegrity",
-      [content],
-      {
-        tabId,
-        frameId,
-      },
-    );
+    async (content) => {
+      const messageResult = await credentialsMessenger.sendMessage(
+        "verifyIntegrity",
+        [content],
+        {
+          tabId,
+          frameId,
+        },
+      );
 
-    const parsed = deserializeIfError(messageResult);
-    return parsed as FetchIntegrityResult;
-  };
+      const parsed = deserializeIfError(messageResult);
+      return parsed as FetchIntegrityResult;
+    };
+
+/**
+ * リンク検証結果を取得する
+ */
+export const fetchVerificationResult = (tabId: number) =>
+  credentialsMessenger.sendMessage("getVerificationResult", tabId);

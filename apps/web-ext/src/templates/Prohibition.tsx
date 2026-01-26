@@ -1,10 +1,12 @@
 import { _ } from "@originator-profile/ui";
+import LinkVerification from "../components/LinkVerification";
 import GlobalHeader from "../components/GlobalHeader";
 
 function Prohibition() {
   return (
     <>
       <GlobalHeader className="sticky top-0 z-10" />
+      <LinkVerification />
       <main className="min-h-screen bg-gray-100 overflow-y-auto px-4 py-3">
         <h1
           className="whitespace-pre-line text-lg mb-2 text-center font-bold"

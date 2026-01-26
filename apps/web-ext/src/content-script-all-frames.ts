@@ -1,6 +1,7 @@
 import { serializeIfError } from "@originator-profile/core";
 import {
   fetchCredentials,
+  fetchOpMeta,
   FetchCredentialSetResult,
 } from "@originator-profile/presentation";
 import {
@@ -36,7 +37,16 @@ const toFetchCredentialsMessageResult = <T>(
 };
 
 credentialsMessenger.onMessage("fetchCredentials", async () => {
-  const { ops, cas } = await fetchCredentials(document);
+  const { ops, cas, opMeta } = await fetchCredentials(document);
+
+  if (opMeta) {
+    // NOTE: Already attached in setupOpMetaListener, but keeping it here for consistency if triggered manually
+    // Ideally we should avoid duplicate listeners. 
+    // For now, let's assume setupOpMetaListener handles it and we don't need to re-attach, 
+    // OR we just let it be (duplicate listeners same function? No, anonymous function).
+    // Let's rely on setupOpMetaListener for the interaction.
+  }
+
   const frameLocation: FrameLocation = {
     origin: window.origin,
     url: window.location.href,
@@ -44,9 +54,27 @@ credentialsMessenger.onMessage("fetchCredentials", async () => {
   return {
     ops: toFetchCredentialsMessageResult(ops),
     cas: toFetchCredentialsMessageResult(cas),
+    opMeta,
     ...frameLocation,
   };
 });
+
+const setupOpMetaListener = () => {
+  const opMeta = fetchOpMeta(document);
+  if (opMeta) {
+    document.addEventListener("click", () => {
+      void credentialsMessenger.sendMessage("adClicked", {
+        targetopid: opMeta.targetopid,
+      });
+    });
+  }
+};
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", setupOpMetaListener);
+} else {
+  setupOpMetaListener();
+}
 
 credentialsMessenger.onMessage("verifyIntegrity", async ({ data }) => {
   const [content] = data;

@@ -1,5 +1,6 @@
 import {
   ContentAttestationSet,
+  OpMeta,
   OriginatorProfileSet,
 } from "@originator-profile/model";
 import { CredentialsFetchFailed } from "./errors";
@@ -19,7 +20,7 @@ function getEndpoints(doc: Document, mediaType: string): string[] {
  * @param mediaType メディアタイプ
  */
 function getEmbeddedCredentials<
-  T extends OriginatorProfileSet | ContentAttestationSet,
+  T extends OriginatorProfileSet | ContentAttestationSet | OpMeta[],
 >(doc: Document = document, mediaType: string): T {
   const elements = [...doc.querySelectorAll(`script[type="${mediaType}"]`)];
   const credentialsArray = elements
@@ -84,15 +85,25 @@ export const fetchContentAttestationSet = (doc: Document) =>
 export const fetchOriginatorProfileSet = (doc: Document) =>
   fetchCredentialSet<OriginatorProfileSet>(doc, "application/ops+json");
 
+export const fetchOpMeta = (doc: Document): OpMeta | undefined => {
+  const opMetas = getEmbeddedCredentials<OpMeta[]>(
+    doc,
+    "application/opmeta+json",
+  );
+  return opMetas[0];
+};
+
 export const fetchCredentials = async (
   doc: Document,
 ): Promise<FetchCredentialsResult> => {
-  const [ops, cas] = await Promise.all([
+  const [ops, cas, opMeta] = await Promise.all([
     fetchOriginatorProfileSet(doc),
     fetchContentAttestationSet(doc),
+    fetchOpMeta(doc),
   ]);
   return {
     ops,
     cas,
+    opMeta,
   };
 };

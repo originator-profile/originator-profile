@@ -1,5 +1,6 @@
 import { _ } from "@originator-profile/ui";
 import GlobalHeader from "./GlobalHeader";
+import LinkVerification from "./LinkVerification";
 
 function Messages({ errors }: { errors: Error[] }) {
   const errorWithCode = errors.filter((error) => "code" in error);
@@ -24,6 +25,7 @@ function Unsupported({ errors }: Props) {
   return (
     <>
       <GlobalHeader className="sticky top-0 z-10" />
+      <LinkVerification />
       <main className="min-h-screen bg-gray-100 overflow-y-auto px-4 py-3">
         <article className="mb-12 max-w-sm mx-auto">
           <h1 className="whitespace-pre-line text-lg mb-2 text-center font-bold">

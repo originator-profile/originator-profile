@@ -9,7 +9,7 @@ import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
 import { useSiteProfile } from "../siteProfile";
 import { deduplicateCas } from "./deduplicate-cas";
-import { fetchTabCredentials } from "./messaging";
+import { fetchTabCredentials, fetchVerificationResult } from "./messaging";
 import type { FramesVerifiedCas, SupportedVerifiedCas } from "./types";
 import { verifyFramesCas, verifyOps } from "./verify-credentials";
 
@@ -75,32 +75,32 @@ async function fetchVerifiedCredentials([, tabId, sp]: [
 
 type UseCredentialsResult =
   | {
-      cas: undefined;
-      error: undefined;
-      framesCas: undefined;
-      isLoading: true;
-      ops: undefined;
-      origin: undefined;
-      tabId: number;
-    }
+    cas: undefined;
+    error: undefined;
+    framesCas: undefined;
+    isLoading: true;
+    ops: undefined;
+    origin: undefined;
+    tabId: number;
+  }
   | {
-      cas: undefined;
-      error: Error;
-      framesCas: undefined;
-      isLoading: false;
-      ops: undefined;
-      origin: undefined;
-      tabId: number;
-    }
+    cas: undefined;
+    error: Error;
+    framesCas: undefined;
+    isLoading: false;
+    ops: undefined;
+    origin: undefined;
+    tabId: number;
+  }
   | {
-      cas: SupportedVerifiedCas;
-      error: undefined;
-      framesCas: FramesVerifiedCas;
-      isLoading: false;
-      ops: VerifiedOps;
-      origin: string;
-      tabId: number;
-    };
+    cas: SupportedVerifiedCas;
+    error: undefined;
+    framesCas: FramesVerifiedCas;
+    isLoading: false;
+    ops: VerifiedOps;
+    origin: string;
+    tabId: number;
+  };
 
 /**
  * Credentials 取得 (要 Base コンポーネント)
@@ -131,3 +131,5 @@ export function useCredentials() {
     tabId,
   } as UseCredentialsResult;
 }
+
+export { fetchVerificationResult };
