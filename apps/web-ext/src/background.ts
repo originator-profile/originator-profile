@@ -103,6 +103,19 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
 
 let pendingOpIdVerification: { [tabId: number]: string } = {};
 let verificationResults: { [tabId: number]: LinkVerificationResult } = {};
+let allowedNavigations: { [key: string]: boolean } = {}; // key: tabId + url
+
+const getAllowedKey = (tabId: number, url: string) => `${tabId}:${url}`;
+
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.type === "allowNavigation") {
+    if (sender.tab?.id) {
+      const key = getAllowedKey(sender.tab.id, message.url);
+      allowedNavigations[key] = true;
+      sendResponse({ success: true });
+    }
+  }
+});
 
 credentialsMessenger.onMessage("adClicked", ({ data, sender }) => {
   if (sender.tab?.id) {
@@ -125,6 +138,16 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
   if (targetOpId) {
     console.log("Found pending verification for tab", details.tabId, "Target:", targetOpId);
 
+    // Check if allowed
+    const startUrl = details.url;
+    // Check if user allowed this destination.
+    const allowedKey = getAllowedKey(details.tabId, details.url);
+    if (allowedNavigations[allowedKey]) {
+      console.log("Navigation allowed by user choice", allowedKey);
+      delete allowedNavigations[allowedKey]; // Consume one-time permission
+      // Proceed to verification (to show status in popup) but skip redirect logic.
+    }
+
     delete pendingOpIdVerification[details.tabId];
     try {
       console.log("Fetching credentials...");
@@ -144,16 +167,6 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
         return;
       }
 
-      if (decoded.length === 0) {
-        console.log("Verification result: No OPID found");
-        verificationResults[details.tabId] = {
-          status: "missing_opid",
-          expectedOpId: targetOpId,
-          reason: "OPIDが存在しません",
-        };
-        return;
-      }
-
       const matched = decoded.some(
         (p) => p.core.doc.credentialSubject.id === targetOpId,
       );
@@ -167,19 +180,46 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
           expectedOpId: targetOpId,
         };
       } else {
+        const isMissing = decoded.length === 0;
+        const reason = isMissing ? "OPIDが存在しません" : "OPID不一致";
         verificationResults[details.tabId] = {
-          status: "mismatched",
+          status: isMissing ? "missing_opid" : "mismatched",
           expectedOpId: targetOpId,
-          reason: "OPID不一致",
+          reason,
         };
+
+        if (!allowedNavigations[allowedKey]) {
+          const warningUrl = `${chrome.runtime.getURL("index.html")}#/warning?target=${encodeURIComponent(details.url)}&reason=${encodeURIComponent(reason)}`;
+          // Using location.replace to avoid trapping user in history loop when clicking back
+          chrome.scripting.executeScript({
+            target: { tabId: details.tabId },
+            func: (url) => {
+              window.location.replace(url);
+            },
+            args: [warningUrl]
+          });
+        }
       }
     } catch (e: unknown) {
       console.error("Verification failed with error", e);
+      const reason = "クレデンシャルが見つかりません (取得失敗)";
       verificationResults[details.tabId] = {
         status: "error",
         expectedOpId: targetOpId,
-        reason: "クレデンシャルが見つかりません (取得失敗)",
+        reason,
       };
+
+      // Show warning for verification errors (e.g. failed to fetch credentials) as we cannot confirm safety.
+      if (!allowedNavigations[allowedKey]) {
+        const warningUrl = `${chrome.runtime.getURL("index.html")}#/warning?target=${encodeURIComponent(details.url)}&reason=${encodeURIComponent(reason)}`;
+        chrome.scripting.executeScript({
+          target: { tabId: details.tabId },
+          func: (url) => {
+            window.location.replace(url);
+          },
+          args: [warningUrl]
+        });
+      }
     }
   } else {
     console.log("No pending verification for tab", details.tabId, targetOpId);
