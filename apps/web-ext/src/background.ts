@@ -1,3 +1,4 @@
+import { frameCasExtensionMessenger } from "./components/frameCas";
 import { updateBadge, verifyTabCredentials } from "./components/tabBadge";
 import "./utils/cors-basic-auth";
 
@@ -10,6 +11,7 @@ const windowSize = {
 const BADGE_UPDATE_DEBOUNCE_MS = 300;
 
 chrome.action.onClicked.addListener(async (tab) => {
+  if (tab.id === undefined) return;
   const url = `${chrome.runtime.getURL("index.html")}#/tab/${tab.id}`;
   await chrome.windows.create({ url, type: "popup", ...windowSize });
 });
@@ -65,9 +67,9 @@ chrome.tabs.onActivated.addListener(({ tabId }) => {
   requestTabBadgeUpdate(tabId);
 });
 
-// ページ遷移完了時にバッジを更新
-chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
-  if (changeInfo.status === "complete") {
+// ページ遷移完了時にバッジを更新（アクティブタブのみ）
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === "complete" && tab.active) {
     requestTabBadgeUpdate(tabId);
   }
 });
@@ -98,6 +100,27 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
     // const granted = await chrome.permissions.request({
     //   origins: ["<all_urls>"],
     // });
+  }
+});
+
+// iframeのCAS位置情報をコンテンツスクリプトに配信
+frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
+  const { tabId, framesCas } = data;
+  const targetFramesCas = framesCas.filter(
+    (frameCas) => frameCas.cas.length > 0,
+  );
+  for (const frameCas of targetFramesCas) {
+    void frameCasExtensionMessenger.sendMessage(
+      "locating",
+      {
+        frameCas,
+        frames: framesCas.map(({ cas: _, ...frame }) => frame),
+      },
+      {
+        tabId,
+        frameId: frameCas.frameId,
+      },
+    );
   }
 });
 
