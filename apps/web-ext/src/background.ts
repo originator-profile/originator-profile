@@ -6,6 +6,9 @@ const windowSize = {
   height: 640,
 } as const;
 
+/** バッジ更新のデバウンス時間（ミリ秒） */
+const BADGE_UPDATE_DEBOUNCE_MS = 300;
+
 chrome.action.onClicked.addListener(async (tab) => {
   const url = `${chrome.runtime.getURL("index.html")}#/tab/${tab.id}`;
   await chrome.windows.create({ url, type: "popup", ...windowSize });
@@ -52,7 +55,7 @@ function requestTabBadgeUpdate(tabId: number): void {
   const timer = setTimeout(() => {
     pendingBadgeUpdateTimers.delete(tabId);
     void updateTabBadge(tabId);
-  }, 300);
+  }, BADGE_UPDATE_DEBOUNCE_MS);
 
   pendingBadgeUpdateTimers.set(tabId, timer);
 }
@@ -66,6 +69,15 @@ chrome.tabs.onActivated.addListener(({ tabId }) => {
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === "complete") {
     requestTabBadgeUpdate(tabId);
+  }
+});
+
+// タブ削除時にデバウンスタイマーをクリーンアップ
+chrome.tabs.onRemoved.addListener((tabId) => {
+  const timer = pendingBadgeUpdateTimers.get(tabId);
+  if (timer !== undefined) {
+    clearTimeout(timer);
+    pendingBadgeUpdateTimers.delete(tabId);
   }
 });
 

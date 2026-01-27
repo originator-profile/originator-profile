@@ -55,8 +55,11 @@ async function fetchVerifiedSiteProfile(
       return null;
     }
     return verifiedSp;
-  } catch {
-    // Site Profileが存在しない場合はnullを返す
+  } catch (error) {
+    console.error(
+      `[fetchVerifiedSiteProfile] Failed to fetch site profile for tab ${tabId}:`,
+      error,
+    );
     return null;
   }
 }
@@ -127,12 +130,14 @@ export async function verifyTabCredentials(tabId: number): Promise<{
     // 重複を除いて全CASを集約（IDで重複排除）
     const allVerifiedCas = Array.from(
       new Map(
-        verifiedCasResults.flatMap((result) =>
-          (result as SupportedVerifiedCas).map((ca) => [
-            ca.attestation.doc.credentialSubject.id,
-            ca,
-          ]),
-        ),
+        verifiedCasResults.flatMap((result) => {
+          if (result instanceof CasVerifyFailed) {
+            return [];
+          }
+          return result.map(
+            (ca) => [ca.attestation.doc.credentialSubject.id, ca] as const,
+          );
+        }),
       ).values(),
     );
 
@@ -141,7 +146,10 @@ export async function verifyTabCredentials(tabId: number): Promise<{
       count: allVerifiedCas.length,
     };
   } catch (error) {
-    console.error(`Failed to verify credentials for tab ${tabId}:`, error);
+    console.error(
+      `[verifyTabCredentials] Failed to verify credentials for tab ${tabId}:`,
+      error,
+    );
     return null;
   }
 }
