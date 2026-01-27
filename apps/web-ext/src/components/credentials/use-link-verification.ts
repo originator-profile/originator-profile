@@ -6,16 +6,16 @@ import { LinkVerificationResult } from "./types";
 const VERIFICATION_KEY = "link_verification";
 
 export function useLinkVerification() {
-    const params = useParams<{ tabId: string }>();
-    const tabId = Number(params.tabId);
+  const params = useParams<{ tabId: string }>();
+  const tabId = Number(params.tabId);
 
-    const { data } = useSWRImmutable<LinkVerificationResult, Error>(
-        [VERIFICATION_KEY, tabId],
-        ([, id]: [string, number]) =>
-            fetchVerificationResult(id).catch(
-                () => ({ status: "none" }) as LinkVerificationResult,
-            ),
-    );
+  const { data } = useSWRImmutable<LinkVerificationResult, Error>(
+    [VERIFICATION_KEY, tabId],
+    ([, id]: [string, number]) =>
+      fetchVerificationResult(id).catch(
+        () => ({ status: "none" }) as LinkVerificationResult,
+      ),
+  );
 
-    return data;
+  return data;
 }

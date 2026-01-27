@@ -1,26 +1,29 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ja">
-
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Link Verification Test</title>
     <!-- modified -->
     <style>
-        iframe {
-            width: 300px;
-            height: 200px;
-            border: 1px solid #ccc;
-            margin: 10px;
-        }
+      iframe {
+        width: 300px;
+        height: 200px;
+        border: 1px solid #ccc;
+        margin: 10px;
+      }
     </style>
-</head>
+  </head>
 
-<body>
+  <body>
     <h1>Link Verification Test</h1>
     <div>
-        <h2>Valid Case</h2>
-        <p>Target OPID matches the destination site (dns:demo.exp.originator-profile.org)</p>
-        <iframe srcdoc='<!DOCTYPE html>
+      <h2>Valid Case</h2>
+      <p>
+        Target OPID matches the destination site
+        (dns:demo.exp.originator-profile.org)
+      </p>
+      <iframe
+        srcdoc='<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -37,12 +40,14 @@
     <a href="/ja/" target="_top">Click for Valid Transition</a>
   </div>
 </body>
-</html>'></iframe>
+</html>'
+      ></iframe>
     </div>
     <div>
-        <h2>Invalid Case</h2>
-        <p>Target OPID mismatch (dns:invalid.example.com)</p>
-        <iframe srcdoc='<!DOCTYPE html>
+      <h2>Invalid Case</h2>
+      <p>Target OPID mismatch (dns:invalid.example.com)</p>
+      <iframe
+        srcdoc='<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -59,8 +64,8 @@
     <a href="/ja/" target="_top">Click for Invalid Transition</a>
   </div>
 </body>
-</html>'></iframe>
+</html>'
+      ></iframe>
     </div>
-</body>
-
+  </body>
 </html>

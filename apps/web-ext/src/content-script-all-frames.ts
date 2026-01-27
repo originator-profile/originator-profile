@@ -1,8 +1,8 @@
 import { serializeIfError } from "@originator-profile/core";
 import {
   fetchCredentials,
-  fetchOpMeta,
   FetchCredentialSetResult,
+  fetchOpMeta,
 } from "@originator-profile/presentation";
 import {
   normalizeCasItem,
@@ -41,8 +41,8 @@ credentialsMessenger.onMessage("fetchCredentials", async () => {
 
   if (opMeta) {
     // NOTE: Already attached in setupOpMetaListener, but keeping it here for consistency if triggered manually
-    // Ideally we should avoid duplicate listeners. 
-    // For now, let's assume setupOpMetaListener handles it and we don't need to re-attach, 
+    // Ideally we should avoid duplicate listeners.
+    // For now, let's assume setupOpMetaListener handles it and we don't need to re-attach,
     // OR we just let it be (duplicate listeners same function? No, anonymous function).
     // Let's rely on setupOpMetaListener for the interaction.
   }

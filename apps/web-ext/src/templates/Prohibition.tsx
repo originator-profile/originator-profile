@@ -1,6 +1,6 @@
 import { _ } from "@originator-profile/ui";
-import LinkVerification from "../components/LinkVerification";
 import GlobalHeader from "../components/GlobalHeader";
+import LinkVerification from "../components/LinkVerification";
 
 function Prohibition() {
   return (

@@ -1,10 +1,10 @@
+import { decodeOps } from "@originator-profile/verify";
 import { fetchTabCredentials } from "./components/credentials";
 import { credentialsMessenger } from "./components/credentials/events";
 import { LinkVerificationResult } from "./components/credentials/types";
 import { frameCasExtensionMessenger } from "./components/frameCas";
 import { updateBadge, verifyTabCredentials } from "./components/tabBadge";
 import "./utils/cors-basic-auth";
-import { decodeOps } from "@originator-profile/verify";
 
 const windowSize = {
   width: 520,
@@ -136,7 +136,12 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
 
   const targetOpId = pendingOpIdVerification[details.tabId];
   if (targetOpId) {
-    console.log("Found pending verification for tab", details.tabId, "Target:", targetOpId);
+    console.log(
+      "Found pending verification for tab",
+      details.tabId,
+      "Target:",
+      targetOpId,
+    );
 
     // Check if allowed
     const startUrl = details.url;
@@ -196,7 +201,7 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
             func: (url) => {
               window.location.replace(url);
             },
-            args: [warningUrl]
+            args: [warningUrl],
           });
         }
       }
@@ -217,7 +222,7 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
           func: (url) => {
             window.location.replace(url);
           },
-          args: [warningUrl]
+          args: [warningUrl],
         });
       }
     }

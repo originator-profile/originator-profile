@@ -8,7 +8,6 @@ import Credentials from "./pages/Credentials";
 import DetailInfo from "./pages/DetailInfo";
 import Org from "./pages/Org";
 import Prohibition from "./pages/Prohibition";
-import Warning from "./pages/Warning";
 import SiteProfile from "./pages/SiteProfile";
 import Warning from "./pages/Warning";
 import { buildPublUrl, paths } from "./utils/routes";

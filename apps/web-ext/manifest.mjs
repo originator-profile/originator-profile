@@ -40,7 +40,12 @@ const base = {
   web_accessible_resources: [
     {
       matches: ["<all_urls>"],
-      resources: ["content-script/iframe.js", "main.css", "index.html", "*.map"],
+      resources: [
+        "content-script/iframe.js",
+        "main.css",
+        "index.html",
+        "*.map",
+      ],
     },
   ],
   host_permissions: ["<all_urls>"],
