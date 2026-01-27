@@ -14,5 +14,11 @@ export async function updateBadge(tabId: number, count: number): Promise<void> {
       color: "#4CAF50",
       tabId,
     });
+  } else {
+    // カウントが0の場合は背景色をリセット
+    await chrome.action.setBadgeBackgroundColor({
+      color: "#00000000",
+      tabId,
+    });
   }
 }

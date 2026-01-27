@@ -16,25 +16,56 @@ chrome.action.onClicked.addListener(async (tab) => {
  * @param tabId タブID
  */
 async function updateTabBadge(tabId: number): Promise<void> {
-  const result = await verifyTabCredentials(tabId);
+  try {
+    const result = await verifyTabCredentials(tabId);
 
-  if (result === null) {
-    await updateBadge(tabId, 0);
-    return;
+    if (result === null) {
+      await updateBadge(tabId, 0);
+      return;
+    }
+
+    await updateBadge(tabId, result.count);
+  } catch (error) {
+    console.error(
+      `[updateTabBadge] Failed to update badge for tab ${tabId}:`,
+      error,
+    );
+  }
+}
+
+// デバウンス用のタイマーID（タブIDごとに管理）
+const pendingBadgeUpdateTimers = new Map<
+  number,
+  ReturnType<typeof setTimeout>
+>();
+
+/**
+ * タブのバッジ更新をデバウンス付きで要求する
+ * @param tabId タブID
+ */
+function requestTabBadgeUpdate(tabId: number): void {
+  const existingTimer = pendingBadgeUpdateTimers.get(tabId);
+  if (existingTimer !== undefined) {
+    clearTimeout(existingTimer);
   }
 
-  await updateBadge(tabId, result.count);
+  const timer = setTimeout(() => {
+    pendingBadgeUpdateTimers.delete(tabId);
+    void updateTabBadge(tabId);
+  }, 300);
+
+  pendingBadgeUpdateTimers.set(tabId, timer);
 }
 
 // タブ切り替え時にバッジを更新
 chrome.tabs.onActivated.addListener(({ tabId }) => {
-  void updateTabBadge(tabId);
+  requestTabBadgeUpdate(tabId);
 });
 
 // ページ遷移完了時にバッジを更新
 chrome.tabs.onUpdated.addListener((tabId, changeInfo) => {
   if (changeInfo.status === "complete") {
-    void updateTabBadge(tabId);
+    requestTabBadgeUpdate(tabId);
   }
 });
 
