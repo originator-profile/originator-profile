@@ -121,23 +121,22 @@ export async function verifyTabCredentials(tabId: number): Promise<{
     );
 
     // 検証失敗があれば null を返す
-    for (const result of verifiedCasResults) {
-      if (result instanceof CasVerifyFailed) {
-        return null;
-      }
+    const hasVerifyFailed = verifiedCasResults.some(
+      (result) => result instanceof CasVerifyFailed,
+    );
+    if (hasVerifyFailed) {
+      return null;
     }
 
     // 重複を除いて全CASを集約（IDで重複排除）
+    // 上記でCasVerifyFailedはフィルタリング済みのため、型アサーションは安全
     const allVerifiedCas = Array.from(
       new Map(
-        verifiedCasResults.flatMap((result) => {
-          if (result instanceof CasVerifyFailed) {
-            return [];
-          }
-          return result.map(
+        (verifiedCasResults as SupportedVerifiedCas[]).flatMap((result) =>
+          result.map(
             (ca) => [ca.attestation.doc.credentialSubject.id, ca] as const,
-          );
-        }),
+          ),
+        ),
       ).values(),
     );
 
