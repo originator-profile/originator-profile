@@ -5,8 +5,8 @@ import {
   OpsVerifier,
   OpsVerifyFailed,
   SpVerifier,
-  verifyCas,
   VerifiedSp,
+  verifyCas,
 } from "@originator-profile/verify";
 import { getRegistryKeys } from "../../utils/get-registry-keys";
 import {
