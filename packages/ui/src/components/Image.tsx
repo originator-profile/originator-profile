@@ -10,6 +10,17 @@ type Props = {
   cover?: boolean;
 };
 
+const isJa = () => {
+  const locale = navigator.language || "en";
+  return locale.startsWith("ja");
+};
+
+const getDocumentLink = () => {
+  return `https://docs.originator-profile.org/${isJa() ? "ja" : "en"}/troubleshooting/image-access-error/`;
+};
+
+const documentLink = getDocumentLink();
+
 function Image({
   className,
   src,
@@ -37,6 +48,12 @@ function Image({
         width={width}
         height={height}
         crossOrigin="anonymous"
+        onError={(e) => {
+          const message = isJa()
+            ? `[Originator Profile] 画像の読み込みに失敗しました: ${e.currentTarget.src}\n対処法: ${documentLink}`
+            : `[Originator Profile] Failed to load image: ${e.currentTarget.src}\nTroubleshooting: ${documentLink}`;
+          console.error(message);
+        }}
       />
     </figure>
   );
