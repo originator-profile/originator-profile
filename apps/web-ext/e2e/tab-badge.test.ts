@@ -25,15 +25,24 @@ test("クレデンシャルが存在するページでバッジに正しい数�
     credentialsPage.contents,
     credentialsPage.issuer,
   );
-  await page.goto(credentialsPage.endpoint);
 
-  // バッジ更新のデバウンス + 検証処理を待つ
-  await page.waitForTimeout(1000);
+  // service workerを先に起動させる（別のページにアクセスしてトリガー）
+  await page.goto("about:blank");
 
   let [backgroundWorker] = context.serviceWorkers();
   if (!backgroundWorker) {
     backgroundWorker = await context.waitForEvent("serviceworker");
   }
+
+  // service workerの初期化を待つ
+  await page.waitForTimeout(500);
+
+  // 対象ページにナビゲート
+  await page.goto(credentialsPage.endpoint);
+
+  // バッジ更新のデバウンス + 検証処理を待つ
+  await page.waitForTimeout(1000);
+
   const badgeText = await backgroundWorker.evaluate(async () => {
     const [tab] = await chrome.tabs.query({ active: true });
     if (!tab?.id) return "";
@@ -50,15 +59,23 @@ test("クレデンシャルが存在しないページでバッジが表示さ�
   missingCredentials: _missingCredentials,
   credentialsPage,
 }) => {
-  await page.goto(credentialsPage.endpoint);
-
-  // バッジ更新のデバウンス + 検証処理を待つ
-  await page.waitForTimeout(1000);
+  // service workerを先に起動させる
+  await page.goto("about:blank");
 
   let [backgroundWorker] = context.serviceWorkers();
   if (!backgroundWorker) {
     backgroundWorker = await context.waitForEvent("serviceworker");
   }
+
+  // service workerの初期化を待つ
+  await page.waitForTimeout(500);
+
+  // 対象ページにナビゲート
+  await page.goto(credentialsPage.endpoint);
+
+  // バッジ更新のデバウンス + 検証処理を待つ
+  await page.waitForTimeout(1000);
+
   const badgeText = await backgroundWorker.evaluate(async () => {
     const [tab] = await chrome.tabs.query({ active: true });
     if (!tab?.id) return "";
