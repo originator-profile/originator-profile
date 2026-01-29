@@ -3,15 +3,19 @@
 /**
  * 依存関係の更新内容をchangelogとしてまとめるスクリプト
  * 
- * 使用方法:
- * 1. 更新前: node scripts/generate-update-changelog.mjs save
- * 2. 依存関係を更新: pnpm --recursive update --latest
- * 3. 更新後: node scripts/generate-update-changelog.mjs generate
+ * このスクリプトは `pnpm run update` コマンドから自動的に呼び出されます。
+ * 内部的に以下の処理を実行:
+ * 1. 更新前: バージョン情報を保存 (save コマンド)
+ * 2. 更新後: changelogを生成 (generate コマンド)
+ * 
+ * 手動で実行する場合:
+ *   node scripts/generate-update-changelog.mjs save
+ *   pnpm --recursive update --latest
+ *   node scripts/generate-update-changelog.mjs generate
  */
 
 import { execSync } from 'child_process';
 import fs from 'fs';
-import path from 'path';
 
 const VERSIONS_FILE = '.dependency-versions.json';
 const CHANGELOG_FILE = 'DEPENDENCY_UPDATE_CHANGELOG.md';
@@ -32,14 +36,16 @@ function getCurrentVersions() {
     for (const item of data) {
       if (item.dependencies) {
         Object.entries(item.dependencies).forEach(([name, info]) => {
-          if (!versions[name] || versions[name] < info.version) {
+          // 最初に見つけたバージョンを使用（ワークスペース全体で最も高いバージョンではない可能性がある）
+          if (!versions[name]) {
             versions[name] = info.version;
           }
         });
       }
       if (item.devDependencies) {
         Object.entries(item.devDependencies).forEach(([name, info]) => {
-          if (!versions[name] || versions[name] < info.version) {
+          // 最初に見つけたバージョンを使用（ワークスペース全体で最も高いバージョンではない可能性がある）
+          if (!versions[name]) {
             versions[name] = info.version;
           }
         });
@@ -65,7 +71,9 @@ function getNpmUrl(packageName) {
  */
 function getPackageInfo(packageName) {
   try {
-    const output = execSync(`npm view ${packageName} repository.url homepage --json`, {
+    // パッケージ名をクォートでエスケープして安全性を確保
+    const escapedName = packageName.replace(/'/g, "'\\''");
+    const output = execSync(`npm view '${escapedName}' repository.url homepage --json`, {
       encoding: 'utf-8',
       maxBuffer: 1024 * 1024,
     });
@@ -77,7 +85,9 @@ function getPackageInfo(packageName) {
       repoUrl = data['repository.url']
         .replace(/^git\+/, '')
         .replace(/\.git$/, '')
-        .replace(/^git:\/\//, 'https://');
+        .replace(/^git:\/\//, 'https://')
+        .replace(/^ssh:\/\/git@github\.com\//, 'https://github.com/')
+        .replace(/^ssh:\/\/git@/, 'https://');
     }
     
     return {
@@ -130,7 +140,7 @@ function saveVersions() {
 /**
  * 変更履歴を生成
  */
-async function generateChangelog() {
+function generateChangelog() {
   console.log('変更履歴を生成しています...');
   
   // 保存されたバージョン情報を読み込み
@@ -183,7 +193,8 @@ async function generateChangelog() {
     
     for (let i = 0; i < updates.length; i++) {
       const update = updates[i];
-      if (i % 10 === 0) {
+      // 進捗表示: 1, 11, 21, 31, ... を表示
+      if (i === 0 || (i + 1) % 10 === 1) {
         console.log(`  進捗: ${i + 1}/${updates.length}`);
       }
       
@@ -237,18 +248,23 @@ async function generateChangelog() {
   markdown += '---\n\n';
   markdown += '*このレポートは自動生成されました。*\n';
   
-  fs.writeFileSync(CHANGELOG_FILE, markdown);
-  console.log(`\n✓ 変更履歴を ${CHANGELOG_FILE} に生成しました`);
-  
-  // 統計情報を表示
-  console.log('\n📊 更新サマリー:');
-  console.log(`  🔄 更新: ${updates.length} パッケージ`);
-  console.log(`  ➕ 追加: ${added.length} パッケージ`);
-  console.log(`  ➖ 削除: ${removed.length} パッケージ`);
-  
-  // 保存ファイルをクリーンアップ
-  fs.unlinkSync(VERSIONS_FILE);
-  console.log(`\n🧹 一時ファイル ${VERSIONS_FILE} を削除しました`);
+  // ファイル書き込みとクリーンアップを try-finally で保護
+  try {
+    fs.writeFileSync(CHANGELOG_FILE, markdown);
+    console.log(`\n✓ 変更履歴を ${CHANGELOG_FILE} に生成しました`);
+    
+    // 統計情報を表示
+    console.log('\n📊 更新サマリー:');
+    console.log(`  🔄 更新: ${updates.length} パッケージ`);
+    console.log(`  ➕ 追加: ${added.length} パッケージ`);
+    console.log(`  ➖ 削除: ${removed.length} パッケージ`);
+  } finally {
+    // 保存ファイルをクリーンアップ（エラー時も必ず実行）
+    if (fs.existsSync(VERSIONS_FILE)) {
+      fs.unlinkSync(VERSIONS_FILE);
+      console.log(`\n🧹 一時ファイル ${VERSIONS_FILE} を削除しました`);
+    }
+  }
 }
 
 /**
