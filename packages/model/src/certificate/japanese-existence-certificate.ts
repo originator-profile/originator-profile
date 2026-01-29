@@ -7,7 +7,7 @@ export const JapaneseExistenceCertificateProperties = {
   type: "object",
   properties: {
     id: { type: "string", title: "subject の OP ID", format: "uri" },
-    type: { type: "string", const: "ECJPProperties" },
+    type: { type: "string", const: "JP-OrganizationExistenceCertificate" },
     name: {
       title: "法人名",
       type: "string",

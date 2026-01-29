@@ -114,7 +114,7 @@ describe("Certificate", () => {
       issuer: "dns:pa-issuer.example.org",
       credentialSubject: {
         id: "dns:pa-holder.example.jp",
-        type: "ECJPProperties",
+        type: "JP-OrganizationExistenceCertificate",
         addressCountry: "JP",
         name: "○○新聞社 (※開発用サンプル)",
         corporateNumber: "0000000000000",
