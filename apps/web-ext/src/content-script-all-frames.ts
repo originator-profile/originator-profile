@@ -39,8 +39,6 @@ const toFetchCredentialsMessageResult = <T>(
 credentialsMessenger.onMessage("fetchCredentials", async () => {
   const { ops, cas, opMeta } = await fetchCredentials(document);
 
-
-
   const frameLocation: FrameLocation = {
     origin: window.origin,
     url: window.location.href,

@@ -8,8 +8,8 @@ import "./utils/cors-basic-auth";
 
 import {
   allowNavigation,
-  consumeAllowedNavigation,
   cleanupNavigationState,
+  consumeAllowedNavigation,
 } from "./utils/navigation-state";
 
 // ... existing imports ...
@@ -161,9 +161,15 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
     // Check if allowed
     const startUrl = details.url;
     // Check if user allowed this destination.
-    const isAllowed = await consumeAllowedNavigation(details.tabId, details.url);
+    const isAllowed = await consumeAllowedNavigation(
+      details.tabId,
+      details.url,
+    );
     if (isAllowed) {
-      console.log("Navigation allowed by user choice", `${details.tabId}:${details.url}`);
+      console.log(
+        "Navigation allowed by user choice",
+        `${details.tabId}:${details.url}`,
+      );
       // Proceed to verification (to show status in popup) but skip redirect logic.
     }
 
@@ -270,7 +276,7 @@ frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
 });
 
 // https://www.typescriptlang.org/tsconfig#non-module-files
-export { };
+export {};
 
 // NOTE: gh-1583
 if (import.meta.env.MODE === "development") {
@@ -294,10 +300,10 @@ if (import.meta.env.BASIC_AUTH) {
         urls:
           credential.domain === "localhost"
             ? [
-              "http://localhost:8080/*",
-              // Firefox のため
-              "http://localhost/*",
-            ]
+                "http://localhost:8080/*",
+                // Firefox のため
+                "http://localhost/*",
+              ]
             : [`https://${credential.domain}/*`],
       },
       ["blocking"],

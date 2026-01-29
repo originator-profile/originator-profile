@@ -9,8 +9,8 @@ const getAllowedKey = (tabId: number, url: string) => `${tabId}:${url}`;
  * 1回のみ有効（使用時に消費）
  */
 export const allowNavigation = (tabId: number, url: string): void => {
-    const key = getAllowedKey(tabId, url);
-    allowedNavigations[key] = true;
+  const key = getAllowedKey(tabId, url);
+  allowedNavigations[key] = true;
 };
 
 /**
@@ -18,30 +18,30 @@ export const allowNavigation = (tabId: number, url: string): void => {
  * @returns ナビゲーションが許可され、消費された場合は true、それ以外は false
  */
 export const consumeAllowedNavigation = async (
-    tabId: number,
-    url: string,
+  tabId: number,
+  url: string,
 ): Promise<boolean> => {
-    const key = getAllowedKey(tabId, url);
-    const lockName = `nav-lock:${key}`;
+  const key = getAllowedKey(tabId, url);
+  const lockName = `nav-lock:${key}`;
 
-    // navigator.locks を使用して、複数のフレーム/タブが同時に同じキーを確認することによる競合状態を防ぐ
-    return navigator.locks.request(lockName, async () => {
-        if (allowedNavigations[key]) {
-            delete allowedNavigations[key];
-            return true;
-        }
-        return false;
-    });
+  // navigator.locks を使用して、複数のフレーム/タブが同時に同じキーを確認することによる競合状態を防ぐ
+  return navigator.locks.request(lockName, async () => {
+    if (allowedNavigations[key]) {
+      delete allowedNavigations[key];
+      return true;
+    }
+    return false;
+  });
 };
 
 /**
  * 特定のタブの許可されたナビゲーション状態を削除
  */
 export const cleanupNavigationState = (tabId: number): void => {
-    const prefix = `${tabId}:`;
-    Object.keys(allowedNavigations).forEach((key) => {
-        if (key.startsWith(prefix)) {
-            delete allowedNavigations[key];
-        }
-    });
+  const prefix = `${tabId}:`;
+  Object.keys(allowedNavigations).forEach((key) => {
+    if (key.startsWith(prefix)) {
+      delete allowedNavigations[key];
+    }
+  });
 };
