@@ -17,24 +17,26 @@
     "lint": "turbo run lint --continue",
     "type-check": "turbo run type-check --continue",
     "format": "prettier --write .",
-    "update": "run-s update:pnpm update:dedupe",
+    "update": "run-s update:save update:pnpm update:dedupe update:changelog",
+    "update:save": "node scripts/generate-update-changelog.mjs save",
     "update:pnpm": "pnpm --recursive update --latest",
     "update:dedupe": "pnpm dedupe",
+    "update:changelog": "node scripts/generate-update-changelog.mjs generate",
     "docs": "run-s docs:ts docs:build",
     "docs:ts": "typedoc",
     "docs:build": "astro build",
     "docs:preview": "astro preview"
   },
   "devDependencies": {
-    "@lerna-lite/cli": "^4.1.1",
-    "@lerna-lite/version": "^4.1.1",
+    "@lerna-lite/cli": "^4.11.0",
+    "@lerna-lite/version": "^4.11.1",
     "@types/jsdom": "^27.0.0",
-    "astro": "^5.7.10",
-    "npm-run-all2": "^8.0.0",
-    "prettier": "^3.5.3",
+    "astro": "^5.17.0",
+    "npm-run-all2": "^8.0.4",
+    "prettier": "^3.8.1",
     "prettier-plugin-organize-imports": "^4.3.0",
-    "turbo": "2.6.1",
-    "typedoc": "^0.28.3"
+    "turbo": "2.8.0",
+    "typedoc": "^0.28.16"
   },
   "engines": {
     "node": "^20.18.0 || ^22.2.0 || ^24.10.0"

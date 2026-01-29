@@ -39,12 +39,12 @@
     "@originator-profile/tsconfig": "workspace:*",
     "bcp-47-match": "^2.0.3",
     "date-fns": "^4.1.0",
-    "eslint": "^9.25.1",
+    "eslint": "^9.39.2",
     "eslint-config-originator-profile": "workspace:*",
-    "pkgroll": "^2.12.2",
-    "serialize-error": "^12.0.0",
-    "typescript": "^5.8.3",
+    "pkgroll": "^2.22.0",
+    "serialize-error": "^13.0.1",
+    "typescript": "^5.9.3",
     "uuid": "^13.0.0",
-    "vitest": "^4.0.0"
+    "vitest": "^4.0.18"
   }
 }

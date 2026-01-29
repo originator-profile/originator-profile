@@ -11,6 +11,6 @@
   },
   "type": "module",
   "dependencies": {
-    "@tsconfig/recommended": "^1.0.8"
+    "@tsconfig/recommended": "^1.0.13"
   }
 }

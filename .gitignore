@@ -18,3 +18,6 @@ vendor
 /public/ts
 
 .claude/settings.local.json
+
+# Dependency update tracking
+.dependency-versions.json
