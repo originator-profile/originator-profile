@@ -31,6 +31,30 @@ Unless required by applicable law or agreed to in writing, software distributed 
 For the architecture, specifications, and technical information of the Originator Profile, please visit this website:
 https://docs.originator-profile.org/
 
+## Development
+
+### Updating Dependencies
+
+To update all project dependencies to their latest versions and generate a detailed changelog:
+
+```bash
+pnpm run update
+```
+
+This command automatically:
+1. Saves current dependency versions
+2. Updates all packages to their latest versions
+3. Deduplicates dependencies
+4. Generates a detailed changelog (`DEPENDENCY_UPDATE_CHANGELOG.md`)
+
+The generated changelog includes for each package:
+- Version changes
+- Link to npm package page
+- Link to GitHub repository
+- Link to compare changes between versions
+- Link to release notes
+
+
 ## How to Participate and Contribute
 
 To contribute to the technical specifications or software developed under the Originator Profile project, you must either agree to the Developer Certificate of Origin (by adding a sign-off line, “Signed-off-by”, in your pull request) or agree to the Contributor License Agreement.

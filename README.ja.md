@@ -31,6 +31,30 @@ http://www.apache.org/licenses/LICENSE-2.0
 Originator Profile のアーキテクチャ・仕様や技術情報についてはこちらの Web サイトをご覧ください。
 https://docs.originator-profile.org/
 
+## 開発
+
+### 依存関係の更新
+
+プロジェクトのすべての依存関係を最新バージョンに更新し、詳細なchangelogを生成するには:
+
+```bash
+pnpm run update
+```
+
+このコマンドは以下の処理を自動的に実行します:
+1. 現在の依存関係のバージョンを保存
+2. すべてのパッケージを最新バージョンに更新
+3. 重複する依存関係を統合
+4. 更新内容を詳細なchangelogとして生成 (`DEPENDENCY_UPDATE_CHANGELOG.md`)
+
+生成されるchangelogには、各パッケージの以下の情報が含まれます:
+- バージョンの変更内容
+- npmパッケージページへのリンク
+- GitHubリポジトリへのリンク
+- バージョン間の差分比較リンク
+- リリースノートへのリンク
+
+
 ## 参加・貢献するには
 
 Originator Profile で開発する技術仕様やソフトウェアに貢献いただくには Developer Certificate of Origin に同意しプルリクエストでサインオフ (Signed-off-by 行) を付与していただくか、Contributor License Agreement に同意していただく必要があります。
