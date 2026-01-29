@@ -37,11 +37,11 @@
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",
     "ajv": "^8.17.1",
-    "eslint": "^9.39.2",
+    "eslint": "^9.25.1",
     "eslint-config-originator-profile": "workspace:*",
     "json-schema-to-ts": "^3.1.1",
-    "pkgroll": "^2.22.0",
-    "typescript": "^5.9.3",
-    "vitest": "^4.0.18"
+    "pkgroll": "^2.12.2",
+    "typescript": "^5.8.3",
+    "vitest": "^4.0.0"
   }
 }
