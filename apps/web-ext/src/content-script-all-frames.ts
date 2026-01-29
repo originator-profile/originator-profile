@@ -39,13 +39,7 @@ const toFetchCredentialsMessageResult = <T>(
 credentialsMessenger.onMessage("fetchCredentials", async () => {
   const { ops, cas, opMeta } = await fetchCredentials(document);
 
-  if (opMeta) {
-    // NOTE: Already attached in setupOpMetaListener, but keeping it here for consistency if triggered manually
-    // Ideally we should avoid duplicate listeners.
-    // For now, let's assume setupOpMetaListener handles it and we don't need to re-attach,
-    // OR we just let it be (duplicate listeners same function? No, anonymous function).
-    // Let's rely on setupOpMetaListener for the interaction.
-  }
+
 
   const frameLocation: FrameLocation = {
     origin: window.origin,
@@ -59,7 +53,9 @@ credentialsMessenger.onMessage("fetchCredentials", async () => {
   };
 });
 
+let isListenerSetup = false;
 const setupOpMetaListener = () => {
+  if (isListenerSetup) return;
   const opMeta = fetchOpMeta(document);
   if (opMeta) {
     document.addEventListener("click", () => {
@@ -67,6 +63,7 @@ const setupOpMetaListener = () => {
         targetopid: opMeta.targetopid,
       });
     });
+    isListenerSetup = true;
   }
 };
 

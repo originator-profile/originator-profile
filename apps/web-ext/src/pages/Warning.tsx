@@ -5,14 +5,25 @@ export default function Warning() {
   const target = searchParams.get("target");
   const reason = searchParams.get("reason");
 
+  const isValidUrl = (url: string) => {
+    try {
+      const parsed = new URL(url);
+      return ["http:", "https:"].includes(parsed.protocol);
+    } catch {
+      return false;
+    }
+  };
+
+  const safeTarget = target && isValidUrl(target) ? target : null;
+
   const handleProceed = () => {
-    if (target) {
+    if (safeTarget) {
       // Send message to background to allow navigation
       chrome.runtime.sendMessage(
-        { type: "allowNavigation", url: target },
+        { type: "allowNavigation", url: safeTarget },
         () => {
           // Navigate to the target URL
-          window.location.replace(target);
+          window.location.replace(safeTarget);
         },
       );
     }
@@ -44,6 +55,7 @@ export default function Warning() {
           予期されたOriginator Profile (OPID) と一致しませんでした。
           <br />
           <span className="text-sm text-gray-500">{reason || "詳細不明"}</span>
+          {/* reason is safe to render here because React escapes values by default */}
         </p>
         <div className="space-y-3">
           <button
@@ -54,14 +66,18 @@ export default function Warning() {
           </button>
           <button
             onClick={handleProceed}
-            className="w-full bg-gray-200 text-gray-700 py-2 px-4 rounded hover:bg-gray-300 transition duration-200"
+            disabled={!safeTarget}
+            className={`w-full py-2 px-4 rounded transition duration-200 ${safeTarget
+              ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              }`}
           >
             このままアクセスする
           </button>
         </div>
-        {target && (
+        {safeTarget && (
           <div className="mt-6 text-xs text-gray-400 break-all">
-            遷移先: {target}
+            遷移先: {safeTarget}
           </div>
         )}
       </div>
