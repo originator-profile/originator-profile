@@ -43,7 +43,7 @@ packages/
 詳細なガイドラインは以下を参照してください：
 
 - [コンポーネント作成パターン](./references/component-patterns.md) - Props 定義、スタイルマージ、命名規則
-- [スタイリングガイド](./references/styling-guide.md) - Tailwind CSS、カラーパレット、CSS の使い分け
-- [アクセシビリティ](./references/accessibility.md) - ARIA 属性、キーボード操作、フォーカス管理
+- [スタイリングガイド](./references/styling-guide.md) - Tailwind CSS による設計
+- [アクセシビリティ](./references/accessibility.md) - ARIA APG 指向
 - [テスト規約](./references/testing.md) - Vitest、Playwright、VRT
-- [プロジェクト構造](./references/project-structure.md) - Feature-driven folder structure、ESLint 制約
+- [プロジェクト構造](./references/project-structure.md) - Feature-driven folder structure
