@@ -235,7 +235,7 @@ const getVerificationResult = async (
     const decoded = decodeOps(ops);
 
     if (decoded instanceof Error) {
-      console.error("Failed to decode OPS", decoded);
+
       return {
         status: "error",
         expectedOpId: targetOpId,
@@ -265,7 +265,7 @@ const getVerificationResult = async (
       reason,
     };
   } catch (e: unknown) {
-    console.error("Verification failed with error", e);
+
     const reason = "クレデンシャルが見つかりません (取得失敗)";
     return {
       status: "error",
@@ -327,7 +327,7 @@ frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
 });
 
 // https://www.typescriptlang.org/tsconfig#non-module-files
-export {};
+export { };
 
 // NOTE: gh-1583
 if (import.meta.env.MODE === "development") {
@@ -351,10 +351,10 @@ if (import.meta.env.BASIC_AUTH) {
         urls:
           credential.domain === "localhost"
             ? [
-                "http://localhost:8080/*",
-                // Firefox のため
-                "http://localhost/*",
-              ]
+              "http://localhost:8080/*",
+              // Firefox のため
+              "http://localhost/*",
+            ]
             : [`https://${credential.domain}/*`],
       },
       ["blocking"],
