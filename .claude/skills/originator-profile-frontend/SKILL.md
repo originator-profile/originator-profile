@@ -9,12 +9,12 @@ description: フロントエンド開発支援（React コンポーネント、T
 
 ## 技術スタック
 
-- **フレームワーク**: React 19
+- **フレームワーク**: React
 - **言語**: TypeScript
-- **スタイリング**: Tailwind CSS 4.x + tailwind-merge + clsx
+- **スタイリング**: Tailwind CSS + tailwind-merge
 - **テスト**: Vitest（ユニット）、Playwright（E2E・VRT）
-- **リンター**: ESLint（jsx-a11y, react-hooks, canonical）
-- **ビルド**: Vite
+- **リンター**: ESLint
+- **ビルド**: Vite、esbuild
 
 ## プロジェクト構成
 

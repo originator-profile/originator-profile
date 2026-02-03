@@ -19,16 +19,16 @@ components/
 ### テストの書き方
 
 ```typescript
-import { describe, it, expect } from "vitest";
+import { describe, test, expect } from "vitest";
 import { isFrameVisible } from "./is-frame-visible";
 
 describe("isFrameVisible", () => {
-  it("可視フレームに対して true を返す", () => {
+  test("可視フレームに対して true を返す", () => {
     const result = isFrameVisible(visibleFrame);
     expect(result).toBe(true);
   });
 
-  it("不可視フレームに対して false を返す", () => {
+  test("不可視フレームに対して false を返す", () => {
     const result = isFrameVisible(hiddenFrame);
     expect(result).toBe(false);
   });
@@ -157,23 +157,3 @@ pnpm e2e --update-snapshots
 await expect(ext?.getByTestId("site-profile")).toBeVisible();
 expect(await ext?.getByTestId("site-profile-wsp-name").innerText()).toBe("SiteProfileの取得検証");
 ```
-
-## Vitest ESLint プラグイン
-
-```javascript
-// eslint.config.mjs
-import vitest from "@vitest/eslint-plugin";
-
-{
-  plugins: { vitest },
-  rules: {
-    ...vitest.configs.recommended.rules,
-  },
-}
-```
-
-### 主要なルール
-
-- `vitest/expect-expect`: テストに `expect` が含まれていることを確認
-- `vitest/no-identical-title`: 同一の `describe`/`it` タイトルを禁止
-- `vitest/valid-expect`: `expect` の正しい使用を確認

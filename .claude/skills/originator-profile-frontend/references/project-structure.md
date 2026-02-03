@@ -4,6 +4,10 @@
 
 機能（Feature）ごとにファイルをまとめる構造を採用しています。
 
+> ![NOTE]
+> hooks, utils ディレクトリは機能別ディレクトリに移行予定です。
+> Issue: [components, utils, hooks ディレクトリを機能ディレクトリに集約する (機能駆動的な構成であることを明確にする) · Issue #219 · originator-profile/originator-profile](https://github.com/originator-profile/originator-profile/issues/219)
+
 ### 基本原則
 
 - **関連するファイルを近くに配置**: コンポーネント、フック、型、ユーティリティを同じディレクトリに
@@ -89,11 +93,10 @@ packages/ui/src/
 ### 機能フォルダの index.ts
 
 ```typescript
-// components/Menu/index.ts
-export { useMenuButton } from "../../hooks/useMenuButton";
-export { Menu } from "./Menu";
-export { MenuButton } from "./MenuButton";
-export { MenuItem } from "./MenuItem";
+// packages/ui/src/components/profileAnnotation/index.ts
+export * from "./CertificateDetail";
+export * from "./CertificateSummary";
+export * from "./use-profile-annotator-wmp";
 ```
 
 ### パッケージの index.ts
@@ -102,95 +105,4 @@ export { MenuItem } from "./MenuItem";
 // packages/ui/src/index.ts
 export * from "./components";
 export * from "./utils";
-```
-
-## ESLint による品質制約
-
-### 複雑度の制限
-
-```javascript
-// eslint.config.mjs
-{
-  rules: {
-    "max-depth": ["error", 2],      // ネスト深さ最大 2
-    complexity: ["error", 10],       // 循環的複雑度最大 10
-  },
-}
-```
-
-### max-depth: 2
-
-```tsx
-// NG: 深さ 3
-function Component() {
-  if (condition1) {
-    if (condition2) {
-      if (condition3) {  // エラー
-        return <div />;
-      }
-    }
-  }
-}
-
-// OK: 早期リターンで深さを抑える
-function Component() {
-  if (!condition1) return null;
-  if (!condition2) return null;
-  if (!condition3) return null;
-  return <div />;
-}
-```
-
-### complexity: 10
-
-複雑な条件分岐が多い場合は、関数を分割します。
-
-```tsx
-// NG: 複雑度が高い
-function handleKeyDown(event: KeyboardEvent) {
-  switch (event.key) {
-    case "Enter": /* ... */ break;
-    case " ": /* ... */ break;
-    case "ArrowDown": /* ... */ break;
-    // ... 多数のケース
-  }
-}
-
-// OK: ハンドラを分離
-const keyHandlers = {
-  Enter: handleEnter,
-  " ": handleSpace,
-  ArrowDown: handleArrowDown,
-};
-
-function handleKeyDown(event: KeyboardEvent) {
-  keyHandlers[event.key]?.();
-}
-```
-
-## ファイル命名規則
-
-| 種類 | パターン | 例 |
-|------|---------|-----|
-| React コンポーネント | PascalCase.tsx | `Header.tsx`, `MenuButton.tsx` |
-| カスタムフック | kebab-case.ts | `use-menu-button.ts` |
-| ユーティリティ | kebab-case.ts | `get-message.ts` |
-| 型定義 | kebab-case.ts | `types.ts` |
-| テスト | *.test.ts | `is-frame-visible.test.ts` |
-| CSS | 対応コンポーネント名.css | `Menu.css` |
-| ドキュメント | README.md | 各機能フォルダ内 |
-
-## 機能ドキュメント
-
-各機能フォルダには `README.md` を配置して、機能の概要を記述できます。
-
-```markdown
-<!-- components/credentials/README.md -->
-# Credentials
-
-認証情報の取得と検証を行う機能です。
-
-## 使い方
-
-...
 ```
