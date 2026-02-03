@@ -7,18 +7,8 @@ export async function updateBadge(tabId: number, count: number): Promise<void> {
   const text = count === 0 ? "" : count > 99 ? "99+" : String(count);
 
   await chrome.action.setBadgeText({ text, tabId });
-
-  if (count > 0) {
-    // 緑系の背景色を設定
-    await chrome.action.setBadgeBackgroundColor({
-      color: "#4CAF50",
-      tabId,
-    });
-  } else {
-    // カウントが0の場合は背景色をリセット
-    await chrome.action.setBadgeBackgroundColor({
-      color: "#00000000",
-      tabId,
-    });
-  }
+  await chrome.action.setBadgeBackgroundColor({
+    color: "#4CAF50",
+    tabId,
+  });
 }

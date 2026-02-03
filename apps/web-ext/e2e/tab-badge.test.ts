@@ -40,14 +40,22 @@ test("クレデンシャルが存在するページでバッジに正しい数�
   // 対象ページにナビゲート
   await page.goto(credentialsPage.endpoint);
 
-  // バッジ更新のデバウンス + 検証処理を待つ
-  await page.waitForTimeout(1000);
-
+  // バッジが期待値になるまでポーリングで待機
+  /* eslint-disable no-await-in-loop -- Service Worker内で逐次ポーリングするため意図的 */
   const badgeText = await backgroundWorker.evaluate(async () => {
     const [tab] = await chrome.tabs.query({ active: true });
-    if (!tab?.id) return "";
-    return chrome.action.getBadgeText({ tabId: tab.id });
+    if (!tab?.id) throw new Error("No active tab");
+
+    for (let i = 0; i < 30; i++) {
+      const text = await chrome.action.getBadgeText({ tabId: tab.id });
+      if (text !== "") return text;
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+    }
+    throw new Error("Timeout waiting for badge text");
   });
+  /* eslint-enable no-await-in-loop */
 
   expect(badgeText).toBe("1");
 });

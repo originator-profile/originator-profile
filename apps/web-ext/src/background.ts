@@ -23,13 +23,7 @@ chrome.action.onClicked.addListener(async (tab) => {
 async function updateTabBadge(tabId: number): Promise<void> {
   try {
     const result = await verifyTabCredentials(tabId);
-
-    if (result === null) {
-      await updateBadge(tabId, 0);
-      return;
-    }
-
-    await updateBadge(tabId, result.count);
+    await updateBadge(tabId, result?.count ?? 0);
   } catch (error) {
     console.error(
       `[updateTabBadge] Failed to update badge for tab ${tabId}:`,
