@@ -30,7 +30,6 @@ export default Header;
 
 **ポイント:**
 
-- `type Props` を使用（`interface` ではなく）
 - `className` はオプショナルで、`twMerge` でマージ
 - デフォルトスタイルを先に、外部から渡された `className` を後に
 
