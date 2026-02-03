@@ -86,10 +86,11 @@ export default function Warning() {
           <button
             onClick={handleProceed}
             disabled={!safeTarget}
-            className={`w-full py-2 px-4 rounded transition duration-200 ${safeTarget
+            className={`w-full py-2 px-4 rounded transition duration-200 ${
+              safeTarget
                 ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 : "bg-gray-100 text-gray-400 cursor-not-allowed"
-              }`}
+            }`}
           >
             このままアクセスする
           </button>
