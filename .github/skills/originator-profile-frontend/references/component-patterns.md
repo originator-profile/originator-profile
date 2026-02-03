@@ -35,17 +35,17 @@ export default Header;
 
 ## ファイル命名規則
 
-ファイル命名規則は以下の通りです。
+デフォルトエクスポートを使用する場合、ESLint の `canonical/filename-match-exported` ルールによりファイル名がエクスポート名に対応する必要があります。
 
-| 種類           | ファイル名           | エクスポート名     | 命名規則           |
-| -------------- | -------------------- | ------------------ | ------------------ |
-| コンポーネント | `Header.tsx`         | `Header`           | PascalCase（推奨） |
-| フック         | `use-menu-button.ts` | `useMenuButton`    | kebab-case（推奨） |
-| ユーティリティ | `get-message.ts`     | `getMessage`       | kebab-case（推奨） |
-| 定数           | `constants.ts`       | 複数エクスポート可 | kebab-case（推奨） |
+| 種類           | ファイル名 (命名規則)             | デフォルトエクスポート名 |
+| -------------- | --------------------------------- | ------------------------ |
+| コンポーネント | `Header.tsx` (PascalCase)         | `Header`                 |
+| フック         | `use-menu-button.ts` (kebab-case) | `useMenuButton`          |
+| ユーティリティ | `get-message.ts` (kebab-case)     | `getMessage`             |
+| 定数           | `constants.ts` (kebab-case)       | `MAX_COUNT`, `config` 等 |
 
 > [!NOTE]
-> デフォルトエクスポートを使用する場合、ESLint の `canonical/filename-match-exported` ルールによりファイル名がエクスポート名に対応する必要があります。このルールは名前付きエクスポートには適用されません。
+> 名前付きエクスポートを使用する場合、この規約は適用されません。
 
 ## カスタムフックの分離
 
