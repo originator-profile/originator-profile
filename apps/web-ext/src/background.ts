@@ -12,8 +12,6 @@ import {
   consumeAllowedNavigation,
 } from "./utils/navigation-state";
 
-
-
 const windowSize = {
   width: 520,
   height: 640,
@@ -209,7 +207,6 @@ credentialsMessenger.onMessage("getVerificationResult", ({ data: tabId }) => {
 });
 
 chrome.webNavigation.onCompleted.addListener(async (details) => {
-
   if (details.frameId !== 0) return;
 
   // Navigate したら結果をリセット
@@ -224,7 +221,6 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
       details.url,
     );
     if (isAllowed) {
-
       // Proceed to verification (to show status in popup) but skip redirect logic.
     }
 
@@ -249,7 +245,6 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
       const matched = decoded.some((op) =>
         op.media?.some((wmp) => wmp.doc.issuer === targetOpId),
       );
-
 
       if (matched) {
         verificationResults[details.tabId] = {
@@ -306,7 +301,6 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
       }
     }
   } else {
-
   }
 });
 
@@ -332,7 +326,7 @@ frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
 });
 
 // https://www.typescriptlang.org/tsconfig#non-module-files
-export { };
+export {};
 
 // NOTE: gh-1583
 if (import.meta.env.MODE === "development") {
@@ -356,10 +350,10 @@ if (import.meta.env.BASIC_AUTH) {
         urls:
           credential.domain === "localhost"
             ? [
-              "http://localhost:8080/*",
-              // Firefox のため
-              "http://localhost/*",
-            ]
+                "http://localhost:8080/*",
+                // Firefox のため
+                "http://localhost/*",
+              ]
             : [`https://${credential.domain}/*`],
       },
       ["blocking"],
