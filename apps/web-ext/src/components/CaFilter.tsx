@@ -1,12 +1,15 @@
 import { Icon } from "@iconify/react";
 import { _ } from "@originator-profile/ui";
 import clsx from "clsx";
+import { useMemo } from "react";
 import { Menu, MenuButton, MenuItem, useMenuButton } from "./Menu";
 import { listCas } from "./credentials";
+import type { SupportedVerifiedCas } from "./credentials/types";
 
 type Props = {
   caListType: Parameters<typeof listCas>[1];
   setCaListType: (contentType: Parameters<typeof listCas>[1]) => void;
+  cas: SupportedVerifiedCas;
 };
 
 type FilterOption = {
@@ -22,7 +25,14 @@ const FILTER_OPTIONS: FilterOption[] = [
   { value: "OnlineAd", title: _("CaFilter_Advertisements") },
 ];
 
-function CaFilter({ caListType, setCaListType }: Props) {
+function CaFilter({ caListType, setCaListType, cas }: Props) {
+  // 1件以上存在するフィルターオプションのみ表示
+  const availableOptions = useMemo(() => {
+    return FILTER_OPTIONS.filter((option) => {
+      const filtered = listCas(cas, option.value);
+      return filtered.length > 0;
+    });
+  }, [cas]);
   const {
     isOpen,
     activeIndex,
@@ -37,10 +47,10 @@ function CaFilter({ caListType, setCaListType }: Props) {
     handleMenuKeyDown,
     handleItemMouseEnter,
   } = useMenuButton({
-    items: FILTER_OPTIONS.map((option) => option.value),
+    items: availableOptions.map((option) => option.value),
     onItemSelect: (value) => {
       // Type guard to ensure value is valid
-      const validOption = FILTER_OPTIONS.find(
+      const validOption = availableOptions.find(
         (option) => option.value === value,
       );
       if (validOption) {
@@ -68,7 +78,7 @@ function CaFilter({ caListType, setCaListType }: Props) {
         className="rounded-lg absolute ml-2 py-2 w-36 bg-white shadow-lg z-20"
         {...menuProps}
       >
-        {FILTER_OPTIONS.map((option, index) => {
+        {availableOptions.map((option, index) => {
           const isSelected = caListType === option.value;
           const isActive = activeIndex === index;
           return (
