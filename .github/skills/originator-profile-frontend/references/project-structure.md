@@ -4,7 +4,7 @@
 
 機能（Feature）ごとにファイルをまとめる構造を採用しています。
 
-> ![NOTE]
+> [!NOTE]
 > hooks, utils ディレクトリは機能別ディレクトリに移行予定です。
 > Issue: [components, utils, hooks ディレクトリを機能ディレクトリに集約する (機能駆動的な構成であることを明確にする) · Issue #219 · originator-profile/originator-profile](https://github.com/originator-profile/originator-profile/issues/219)
 
@@ -90,7 +90,7 @@ packages/ui/src/
 
 ## モジュールエクスポートパターン
 
-> ![INFO]
+> [!INFO]
 > 本プロジェクトの構造では、再帰的なエクスポートが頻出するため、
 > 再エクスポートが容易な名前つきエクスポートを推奨します。
 
