@@ -38,7 +38,6 @@ const toFetchCredentialsMessageResult = <T>(
 
 credentialsMessenger.onMessage("fetchCredentials", async () => {
   const { ops, cas, opMeta } = await fetchCredentials(document);
-
   const frameLocation: FrameLocation = {
     origin: window.origin,
     url: window.location.href,
@@ -61,11 +60,20 @@ const setupOpMetaListener = () => {
         targetopid: opMeta.targetopid,
       });
     };
-    document.addEventListener("click", sendAdClicked);
-    document.addEventListener("mousedown", sendAdClicked);
+    const handleLinkClick = (e: MouseEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.closest("a")) {
+        sendAdClicked();
+      }
+    };
+    document.addEventListener("click", handleLinkClick);
+    document.addEventListener("mousedown", handleLinkClick);
     document.addEventListener("keydown", (e) => {
       if (e.key === "Enter") {
-        sendAdClicked();
+        const target = e.target as HTMLElement;
+        if (target.closest("a")) {
+          sendAdClicked();
+        }
         return;
       }
       if (e.key === " " || e.key === "Spacebar") {

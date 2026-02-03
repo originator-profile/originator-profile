@@ -5,6 +5,8 @@ export default function Warning() {
   const target = searchParams.get("target");
   const reason = searchParams.get("reason");
 
+  const original = searchParams.get("original");
+
   const isValidUrl = (url: string) => {
     try {
       const parsed = new URL(url);
@@ -15,17 +17,33 @@ export default function Warning() {
   };
 
   const safeTarget = target && isValidUrl(target) ? target : null;
+  const safeOriginal = original && isValidUrl(original) ? original : null;
+  const safeReason = reason?.slice(0, 500) ?? null;
 
-  const handleProceed = () => {
+  const handleProceed = async () => {
     if (safeTarget) {
-      // Send message to background to allow navigation
-      chrome.runtime.sendMessage(
-        { type: "allowNavigation", url: safeTarget },
-        () => {
-          // Navigate to the target URL
-          window.location.replace(safeTarget);
-        },
-      );
+      try {
+        // Send message to background to allow navigation
+        await chrome.runtime.sendMessage({
+          type: "allowNavigation",
+          url: safeTarget,
+        });
+      } catch (error) {
+        // If message fails (e.g. background script suspended), log it but proceed anyway.
+        // The user explicitly chose to proceed, so we shouldn't block them.
+        console.warn("Failed to notify background script:", error);
+      } finally {
+        // Navigate to the target URL regardless of message success
+        window.location.replace(safeTarget);
+      }
+    }
+  };
+
+  const handleBack = () => {
+    if (window.history.length > 1) {
+      window.history.back();
+    } else {
+      window.close();
     }
   };
 
@@ -54,33 +72,25 @@ export default function Warning() {
         <p className="text-gray-600 mb-6">
           予期されたOriginator Profile (OPID) と一致しませんでした。
           <br />
-          <span className="text-sm text-gray-500">{reason || "詳細不明"}</span>
-          {/* reason is safe to render here because React escapes values by default */}
+          <span className="text-sm text-gray-500">{safeReason || "詳細不明"}</span>
+          {/* safeReason is sanitised/truncated and React escapes values by default */}
         </p>
         <div className="space-y-3">
-          {window.history.length > 1 ? (
-            <button
-              onClick={() => window.history.back()}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-200"
-            >
-              前のページに戻る
-            </button>
-          ) : (
-            <button
-              onClick={() => window.close()}
-              className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-200"
-            >
-              このタブを閉じる
-            </button>
-          )}
+          <button
+            onClick={handleBack}
+            className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-200"
+          >
+            {window.history.length > 1
+              ? "前のページに戻る"
+              : "このタブを閉じる"}
+          </button>
           <button
             onClick={handleProceed}
             disabled={!safeTarget}
-            className={`w-full py-2 px-4 rounded transition duration-200 ${
-              safeTarget
-                ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                : "bg-gray-100 text-gray-400 cursor-not-allowed"
-            }`}
+            className={`w-full py-2 px-4 rounded transition duration-200 ${safeTarget
+              ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              }`}
           >
             このままアクセスする
           </button>
