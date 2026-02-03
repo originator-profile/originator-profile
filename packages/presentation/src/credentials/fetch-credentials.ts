@@ -115,11 +115,11 @@ export const fetchOpMeta = (doc: Document): OpMeta | undefined => {
 export const fetchCredentials = async (
   doc: Document,
 ): Promise<FetchCredentialsResult> => {
-  const [ops, cas, opMeta] = await Promise.all([
+  const [ops, cas] = await Promise.all([
     fetchOriginatorProfileSet(doc),
     fetchContentAttestationSet(doc),
-    fetchOpMeta(doc),
   ]);
+  const opMeta = fetchOpMeta(doc);
   return {
     ops,
     cas,

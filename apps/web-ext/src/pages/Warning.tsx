@@ -1,23 +1,20 @@
 import { useSearchParams } from "react-router";
 
+const isValidUrl = (url: string) => {
+  try {
+    const parsed = new URL(url);
+    return ["http:", "https:"].includes(parsed.protocol);
+  } catch {
+    return false;
+  }
+};
+
 export default function Warning() {
   const [searchParams] = useSearchParams();
   const target = searchParams.get("target");
   const reason = searchParams.get("reason");
 
-  const original = searchParams.get("original");
-
-  const isValidUrl = (url: string) => {
-    try {
-      const parsed = new URL(url);
-      return ["http:", "https:"].includes(parsed.protocol);
-    } catch {
-      return false;
-    }
-  };
-
   const safeTarget = target && isValidUrl(target) ? target : null;
-  const safeOriginal = original && isValidUrl(original) ? original : null;
   const safeReason = reason?.slice(0, 500) ?? null;
 
   const handleProceed = async () => {
@@ -89,11 +86,10 @@ export default function Warning() {
           <button
             onClick={handleProceed}
             disabled={!safeTarget}
-            className={`w-full py-2 px-4 rounded transition duration-200 ${
-              safeTarget
+            className={`w-full py-2 px-4 rounded transition duration-200 ${safeTarget
                 ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 : "bg-gray-100 text-gray-400 cursor-not-allowed"
-            }`}
+              }`}
           >
             このままアクセスする
           </button>

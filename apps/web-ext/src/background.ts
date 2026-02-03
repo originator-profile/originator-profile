@@ -107,8 +107,8 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   }
 });
 
-let pendingOpIdVerification: { [tabId: number]: string } = {};
-let verificationResults: { [tabId: number]: LinkVerificationResult } = {};
+const pendingOpIdVerification: { [tabId: number]: string } = {};
+const verificationResults: { [tabId: number]: LinkVerificationResult } = {};
 
 // Clean up state when a tab is closed to prevent memory leaks
 const pendingClicks: {
@@ -174,37 +174,124 @@ chrome.tabs.onCreated.addListener((tab) => {
   }
 });
 
+const handleAdClicked = (
+  tabId: number,
+  frameId: number,
+  targetOpId: string,
+) => {
+  // Store the click for this frame
+  if (!pendingClicks[tabId]) {
+    pendingClicks[tabId] = {};
+  }
+  pendingClicks[tabId][frameId] = targetOpId;
+
+  // Also update main pending map for same-tab navigations (overwrites last click in tab)
+  pendingOpIdVerification[tabId] = targetOpId;
+
+  // Check if any new tabs were already created by this frame waiting for this opId
+  const tabAssociations = pendingNewTabAssociations[tabId];
+  const waitingTabs = tabAssociations?.[frameId];
+
+  if (tabAssociations && waitingTabs) {
+    for (const newTabId of waitingTabs) {
+      pendingOpIdVerification[newTabId] = targetOpId;
+    }
+    // Clear associations as they are fulfilled
+    delete tabAssociations[frameId];
+  }
+};
+
 credentialsMessenger.onMessage("adClicked", async ({ data, sender }) => {
   if (sender.tab?.id && sender.frameId !== undefined) {
-    const tabId = sender.tab.id;
-    const frameId = sender.frameId;
-
-    // Store the click for this frame
-    if (!pendingClicks[tabId]) {
-      pendingClicks[tabId] = {};
-    }
-    pendingClicks[tabId][frameId] = data.targetopid;
-
-    // Also update main pending map for same-tab navigations (overwrites last click in tab)
-    pendingOpIdVerification[tabId] = data.targetopid;
-
-    // Check if any new tabs were already created by this frame waiting for this opId
-    const tabAssociations = pendingNewTabAssociations[tabId];
-    const waitingTabs = tabAssociations?.[frameId];
-
-    if (tabAssociations && waitingTabs) {
-      for (const newTabId of waitingTabs) {
-        pendingOpIdVerification[newTabId] = data.targetopid;
-      }
-      // Clear associations as they are fulfilled
-      delete tabAssociations[frameId];
-    }
+    handleAdClicked(sender.tab.id, sender.frameId, data.targetopid);
   }
 });
 
 credentialsMessenger.onMessage("getVerificationResult", ({ data: tabId }) => {
   return verificationResults[tabId] ?? { status: "none" };
 });
+
+const executeWarningRedirect = (tabId: number, url: string, reason: string) => {
+  const warningUrl = `${chrome.runtime.getURL("index.html")}#/warning?target=${encodeURIComponent(url)}&reason=${encodeURIComponent(reason)}`;
+  void chrome.scripting.executeScript({
+    target: { tabId },
+    func: (destination) => {
+      const referrer = document.referrer;
+      const fullUrl =
+        destination +
+        (referrer ? `&original=${encodeURIComponent(referrer)}` : "");
+      window.location.replace(fullUrl);
+    },
+    args: [warningUrl],
+  });
+};
+
+const getVerificationResult = async (
+  tabId: number,
+  targetOpId: string,
+): Promise<LinkVerificationResult> => {
+  try {
+    const { ops } = await fetchTabCredentials(tabId);
+    const decoded = decodeOps(ops);
+
+    if (decoded instanceof Error) {
+      console.error("Failed to decode OPS", decoded);
+      return {
+        status: "error",
+        expectedOpId: targetOpId,
+        reason:
+          import.meta.env.MODE === "development"
+            ? `無効なOPS (デコード失敗): ${decoded.message}`
+            : "無効なOPS (デコード失敗)",
+      };
+    }
+
+    const matched = decoded.some((op) =>
+      op.media?.some((wmp) => wmp.doc.issuer === targetOpId),
+    );
+
+    if (matched) {
+      return {
+        status: "matched",
+        expectedOpId: targetOpId,
+      };
+    }
+
+    const isMissing = decoded.length === 0;
+    const reason = isMissing ? "OPIDが存在しません" : "OPID不一致";
+    return {
+      status: isMissing ? "missing_opid" : "mismatched",
+      expectedOpId: targetOpId,
+      reason,
+    };
+  } catch (e: unknown) {
+    console.error("Verification failed with error", e);
+    const reason = "クレデンシャルが見つかりません (取得失敗)";
+    return {
+      status: "error",
+      expectedOpId: targetOpId,
+      reason,
+    };
+  }
+};
+
+const handleVerification = async (
+  tabId: number,
+  url: string,
+  targetOpId: string,
+) => {
+  // Check if user allowed this destination.
+  const isAllowed = await consumeAllowedNavigation(tabId, url);
+  const result = await getVerificationResult(tabId, targetOpId);
+  verificationResults[tabId] = result;
+
+  if (result.status !== "matched" && !isAllowed) {
+    const reason = result.reason ?? "Unknown Error";
+    executeWarningRedirect(tabId, url, reason);
+  }
+
+  delete pendingOpIdVerification[tabId];
+};
 
 chrome.webNavigation.onCompleted.addListener(async (details) => {
   if (details.frameId !== 0) return;
@@ -214,93 +301,7 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
 
   const targetOpId = pendingOpIdVerification[details.tabId];
   if (targetOpId) {
-    // Check if allowed
-    // Check if user allowed this destination.
-    const isAllowed = await consumeAllowedNavigation(
-      details.tabId,
-      details.url,
-    );
-    if (isAllowed) {
-      // Proceed to verification (to show status in popup) but skip redirect logic.
-    }
-
-    delete pendingOpIdVerification[details.tabId];
-    try {
-      const { ops } = await fetchTabCredentials(details.tabId);
-
-      const decoded = decodeOps(ops);
-      if (decoded instanceof Error) {
-        console.error("Failed to decode OPS", decoded);
-        verificationResults[details.tabId] = {
-          status: "error",
-          expectedOpId: targetOpId,
-          reason:
-            import.meta.env.MODE === "development"
-              ? `無効なOPS (デコード失敗): ${decoded.message}`
-              : "無効なOPS (デコード失敗)",
-        };
-        return;
-      }
-
-      const matched = decoded.some((op) =>
-        op.media?.some((wmp) => wmp.doc.issuer === targetOpId),
-      );
-
-      if (matched) {
-        verificationResults[details.tabId] = {
-          status: "matched",
-          expectedOpId: targetOpId,
-        };
-      } else {
-        const isMissing = decoded.length === 0;
-        const reason = isMissing ? "OPIDが存在しません" : "OPID不一致";
-        verificationResults[details.tabId] = {
-          status: isMissing ? "missing_opid" : "mismatched",
-          expectedOpId: targetOpId,
-          reason,
-        };
-
-        if (!isAllowed) {
-          const warningUrl = `${chrome.runtime.getURL("index.html")}#/warning?target=${encodeURIComponent(details.url)}&reason=${encodeURIComponent(reason)}`;
-          chrome.scripting.executeScript({
-            target: { tabId: details.tabId },
-            func: (url) => {
-              const referrer = document.referrer;
-              const fullUrl =
-                url +
-                (referrer ? `&original=${encodeURIComponent(referrer)}` : "");
-              window.location.replace(fullUrl);
-            },
-            args: [warningUrl],
-          });
-        }
-      }
-    } catch (e: unknown) {
-      console.error("Verification failed with error", e);
-      const reason = "クレデンシャルが見つかりません (取得失敗)";
-      verificationResults[details.tabId] = {
-        status: "error",
-        expectedOpId: targetOpId,
-        reason,
-      };
-
-      // Show warning for verification errors (e.g. failed to fetch credentials) as we cannot confirm safety.
-      if (!isAllowed) {
-        const warningUrl = `${chrome.runtime.getURL("index.html")}#/warning?target=${encodeURIComponent(details.url)}&reason=${encodeURIComponent(reason)}`;
-        chrome.scripting.executeScript({
-          target: { tabId: details.tabId },
-          func: (url) => {
-            const referrer = document.referrer;
-            const fullUrl =
-              url +
-              (referrer ? `&original=${encodeURIComponent(referrer)}` : "");
-            window.location.replace(fullUrl);
-          },
-          args: [warningUrl],
-        });
-      }
-    }
-  } else {
+    await handleVerification(details.tabId, details.url, targetOpId);
   }
 });
 
@@ -326,7 +327,7 @@ frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
 });
 
 // https://www.typescriptlang.org/tsconfig#non-module-files
-export {};
+export { };
 
 // NOTE: gh-1583
 if (import.meta.env.MODE === "development") {
@@ -350,10 +351,10 @@ if (import.meta.env.BASIC_AUTH) {
         urls:
           credential.domain === "localhost"
             ? [
-                "http://localhost:8080/*",
-                // Firefox のため
-                "http://localhost/*",
-              ]
+              "http://localhost:8080/*",
+              // Firefox のため
+              "http://localhost/*",
+            ]
             : [`https://${credential.domain}/*`],
       },
       ["blocking"],
