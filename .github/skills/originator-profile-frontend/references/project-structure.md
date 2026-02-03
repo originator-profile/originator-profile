@@ -64,6 +64,11 @@ apps/web-ext/src/
 │   ├── Credentials.tsx
 │   └── SiteProfile.tsx
 │
+├── templates/                   # テンプレートコンポーネント
+│   ├── DetailInfo.tsx
+│   ├── Org.tsx
+│   └── Prohibition.tsx
+│
 └── utils/                       # 共有ユーティリティ
     ├── get-profile-error-message.ts
     └── get-registry-keys.ts
