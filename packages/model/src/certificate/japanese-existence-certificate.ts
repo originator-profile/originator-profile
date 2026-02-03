@@ -9,10 +9,14 @@ export const JapaneseExistenceCertificateProperties = {
     id: { type: "string", title: "subject の OP ID", format: "uri" },
     type: { type: "string", const: "JP-OrganizationExistenceCertificate" },
     name: {
-      title: "法人名",
+      title: "PA 名",
       type: "string",
     },
     description: { type: "string", title: "説明" },
+    corporateName: {
+      title: "法人名",
+      type: "string",
+    },
     corporateNumber: {
       title: "法人番号",
       type: "string",
@@ -43,6 +47,7 @@ export const JapaneseExistenceCertificateProperties = {
     "id",
     "type",
     "name",
+    "corporateName",
     "corporateNumber",
     "postalCode",
     "addressCountry",

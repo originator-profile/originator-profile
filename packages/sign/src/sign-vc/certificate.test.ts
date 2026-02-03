@@ -117,6 +117,7 @@ describe("Certificate", () => {
         type: "JP-OrganizationExistenceCertificate",
         addressCountry: "JP",
         name: "○○新聞社 (※開発用サンプル)",
+        corporateName: "○○新聞社 (※開発用サンプル)",
         corporateNumber: "0000000000000",
         postalCode: "000-0000",
         addressRegion: "東京都",
