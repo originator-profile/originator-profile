@@ -5,7 +5,7 @@
 機能（Feature）ごとにファイルをまとめる構造を採用しています。
 
 > [!NOTE]
-> hooks, utils ディレクトリは機能別ディレクトリに移行予定です。
+> hooks, utils ディレクトリは機能別ディレクトリに移行予定です。新規の hooks や utils は機能フォルダ内に配置してください。
 > Issue: [components, utils, hooks ディレクトリを機能ディレクトリに集約する (機能駆動的な構成であることを明確にする) · Issue #219 · originator-profile/originator-profile](https://github.com/originator-profile/originator-profile/issues/219)
 
 ### 基本原則
