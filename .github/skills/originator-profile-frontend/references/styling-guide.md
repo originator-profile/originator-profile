@@ -27,7 +27,7 @@ function Button({ className, children }: Props) {
 ```
 
 > [!NOTE]
-> clsx を使用している箇所は tailwind-merge へ移行予定です。
+> clsx を使用している箇所は tailwind-merge へ移行予定です。新規コードでは `twMerge` を使用してください。
 > Issue: [clsx の代わりに tailwind-merge を導入する提案 · Issue #45 · originator-profile/originator-profile](https://github.com/originator-profile/originator-profile/issues/45)
 
 ## プロジェクト設定
