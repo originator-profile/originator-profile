@@ -36,4 +36,5 @@ runs:
         claude_code_oauth_token: ${{ inputs.CLAUDE_CODE_OAUTH_TOKEN }}
         track_progress: true
         claude_args: |
-          --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git add *),Bash(git commit *),Bash(git push origin *)" --disallowedTools "Bash(git push *--force*),Bash(git push *-f *),Bash(git push *-f)"
+          --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*),Bash(git add *),Bash(git commit *),Bash(git push origin *)"
+          --disallowedTools "Bash(git push *--force*),Bash(git push *-f *),Bash(git push *-f)"
