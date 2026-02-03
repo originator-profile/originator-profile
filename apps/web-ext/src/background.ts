@@ -12,7 +12,7 @@ import {
   consumeAllowedNavigation,
 } from "./utils/navigation-state";
 
-// ... existing imports ...
+
 
 const windowSize = {
   width: 520,
@@ -113,12 +113,26 @@ let pendingOpIdVerification: { [tabId: number]: string } = {};
 let verificationResults: { [tabId: number]: LinkVerificationResult } = {};
 
 // Clean up state when a tab is closed to prevent memory leaks
+const pendingClicks: {
+  [tabId: number]: { [frameId: number]: string };
+} = {};
+const pendingNewTabAssociations: {
+  [tabId: number]: { [frameId: number]: number[] };
+} = {};
+
+// Clean up state when a tab is closed to prevent memory leaks
 chrome.tabs.onRemoved.addListener((tabId) => {
   if (pendingOpIdVerification[tabId]) {
     delete pendingOpIdVerification[tabId];
   }
   if (verificationResults[tabId]) {
     delete verificationResults[tabId];
+  }
+  if (pendingClicks[tabId]) {
+    delete pendingClicks[tabId];
+  }
+  if (pendingNewTabAssociations[tabId]) {
+    delete pendingNewTabAssociations[tabId];
   }
   cleanupNavigationState(tabId);
 });
@@ -132,32 +146,60 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-// Propagate verification state to new tabs opened via window.open
+// Use webNavigation to correctly associate new tabs with the specific frame that opened them
+chrome.webNavigation.onCreatedNavigationTarget.addListener((details) => {
+  const { sourceTabId, sourceFrameId, tabId } = details;
+  // If we already have a pending click from this source frame, associate it immediately
+  if (pendingClicks[sourceTabId]?.[sourceFrameId]) {
+    pendingOpIdVerification[tabId] = pendingClicks[sourceTabId][sourceFrameId];
+  } else {
+    // Otherwise, store usage association for when the click message arrives
+    if (!pendingNewTabAssociations[sourceTabId]) {
+      pendingNewTabAssociations[sourceTabId] = {};
+    }
+    if (!pendingNewTabAssociations[sourceTabId][sourceFrameId]) {
+      pendingNewTabAssociations[sourceTabId][sourceFrameId] = [];
+    }
+    pendingNewTabAssociations[sourceTabId][sourceFrameId].push(tabId);
+  }
+});
+
+// Propagate verification state to new tabs opened via window.open (Legacy/Fallback)
 chrome.tabs.onCreated.addListener((tab) => {
   const openerId = tab.openerTabId;
   if (openerId !== undefined) {
     const opId = pendingOpIdVerification[openerId];
-    if (opId && tab.id !== undefined) {
+    // Only inherit if we haven't already set it via onCreatedNavigationTarget (which is more precise)
+    if (opId && tab.id !== undefined && !pendingOpIdVerification[tab.id]) {
       pendingOpIdVerification[tab.id] = opId;
     }
   }
 });
 
 credentialsMessenger.onMessage("adClicked", async ({ data, sender }) => {
-  if (sender.tab?.id) {
-    pendingOpIdVerification[sender.tab.id] = data.targetopid;
+  if (sender.tab?.id && sender.frameId !== undefined) {
+    const tabId = sender.tab.id;
+    const frameId = sender.frameId;
 
-    // Handle race condition where tab is created before message arrives
-    // 'openerTabId' might not be invalid in QueryInfo type definition, so filter manually
-    const tabs = await chrome.tabs.query({});
-    for (const tab of tabs) {
-      if (
-        tab.openerTabId === sender.tab.id &&
-        tab.id !== undefined &&
-        tab.status === "loading"
-      ) {
-        pendingOpIdVerification[tab.id] = data.targetopid;
+    // Store the click for this frame
+    if (!pendingClicks[tabId]) {
+      pendingClicks[tabId] = {};
+    }
+    pendingClicks[tabId][frameId] = data.targetopid;
+
+    // Also update main pending map for same-tab navigations (overwrites last click in tab)
+    pendingOpIdVerification[tabId] = data.targetopid;
+
+    // Check if any new tabs were already created by this frame waiting for this opId
+    const tabAssociations = pendingNewTabAssociations[tabId];
+    const waitingTabs = tabAssociations?.[frameId];
+
+    if (tabAssociations && waitingTabs) {
+      for (const newTabId of waitingTabs) {
+        pendingOpIdVerification[newTabId] = data.targetopid;
       }
+      // Clear associations as they are fulfilled
+      delete tabAssociations[frameId];
     }
   }
 });
@@ -167,7 +209,7 @@ credentialsMessenger.onMessage("getVerificationResult", ({ data: tabId }) => {
 });
 
 chrome.webNavigation.onCompleted.addListener(async (details) => {
-  console.log("Navigation completed", details);
+
   if (details.frameId !== 0) return;
 
   // Navigate したら結果をリセット
@@ -175,35 +217,20 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
 
   const targetOpId = pendingOpIdVerification[details.tabId];
   if (targetOpId) {
-    console.log(
-      "Found pending verification for tab",
-      details.tabId,
-      "Target:",
-      targetOpId,
-    );
-
     // Check if allowed
-    const startUrl = details.url;
     // Check if user allowed this destination.
     const isAllowed = await consumeAllowedNavigation(
       details.tabId,
       details.url,
     );
     if (isAllowed) {
-      console.log(
-        "Navigation allowed by user choice",
-        `${details.tabId}:${details.url}`,
-      );
+
       // Proceed to verification (to show status in popup) but skip redirect logic.
     }
 
     delete pendingOpIdVerification[details.tabId];
     try {
-      console.log("Fetching credentials...");
-
       const { ops } = await fetchTabCredentials(details.tabId);
-
-      console.log("Credentials fetched", ops);
 
       const decoded = decodeOps(ops);
       if (decoded instanceof Error) {
@@ -222,9 +249,7 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
       const matched = decoded.some((op) =>
         op.media?.some((wmp) => wmp.doc.issuer === targetOpId),
       );
-      if (import.meta.env.MODE === "development") {
-        console.log("Verification result: matched =", matched);
-      }
+
 
       if (matched) {
         verificationResults[details.tabId] = {
@@ -242,11 +267,14 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
 
         if (!isAllowed) {
           const warningUrl = `${chrome.runtime.getURL("index.html")}#/warning?target=${encodeURIComponent(details.url)}&reason=${encodeURIComponent(reason)}`;
-          // Using location.replace to avoid trapping user in history loop when clicking back
           chrome.scripting.executeScript({
             target: { tabId: details.tabId },
             func: (url) => {
-              window.location.replace(url);
+              const referrer = document.referrer;
+              const fullUrl =
+                url +
+                (referrer ? `&original=${encodeURIComponent(referrer)}` : "");
+              window.location.replace(fullUrl);
             },
             args: [warningUrl],
           });
@@ -267,14 +295,18 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
         chrome.scripting.executeScript({
           target: { tabId: details.tabId },
           func: (url) => {
-            window.location.replace(url);
+            const referrer = document.referrer;
+            const fullUrl =
+              url +
+              (referrer ? `&original=${encodeURIComponent(referrer)}` : "");
+            window.location.replace(fullUrl);
           },
           args: [warningUrl],
         });
       }
     }
   } else {
-    console.log("No pending verification for tab", details.tabId, targetOpId);
+
   }
 });
 
@@ -300,7 +332,7 @@ frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
 });
 
 // https://www.typescriptlang.org/tsconfig#non-module-files
-export {};
+export { };
 
 // NOTE: gh-1583
 if (import.meta.env.MODE === "development") {
@@ -324,10 +356,10 @@ if (import.meta.env.BASIC_AUTH) {
         urls:
           credential.domain === "localhost"
             ? [
-                "http://localhost:8080/*",
-                // Firefox のため
-                "http://localhost/*",
-              ]
+              "http://localhost:8080/*",
+              // Firefox のため
+              "http://localhost/*",
+            ]
             : [`https://${credential.domain}/*`],
       },
       ["blocking"],
