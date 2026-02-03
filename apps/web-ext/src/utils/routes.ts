@@ -19,15 +19,6 @@ function urlParamsRoute<Path extends string, T>(
   const baseRoute = route(path);
   return {
     ...baseRoute,
-    build(params: ParseUrlParams<Path>) {
-      const encodedParams = Object.fromEntries(
-        Object.entries(params).map(([key, value]) => [
-          key,
-          encodeURIComponent(String(value)),
-        ]),
-      ) as ParseUrlParams<Path>;
-      return baseRoute.build(encodedParams);
-    },
     getParams,
   };
 }
