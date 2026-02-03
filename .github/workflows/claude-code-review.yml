@@ -13,6 +13,10 @@ jobs:
       id-token: write
       actions: read
     steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
       - name: Run Claude Code Review
         uses: "./.github/actions/claude_code_review"
         with:

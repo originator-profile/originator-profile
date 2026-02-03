@@ -30,10 +30,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Checkout repository
-      uses: actions/checkout@v6
-      with:
-        fetch-depth: 1
     - name: Run Claude Code
       uses: anthropics/claude-code-action@v1
       with:
