@@ -56,10 +56,32 @@ const setupOpMetaListener = () => {
   if (isListenerSetup) return;
   const opMeta = fetchOpMeta(document);
   if (opMeta) {
-    document.addEventListener("click", () => {
+    const sendAdClicked = () => {
       void credentialsMessenger.sendMessage("adClicked", {
         targetopid: opMeta.targetopid,
       });
+    };
+    document.addEventListener("click", sendAdClicked);
+    document.addEventListener("mousedown", sendAdClicked);
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Enter") {
+        sendAdClicked();
+        return;
+      }
+      if (e.key === " " || e.key === "Spacebar") {
+        const target = e.target as HTMLElement;
+        const tagName = target.tagName;
+        const role = target.getAttribute("role");
+        if (
+          tagName === "BUTTON" ||
+          tagName === "INPUT" ||
+          tagName === "SELECT" ||
+          tagName === "TEXTAREA" ||
+          role === "button"
+        ) {
+          sendAdClicked();
+        }
+      }
     });
     isListenerSetup = true;
   }

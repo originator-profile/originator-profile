@@ -58,12 +58,21 @@ export default function Warning() {
           {/* reason is safe to render here because React escapes values by default */}
         </p>
         <div className="space-y-3">
-          <button
-            onClick={() => window.history.back()}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-200"
-          >
-            前のページに戻る
-          </button>
+          {window.history.length > 1 ? (
+            <button
+              onClick={() => window.history.back()}
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-200"
+            >
+              前のページに戻る
+            </button>
+          ) : (
+            <button
+              onClick={() => window.close()}
+              className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-200"
+            >
+              このタブを閉じる
+            </button>
+          )}
           <button
             onClick={handleProceed}
             disabled={!safeTarget}

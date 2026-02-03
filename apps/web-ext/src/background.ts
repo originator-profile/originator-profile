@@ -132,9 +132,33 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   }
 });
 
-credentialsMessenger.onMessage("adClicked", ({ data, sender }) => {
+// Propagate verification state to new tabs opened via window.open
+chrome.tabs.onCreated.addListener((tab) => {
+  const openerId = tab.openerTabId;
+  if (openerId !== undefined) {
+    const opId = pendingOpIdVerification[openerId];
+    if (opId && tab.id !== undefined) {
+      pendingOpIdVerification[tab.id] = opId;
+    }
+  }
+});
+
+credentialsMessenger.onMessage("adClicked", async ({ data, sender }) => {
   if (sender.tab?.id) {
     pendingOpIdVerification[sender.tab.id] = data.targetopid;
+
+    // Handle race condition where tab is created before message arrives
+    // 'openerTabId' might not be invalid in QueryInfo type definition, so filter manually
+    const tabs = await chrome.tabs.query({});
+    for (const tab of tabs) {
+      if (
+        tab.openerTabId === sender.tab.id &&
+        tab.id !== undefined &&
+        tab.status === "loading"
+      ) {
+        pendingOpIdVerification[tab.id] = data.targetopid;
+      }
+    }
   }
 });
 
