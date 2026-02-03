@@ -30,6 +30,7 @@ export function useMenuButton({ onItemSelect, items }: UseMenuButtonOptions) {
 ```
 
 **ポイント:**
+
 - `aria-haspopup="menu"`: ボタンがメニューを開くことを支援技術に伝える
 - `aria-expanded`: メニューの開閉状態を伝える
 - `aria-controls`: ボタンが制御するメニュー要素を関連付ける
@@ -77,6 +78,7 @@ function setInert(el: Node): () => void {
 ```
 
 **ポイント:**
+
 - `aria-modal`: モーダルであることを支援技術に伝える
 - `aria-hidden`: 表示/非表示状態を伝える（CSS の `visibility` と連動）
 - `aria-labelledby` / `aria-describedby`: ダイアログの目的を明確にする

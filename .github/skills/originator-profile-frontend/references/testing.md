@@ -151,9 +151,11 @@ pnpm e2e --update-snapshots
 // コンポーネント
 <div data-testid="site-profile">
   <span data-testid="site-profile-wsp-name">{name}</span>
-</div>
+</div>;
 
 // テスト
 await expect(ext?.getByTestId("site-profile")).toBeVisible();
-expect(await ext?.getByTestId("site-profile-wsp-name").innerText()).toBe("SiteProfileの取得検証");
+expect(await ext?.getByTestId("site-profile-wsp-name").innerText()).toBe(
+  "SiteProfileの取得検証",
+);
 ```

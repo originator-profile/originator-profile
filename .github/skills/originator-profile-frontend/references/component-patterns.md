@@ -29,6 +29,7 @@ export default Header;
 ```
 
 **ポイント:**
+
 - `type Props` を使用（`interface` ではなく）
 - `className` はオプショナルで、`twMerge` でマージ
 - デフォルトスタイルを先に、外部から渡された `className` を後に
@@ -37,12 +38,12 @@ export default Header;
 
 ESLint の `canonical/filename-match-exported` ルールにより、ファイル名はエクスポート名に対応する必要があります。
 
-| 種類 | ファイル名 | エクスポート名 |
-|------|-----------|---------------|
-| コンポーネント | `Header.tsx` (PascalCase) | `Header` |
-| フック | `use-menu-button.ts` (kebab-case) | `useMenuButton` |
-| ユーティリティ | `get-message.ts` (kebab-case) | `getMessage` |
-| 定数 | `constants.ts` (kebab-case) | 複数エクスポート可 |
+| 種類           | ファイル名                        | エクスポート名     |
+| -------------- | --------------------------------- | ------------------ |
+| コンポーネント | `Header.tsx` (PascalCase)         | `Header`           |
+| フック         | `use-menu-button.ts` (kebab-case) | `useMenuButton`    |
+| ユーティリティ | `get-message.ts` (kebab-case)     | `getMessage`       |
+| 定数           | `constants.ts` (kebab-case)       | 複数エクスポート可 |
 
 ## カスタムフックの分離
 
@@ -95,10 +96,7 @@ export { MenuItem } from "./MenuItem";
 type ModalDialogProps = {
   children:
     | ReactNode
-    | ((props: {
-        titleId: string;
-        descriptionId: string;
-      }) => ReactNode);
+    | ((props: { titleId: string; descriptionId: string }) => ReactNode);
 };
 
 // 使用例
@@ -109,5 +107,5 @@ type ModalDialogProps = {
       <p id={descriptionId}>説明文</p>
     </>
   )}
-</ModalDialog>
+</ModalDialog>;
 ```

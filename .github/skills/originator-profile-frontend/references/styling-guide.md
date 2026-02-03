@@ -23,7 +23,7 @@ function Button({ className, children }: Props) {
 }
 
 // 使用例: bg-primary が bg-danger に上書きされる
-<Button className="bg-danger">削除</Button>
+<Button className="bg-danger">削除</Button>;
 ```
 
 > [!NOTE]
