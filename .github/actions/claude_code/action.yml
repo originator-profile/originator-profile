@@ -12,7 +12,7 @@ description: |
     pull_request_review:
       types: [submitted]
   expected permissions:
-    contents: write 
+    contents: write
     pull-requests: write
     issues: write
     id-token: write
