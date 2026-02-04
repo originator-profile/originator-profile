@@ -7,7 +7,7 @@ type Props = { back: string };
 
 function DetailInfo(props: Props) {
   const { siteProfile, error: sp_error } = useSiteProfile();
-  const { ops, framesCas, error: credentials_error } = useCredentials();
+  const { ops, cas, framesCas, error: credentials_error } = useCredentials();
   const [queryParams] = useSearchParams();
   const backPath = {
     pathname: props.back,
@@ -17,6 +17,7 @@ function DetailInfo(props: Props) {
     <Template
       sp={siteProfile}
       ops={ops}
+      cas={cas}
       framesCas={framesCas}
       errors={[sp_error, credentials_error].filter((x) => x !== undefined)}
       backPath={backPath}
