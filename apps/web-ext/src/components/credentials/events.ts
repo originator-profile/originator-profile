@@ -11,7 +11,7 @@ type CredentialsProtocolMap = {
   verifyIntegrity(
     message: Parameters<VerifyIntegrity>,
   ): Awaited<FetchIntegrityMessageResult>;
-  adClicked(message: { targetopid: string }): void;
+  adClicked(message: { targetopid: string; sourceOrgName?: string }): void;
   getVerificationResult(tabId: number): LinkVerificationResult;
 };
 

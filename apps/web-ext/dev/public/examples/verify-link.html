@@ -1,29 +1,29 @@
 <!doctype html>
 <html lang="ja">
-  <head>
-    <meta charset="UTF-8" />
-    <title>リンク検証テスト</title>
-    <!-- modified -->
-    <style>
-      iframe {
-        width: 300px;
-        height: 200px;
-        border: 1px solid #ccc;
-        margin: 10px;
-      }
-    </style>
-  </head>
 
-  <body>
-    <h1>リンク検証テスト</h1>
-    <div>
-      <h2>正常なケース</h2>
-      <p>
-        ターゲットOPIDが遷移先サイト (dns:oprexpt.originator-profile.org)
-        と一致します
-      </p>
-      <iframe
-        srcdoc='<!DOCTYPE html>
+<head>
+  <meta charset="UTF-8" />
+  <title>リンク検証テスト</title>
+  <!-- modified -->
+  <style>
+    iframe {
+      width: 300px;
+      height: 200px;
+      border: 1px solid #ccc;
+      margin: 10px;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>リンク検証テスト</h1>
+  <div>
+    <h2>正常なケース</h2>
+    <p>
+      ターゲットOPIDが遷移先サイト (dns:oprexpt.originator-profile.org)
+      と一致します
+    </p>
+    <iframe srcdoc='<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -40,17 +40,15 @@
     <a href="valid-dest.html" target="_top">正しい遷移先へ (クリック)</a>
   </div>
 </body>
-</html>'
-      ></iframe>
-    </div>
-    <div>
-      <h2>正常なケース (window.open)</h2>
-      <p>
-        ターゲットOPIDが遷移先サイト (dns:oprexpt.originator-profile.org)
-        と一致します (window.openを使用)
-      </p>
-      <iframe
-        srcdoc='<!DOCTYPE html>
+</html>'></iframe>
+  </div>
+  <div>
+    <h2>正常なケース (window.open)</h2>
+    <p>
+      ターゲットOPIDが遷移先サイト (dns:oprexpt.originator-profile.org)
+      と一致します (window.openを使用)
+    </p>
+    <iframe srcdoc='<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -67,18 +65,16 @@
     <a href="javascript:void(0)" onclick="window.open(&#39;valid-dest.html&#39;, &#39;_blank&#39; )">正しい遷移先へ (クリック)</a>
   </div>
 </body>
-</html>'
-      ></iframe>
-    </div>
-    <div>
-      <h2>外部サイトへのリンク (クレデンシャルなし)</h2>
-      <p>
-        ターゲットは外部サイト (example.com)
-        です。クレデンシャルが存在しないため、検証に失敗します
-        (アラートが表示されます)。
-      </p>
-      <iframe
-        srcdoc='<!DOCTYPE html>
+</html>'></iframe>
+  </div>
+  <div>
+    <h2>外部サイトへのリンク (クレデンシャルなし)</h2>
+    <p>
+      ターゲットは外部サイト (example.com)
+      です。クレデンシャルが存在しないため、検証に失敗します
+      (アラートが表示されます)。
+    </p>
+    <iframe srcdoc='<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -90,23 +86,32 @@
       "targetopid": "dns:oprexpt.originator-profile.org"
     }
   </script>
+  <script type="application/ops+json">
+    [
+      {
+        "core": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwX1hDazM2dFFrUlpsQnhEckhzMVhldHBUZUZYdDRfVlRSbHlEa0YyQWsiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiXSwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCIsIkNvcmVQcm9maWxlIl0sImlzc3VlciI6ImRuczpvcHJleHB0Lm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwidHlwZSI6IkNvcmUiLCJqd2tzIjp7ImtleXMiOlt7Imt0eSI6IkVDIiwia2lkIjoiQ0IzN3ZMY0pTN2x3UWFrSGRnQ0lfMk1mdU9CckEzdnRPZzRMbXdKOTV6byIsIngiOiJVS0x5aFB6Z2JJOVA2ekFDaGtPU2NfT2NXdUw1clpIX2ZCZXpDT0JyVWRzIiwieSI6InVybVJDaGN3UUhQMXJoYjdSMWxmZzhWc1NfZGVUWlNwTkNPUFFPR2piNUkiLCJjcnYiOiJQLTI1NiJ9XX19LCJpc3MiOiJkbnM6b3ByZXhwdC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwic3ViIjoiZG5zOmRlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJpYXQiOjE3NTIxMTk1MTMsImV4cCI6MTc4MzY1NTUxM30.BKxJnCp5zlt5wKEcCCa31FqJOB69Pd5CuOI6gZ9lVz5pWYqDVZjKPMcrkBfGOw2wQPGOs7kaoaqMQyfrQScjVQ",
+        "media": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwX1hDazM2dFFrUlpsQnhEckhzMVhldHBUZUZYdDRfVlRSbHlEa0YyQWsiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiV2ViTWVkaWFQcm9maWxlIl0sImlzc3VlciI6ImRuczpvcHJleHB0Lm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwidHlwZSI6Ik9ubGluZUJ1c2luZXNzIiwidXJsIjoiaHR0cHM6Ly9kZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwibmFtZSI6IuODh-ODoueUqOODoeODh-OCo-OCoi0xIiwibG9nbyI6eyJpZCI6Imh0dHBzOi8vZGVtby5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZy9hc3NldHMvaW1hZ2VzL2Zhdmljb24uaWNvIiwiZGlnZXN0U1JJIjoic2hhMjU2LUxNcDNHaFFvT09tQ1p3SmlRdUJJSFNMN0tUVm41NmoyRXFpelc0amR4OGc9In0sInByaXZhY3lQb2xpY3kiOnsiaWQiOiJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvamEtSlAvcHJpdmFjeS8iLCJuYW1lIjoi44OX44Op44Kk44OQ44K344O844Od44Oq44K344O8In19LCJpc3MiOiJkbnM6b3ByZXhwdC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwic3ViIjoiZG5zOmRlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJpYXQiOjE3NTIxMTk1MTcsImV4cCI6MTc4MzY1NTUxN30.B-fmtXoqtpYkKm-otlg3A5dmh2SFHhOIUHqIpPBYjUknmhF-AXnFrOT-x4x0cZeQ254y4lMPUR2y_5MWNQC3Zw",
+        "annotations": [
+          "eyJhbGciOiJFUzI1NiIsImtpZCI6InhfNzlxQnd5V3RTYzNxazZaTWJnRGlFZWtmUFRDaldLZjJIeVRxWFhxS3MiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ2VydGlmaWNhdGUiXSwiaXNzdWVyIjoiZG5zOm92YWMuZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwidHlwZSI6IkNlcnRpZmljYXRlUHJvcGVydGllcyIsImFkZHJlc3NDb3VudHJ5IjoiSlAiLCJuYW1lIjoi44OH44Oi44Oa44O844K45omA5pyJ57WE57mULTEiLCJjb3Jwb3JhdGVOdW1iZXIiOiI5OTk5OTk5OTkiLCJwb3N0YWxDb2RlIjoiOTk5LTk5OTkiLCJhZGRyZXNzUmVnaW9uIjoi5p2x5Lqs6YO9IiwiYWRkcmVzc0xvY2FsaXR5Ijoi5Y2D5Luj55Sw5Yy6Iiwic3RyZWV0QWRkcmVzcyI6IuWkp-aJi-eUujktOS05IiwiY2VydGlmaWNhdGlvblN5c3RlbSI6eyJpZCI6InVybjp1dWlkOmRlZjA5Y2JkLTZlOGUtNGM3My04NTZkLTVlMDBkZmZkZTY0MyIsInR5cGUiOiJDZXJ0aWZpY2F0aW9uU3lzdGVtIiwibmFtZSI6Iuaetuepuue1hOe5lOWun-WcqOaAp-aknOiovOWxgCDlrp_lnKjoqLzmmI4iLCJkZXNjcmlwdGlvbiI6IuOBk-OBrue1hOe5lOOBr-OAgeazleS6uueZu-iomOOBrueFp-S8muetieOBq-OCiOOCiue1hOe5lOOBjOWun-WcqOOBl-OBpuOBhOOCi-OBk-OBqOOBjOeiuuiqjeOBp-OBjeOBvuOBl-OBn-OAgiIsInJlZiI6Imh0dHBzOi8vb3ZhYy5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZy8ifSwiY2VydGlmaWVyIjoi5p6256m657WE57mU5a6f5Zyo5oCn5qSc6Ki85bGAIiwiaW1hZ2UiOnsiaWQiOiJodHRwczovL2RlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmcvaW1hZ2VzL292YWMucG5nIiwiZGlnZXN0U1JJIjoic2hhMjU2LXBTaWFVU1J0cWR6ZG05YWc3a3ZJbEJ2Z3ZRSzFYQkNJS1FKTzNScWtKems9In19LCJpc3MiOiJkbnM6b3ZhYy5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZyIsInN1YiI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwiaWF0IjoxNzUyMTE5NDk1LCJleHAiOjE3ODM2NTU0OTV9.xQJhu4CyTzIliD5POA2kTCUPxZJyFxht8141SUYAvWNFOtAFkRj7vLGjxHa9C6SgXzCOhmGpaO0KdTYUx8CyBQ"
+        ]
+      }
+    ]
+  </script>
   <div style="padding: 20px; background: #f3e5f5; text-align: center;">
     <p>外部サイト広告</p>
     <a href="https://example.com" target="_top">外部サイトへ (クリック)</a>
   </div>
 </body>
-</html>'
-      ></iframe>
-    </div>
-    <div>
-      <h2>外部サイトへのリンク (クレデンシャルなし) (window.open)</h2>
-      <p>
-        ターゲットは外部サイト (example.com)
-        です。クレデンシャルが存在しないため、検証に失敗します
-        (アラートが表示されます)。(window.openを使用)
-      </p>
-      <iframe
-        srcdoc='<!DOCTYPE html>
+</html>'></iframe>
+  </div>
+  <div>
+    <h2>外部サイトへのリンク (クレデンシャルなし) (window.open)</h2>
+    <p>
+      ターゲットは外部サイト (example.com)
+      です。クレデンシャルが存在しないため、検証に失敗します
+      (アラートが表示されます)。(window.openを使用)
+    </p>
+    <iframe srcdoc='<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -118,19 +123,28 @@
       "targetopid": "dns:oprexpt.originator-profile.org"
     }
   </script>
+  <script type="application/ops+json">
+    [
+      {
+        "core": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwX1hDazM2dFFrUlpsQnhEckhzMVhldHBUZUZYdDRfVlRSbHlEa0YyQWsiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiXSwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCIsIkNvcmVQcm9maWxlIl0sImlzc3VlciI6ImRuczpvcHJleHB0Lm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwidHlwZSI6IkNvcmUiLCJqd2tzIjp7ImtleXMiOlt7Imt0eSI6IkVDIiwia2lkIjoiQ0IzN3ZMY0pTN2x3UWFrSGRnQ0lfMk1mdU9CckEzdnRPZzRMbXdKOTV6byIsIngiOiJVS0x5aFB6Z2JJOVA2ekFDaGtPU2NfT2NXdUw1clpIX2ZCZXpDT0JyVWRzIiwieSI6InVybVJDaGN3UUhQMXJoYjdSMWxmZzhWc1NfZGVUWlNwTkNPUFFPR2piNUkiLCJjcnYiOiJQLTI1NiJ9XX19LCJpc3MiOiJkbnM6b3ByZXhwdC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwic3ViIjoiZG5zOmRlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJpYXQiOjE3NTIxMTk1MTMsImV4cCI6MTc4MzY1NTUxM30.BKxJnCp5zlt5wKEcCCa31FqJOB69Pd5CuOI6gZ9lVz5pWYqDVZjKPMcrkBfGOw2wQPGOs7kaoaqMQyfrQScjVQ",
+        "media": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwX1hDazM2dFFrUlpsQnhEckhzMVhldHBUZUZYdDRfVlRSbHlEa0YyQWsiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiV2ViTWVkaWFQcm9maWxlIl0sImlzc3VlciI6ImRuczpvcHJleHB0Lm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwidHlwZSI6Ik9ubGluZUJ1c2luZXNzIiwidXJsIjoiaHR0cHM6Ly9kZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwibmFtZSI6IuODh-ODoueUqOODoeODh-OCo-OCoi0xIiwibG9nbyI6eyJpZCI6Imh0dHBzOi8vZGVtby5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZy9hc3NldHMvaW1hZ2VzL2Zhdmljb24uaWNvIiwiZGlnZXN0U1JJIjoic2hhMjU2LUxNcDNHaFFvT09tQ1p3SmlRdUJJSFNMN0tUVm41NmoyRXFpelc0amR4OGc9In0sInByaXZhY3lQb2xpY3kiOnsiaWQiOiJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvamEtSlAvcHJpdmFjeS8iLCJuYW1lIjoi44OX44Op44Kk44OQ44K344O844Od44Oq44K344O8In19LCJpc3MiOiJkbnM6b3ByZXhwdC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwic3ViIjoiZG5zOmRlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJpYXQiOjE3NTIxMTk1MTcsImV4cCI6MTc4MzY1NTUxN30.B-fmtXoqtpYkKm-otlg3A5dmh2SFHhOIUHqIpPBYjUknmhF-AXnFrOT-x4x0cZeQ254y4lMPUR2y_5MWNQC3Zw",
+        "annotations": [
+          "eyJhbGciOiJFUzI1NiIsImtpZCI6InhfNzlxQnd5V3RTYzNxazZaTWJnRGlFZWtmUFRDaldLZjJIeVRxWFhxS3MiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ2VydGlmaWNhdGUiXSwiaXNzdWVyIjoiZG5zOm92YWMuZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwidHlwZSI6IkNlcnRpZmljYXRlUHJvcGVydGllcyIsImFkZHJlc3NDb3VudHJ5IjoiSlAiLCJuYW1lIjoi44OH44Oi44Oa44O844K45omA5pyJ57WE57mULTEiLCJjb3Jwb3JhdGVOdW1iZXIiOiI5OTk5OTk5OTkiLCJwb3N0YWxDb2RlIjoiOTk5LTk5OTkiLCJhZGRyZXNzUmVnaW9uIjoi5p2x5Lqs6YO9IiwiYWRkcmVzc0xvY2FsaXR5Ijoi5Y2D5Luj55Sw5Yy6Iiwic3RyZWV0QWRkcmVzcyI6IuWkp-aJi-eUujktOS05IiwiY2VydGlmaWNhdGlvblN5c3RlbSI6eyJpZCI6InVybjp1dWlkOmRlZjA5Y2JkLTZlOGUtNGM3My04NTZkLTVlMDBkZmZkZTY0MyIsInR5cGUiOiJDZXJ0aWZpY2F0aW9uU3lzdGVtIiwibmFtZSI6Iuaetuepuue1hOe5lOWun-WcqOaAp-aknOiovOWxgCDlrp_lnKjoqLzmmI4iLCJkZXNjcmlwdGlvbiI6IuOBk-OBrue1hOe5lOOBr-OAgeazleS6uueZu-iomOOBrueFp-S8muetieOBq-OCiOOCiue1hOe5lOOBjOWun-WcqOOBl-OBpuOBhOOCi-OBk-OBqOOBjOeiuuiqjeOBp-OBjeOBvuOBl-OBn-OAgiIsInJlZiI6Imh0dHBzOi8vb3ZhYy5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZy8ifSwiY2VydGlmaWVyIjoi5p6256m657WE57mU5a6f5Zyo5oCn5qSc6Ki85bGAIiwiaW1hZ2UiOnsiaWQiOiJodHRwczovL2RlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmcvaW1hZ2VzL292YWMucG5nIiwiZGlnZXN0U1JJIjoic2hhMjU2LXBTaWFVU1J0cWR6ZG05YWc3a3ZJbEJ2Z3ZRSzFYQkNJS1FKTzNScWtKems9In19LCJpc3MiOiJkbnM6b3ZhYy5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZyIsInN1YiI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwiaWF0IjoxNzUyMTE5NDk1LCJleHAiOjE3ODM2NTU0OTV9.xQJhu4CyTzIliD5POA2kTCUPxZJyFxht8141SUYAvWNFOtAFkRj7vLGjxHa9C6SgXzCOhmGpaO0KdTYUx8CyBQ"
+        ]
+      }
+    ]
+  </script>
   <div style="padding: 20px; background: #f3e5f5; text-align: center;">
     <p>外部サイト広告 (window.open)</p>
     <a href="javascript:void(0)" onclick="window.open(&#39;https://example.com&#39;, &#39;_blank&#39; )">外部サイトへ (クリック)</a>
   </div>
 </body>
-</html>'
-      ></iframe>
-    </div>
-    <div>
-      <h2>異常なケース</h2>
-      <p>ターゲットOPIDが一致しません (dns:invalid.example.com)</p>
-      <iframe
-        srcdoc='<!DOCTYPE html>
+</html>'></iframe>
+  </div>
+  <div>
+    <h2>異常なケース</h2>
+    <p>ターゲットOPIDが一致しません (dns:invalid.example.com)</p>
+    <iframe srcdoc='<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -142,22 +156,31 @@
       "targetopid": "dns:invalid.example.com"
     }
   </script>
+  <script type="application/ops+json">
+    [
+      {
+        "core": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwX1hDazM2dFFrUlpsQnhEckhzMVhldHBUZUZYdDRfVlRSbHlEa0YyQWsiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiXSwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCIsIkNvcmVQcm9maWxlIl0sImlzc3VlciI6ImRuczpvcHJleHB0Lm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwidHlwZSI6IkNvcmUiLCJqd2tzIjp7ImtleXMiOlt7Imt0eSI6IkVDIiwia2lkIjoiQ0IzN3ZMY0pTN2x3UWFrSGRnQ0lfMk1mdU9CckEzdnRPZzRMbXdKOTV6byIsIngiOiJVS0x5aFB6Z2JJOVA2ekFDaGtPU2NfT2NXdUw1clpIX2ZCZXpDT0JyVWRzIiwieSI6InVybVJDaGN3UUhQMXJoYjdSMWxmZzhWc1NfZGVUWlNwTkNPUFFPR2piNUkiLCJjcnYiOiJQLTI1NiJ9XX19LCJpc3MiOiJkbnM6b3ByZXhwdC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwic3ViIjoiZG5zOmRlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJpYXQiOjE3NTIxMTk1MTMsImV4cCI6MTc4MzY1NTUxM30.BKxJnCp5zlt5wKEcCCa31FqJOB69Pd5CuOI6gZ9lVz5pWYqDVZjKPMcrkBfGOw2wQPGOs7kaoaqMQyfrQScjVQ",
+        "media": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwX1hDazM2dFFrUlpsQnhEckhzMVhldHBUZUZYdDRfVlRSbHlEa0YyQWsiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiV2ViTWVkaWFQcm9maWxlIl0sImlzc3VlciI6ImRuczpvcHJleHB0Lm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwidHlwZSI6Ik9ubGluZUJ1c2luZXNzIiwidXJsIjoiaHR0cHM6Ly9kZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwibmFtZSI6IuODh-ODoueUqOODoeODh-OCo-OCoi0xIiwibG9nbyI6eyJpZCI6Imh0dHBzOi8vZGVtby5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZy9hc3NldHMvaW1hZ2VzL2Zhdmljb24uaWNvIiwiZGlnZXN0U1JJIjoic2hhMjU2LUxNcDNHaFFvT09tQ1p3SmlRdUJJSFNMN0tUVm41NmoyRXFpelc0amR4OGc9In0sInByaXZhY3lQb2xpY3kiOnsiaWQiOiJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvamEtSlAvcHJpdmFjeS8iLCJuYW1lIjoi44OX44Op44Kk44OQ44K344O844Od44Oq44K344O8In19LCJpc3MiOiJkbnM6b3ByZXhwdC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwic3ViIjoiZG5zOmRlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJpYXQiOjE3NTIxMTk1MTcsImV4cCI6MTc4MzY1NTUxN30.B-fmtXoqtpYkKm-otlg3A5dmh2SFHhOIUHqIpPBYjUknmhF-AXnFrOT-x4x0cZeQ254y4lMPUR2y_5MWNQC3Zw",
+        "annotations": [
+          "eyJhbGciOiJFUzI1NiIsImtpZCI6InhfNzlxQnd5V3RTYzNxazZaTWJnRGlFZWtmUFRDaldLZjJIeVRxWFhxS3MiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ2VydGlmaWNhdGUiXSwiaXNzdWVyIjoiZG5zOm92YWMuZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwidHlwZSI6IkNlcnRpZmljYXRlUHJvcGVydGllcyIsImFkZHJlc3NDb3VudHJ5IjoiSlAiLCJuYW1lIjoi44OH44Oi44Oa44O844K45omA5pyJ57WE57mULTEiLCJjb3Jwb3JhdGVOdW1iZXIiOiI5OTk5OTk5OTkiLCJwb3N0YWxDb2RlIjoiOTk5LTk5OTkiLCJhZGRyZXNzUmVnaW9uIjoi5p2x5Lqs6YO9IiwiYWRkcmVzc0xvY2FsaXR5Ijoi5Y2D5Luj55Sw5Yy6Iiwic3RyZWV0QWRkcmVzcyI6IuWkp-aJi-eUujktOS05IiwiY2VydGlmaWNhdGlvblN5c3RlbSI6eyJpZCI6InVybjp1dWlkOmRlZjA5Y2JkLTZlOGUtNGM3My04NTZkLTVlMDBkZmZkZTY0MyIsInR5cGUiOiJDZXJ0aWZpY2F0aW9uU3lzdGVtIiwibmFtZSI6Iuaetuepuue1hOe5lOWun-WcqOaAp-aknOiovOWxgCDlrp_lnKjoqLzmmI4iLCJkZXNjcmlwdGlvbiI6IuOBk-OBrue1hOe5lOOBr-OAgeazleS6uueZu-iomOOBrueFp-S8muetieOBq-OCiOOCiue1hOe5lOOBjOWun-WcqOOBl-OBpuOBhOOCi-OBk-OBqOOBjOeiuuiqjeOBp-OBjeOBvuOBl-OBn-OAgiIsInJlZiI6Imh0dHBzOi8vb3ZhYy5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZy8ifSwiY2VydGlmaWVyIjoi5p6256m657WE57mU5a6f5Zyo5oCn5qSc6Ki85bGAIiwiaW1hZ2UiOnsiaWQiOiJodHRwczovL2RlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmcvaW1hZ2VzL292YWMucG5nIiwiZGlnZXN0U1JJIjoic2hhMjU2LXBTaWFVU1J0cWR6ZG05YWc3a3ZJbEJ2Z3ZRSzFYQkNJS1FKTzNScWtKems9In19LCJpc3MiOiJkbnM6b3ZhYy5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZyIsInN1YiI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwiaWF0IjoxNzUyMTE5NDk1LCJleHAiOjE3ODM2NTU0OTV9.xQJhu4CyTzIliD5POA2kTCUPxZJyFxht8141SUYAvWNFOtAFkRj7vLGjxHa9C6SgXzCOhmGpaO0KdTYUx8CyBQ"
+        ]
+      }
+    ]
+  </script>
   <div style="padding: 20px; background: #ffebee; text-align: center;">
     <p>不正な広告</p>
     <a href="mismatch-dest.html" target="_top">不正な遷移先へ (クリック)</a>
   </div>
 </body>
-</html>'
-      ></iframe>
-    </div>
-    <div>
-      <h2>異常なケース (window.open)</h2>
-      <p>
-        ターゲットOPIDが一致しません (dns:invalid.example.com)
-        (window.openを使用)
-      </p>
-      <iframe
-        srcdoc='<!DOCTYPE html>
+</html>'></iframe>
+  </div>
+  <div>
+    <h2>異常なケース (window.open)</h2>
+    <p>
+      ターゲットOPIDが一致しません (dns:invalid.example.com)
+      (window.openを使用)
+    </p>
+    <iframe srcdoc='<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -169,13 +192,24 @@
       "targetopid": "dns:invalid.example.com"
     }
   </script>
+  <script type="application/ops+json">
+    [
+      {
+        "core": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwX1hDazM2dFFrUlpsQnhEckhzMVhldHBUZUZYdDRfVlRSbHlEa0YyQWsiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiXSwidHlwZSI6WyJWZXJpZmlhYmxlQ3JlZGVudGlhbCIsIkNvcmVQcm9maWxlIl0sImlzc3VlciI6ImRuczpvcHJleHB0Lm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwidHlwZSI6IkNvcmUiLCJqd2tzIjp7ImtleXMiOlt7Imt0eSI6IkVDIiwia2lkIjoiQ0IzN3ZMY0pTN2x3UWFrSGRnQ0lfMk1mdU9CckEzdnRPZzRMbXdKOTV6byIsIngiOiJVS0x5aFB6Z2JJOVA2ekFDaGtPU2NfT2NXdUw1clpIX2ZCZXpDT0JyVWRzIiwieSI6InVybVJDaGN3UUhQMXJoYjdSMWxmZzhWc1NfZGVUWlNwTkNPUFFPR2piNUkiLCJjcnYiOiJQLTI1NiJ9XX19LCJpc3MiOiJkbnM6b3ByZXhwdC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwic3ViIjoiZG5zOmRlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJpYXQiOjE3NTIxMTk1MTMsImV4cCI6MTc4MzY1NTUxM30.BKxJnCp5zlt5wKEcCCa31FqJOB69Pd5CuOI6gZ9lVz5pWYqDVZjKPMcrkBfGOw2wQPGOs7kaoaqMQyfrQScjVQ",
+        "media": "eyJhbGciOiJFUzI1NiIsImtpZCI6IjIwX1hDazM2dFFrUlpsQnhEckhzMVhldHBUZUZYdDRfVlRSbHlEa0YyQWsiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiV2ViTWVkaWFQcm9maWxlIl0sImlzc3VlciI6ImRuczpvcHJleHB0Lm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwidHlwZSI6Ik9ubGluZUJ1c2luZXNzIiwidXJsIjoiaHR0cHM6Ly9kZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwibmFtZSI6IuODh-ODoueUqOODoeODh-OCo-OCoi0xIiwibG9nbyI6eyJpZCI6Imh0dHBzOi8vZGVtby5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZy9hc3NldHMvaW1hZ2VzL2Zhdmljb24uaWNvIiwiZGlnZXN0U1JJIjoic2hhMjU2LUxNcDNHaFFvT09tQ1p3SmlRdUJJSFNMN0tUVm41NmoyRXFpelc0amR4OGc9In0sInByaXZhY3lQb2xpY3kiOnsiaWQiOiJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvamEtSlAvcHJpdmFjeS8iLCJuYW1lIjoi44OX44Op44Kk44OQ44K344O844Od44Oq44K344O8In19LCJpc3MiOiJkbnM6b3ByZXhwdC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwic3ViIjoiZG5zOmRlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJpYXQiOjE3NTIxMTk1MTcsImV4cCI6MTc4MzY1NTUxN30.B-fmtXoqtpYkKm-otlg3A5dmh2SFHhOIUHqIpPBYjUknmhF-AXnFrOT-x4x0cZeQ254y4lMPUR2y_5MWNQC3Zw",
+        "annotations": [
+          "eyJhbGciOiJFUzI1NiIsImtpZCI6InhfNzlxQnd5V3RTYzNxazZaTWJnRGlFZWtmUFRDaldLZjJIeVRxWFhxS3MiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ2VydGlmaWNhdGUiXSwiaXNzdWVyIjoiZG5zOm92YWMuZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwidHlwZSI6IkNlcnRpZmljYXRlUHJvcGVydGllcyIsImFkZHJlc3NDb3VudHJ5IjoiSlAiLCJuYW1lIjoi44OH44Oi44Oa44O844K45omA5pyJ57WE57mULTEiLCJjb3Jwb3JhdGVOdW1iZXIiOiI5OTk5OTk5OTkiLCJwb3N0YWxDb2RlIjoiOTk5LTk5OTkiLCJhZGRyZXNzUmVnaW9uIjoi5p2x5Lqs6YO9IiwiYWRkcmVzc0xvY2FsaXR5Ijoi5Y2D5Luj55Sw5Yy6Iiwic3RyZWV0QWRkcmVzcyI6IuWkp-aJi-eUujktOS05IiwiY2VydGlmaWNhdGlvblN5c3RlbSI6eyJpZCI6InVybjp1dWlkOmRlZjA5Y2JkLTZlOGUtNGM3My04NTZkLTVlMDBkZmZkZTY0MyIsInR5cGUiOiJDZXJ0aWZpY2F0aW9uU3lzdGVtIiwibmFtZSI6Iuaetuepuue1hOe5lOWun-WcqOaAp-aknOiovOWxgCDlrp_lnKjoqLzmmI4iLCJkZXNjcmlwdGlvbiI6IuOBk-OBrue1hOe5lOOBr-OAgeazleS6uueZu-iomOOBrueFp-S8muetieOBq-OCiOOCiue1hOe5lOOBjOWun-WcqOOBl-OBpuOBhOOCi-OBk-OBqOOBjOeiuuiqjeOBp-OBjeOBvuOBl-OBn-OAgiIsInJlZiI6Imh0dHBzOi8vb3ZhYy5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZy8ifSwiY2VydGlmaWVyIjoi5p6256m657WE57mU5a6f5Zyo5oCn5qSc6Ki85bGAIiwiaW1hZ2UiOnsiaWQiOiJodHRwczovL2RlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmcvaW1hZ2VzL292YWMucG5nIiwiZGlnZXN0U1JJIjoic2hhMjU2LXBTaWFVU1J0cWR6ZG05YWc3a3ZJbEJ2Z3ZRSzFYQkNJS1FKTzNScWtKems9In19LCJpc3MiOiJkbnM6b3ZhYy5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZyIsInN1YiI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwiaWF0IjoxNzUyMTE5NDk1LCJleHAiOjE3ODM2NTU0OTV9.xQJhu4CyTzIliD5POA2kTCUPxZJyFxht8141SUYAvWNFOtAFkRj7vLGjxHa9C6SgXzCOhmGpaO0KdTYUx8CyBQ"
+        ]
+      }
+    ]
+  </script>
   <div style="padding: 20px; background: #ffebee; text-align: center;">
     <p>不正な広告 (window.open)</p>
     <a href="javascript:void(0)" onclick="window.open(&#39;mismatch-dest.html&#39;, &#39;_blank&#39; )">不正な遷移先へ (クリック)</a>
   </div>
 </body>
-</html>'
-      ></iframe>
-    </div>
-  </body>
+</html>'></iframe>
+  </div>
+</body>
+
 </html>

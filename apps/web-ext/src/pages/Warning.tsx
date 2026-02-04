@@ -13,6 +13,8 @@ export default function Warning() {
   const [searchParams] = useSearchParams();
   const target = searchParams.get("target");
   const reason = searchParams.get("reason");
+  const sourceOrg = searchParams.get("sourceOrg");
+  const destOrg = searchParams.get("destOrg");
 
   const safeTarget = target && isValidUrl(target) ? target : null;
   const safeReason = reason?.slice(0, 500) ?? null;
@@ -67,12 +69,17 @@ export default function Warning() {
           サイトの身元を確認できません
         </h1>
         <p className="text-gray-600 mb-6">
-          予期されたOriginator Profile (OPID) と一致しませんでした。
-          <br />
-          <span className="text-sm text-gray-500">
-            {safeReason || "詳細不明"}
-          </span>
-          {/* safeReason is sanitised/truncated and React escapes values by default */}
+          {sourceOrg ? (
+            <>
+              {sourceOrg}の広告をクリックしましたが、
+              {destOrg
+                ? `リンク先は${destOrg}が運営しています。`
+                : "リンク先のサイト運営者の確認ができませんでした。"}
+            </>
+          ) : (
+            "予期されたOriginator Profile (OPID) と一致しませんでした。"
+          )}
+          {/* details/reason hidden as per user request */}
         </p>
         <div className="space-y-3">
           <button
@@ -86,11 +93,10 @@ export default function Warning() {
           <button
             onClick={handleProceed}
             disabled={!safeTarget}
-            className={`w-full py-2 px-4 rounded transition duration-200 ${
-              safeTarget
-                ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                : "bg-gray-100 text-gray-400 cursor-not-allowed"
-            }`}
+            className={`w-full py-2 px-4 rounded transition duration-200 ${safeTarget
+              ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
+              : "bg-gray-100 text-gray-400 cursor-not-allowed"
+              }`}
           >
             このままアクセスする
           </button>

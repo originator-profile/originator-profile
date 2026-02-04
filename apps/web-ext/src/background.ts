@@ -1,3 +1,4 @@
+import { WebMediaProfile } from "@originator-profile/model";
 import { decodeOps } from "@originator-profile/verify";
 import { fetchTabCredentials } from "./components/credentials";
 import { credentialsMessenger } from "./components/credentials/events";
@@ -107,12 +108,16 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   }
 });
 
-const pendingOpIdVerification: { [tabId: number]: string } = {};
+const pendingOpIdVerification: {
+  [tabId: number]: { targetOpId: string; sourceOrgName?: string };
+} = {};
 const verificationResults: { [tabId: number]: LinkVerificationResult } = {};
 
 // Clean up state when a tab is closed to prevent memory leaks
 const pendingClicks: {
-  [tabId: number]: { [frameId: number]: string };
+  [tabId: number]: {
+    [frameId: number]: { targetOpId: string; sourceOrgName?: string };
+  };
 } = {};
 const pendingNewTabAssociations: {
   [tabId: number]: { [frameId: number]: number[] };
@@ -166,10 +171,10 @@ chrome.webNavigation.onCreatedNavigationTarget.addListener((details) => {
 chrome.tabs.onCreated.addListener((tab) => {
   const openerId = tab.openerTabId;
   if (openerId !== undefined) {
-    const opId = pendingOpIdVerification[openerId];
+    const pending = pendingOpIdVerification[openerId];
     // Only inherit if we haven't already set it via onCreatedNavigationTarget (which is more precise)
-    if (opId && tab.id !== undefined && !pendingOpIdVerification[tab.id]) {
-      pendingOpIdVerification[tab.id] = opId;
+    if (pending && tab.id !== undefined && !pendingOpIdVerification[tab.id]) {
+      pendingOpIdVerification[tab.id] = pending;
     }
   }
 });
@@ -178,15 +183,16 @@ const handleAdClicked = (
   tabId: number,
   frameId: number,
   targetOpId: string,
+  sourceOrgName?: string,
 ) => {
   // Store the click for this frame
   if (!pendingClicks[tabId]) {
     pendingClicks[tabId] = {};
   }
-  pendingClicks[tabId][frameId] = targetOpId;
+  pendingClicks[tabId][frameId] = { targetOpId, sourceOrgName };
 
   // Also update main pending map for same-tab navigations (overwrites last click in tab)
-  pendingOpIdVerification[tabId] = targetOpId;
+  pendingOpIdVerification[tabId] = { targetOpId, sourceOrgName };
 
   // Check if any new tabs were already created by this frame waiting for this opId
   const tabAssociations = pendingNewTabAssociations[tabId];
@@ -194,7 +200,7 @@ const handleAdClicked = (
 
   if (tabAssociations && waitingTabs) {
     for (const newTabId of waitingTabs) {
-      pendingOpIdVerification[newTabId] = targetOpId;
+      pendingOpIdVerification[newTabId] = { targetOpId, sourceOrgName };
     }
     // Clear associations as they are fulfilled
     delete tabAssociations[frameId];
@@ -203,7 +209,12 @@ const handleAdClicked = (
 
 credentialsMessenger.onMessage("adClicked", async ({ data, sender }) => {
   if (sender.tab?.id && sender.frameId !== undefined) {
-    handleAdClicked(sender.tab.id, sender.frameId, data.targetopid);
+    handleAdClicked(
+      sender.tab.id,
+      sender.frameId,
+      data.targetopid,
+      data.sourceOrgName,
+    );
   }
 });
 
@@ -211,8 +222,21 @@ credentialsMessenger.onMessage("getVerificationResult", ({ data: tabId }) => {
   return verificationResults[tabId] ?? { status: "none" };
 });
 
-const executeWarningRedirect = (tabId: number, url: string, reason: string) => {
-  const warningUrl = `${chrome.runtime.getURL("index.html")}#/warning?target=${encodeURIComponent(url)}&reason=${encodeURIComponent(reason)}`;
+const executeWarningRedirect = (
+  tabId: number,
+  url: string,
+  reason: string,
+  sourceOrg?: string,
+  destOrg?: string,
+) => {
+  const params = new URLSearchParams({
+    target: url,
+    reason,
+  });
+  if (sourceOrg) params.append("sourceOrg", sourceOrg);
+  if (destOrg) params.append("destOrg", destOrg);
+
+  const warningUrl = `${chrome.runtime.getURL("index.html")}#/warning?${params.toString()}`;
   void chrome.scripting.executeScript({
     target: { tabId },
     func: (destination) => {
@@ -229,16 +253,17 @@ const executeWarningRedirect = (tabId: number, url: string, reason: string) => {
 const getVerificationResult = async (
   tabId: number,
   targetOpId: string,
+  sourceOrgName?: string,
 ): Promise<LinkVerificationResult> => {
   try {
     const { ops } = await fetchTabCredentials(tabId);
     const decoded = decodeOps(ops);
 
     if (decoded instanceof Error) {
-
       return {
         status: "error",
         expectedOpId: targetOpId,
+        sourceOrgName,
         reason:
           import.meta.env.MODE === "development"
             ? `無効なOPS (デコード失敗): ${decoded.message}`
@@ -250,10 +275,25 @@ const getVerificationResult = async (
       op.media?.some((wmp) => wmp.doc.issuer === targetOpId),
     );
 
+    // Extract destination org name from the first valid OP that looks like a WebMedia
+    let destinationOrgName: string | undefined;
+    const wmpOp = decoded.find((op) =>
+      op.media?.some((wmp) => wmp.doc.issuer === targetOpId),
+    );
+    if (wmpOp && wmpOp.media && wmpOp.media.length > 0) {
+      destinationOrgName = wmpOp.media[0]?.doc?.credentialSubject?.name;
+    } else {
+      // If mismatch or not found, try to find any WMP name
+      const anyWmpOp = decoded.find((op) => op.media && op.media.length > 0);
+      destinationOrgName = anyWmpOp?.media?.[0]?.doc?.credentialSubject?.name;
+    }
+
     if (matched) {
       return {
         status: "matched",
         expectedOpId: targetOpId,
+        sourceOrgName,
+        destinationOrgName,
       };
     }
 
@@ -262,14 +302,16 @@ const getVerificationResult = async (
     return {
       status: isMissing ? "missing_opid" : "mismatched",
       expectedOpId: targetOpId,
+      sourceOrgName,
+      destinationOrgName,
       reason,
     };
   } catch (e: unknown) {
-
     const reason = "クレデンシャルが見つかりません (取得失敗)";
     return {
       status: "error",
       expectedOpId: targetOpId,
+      sourceOrgName,
       reason,
     };
   }
@@ -279,15 +321,22 @@ const handleVerification = async (
   tabId: number,
   url: string,
   targetOpId: string,
+  sourceOrgName?: string,
 ) => {
   // Check if user allowed this destination.
   const isAllowed = await consumeAllowedNavigation(tabId, url);
-  const result = await getVerificationResult(tabId, targetOpId);
+  const result = await getVerificationResult(tabId, targetOpId, sourceOrgName);
   verificationResults[tabId] = result;
 
   if (result.status !== "matched" && !isAllowed) {
     const reason = result.reason ?? "Unknown Error";
-    executeWarningRedirect(tabId, url, reason);
+    executeWarningRedirect(
+      tabId,
+      url,
+      reason,
+      result.sourceOrgName,
+      result.destinationOrgName,
+    );
   }
 
   delete pendingOpIdVerification[tabId];
@@ -299,9 +348,14 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
   // Navigate したら結果をリセット
   delete verificationResults[details.tabId];
 
-  const targetOpId = pendingOpIdVerification[details.tabId];
-  if (targetOpId) {
-    await handleVerification(details.tabId, details.url, targetOpId);
+  const pending = pendingOpIdVerification[details.tabId];
+  if (pending) {
+    await handleVerification(
+      details.tabId,
+      details.url,
+      pending.targetOpId,
+      pending.sourceOrgName,
+    );
   }
 });
 

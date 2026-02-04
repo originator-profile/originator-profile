@@ -10,6 +10,9 @@ import {
   verifyIntegrity,
 } from "@originator-profile/verify";
 import {
+  WebMediaProfile,
+} from "@originator-profile/model";
+import {
   credentialsMessenger,
   FetchCredentialsMessageResult,
   FrameLocation,
@@ -55,9 +58,41 @@ const setupOpMetaListener = () => {
   if (isListenerSetup) return;
   const opMeta = fetchOpMeta(document);
   if (opMeta) {
-    const sendAdClicked = () => {
+    const sendAdClicked = async () => {
+      const { ops } = await fetchCredentials(document);
+      let sourceOrgName: string | undefined;
+
+      if (Array.isArray(ops)) {
+        for (const op of ops) {
+          const mediaJwt = Array.isArray(op.media) ? op.media[0] : op.media;
+          if (mediaJwt) {
+            try {
+              const payload = mediaJwt.split(".")[1];
+              if (payload) {
+                const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+                const binaryString = atob(base64);
+                const bytes = Uint8Array.from(
+                  binaryString,
+                  (c) => c.codePointAt(0)!,
+                );
+                const decodedPayload = JSON.parse(
+                  new TextDecoder().decode(bytes),
+                );
+                if (decodedPayload?.credentialSubject?.name) {
+                  sourceOrgName = decodedPayload.credentialSubject.name;
+                  break;
+                }
+              }
+            } catch (e) {
+              console.error("[ContentScript] Failed to decode media JWT", e);
+            }
+          }
+        }
+      }
+
       void credentialsMessenger.sendMessage("adClicked", {
         targetopid: opMeta.targetopid,
+        sourceOrgName,
       });
     };
     const handleLinkClick = (e: MouseEvent) => {
