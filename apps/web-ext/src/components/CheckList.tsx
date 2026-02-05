@@ -418,7 +418,7 @@ function CheckList({
         <ContentAttestationSetCheck cas={contentAttestationSet} />
       ) : (
         <DetailItem
-          label="Content Attestation"
+          label="Content Attestation Set"
           icon="null"
           className="pl-4 mb-2"
         >
