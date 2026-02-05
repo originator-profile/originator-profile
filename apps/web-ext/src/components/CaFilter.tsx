@@ -28,7 +28,7 @@ const FILTER_OPTIONS: FilterOption[] = [
 function CaFilter({ caListType, setCaListType, cas }: Props) {
   // 1件以上存在するフィルターオプションのみ表示 (「All」は常に表示)
   const availableOptions = useMemo(
-    () => FILTER_OPTIONS.filter(({ value }) => value === "All" || listCas(cas, value).length),
+    () => FILTER_OPTIONS.filter(({ value }) => value === "All" || listCas(cas, value).length > 0),
     [cas]
   );
   const {
