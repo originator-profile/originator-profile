@@ -12,10 +12,11 @@ export default function LinkVerification() {
 
   return (
     <div
-      className={`p-4 border-b ${isMatched
-        ? "bg-green-50 border-green-200 text-green-800"
-        : "bg-red-50 border-red-200 text-red-800"
-        }`}
+      className={`p-4 border-b ${
+        isMatched
+          ? "bg-green-50 border-green-200 text-green-800"
+          : "bg-red-50 border-red-200 text-red-800"
+      }`}
     >
       <h2 className="font-bold mb-1">
         {isMatched ? "リンク先確認成功" : "サイトの身元を確認できません"}
@@ -35,19 +36,17 @@ export default function LinkVerification() {
         </p>
       )}
 
-      {
-        isMatched && (
-          <p className="text-sm">
-            {verificationResult.destinationOrgName
-              ? `${verificationResult.destinationOrgName}のサイトを開くことを意図した`
-              : ""}
-            {verificationResult.sourceOrgName
-              ? `${verificationResult.sourceOrgName}の`
-              : ""}
-            広告をクリックし、正しいリンク先に遷移したことを確認できました
-          </p>
-        )
-      }
-    </div >
+      {isMatched && (
+        <p className="text-sm">
+          {verificationResult.destinationOrgName
+            ? `${verificationResult.destinationOrgName}のサイトを開くことを意図した`
+            : ""}
+          {verificationResult.sourceOrgName
+            ? `${verificationResult.sourceOrgName}の`
+            : ""}
+          広告をクリックし、正しいリンク先に遷移したことを確認できました
+        </p>
+      )}
+    </div>
   );
 }

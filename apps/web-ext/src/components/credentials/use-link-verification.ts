@@ -16,8 +16,7 @@ export function useLinkVerification() {
         () => ({ status: "none" }) as LinkVerificationResult,
       ),
     {
-      refreshInterval: (data) =>
-        !data || data.status === "none" ? 500 : 0,
+      refreshInterval: (data) => (!data || data.status === "none" ? 500 : 0),
     },
   );
 

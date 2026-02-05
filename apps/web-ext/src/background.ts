@@ -1,4 +1,3 @@
-import { WebMediaProfile } from "@originator-profile/model";
 import { decodeOps } from "@originator-profile/verify";
 import { fetchTabCredentials } from "./components/credentials";
 import { credentialsMessenger } from "./components/credentials/events";
@@ -192,7 +191,11 @@ chrome.tabs.onCreated.addListener(async (tab) => {
   if (openerId !== undefined) {
     const pending = pendingOpIdVerification.get(openerId);
     // Only inherit if we haven't already set it via onCreatedNavigationTarget (which is more precise)
-    if (pending && tab.id !== undefined && !pendingOpIdVerification.get(tab.id)) {
+    if (
+      pending &&
+      tab.id !== undefined &&
+      !pendingOpIdVerification.get(tab.id)
+    ) {
       pendingOpIdVerification.set(tab.id, pending);
     }
   }
@@ -254,10 +257,13 @@ credentialsMessenger.onMessage("adClicked", async ({ data, sender }) => {
   }
 });
 
-credentialsMessenger.onMessage("getVerificationResult", async ({ data: tabId }) => {
-  await stateReady;
-  return verificationResults.get(tabId) ?? { status: "none" };
-});
+credentialsMessenger.onMessage(
+  "getVerificationResult",
+  async ({ data: tabId }) => {
+    await stateReady;
+    return verificationResults.get(tabId) ?? { status: "none" };
+  },
+);
 
 const executeWarningRedirect = (
   tabId: number,
@@ -457,7 +463,7 @@ frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
 });
 
 // https://www.typescriptlang.org/tsconfig#non-module-files
-export { };
+export {};
 
 // NOTE: gh-1583
 if (import.meta.env.MODE === "development") {
@@ -481,10 +487,10 @@ if (import.meta.env.BASIC_AUTH) {
         urls:
           credential.domain === "localhost"
             ? [
-              "http://localhost:8080/*",
-              // Firefox のため
-              "http://localhost/*",
-            ]
+                "http://localhost:8080/*",
+                // Firefox のため
+                "http://localhost/*",
+              ]
             : [`https://${credential.domain}/*`],
       },
       ["blocking"],

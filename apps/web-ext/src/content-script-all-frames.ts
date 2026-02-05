@@ -10,9 +10,6 @@ import {
   verifyIntegrity,
 } from "@originator-profile/verify";
 import {
-  WebMediaProfile,
-} from "@originator-profile/model";
-import {
   credentialsMessenger,
   FetchCredentialsMessageResult,
   FrameLocation,
@@ -82,8 +79,9 @@ const setupOpMetaListener = () => {
               if (payload) {
                 const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
                 const binaryString = atob(base64);
-                const bytes = Uint8Array.from(binaryString, (c) =>
-                  c.codePointAt(0)!
+                const bytes = Uint8Array.from(
+                  binaryString,
+                  (c) => c.codePointAt(0)!,
                 );
                 return JSON.parse(new TextDecoder().decode(bytes));
               }
