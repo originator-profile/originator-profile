@@ -21,6 +21,7 @@ import {
 } from "@originator-profile/verify";
 import JsonView from "@uiw/react-json-view";
 import React from "react";
+import { SupportedVerifiedCas } from "./credentials";
 
 interface CodedError extends Error {
   code: string;
@@ -342,7 +343,7 @@ function ContentAttestationSetCheck({
  *   検証済みの SP
  * @param ops - VerifiedOps | undefined
  *   検証済みの OPS
- * @param cas - VerifiedCas | undefined
+ * @param cas - SupportedVerifiedCas | undefined
  *   検証済みの CAS
  * @param errors - Error[]
  *   各項目に対応するエラーオブジェクトの配列
@@ -361,7 +362,7 @@ function CheckList({
 }: {
   sp: VerifiedSp | undefined;
   ops: VerifiedOps | undefined;
-  cas: VerifiedCas | undefined;
+  cas: SupportedVerifiedCas | undefined;
   errors: Error[];
 }) {
   const codedErrors = errors.filter(isCodedError);

@@ -1,19 +1,18 @@
 import { stringifyWithError } from "@originator-profile/core";
 import { _, ProjectSummary, ProjectTitle } from "@originator-profile/ui";
-import type {
-  VerifiedCas,
-  VerifiedOps,
-  VerifiedSp,
-} from "@originator-profile/verify";
+import type { VerifiedOps, VerifiedSp } from "@originator-profile/verify";
 import JsonView from "@uiw/react-json-view";
 import BackHeader from "../components/BackHeader";
 import CheckList from "../components/CheckList";
-import type { FrameVerifiedCas } from "../components/credentials";
+import type {
+  FrameVerifiedCas,
+  SupportedVerifiedCas,
+} from "../components/credentials";
 
 type DetailInfoProps = {
   sp?: VerifiedSp;
   ops?: VerifiedOps;
-  cas?: VerifiedCas;
+  cas?: SupportedVerifiedCas;
   framesCas?: FrameVerifiedCas[];
   errors: Error[];
   backPath: {
