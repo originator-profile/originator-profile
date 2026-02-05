@@ -26,13 +26,11 @@ const FILTER_OPTIONS: FilterOption[] = [
 ];
 
 function CaFilter({ caListType, setCaListType, cas }: Props) {
-  // 1件以上存在するフィルターオプションのみ表示
-  const availableOptions = useMemo(() => {
-    return FILTER_OPTIONS.filter((option) => {
-      const filtered = listCas(cas, option.value);
-      return filtered.length > 0;
-    });
-  }, [cas]);
+  // 1件以上存在するフィルターオプションのみ表示 (「All」は常に表示)
+  const availableOptions = useMemo(
+    () => FILTER_OPTIONS.filter(({ value }) => value === "All" || listCas(cas, value).length),
+    [cas]
+  );
   const {
     isOpen,
     activeIndex,
