@@ -3,15 +3,18 @@ import {
   fetchCredentials,
   FetchCredentialSetResult,
   fetchOpMeta,
+  fetchSiteProfile,
 } from "@originator-profile/presentation";
 import {
   normalizeCasItem,
   TargetIntegrityAlgorithm,
   verifyIntegrity,
 } from "@originator-profile/verify";
+
 import {
   credentialsMessenger,
   FetchCredentialsMessageResult,
+  FetchSiteProfileMessageResult,
   FrameLocation,
   FrameResponse,
   VerifyFailed,
@@ -36,8 +39,15 @@ const toFetchCredentialsMessageResult = <T>(
   >;
 };
 
+const toFetchSiteProfileMessageResult = (
+  result: Awaited<ReturnType<typeof fetchSiteProfile>>,
+): FetchSiteProfileMessageResult => {
+  return serializeIfError(result) as FetchSiteProfileMessageResult;
+};
+
 credentialsMessenger.onMessage("fetchCredentials", async () => {
   const { ops, cas, opMeta } = await fetchCredentials(document);
+  const sp = await fetchSiteProfile(document);
   const frameLocation: FrameLocation = {
     origin: window.origin,
     url: window.location.href,
@@ -45,6 +55,7 @@ credentialsMessenger.onMessage("fetchCredentials", async () => {
   return {
     ops: toFetchCredentialsMessageResult(ops),
     cas: toFetchCredentialsMessageResult(cas),
+    sp: toFetchSiteProfileMessageResult(sp),
     opMeta,
     ...frameLocation,
   };
@@ -60,6 +71,7 @@ const setupOpMetaListener = () => {
       let sourceOrgName: string | undefined;
       let expectedOrgName: string | undefined;
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const getCasIssuer = (casItem: any) => {
         if (typeof casItem === "string") return undefined; // Simplified for now, assuming object structure in test
         return casItem.issuer;
@@ -79,9 +91,8 @@ const setupOpMetaListener = () => {
               if (payload) {
                 const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
                 const binaryString = atob(base64);
-                const bytes = Uint8Array.from(
-                  binaryString,
-                  (c) => c.codePointAt(0)!,
+                const bytes = Uint8Array.from(binaryString, (c) =>
+                  c.codePointAt(0) ?? 0
                 );
                 return JSON.parse(new TextDecoder().decode(bytes));
               }
@@ -91,26 +102,29 @@ const setupOpMetaListener = () => {
             return undefined;
           };
 
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const processPayload = (decodedPayload: any) => {
-            if (decodedPayload?.credentialSubject?.name) {
-              if (!sourceOrgName) {
-                sourceOrgName = decodedPayload.credentialSubject.name;
-              }
-              // If CAS issuer is present, use it to find expectedOrgName
-              if (casIssuer) {
-                if (
-                  decodedPayload.iss === casIssuer ||
-                  decodedPayload.credentialSubject?.id === casIssuer
-                ) {
-                  expectedOrgName = decodedPayload.credentialSubject.name;
-                }
-              } else if (
-                opMeta.targetopid &&
-                (decodedPayload.iss === opMeta.targetopid ||
-                  decodedPayload.credentialSubject?.id === opMeta.targetopid)
-              ) {
-                expectedOrgName = decodedPayload.credentialSubject.name;
-              }
+            if (!decodedPayload?.credentialSubject?.name) {
+              return;
+            }
+
+            if (!sourceOrgName) {
+              sourceOrgName = decodedPayload.credentialSubject.name;
+            }
+
+
+            const isMatch = (targetId: string) => {
+              return (
+                decodedPayload.iss === targetId ||
+                decodedPayload.credentialSubject?.id === targetId
+              );
+            };
+
+            // If CAS issuer is present, use it to find expectedOrgName
+            if (casIssuer && isMatch(casIssuer)) {
+              expectedOrgName = decodedPayload.credentialSubject.name;
+            } else if (opMeta.targetopid && isMatch(opMeta.targetopid)) {
+              expectedOrgName = decodedPayload.credentialSubject.name;
             }
           };
 
@@ -125,14 +139,16 @@ const setupOpMetaListener = () => {
         sourceOrgName,
         expectedOrgName:
           expectedOrgName ??
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (opMeta as any).targetOrgName ??
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           (opMeta as any).targetname,
       });
     };
     const handleLinkClick = (e: MouseEvent) => {
       const target = e.target as HTMLElement;
       if (target.closest("a")) {
-        sendAdClicked();
+        void sendAdClicked();
       }
     };
     document.addEventListener("click", handleLinkClick);
@@ -141,7 +157,7 @@ const setupOpMetaListener = () => {
       if (e.key === "Enter") {
         const target = e.target as HTMLElement;
         if (target.closest("a")) {
-          sendAdClicked();
+          void sendAdClicked();
         }
         return;
       }
@@ -156,7 +172,7 @@ const setupOpMetaListener = () => {
           tagName === "TEXTAREA" ||
           role === "button"
         ) {
-          sendAdClicked();
+          void sendAdClicked();
         }
       }
     });

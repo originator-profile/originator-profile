@@ -1,4 +1,9 @@
-import { decodeOps } from "@originator-profile/verify";
+import {
+  SiteProfile,
+  WebsiteProfile,
+} from "@originator-profile/model";
+import { JwtVcDecoder } from "@originator-profile/securing-mechanism";
+import { decodeOps, DecodedOp } from "@originator-profile/verify";
 import { fetchTabCredentials } from "./components/credentials";
 import { credentialsMessenger } from "./components/credentials/events";
 import { LinkVerificationResult } from "./components/credentials/types";
@@ -191,11 +196,7 @@ chrome.tabs.onCreated.addListener(async (tab) => {
   if (openerId !== undefined) {
     const pending = pendingOpIdVerification.get(openerId);
     // Only inherit if we haven't already set it via onCreatedNavigationTarget (which is more precise)
-    if (
-      pending &&
-      tab.id !== undefined &&
-      !pendingOpIdVerification.get(tab.id)
-    ) {
+    if (pending && tab.id !== undefined && !pendingOpIdVerification.get(tab.id)) {
       pendingOpIdVerification.set(tab.id, pending);
     }
   }
@@ -257,13 +258,10 @@ credentialsMessenger.onMessage("adClicked", async ({ data, sender }) => {
   }
 });
 
-credentialsMessenger.onMessage(
-  "getVerificationResult",
-  async ({ data: tabId }) => {
-    await stateReady;
-    return verificationResults.get(tabId) ?? { status: "none" };
-  },
-);
+credentialsMessenger.onMessage("getVerificationResult", async ({ data: tabId }) => {
+  await stateReady;
+  return verificationResults.get(tabId) ?? { status: "none" };
+});
 
 const executeWarningRedirect = (
   tabId: number,
@@ -295,6 +293,120 @@ const executeWarningRedirect = (
   });
 };
 
+const createErrorResult = (
+  targetOpId: string,
+  sourceOrgName: string | undefined,
+  expectedOrgName: string | undefined,
+  error: Error,
+): LinkVerificationResult => {
+  return {
+    status: "error",
+    expectedOpId: targetOpId,
+    sourceOrgName,
+    expectedOrgName,
+    reason:
+      import.meta.env.MODE === "development"
+        ? `無効なOPS (デコード失敗): ${error.message}`
+        : "無効なOPS (デコード失敗)",
+  };
+};
+
+
+const decodeWsps = (sp: SiteProfile | null) => {
+  if (!sp) return [];
+  const decodeWsp = JwtVcDecoder<WebsiteProfile>();
+  // Handle both 'sites' (new) and 'credential' (legacy)
+  const sources = sp.sites ?? (sp.credential ? [sp.credential] : []);
+  return sources
+    .map((jwt) => {
+      const decoded = decodeWsp(jwt);
+      return decoded instanceof Error ? null : decoded;
+    })
+    .filter((wsp): wsp is NonNullable<typeof wsp> => wsp !== null);
+};
+
+const getOrgNameFromOp = (op: DecodedOp): string | undefined => {
+  if (!op.annotations) return undefined;
+  const annotationWithName = op.annotations.find(
+    (a) =>
+      "name" in a.doc.credentialSubject &&
+      typeof a.doc.credentialSubject.name === "string",
+  );
+  if (annotationWithName) {
+    return (annotationWithName.doc.credentialSubject as { name: string }).name;
+  }
+  return undefined;
+};
+
+const resolveName = (
+  wsp: NonNullable<ReturnType<typeof decodeWsps>[0]>,
+  decodedOps: DecodedOp[],
+): string | undefined => {
+  const op = decodedOps.find(
+    (o) => o.core.doc.credentialSubject.id === wsp.doc.issuer,
+  );
+  if (op) {
+    const orgName = getOrgNameFromOp(op);
+    if (orgName) return orgName;
+  }
+  // WSP name fallback
+  if ("name" in wsp.doc.credentialSubject) {
+    return wsp.doc.credentialSubject.name;
+  }
+  return undefined;
+};
+
+const getDestinationOrgName = (
+  decodedOps: DecodedOp[],
+  decodedWsps: ReturnType<typeof decodeWsps>,
+  targetOpId: string,
+): string | undefined => {
+  // Find WSP that matches targetOpId
+  const matchedWsp = decodedWsps.find((wsp) => wsp.doc.issuer === targetOpId);
+
+  if (matchedWsp) {
+    return resolveName(matchedWsp, decodedOps);
+  }
+
+  // Fallback: If no match, try to get name from first available WSP
+  if (decodedWsps.length > 0) {
+    const firstWsp = decodedWsps[0];
+    if (firstWsp) {
+      return resolveName(firstWsp, decodedOps);
+    }
+  }
+
+  return undefined;
+};
+
+const isMatched = (
+  decodedWsps: ReturnType<typeof decodeWsps>,
+  targetOpId: string
+): boolean => {
+  return decodedWsps.some((wsp) => wsp.doc.issuer === targetOpId);
+};
+
+
+
+const createMismatchResult = (
+  targetOpId: string,
+  sourceOrgName: string | undefined,
+  expectedOrgName: string | undefined,
+  destinationOrgName: string | undefined,
+  isMissing: boolean,
+): LinkVerificationResult => {
+  const reason = isMissing ? "OPIDが存在しません" : "OPID不一致";
+  return {
+    status: isMissing ? "missing_opid" : "mismatched",
+    expectedOpId: targetOpId,
+    sourceOrgName,
+    expectedOrgName,
+    destinationOrgName,
+    reason,
+  };
+};
+
+
 const getVerificationResult = async (
   tabId: number,
   targetOpId: string,
@@ -302,38 +414,24 @@ const getVerificationResult = async (
   expectedOrgName?: string,
 ): Promise<LinkVerificationResult> => {
   try {
-    const { ops } = await fetchTabCredentials(tabId);
-    const decoded = decodeOps(ops);
+    const { ops, sp } = await fetchTabCredentials(tabId);
+    const decodedOps = decodeOps(ops);
+    const decodedWsps = decodeWsps(sp);
 
-    if (decoded instanceof Error) {
-      return {
-        status: "error",
-        expectedOpId: targetOpId,
-        sourceOrgName,
-        expectedOrgName,
-        reason:
-          import.meta.env.MODE === "development"
-            ? `無効なOPS (デコード失敗): ${decoded.message}`
-            : "無効なOPS (デコード失敗)",
-      };
+    if (decodedOps instanceof Error) {
+      return createErrorResult(targetOpId, sourceOrgName, expectedOrgName, decodedOps);
     }
 
-    const matched = decoded.some((op) =>
-      op.media?.some((wmp) => wmp.doc.issuer === targetOpId),
-    );
+    // Note: We don't strictly error if SP is invalid here, just treat as mismatch/missing.
+    // Or should we? The original code didn't check WMP validity deeply beyond decodeOps return.
 
-    // Extract destination org name from the first valid OP that looks like a WebMedia
-    let destinationOrgName: string | undefined;
-    const wmpOp = decoded.find((op) =>
-      op.media?.some((wmp) => wmp.doc.issuer === targetOpId),
+    const matched = isMatched(decodedWsps, targetOpId);
+
+    const destinationOrgName = getDestinationOrgName(
+      decodedOps,
+      decodedWsps,
+      targetOpId,
     );
-    if (wmpOp && wmpOp.media && wmpOp.media.length > 0) {
-      destinationOrgName = wmpOp.media[0]?.doc?.credentialSubject?.name;
-    } else {
-      // If mismatch or not found, try to find any WMP name
-      const anyWmpOp = decoded.find((op) => op.media && op.media.length > 0);
-      destinationOrgName = anyWmpOp?.media?.[0]?.doc?.credentialSubject?.name;
-    }
 
     if (matched) {
       return {
@@ -345,16 +443,14 @@ const getVerificationResult = async (
       };
     }
 
-    const isMissing = decoded.length === 0;
-    const reason = isMissing ? "OPIDが存在しません" : "OPID不一致";
-    return {
-      status: isMissing ? "missing_opid" : "mismatched",
-      expectedOpId: targetOpId,
+    const isMissing = decodedWsps.length === 0;
+    return createMismatchResult(
+      targetOpId,
       sourceOrgName,
       expectedOrgName,
       destinationOrgName,
-      reason,
-    };
+      isMissing,
+    );
   } catch (e: unknown) {
     const reason = "クレデンシャルが見つかりません (取得失敗)";
     return {
@@ -463,7 +559,7 @@ frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
 });
 
 // https://www.typescriptlang.org/tsconfig#non-module-files
-export {};
+export { };
 
 // NOTE: gh-1583
 if (import.meta.env.MODE === "development") {
@@ -487,10 +583,10 @@ if (import.meta.env.BASIC_AUTH) {
         urls:
           credential.domain === "localhost"
             ? [
-                "http://localhost:8080/*",
-                // Firefox のため
-                "http://localhost/*",
-              ]
+              "http://localhost:8080/*",
+              // Firefox のため
+              "http://localhost/*",
+            ]
             : [`https://${credential.domain}/*`],
       },
       ["blocking"],

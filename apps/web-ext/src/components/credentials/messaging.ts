@@ -44,10 +44,12 @@ async function fetchAllFramesCredentials(
 
         const opsResult = deserializeIfError(result.ops);
         const casResult = deserializeIfError(result.cas);
+        const spResult = deserializeIfError(result.sp);
 
         return {
           ops: opsResult instanceof Error ? [] : opsResult,
           cas: casResult instanceof Error ? [] : casResult,
+          sp: spResult instanceof Error ? null : spResult.result,
           opMeta: result.opMeta,
           url: result.url,
           origin: result.origin,
