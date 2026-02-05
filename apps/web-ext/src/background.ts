@@ -1,9 +1,6 @@
-import {
-  SiteProfile,
-  WebsiteProfile,
-} from "@originator-profile/model";
+import { SiteProfile, WebsiteProfile } from "@originator-profile/model";
 import { JwtVcDecoder } from "@originator-profile/securing-mechanism";
-import { decodeOps, DecodedOp } from "@originator-profile/verify";
+import { DecodedOp, decodeOps } from "@originator-profile/verify";
 import { fetchTabCredentials } from "./components/credentials";
 import { credentialsMessenger } from "./components/credentials/events";
 import { LinkVerificationResult } from "./components/credentials/types";
@@ -196,7 +193,11 @@ chrome.tabs.onCreated.addListener(async (tab) => {
   if (openerId !== undefined) {
     const pending = pendingOpIdVerification.get(openerId);
     // Only inherit if we haven't already set it via onCreatedNavigationTarget (which is more precise)
-    if (pending && tab.id !== undefined && !pendingOpIdVerification.get(tab.id)) {
+    if (
+      pending &&
+      tab.id !== undefined &&
+      !pendingOpIdVerification.get(tab.id)
+    ) {
       pendingOpIdVerification.set(tab.id, pending);
     }
   }
@@ -258,10 +259,13 @@ credentialsMessenger.onMessage("adClicked", async ({ data, sender }) => {
   }
 });
 
-credentialsMessenger.onMessage("getVerificationResult", async ({ data: tabId }) => {
-  await stateReady;
-  return verificationResults.get(tabId) ?? { status: "none" };
-});
+credentialsMessenger.onMessage(
+  "getVerificationResult",
+  async ({ data: tabId }) => {
+    await stateReady;
+    return verificationResults.get(tabId) ?? { status: "none" };
+  },
+);
 
 const executeWarningRedirect = (
   tabId: number,
@@ -310,7 +314,6 @@ const createErrorResult = (
         : "無効なOPS (デコード失敗)",
   };
 };
-
 
 const decodeWsps = (sp: SiteProfile | null) => {
   if (!sp) return [];
@@ -381,12 +384,10 @@ const getDestinationOrgName = (
 
 const isMatched = (
   decodedWsps: ReturnType<typeof decodeWsps>,
-  targetOpId: string
+  targetOpId: string,
 ): boolean => {
   return decodedWsps.some((wsp) => wsp.doc.issuer === targetOpId);
 };
-
-
 
 const createMismatchResult = (
   targetOpId: string,
@@ -406,7 +407,6 @@ const createMismatchResult = (
   };
 };
 
-
 const getVerificationResult = async (
   tabId: number,
   targetOpId: string,
@@ -419,7 +419,12 @@ const getVerificationResult = async (
     const decodedWsps = decodeWsps(sp);
 
     if (decodedOps instanceof Error) {
-      return createErrorResult(targetOpId, sourceOrgName, expectedOrgName, decodedOps);
+      return createErrorResult(
+        targetOpId,
+        sourceOrgName,
+        expectedOrgName,
+        decodedOps,
+      );
     }
 
     // Note: We don't strictly error if SP is invalid here, just treat as mismatch/missing.
@@ -559,7 +564,7 @@ frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
 });
 
 // https://www.typescriptlang.org/tsconfig#non-module-files
-export { };
+export {};
 
 // NOTE: gh-1583
 if (import.meta.env.MODE === "development") {
@@ -583,10 +588,10 @@ if (import.meta.env.BASIC_AUTH) {
         urls:
           credential.domain === "localhost"
             ? [
-              "http://localhost:8080/*",
-              // Firefox のため
-              "http://localhost/*",
-            ]
+                "http://localhost:8080/*",
+                // Firefox のため
+                "http://localhost/*",
+              ]
             : [`https://${credential.domain}/*`],
       },
       ["blocking"],

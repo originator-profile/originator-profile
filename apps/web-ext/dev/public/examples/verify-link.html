@@ -1,29 +1,26 @@
 <!doctype html>
 <html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>リンク検証テスト</title>
+    <!-- modified -->
+    <style>
+      iframe {
+        width: 300px;
+        height: 200px;
+        border: 1px solid #ccc;
+        margin: 10px;
+      }
+    </style>
+  </head>
 
-<head>
-  <meta charset="UTF-8" />
-  <title>リンク検証テスト</title>
-  <!-- modified -->
-  <style>
-    iframe {
-      width: 300px;
-      height: 200px;
-      border: 1px solid #ccc;
-      margin: 10px;
-    }
-  </style>
-</head>
-
-<body>
-  <h1>リンク検証テスト</h1>
-  <div>
-    <h2>正常なケース</h2>
-    <p>
-      ターゲットOPID (dns:localhost) が遷移先サイトのOPID
-      と一致します
-    </p>
-    <iframe srcdoc='<!DOCTYPE html>
+  <body>
+    <h1>リンク検証テスト</h1>
+    <div>
+      <h2>正常なケース</h2>
+      <p>ターゲットOPID (dns:localhost) が遷移先サイトのOPID と一致します</p>
+      <iframe
+        srcdoc='<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -93,15 +90,17 @@
     <a href="valid-dest.html" target="_top">正しい遷移先へ (クリック)</a>
   </div>
 </body>
-</html>'></iframe>
-  </div>
-  <div>
-    <h2>正常なケース (window.open)</h2>
-    <p>
-      ターゲットOPID (dns:localhost) が遷移先サイトのOPID
-      と一致します (window.openを使用)
-    </p>
-    <iframe srcdoc='<!DOCTYPE html>
+</html>'
+      ></iframe>
+    </div>
+    <div>
+      <h2>正常なケース (window.open)</h2>
+      <p>
+        ターゲットOPID (dns:localhost) が遷移先サイトのOPID と一致します
+        (window.openを使用)
+      </p>
+      <iframe
+        srcdoc='<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -171,16 +170,17 @@
     <a href="javascript:void(0)" onclick="window.open(&#39;valid-dest.html&#39;, &#39;_blank&#39; )">正しい遷移先へ (クリック)</a>
   </div>
 </body>
-</html>'></iframe>
-  </div>
-  <div>
-    <h2>外部サイトへのリンク (OPID不一致)</h2>
-    <p>
-      ターゲットOPID (dns:localhost) と
-      外部サイト (example.com) のOPIDが一致しないため、
-      検証に失敗します (警告ページが表示されます)。
-    </p>
-    <iframe srcdoc='<!DOCTYPE html>
+</html>'
+      ></iframe>
+    </div>
+    <div>
+      <h2>外部サイトへのリンク (OPID不一致)</h2>
+      <p>
+        ターゲットOPID (dns:localhost) と 外部サイト (example.com)
+        のOPIDが一致しないため、 検証に失敗します (警告ページが表示されます)。
+      </p>
+      <iframe
+        srcdoc='<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -250,16 +250,18 @@
     <a href="https://example.com" target="_top">外部サイトへ (クリック)</a>
   </div>
 </body>
-</html>'></iframe>
-  </div>
-  <div>
-    <h2>外部サイトへのリンク (OPID不一致) (window.open)</h2>
-    <p>
-      ターゲットOPID (dns:localhost) と
-      外部サイト (example.com) のOPIDが一致しないため、
-      検証に失敗します (警告ページが表示されます)。(window.openを使用)
-    </p>
-    <iframe srcdoc='<!DOCTYPE html>
+</html>'
+      ></iframe>
+    </div>
+    <div>
+      <h2>外部サイトへのリンク (OPID不一致) (window.open)</h2>
+      <p>
+        ターゲットOPID (dns:localhost) と 外部サイト (example.com)
+        のOPIDが一致しないため、 検証に失敗します
+        (警告ページが表示されます)。(window.openを使用)
+      </p>
+      <iframe
+        srcdoc='<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -329,12 +331,14 @@
     <a href="javascript:void(0)" onclick="window.open(&#39;https://example.com&#39;, &#39;_blank&#39; )">外部サイトへ (クリック)</a>
   </div>
 </body>
-</html>'></iframe>
-  </div>
-  <div>
-    <h2>異常なケース</h2>
-    <p>ターゲットOPIDが一致しません (dns:invalid.example.com)</p>
-    <iframe srcdoc='<!DOCTYPE html>
+</html>'
+      ></iframe>
+    </div>
+    <div>
+      <h2>異常なケース</h2>
+      <p>ターゲットOPIDが一致しません (dns:invalid.example.com)</p>
+      <iframe
+        srcdoc='<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -404,15 +408,17 @@
     <a href="mismatch-dest.html" target="_top">不正な遷移先へ (クリック)</a>
   </div>
 </body>
-</html>'></iframe>
-  </div>
-  <div>
-    <h2>異常なケース (window.open)</h2>
-    <p>
-      ターゲットOPIDが一致しません (dns:invalid.example.com)
-      (window.openを使用)
-    </p>
-    <iframe srcdoc='<!DOCTYPE html>
+</html>'
+      ></iframe>
+    </div>
+    <div>
+      <h2>異常なケース (window.open)</h2>
+      <p>
+        ターゲットOPIDが一致しません (dns:invalid.example.com)
+        (window.openを使用)
+      </p>
+      <iframe
+        srcdoc='<!DOCTYPE html>
 <html lang="ja">
 <head>
   <meta charset="UTF-8">
@@ -482,8 +488,8 @@
     <a href="javascript:void(0)" onclick="window.open(&#39;mismatch-dest.html&#39;, &#39;_blank&#39; )">不正な遷移先へ (クリック)</a>
   </div>
 </body>
-</html>'></iframe>
-  </div>
-</body>
-
+</html>'
+      ></iframe>
+    </div>
+  </body>
 </html>

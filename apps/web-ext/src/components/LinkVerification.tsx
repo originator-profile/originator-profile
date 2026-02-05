@@ -47,18 +47,16 @@ export default function LinkVerification() {
 
   return (
     <div
-      className={`p-4 border-b ${isMatched
-        ? "bg-green-50 border-green-200 text-green-800"
-        : "bg-red-50 border-red-200 text-red-800"
-        }`}
+      className={`p-4 border-b ${
+        isMatched
+          ? "bg-green-50 border-green-200 text-green-800"
+          : "bg-red-50 border-red-200 text-red-800"
+      }`}
     >
       <h2 className="font-bold mb-1">
         {isMatched ? "リンク先確認成功" : "サイトの身元を確認できません"}
       </h2>
       <VerificationMessage result={verificationResult} isMatched={isMatched} />
-    </div >
+    </div>
   );
 }
-
-
-

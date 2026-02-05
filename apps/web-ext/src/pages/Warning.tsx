@@ -119,5 +119,3 @@ export default function Warning() {
     </div>
   );
 }
-
-

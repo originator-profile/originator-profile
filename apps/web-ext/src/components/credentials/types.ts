@@ -8,9 +8,9 @@ import {
   SiteProfile,
   WebMediaProfile,
 } from "@originator-profile/model";
-export { type FetchSiteProfileMessageResult } from "../siteProfile/types";
-import { FetchSiteProfileMessageResult } from "../siteProfile/types";
 import { VerifiedCas, VerifiedOps } from "@originator-profile/verify";
+import { FetchSiteProfileMessageResult } from "../siteProfile/types";
+export { type FetchSiteProfileMessageResult } from "../siteProfile/types";
 
 /** 表示に対応している CA */
 export type SupportedCa = ArticleCA | AdvertisementCA | AdvertorialCA;

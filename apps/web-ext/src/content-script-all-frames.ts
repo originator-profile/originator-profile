@@ -91,8 +91,9 @@ const setupOpMetaListener = () => {
               if (payload) {
                 const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
                 const binaryString = atob(base64);
-                const bytes = Uint8Array.from(binaryString, (c) =>
-                  c.codePointAt(0) ?? 0
+                const bytes = Uint8Array.from(
+                  binaryString,
+                  (c) => c.codePointAt(0) ?? 0,
                 );
                 return JSON.parse(new TextDecoder().decode(bytes));
               }
@@ -111,7 +112,6 @@ const setupOpMetaListener = () => {
             if (!sourceOrgName) {
               sourceOrgName = decodedPayload.credentialSubject.name;
             }
-
 
             const isMatch = (targetId: string) => {
               return (
