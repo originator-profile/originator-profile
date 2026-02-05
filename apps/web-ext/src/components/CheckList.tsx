@@ -54,7 +54,7 @@ function DisplayStatus({
   const iconMap = {
     check: { icon: "ic:round-check", color: "text-success" },
     cancel: { icon: "ic:round-cancel", color: "text-danger" },
-    null: { icon: "ic:round-warning", color: "text-warning" },
+    null: { icon: "ic:round-warning", color: "text-caution" },
   } as const;
 
   const { icon: iconName, color } = iconMap[icon];
