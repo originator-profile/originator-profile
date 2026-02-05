@@ -249,6 +249,11 @@ function OriginatorProfileSetCheck({
   const isError = originators instanceof Error;
   const isOpsError =
     originators instanceof OpsInvalid || originators instanceof OpsVerifyFailed;
+  const listValue = isOpsError
+    ? originators.result
+    : !isError
+      ? originators
+      : undefined;
 
   return (
     <ResultItem
@@ -256,8 +261,7 @@ function OriginatorProfileSetCheck({
       value={originators}
       className="pl-4 mb-2"
     >
-      {isOpsError && <OriginatorsCheckList originators={originators.result} />}
-      {!isError && <OriginatorsCheckList originators={originators} />}
+      {listValue && <OriginatorsCheckList originators={listValue} />}
     </ResultItem>
   );
 }
@@ -271,23 +275,18 @@ function SiteProfileCheck({
   const isSiteError =
     siteProfile instanceof SiteProfileInvalid ||
     siteProfile instanceof SiteProfileVerifyFailed;
+  const originatorValue = isSiteError
+    ? siteProfile.result.originators
+    : !isError
+      ? siteProfile.originators
+      : undefined;
 
   return (
     <ResultItem label="Site Profile" value={siteProfile} className="pl-4 mb-2">
-      {isSiteError && (
-        <>
-          <OriginatorProfileSetCheck
-            originators={siteProfile.result.originators}
-          />
-          <SitesCheck siteProfile={siteProfile} />
-        </>
+      {originatorValue && (
+        <OriginatorProfileSetCheck originators={originatorValue} />
       )}
-      {!isError && (
-        <>
-          <OriginatorProfileSetCheck originators={siteProfile.originators} />
-          <SitesCheck siteProfile={siteProfile} />
-        </>
-      )}
+      {(isSiteError || !isError) && <SitesCheck siteProfile={siteProfile} />}
     </ResultItem>
   );
 }
