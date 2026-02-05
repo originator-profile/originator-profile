@@ -1,4 +1,5 @@
 import { selectByLocale } from "@originator-profile/core";
+import { _ } from "@originator-profile/ui";
 import { useSearchParams } from "react-router";
 import GlobalHeader from "../components/GlobalHeader";
 import Loading from "../components/Loading";
@@ -13,7 +14,24 @@ export default function SiteProfile() {
   const { siteProfile, isLoading } = useSiteProfile();
   if (isLoading) return <Loading />;
   // Credential での CaSelector 部分とスタッキングコンテキストで下に重なってしまうため z-11 に設定
-  if (!siteProfile) return <GlobalHeader className="sticky top-0 z-11" />;
+  if (!siteProfile) {
+    return (
+      <>
+        <GlobalHeader className="sticky top-0 z-11" />
+        <div className="bg-gray-50 p-4">
+          <h1
+            className="text-base text-center mb-6"
+            data-testid="site-profile-missing"
+          >
+            {_("WebMediaProfile_Missing")}
+          </h1>
+          <p className="whitespace-pre-line text-xs text-gray-700 text-center leading-5">
+            {_("WebMediaProfile_Missing_Reason")}
+          </p>
+        </div>
+      </>
+    );
+  }
 
   // sitesから適切なWebsiteProfileを選択
   const selectedWsp = selectByLocale(siteProfile.sites.map((s) => s.doc));

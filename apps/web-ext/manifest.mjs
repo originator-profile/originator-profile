@@ -55,6 +55,7 @@ const base = {
     "webNavigation",
     "webRequest",
     "webRequestAuthProvider",
+    "storage",
   ],
 };
 

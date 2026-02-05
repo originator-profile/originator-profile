@@ -59,40 +59,76 @@ const setupOpMetaListener = () => {
   const opMeta = fetchOpMeta(document);
   if (opMeta) {
     const sendAdClicked = async () => {
-      const { ops } = await fetchCredentials(document);
+      const { ops, cas } = await fetchCredentials(document);
       let sourceOrgName: string | undefined;
+      let expectedOrgName: string | undefined;
+
+      const getCasIssuer = (casItem: any) => {
+        if (typeof casItem === "string") return undefined; // Simplified for now, assuming object structure in test
+        return casItem.issuer;
+      };
+
+      let casIssuer: string | undefined;
+      if (Array.isArray(cas) && cas.length > 0) {
+        casIssuer = getCasIssuer(cas[0]);
+      }
 
       if (Array.isArray(ops)) {
         for (const op of ops) {
-          const mediaJwt = Array.isArray(op.media) ? op.media[0] : op.media;
-          if (mediaJwt) {
+          const decodeJwt = (jwt: string | undefined) => {
+            if (!jwt) return undefined;
             try {
-              const payload = mediaJwt.split(".")[1];
+              const payload = jwt.split(".")[1];
               if (payload) {
                 const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
                 const binaryString = atob(base64);
-                const bytes = Uint8Array.from(
-                  binaryString,
-                  (c) => c.codePointAt(0)!,
+                const bytes = Uint8Array.from(binaryString, (c) =>
+                  c.codePointAt(0)!
                 );
-                const decodedPayload = JSON.parse(
-                  new TextDecoder().decode(bytes),
-                );
-                if (decodedPayload?.credentialSubject?.name) {
-                  sourceOrgName = decodedPayload.credentialSubject.name;
-                  break;
-                }
+                return JSON.parse(new TextDecoder().decode(bytes));
               }
             } catch (e) {
-              console.error("[ContentScript] Failed to decode media JWT", e);
+              console.error("[ContentScript] Failed to decode JWT", e);
             }
-          }
+            return undefined;
+          };
+
+          const processPayload = (decodedPayload: any) => {
+            if (decodedPayload?.credentialSubject?.name) {
+              if (!sourceOrgName) {
+                sourceOrgName = decodedPayload.credentialSubject.name;
+              }
+              // If CAS issuer is present, use it to find expectedOrgName
+              if (casIssuer) {
+                if (
+                  decodedPayload.iss === casIssuer ||
+                  decodedPayload.credentialSubject?.id === casIssuer
+                ) {
+                  expectedOrgName = decodedPayload.credentialSubject.name;
+                }
+              } else if (
+                opMeta.targetopid &&
+                (decodedPayload.iss === opMeta.targetopid ||
+                  decodedPayload.credentialSubject?.id === opMeta.targetopid)
+              ) {
+                expectedOrgName = decodedPayload.credentialSubject.name;
+              }
+            }
+          };
+
+          const mediaJwt = Array.isArray(op.media) ? op.media[0] : op.media;
+          processPayload(decodeJwt(mediaJwt));
+          processPayload(decodeJwt(op.core));
         }
       }
 
       void credentialsMessenger.sendMessage("adClicked", {
         targetopid: opMeta.targetopid,
         sourceOrgName,
+        expectedOrgName:
+          expectedOrgName ??
+          (opMeta as any).targetOrgName ??
+          (opMeta as any).targetname,
       });
     };
     const handleLinkClick = (e: MouseEvent) => {

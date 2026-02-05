@@ -15,6 +15,7 @@ export default function Warning() {
   const reason = searchParams.get("reason");
   const sourceOrg = searchParams.get("sourceOrg");
   const destOrg = searchParams.get("destOrg");
+  const expectedOrg = searchParams.get("expectedOrg");
 
   const safeTarget = target && isValidUrl(target) ? target : null;
   const safeReason = reason?.slice(0, 500) ?? null;
@@ -71,6 +72,7 @@ export default function Warning() {
         <p className="text-gray-600 mb-6">
           {sourceOrg ? (
             <>
+              {expectedOrg ? `${expectedOrg}のサイトを開くことを意図した` : ""}
               {sourceOrg}の広告をクリックしましたが、
               {destOrg
                 ? `リンク先は${destOrg}が運営しています。`

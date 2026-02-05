@@ -1,5 +1,5 @@
 import { useParams } from "react-router";
-import useSWRImmutable from "swr/immutable";
+import useSWR from "swr";
 import { fetchVerificationResult } from "./messaging";
 import { LinkVerificationResult } from "./types";
 
@@ -9,12 +9,16 @@ export function useLinkVerification() {
   const params = useParams<{ tabId: string }>();
   const tabId = Number(params.tabId);
 
-  const { data } = useSWRImmutable<LinkVerificationResult, Error>(
+  const { data } = useSWR<LinkVerificationResult, Error>(
     [VERIFICATION_KEY, tabId],
     ([, id]: [string, number]) =>
       fetchVerificationResult(id).catch(
         () => ({ status: "none" }) as LinkVerificationResult,
       ),
+    {
+      refreshInterval: (data) =>
+        !data || data.status === "none" ? 500 : 0,
+    },
   );
 
   return data;
