@@ -1,5 +1,5 @@
-import { ContentAttestation, OpVc } from "@originator-profile/model";
 import { serializeIfError } from "@originator-profile/core";
+import { ContentAttestation, OpVc } from "@originator-profile/model";
 import {
   fetchCredentials,
   FetchCredentialSetResult,
@@ -76,7 +76,9 @@ const setupOpMetaListener = () => {
       const AD_CA_TYPES = ["OnlineAd", "Advertorial"] as const;
       type AdCaType = (typeof AD_CA_TYPES)[number];
 
-      const isContentAttestation = (item: unknown): item is ContentAttestation => {
+      const isContentAttestation = (
+        item: unknown,
+      ): item is ContentAttestation => {
         return (
           typeof item === "object" &&
           item !== null &&
@@ -117,7 +119,9 @@ const setupOpMetaListener = () => {
             };
           };
 
-          const decodeJwt = (jwt: string | undefined): DecodedOpPayload | undefined => {
+          const decodeJwt = (
+            jwt: string | undefined,
+          ): DecodedOpPayload | undefined => {
             if (!jwt) return undefined;
             try {
               const payload = jwt.split(".")[1];
@@ -128,7 +132,9 @@ const setupOpMetaListener = () => {
                   binaryString,
                   (c) => c.codePointAt(0) ?? 0,
                 );
-                return JSON.parse(new TextDecoder().decode(bytes)) as DecodedOpPayload;
+                return JSON.parse(
+                  new TextDecoder().decode(bytes),
+                ) as DecodedOpPayload;
               }
             } catch (e) {
               console.error("[ContentScript] Failed to decode JWT", e);
@@ -136,7 +142,9 @@ const setupOpMetaListener = () => {
             return undefined;
           };
 
-          const processPayload = (decodedPayload: DecodedOpPayload | undefined) => {
+          const processPayload = (
+            decodedPayload: DecodedOpPayload | undefined,
+          ) => {
             if (!decodedPayload?.credentialSubject?.name) {
               return;
             }
