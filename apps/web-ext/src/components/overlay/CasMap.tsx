@@ -75,7 +75,9 @@ export function CasMap(props: Props) {
             wmps={props.wmps}
             page={frameCas.parentFrameId === -1}
             frameId={frameCas.frameId}
-            filtered={filteredCaIds.has(ca.attestation.doc.credentialSubject.id)}
+            filtered={filteredCaIds.has(
+              ca.attestation.doc.credentialSubject.id,
+            )}
           />
         )),
       )}
