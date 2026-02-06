@@ -1,6 +1,9 @@
 import { WebMediaProfile } from "@originator-profile/model";
 import { FramesVerifiedCas, SupportedVerifiedCa } from "../credentials";
+import { listCas } from "../credentials/cas";
 import { defineWindowMessaging } from "../windowMessaging";
+
+export type CaFilterType = Parameters<typeof listCas>[1];
 
 export type OverlayProtocolMap = {
   /** オーバーレイの開始・更新 */
@@ -8,6 +11,7 @@ export type OverlayProtocolMap = {
     framesCas: FramesVerifiedCas;
     activeCa: SupportedVerifiedCa | null;
     wmps: WebMediaProfile[];
+    filterType?: CaFilterType;
   }): void;
   /** オーバーレイの終了 */
   leave(message: null): void;

@@ -26,6 +26,7 @@ type Props = {
   active: boolean;
   onClickCa: (ca: SupportedVerifiedCa) => void;
   frameId: number;
+  filtered: boolean;
 };
 
 export function FrameCaMarker(props: Props) {
@@ -57,6 +58,7 @@ export function FrameCaMarker(props: Props) {
             active={props.active}
             onClick={handleClick}
             wmp={props.wmp}
+            filtered={props.filtered}
           />
         ))
       }

@@ -35,12 +35,24 @@ export function Credentials(props: CredentialsProps) {
 
   const filteredCas = listCas(props.cas, caListType);
 
-  function onFilterUpdate(caListType: Parameters<typeof listCas>[1]) {
-    setCaListType(caListType);
-    const newlyFilteredCas = listCas(props.cas, caListType);
+  function onFilterUpdate(newFilterType: Parameters<typeof listCas>[1]) {
+    setCaListType(newFilterType);
+    const newlyFilteredCas = listCas(props.cas, newFilterType);
     const [ca] = newlyFilteredCas;
     if (ca) {
       void navigate(buildPublUrl(tabId, ca.attestation.doc));
+      void overlayExtensionMessenger.sendMessage(
+        "enter",
+        {
+          framesCas: props.framesCas,
+          activeCa: ca,
+          wmps: flush(
+            props.ops.flatMap((op) => op.media?.map((m) => m.doc) ?? []),
+          ),
+          filterType: newFilterType,
+        },
+        Number(tabId),
+      );
     }
   }
 
@@ -53,6 +65,7 @@ export function Credentials(props: CredentialsProps) {
         wmps: flush(
           props.ops.flatMap((op) => op.media?.map((m) => m.doc) ?? []),
         ),
+        filterType: caListType,
       },
       Number(tabId),
     );

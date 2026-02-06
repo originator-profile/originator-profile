@@ -9,6 +9,7 @@ import {
   CasMap,
   ContentsArea,
   overlayWindowMessenger,
+  type CaFilterType,
 } from "../components/overlay";
 
 function Panel(props: { children?: React.ReactNode }) {
@@ -26,6 +27,7 @@ function App() {
   const [framesCas, setFramesCas] = useState<FramesVerifiedCas>([]);
   const [activeCa, setActiveCa] = useState<SupportedVerifiedCa | null>(null);
   const [wmps, setWmps] = useState<WebMediaProfile[]>([]);
+  const [filterType, setFilterType] = useState<CaFilterType>("All");
   const dialog = useRef<HTMLDialogElement>(null);
 
   const handleClose = () => dialog.current?.close();
@@ -53,6 +55,7 @@ function App() {
         setFramesCas(data.framesCas);
         setActiveCa(data.activeCa);
         setWmps(data.wmps);
+        setFilterType(data.filterType ?? "All");
         handleOpen();
       },
     );
@@ -100,6 +103,7 @@ function App() {
           activeCa={activeCa}
           onClickCa={handleClickCa}
           wmps={wmps}
+          filterType={filterType}
         />
       </Panel>
     </dialog>

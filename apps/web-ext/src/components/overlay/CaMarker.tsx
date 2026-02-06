@@ -9,6 +9,7 @@ export function CaMarker(props: {
   active: boolean;
   onClick: () => void;
   wmp?: WebMediaProfile;
+  filtered: boolean;
 }) {
   const width = 54;
   const height = 54;
@@ -38,7 +39,11 @@ export function CaMarker(props: {
 
   return (
     <div
-      className={twMerge(props.className, "absolute")}
+      className={twMerge(
+        props.className,
+        "absolute transition-opacity",
+        !props.filtered && "opacity-30",
+      )}
       style={{
         top: isTopOverflow
           ? props.rect.top - border + tailHeight
