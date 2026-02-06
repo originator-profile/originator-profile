@@ -1,0 +1,33 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://originator-profile.org/ns/credentials/v1",
+    "https://originator-profile.org/ns/cip/v1",
+    {
+      "@language": "ja-JP"
+    }
+  ],
+  "type": ["VerifiableCredential", "ContentAttestation"],
+  "issuer": "dns:localhost",
+  "credentialSubject": {
+    "type": "Article",
+    "headline": "複数CAタイプのデモ - 記事",
+    "image": {
+      "id": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg=="
+    },
+    "description": "記事CAのデモ",
+    "author": ["山田花子"],
+    "editor": ["山田太郎"],
+    "datePublished": "2023-07-04T19:14:00Z",
+    "dateModified": "2023-07-04T19:14:00Z",
+    "genre": "Arts & Entertainment"
+  },
+  "allowedUrl": "http://localhost:8080/*",
+  "target": [
+    {
+      "type": "TextTargetIntegrity",
+      "cssSelector": "#article-content",
+      "content": "<p id=\"article-content\">これは記事コンテンツです</p>"
+    }
+  ]
+}
