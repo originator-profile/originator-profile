@@ -1,3 +1,4 @@
+import { ContentAttestation, OpVc } from "@originator-profile/model";
 import { serializeIfError } from "@originator-profile/core";
 import {
   fetchCredentials,
@@ -71,20 +72,52 @@ const setupOpMetaListener = () => {
       let sourceOrgName: string | undefined;
       let expectedOrgName: string | undefined;
 
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
-      const getCasIssuer = (casItem: any) => {
-        if (typeof casItem === "string") return undefined; // Simplified for now, assuming object structure in test
+      // 広告関連のCAタイプ（リンク先確認に使用）
+      const AD_CA_TYPES = ["OnlineAd", "Advertorial"] as const;
+      type AdCaType = (typeof AD_CA_TYPES)[number];
+
+      const isContentAttestation = (item: unknown): item is ContentAttestation => {
+        return (
+          typeof item === "object" &&
+          item !== null &&
+          "credentialSubject" in item
+        );
+      };
+
+      const getCasIssuer = (casItem: unknown): string | undefined => {
+        if (!isContentAttestation(casItem)) return undefined;
         return casItem.issuer;
       };
 
+      const getSubjectType = (casItem: unknown): string | undefined => {
+        if (!isContentAttestation(casItem)) return undefined;
+        return casItem.credentialSubject?.type;
+      };
+
+      const isAdCaType = (type: string | undefined): type is AdCaType => {
+        return type !== undefined && AD_CA_TYPES.includes(type as AdCaType);
+      };
+
+      // 広告関連CAのみをフィルタリング
+      const adCas = Array.isArray(cas)
+        ? cas.filter((item) => isAdCaType(getSubjectType(item)))
+        : [];
+
       let casIssuer: string | undefined;
-      if (Array.isArray(cas) && cas.length > 0) {
-        casIssuer = getCasIssuer(cas[0]);
+      if (adCas.length > 0) {
+        casIssuer = getCasIssuer(adCas[0]);
       }
 
       if (Array.isArray(ops)) {
         for (const op of ops) {
-          const decodeJwt = (jwt: string | undefined) => {
+          // デコード済みOPペイロードの型（nameを含む）
+          type DecodedOpPayload = OpVc & {
+            credentialSubject: OpVc["credentialSubject"] & {
+              name?: string;
+            };
+          };
+
+          const decodeJwt = (jwt: string | undefined): DecodedOpPayload | undefined => {
             if (!jwt) return undefined;
             try {
               const payload = jwt.split(".")[1];
@@ -95,7 +128,7 @@ const setupOpMetaListener = () => {
                   binaryString,
                   (c) => c.codePointAt(0) ?? 0,
                 );
-                return JSON.parse(new TextDecoder().decode(bytes));
+                return JSON.parse(new TextDecoder().decode(bytes)) as DecodedOpPayload;
               }
             } catch (e) {
               console.error("[ContentScript] Failed to decode JWT", e);
@@ -103,8 +136,7 @@ const setupOpMetaListener = () => {
             return undefined;
           };
 
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          const processPayload = (decodedPayload: any) => {
+          const processPayload = (decodedPayload: DecodedOpPayload | undefined) => {
             if (!decodedPayload?.credentialSubject?.name) {
               return;
             }
@@ -115,7 +147,7 @@ const setupOpMetaListener = () => {
 
             const isMatch = (targetId: string) => {
               return (
-                decodedPayload.iss === targetId ||
+                decodedPayload.issuer === targetId ||
                 decodedPayload.credentialSubject?.id === targetId
               );
             };
@@ -134,15 +166,19 @@ const setupOpMetaListener = () => {
         }
       }
 
+      // OpMetaの追加プロパティを取得するヘルパー
+      const getOpMetaProperty = (key: string): string | undefined => {
+        const value = (opMeta as Record<string, unknown>)[key];
+        return typeof value === "string" ? value : undefined;
+      };
+
       void credentialsMessenger.sendMessage("adClicked", {
         targetopid: opMeta.targetopid,
         sourceOrgName,
         expectedOrgName:
           expectedOrgName ??
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (opMeta as any).targetOrgName ??
-          // eslint-disable-next-line @typescript-eslint/no-explicit-any
-          (opMeta as any).targetname,
+          getOpMetaProperty("targetOrgName") ??
+          getOpMetaProperty("targetname"),
       });
     };
     const handleLinkClick = (e: MouseEvent) => {
