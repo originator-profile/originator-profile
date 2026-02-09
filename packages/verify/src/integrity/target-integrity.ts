@@ -89,15 +89,15 @@ export async function verifyIntegrity(
   doc = document,
   fetcher = fetch,
 ): Promise<FetchIntegrityResult> {
+  const { contentFetcher, elementSelector } =
+    TargetIntegrityAlgorithm[content.type];
+
+  const integrityVerifier = new IntegrityVerifier(
+    (content) => contentFetcher(content, fetcher),
+    elementSelector,
+  );
+
   try {
-    const { contentFetcher, elementSelector } =
-      TargetIntegrityAlgorithm[content.type];
-
-    const integrityVerifier = new IntegrityVerifier(
-      (content) => contentFetcher(content, fetcher),
-      elementSelector,
-    );
-
     return await integrityVerifier.verify(content, doc);
   } catch (e) {
     if (e instanceof Error || e instanceof window.Error) {
