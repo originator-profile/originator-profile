@@ -3,6 +3,7 @@ import {
   type ContentFetcher,
   type ElementSelector,
   fetchExternalResource,
+  FetchFailed,
   fetchHtmlContent,
   fetchTextContent,
   fetchVisibleTextContent,
@@ -100,8 +101,10 @@ export async function verifyIntegrity(
   try {
     return await integrityVerifier.verify(content, doc);
   } catch (e) {
-    if (e instanceof Error || e instanceof window.Error) {
-      return new FetchIntegrityFailed("Verify integrity failed", { error: e });
+    if (e instanceof FetchFailed) {
+      return new FetchIntegrityFailed("Verify integrity failed", {
+        error: e.error,
+      });
     }
 
     return new FetchIntegrityFailed("Verify integrity failed", { payload: e });
