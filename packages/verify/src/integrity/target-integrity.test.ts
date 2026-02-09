@@ -6,8 +6,8 @@ import {
   createIntegrityMetadataSet,
   IntegrityMetadataSet,
 } from "websri";
-import { IntegrityVerifyResult } from "../../dist/index.cjs";
 import { verifyIntegrity } from "./target-integrity";
+import { IntegrityVerifyResult } from "./types";
 
 describe("verifyIntegrity()", () => {
   beforeEach(() => {
