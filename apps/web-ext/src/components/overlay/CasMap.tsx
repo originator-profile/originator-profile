@@ -1,4 +1,5 @@
 import { WebMediaProfile } from "@originator-profile/model";
+import { useMemo } from "react";
 import { FramesVerifiedCas, SupportedVerifiedCa } from "../credentials";
 import { listCas } from "../credentials/cas";
 import { ElementCaMarker } from "./ElementCaMarker";
@@ -55,12 +56,16 @@ type Props = {
 
 export function CasMap(props: Props) {
   // フィルター対象のCA IDを取得
-  const filteredCaIds = new Set(
-    props.framesCas.flatMap((frameCas) =>
-      listCas(frameCas.cas, props.filterType).map(
-        (ca) => ca.attestation.doc.credentialSubject.id,
+  const filteredCaIds = useMemo(
+    () =>
+      new Set(
+        props.framesCas.flatMap((frameCas) =>
+          listCas(frameCas.cas, props.filterType).map(
+            (ca) => ca.attestation.doc.credentialSubject.id,
+          ),
+        ),
       ),
-    ),
+    [props.framesCas, props.filterType],
   );
 
   return (
