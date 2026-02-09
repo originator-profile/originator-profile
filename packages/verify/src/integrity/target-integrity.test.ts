@@ -6,6 +6,7 @@ import {
   createIntegrityMetadataSet,
   IntegrityMetadataSet,
 } from "websri";
+import { IntegrityVerifyResult } from "../../dist/index.cjs";
 import { verifyIntegrity } from "./target-integrity";
 
 describe("verifyIntegrity()", () => {
@@ -19,8 +20,10 @@ describe("verifyIntegrity()", () => {
       cssSelector: "body",
     });
 
-    const result = await verifyIntegrity(content as Target);
-    expect(result.valid).toBe(true);
+    const fetchResult = await verifyIntegrity(content as Target);
+    expect(fetchResult instanceof Error).toBe(false);
+    const verifyResult = fetchResult as IntegrityVerifyResult;
+    expect(verifyResult.valid).toBe(true);
   });
 
   it("should return false if integrity algorithm is unsupported", async () => {
@@ -30,8 +33,10 @@ describe("verifyIntegrity()", () => {
       integrity: "md5-REvLOj/Pg4kpbElGfyfh1g==",
     };
 
-    const result = await verifyIntegrity(content);
-    expect(result.valid).toBe(false);
+    const fetchResult = await verifyIntegrity(content);
+    expect(fetchResult instanceof Error).toBe(false);
+    const verifyResult = fetchResult as IntegrityVerifyResult;
+    expect(verifyResult.valid).toBe(false);
   });
 
   it("should return false if no elements are selected", async () => {
@@ -46,8 +51,10 @@ describe("verifyIntegrity()", () => {
       integrity: integrityMetadata.toString(),
     };
 
-    const result = await verifyIntegrity(content);
-    expect(result.valid).toBe(false);
+    const fetchResult = await verifyIntegrity(content);
+    expect(fetchResult instanceof Error).toBe(false);
+    const verifyResult = fetchResult as IntegrityVerifyResult;
+    expect(verifyResult.valid).toBe(false);
   });
 
   it("should verify ExternalResourceTargetIntegrity using src attribute", async () => {
@@ -65,8 +72,10 @@ describe("verifyIntegrity()", () => {
       integrity: integrityMetadata.toString(),
     };
 
-    const result = await verifyIntegrity(content);
-    expect(result.valid).toBe(true);
+    const fetchResult = await verifyIntegrity(content);
+    expect(fetchResult instanceof Error).toBe(false);
+    const verifyResult = fetchResult as IntegrityVerifyResult;
+    expect(verifyResult.valid).toBe(true);
   });
 
   it("should verify ExternalResourceTargetIntegrity using currentSrc when available", async () => {
@@ -87,8 +96,10 @@ describe("verifyIntegrity()", () => {
       integrity: integrityMetadata.toString(),
     };
 
-    const result = await verifyIntegrity(content);
-    expect(result.valid).toBe(true);
+    const fetchResult = await verifyIntegrity(content);
+    expect(fetchResult instanceof Error).toBe(false);
+    const verifyResult = fetchResult as IntegrityVerifyResult;
+    expect(verifyResult.valid).toBe(true);
   });
 
   it("should verify only currentSrc when multiple sources exist", async () => {
@@ -118,8 +129,10 @@ describe("verifyIntegrity()", () => {
       integrity: integrityMetadataSet.toString(),
     };
 
-    const result = await verifyIntegrity(content);
-    expect(result.valid).toBe(true);
+    const fetchResult = await verifyIntegrity(content);
+    expect(fetchResult instanceof Error).toBe(false);
+    const verifyResult = fetchResult as IntegrityVerifyResult;
+    expect(verifyResult.valid).toBe(true);
   });
 
   it("should verify with multiple overlapping hash algorithms", async () => {
@@ -145,7 +158,9 @@ describe("verifyIntegrity()", () => {
       integrity: overlappingIntegrity,
     };
 
-    const result = await verifyIntegrity(content);
-    expect(result.valid).toBe(true);
+    const fetchResult = await verifyIntegrity(content);
+    expect(fetchResult instanceof Error).toBe(false);
+    const verifyResult = fetchResult as IntegrityVerifyResult;
+    expect(verifyResult.valid).toBe(true);
   });
 });

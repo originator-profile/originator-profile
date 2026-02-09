@@ -10,11 +10,8 @@ import {
   selectByIntegrity,
 } from "@originator-profile/sign";
 import { createIntegrityMetadataSet, IntegrityMetadataSet } from "websri";
-
-export type IntegrityVerifyResult = {
-  valid: boolean;
-  failedIntegrities: ReadonlyArray<string>;
-};
+import { FetchIntegrityFailed } from "./error";
+import { FetchIntegrityResult, IntegrityVerifyResult } from "./types";
 
 class IntegrityVerifier {
   constructor(
@@ -91,16 +88,24 @@ export async function verifyIntegrity(
   content: Target,
   doc = document,
   fetcher = fetch,
-): Promise<IntegrityVerifyResult> {
-  const { contentFetcher, elementSelector } =
-    TargetIntegrityAlgorithm[content.type];
+): Promise<FetchIntegrityResult> {
+  try {
+    const { contentFetcher, elementSelector } =
+      TargetIntegrityAlgorithm[content.type];
 
-  const integrityVerifier = new IntegrityVerifier(
-    (content) => contentFetcher(content, fetcher),
-    elementSelector,
-  );
+    const integrityVerifier = new IntegrityVerifier(
+      (content) => contentFetcher(content, fetcher),
+      elementSelector,
+    );
 
-  return await integrityVerifier.verify(content, doc);
+    return await integrityVerifier.verify(content, doc);
+  } catch (e) {
+    if (e instanceof Error || e instanceof window.Error) {
+      return new FetchIntegrityFailed("Verify integrity failed", { error: e });
+    }
+
+    return new FetchIntegrityFailed("Verify integrity failed", { payload: e });
+  }
 }
 
 export type VerifyIntegrity = typeof verifyIntegrity;

@@ -7,6 +7,7 @@ import {
   VcVerifyFailed,
 } from "@originator-profile/securing-mechanism";
 import {
+  FetchIntegrityResult,
   IntegrityVerifyResult,
   verifyIntegrity as nativeVerifyIntegrity,
   VerifyIntegrity,
@@ -18,7 +19,7 @@ import { CaVerificationResult, VerifiedCa } from "./types";
 
 type IntegrityResult = {
   index: number;
-  verifyResult: IntegrityVerifyResult;
+  verifyResult: FetchIntegrityResult;
   expectedIntegrity: string;
 };
 
@@ -94,6 +95,7 @@ export function CaVerifier<T extends ContentAttestation>(
       if (urlResult.doc.target.length === 0) {
         return new CaInvalid("Target is empty", urlResult);
       }
+
       const integrityResults: IntegrityResult[] = await Promise.all(
         urlResult.doc.target.map(async (t, index) => ({
           index,
@@ -102,8 +104,30 @@ export function CaVerifier<T extends ContentAttestation>(
         })),
       );
 
+      // Integrity の取得に失敗した場合
+      const fetchFailedResults = integrityResults.filter(
+        (r) => r.verifyResult instanceof Error,
+      );
+
+      if (fetchFailedResults.length > 0) {
+        const failedIntegritiesMessage = fetchFailedResults
+          .map((result) => {
+            return `target[${result.index}] Expected: ${result.expectedIntegrity}`;
+          })
+          .join(", ");
+
+        return new CaVerifyFailed(
+          `Content Attestation Target integrity fetch failed for element(s): ${failedIntegritiesMessage}`,
+          urlResult,
+        );
+      }
+
       const failedIndices = integrityResults
-        .filter((result) => !result.verifyResult.valid)
+        .filter(
+          (result) =>
+            !(result.verifyResult instanceof Error) &&
+            !result.verifyResult.valid,
+        )
         .map((result) => result.index);
 
       if (failedIndices.length > 0) {
@@ -111,8 +135,10 @@ export function CaVerifier<T extends ContentAttestation>(
           .map((integrityResultIndex) => {
             const integrityResult = integrityResults[integrityResultIndex];
             if (integrityResult) {
+              const verifyResult =
+                integrityResult.verifyResult as IntegrityVerifyResult;
               const calculatedIntegrities =
-                integrityResult.verifyResult.failedIntegrities.join();
+                verifyResult.failedIntegrities.join();
               return `target[${integrityResultIndex}] Expected: ${integrityResult.expectedIntegrity}, Calculated: ${calculatedIntegrities}`;
             }
             return undefined;

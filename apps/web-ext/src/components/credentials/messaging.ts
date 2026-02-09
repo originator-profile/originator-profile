@@ -1,5 +1,8 @@
 import { deserializeIfError } from "@originator-profile/core";
-import { VerifyIntegrity } from "@originator-profile/verify";
+import {
+  FetchIntegrityResult,
+  VerifyIntegrity,
+} from "@originator-profile/verify";
 import { FetchCredentialsMessagingFailed } from "./errors";
 import { credentialsMessenger } from "./events";
 import { FrameCredentials, FrameResponse, TabCredentials } from "./types";
@@ -112,8 +115,16 @@ export async function fetchTabCredentials(
  */
 export const FrameIntegrityVerifier =
   (tabId: number, frameId: number): VerifyIntegrity =>
-  (content) =>
-    credentialsMessenger.sendMessage("verifyIntegrity", [content], {
-      tabId,
-      frameId,
-    });
+  async (content) => {
+    const messageResult = await credentialsMessenger.sendMessage(
+      "verifyIntegrity",
+      [content],
+      {
+        tabId,
+        frameId,
+      },
+    );
+
+    const parsed = deserializeIfError(messageResult);
+    return parsed as FetchIntegrityResult;
+  };
