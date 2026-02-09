@@ -40,9 +40,7 @@ export async function verifyAllowedUrl(
       const pattern = new URLPattern(ReplaceEncode(value));
       return pattern.test(ReplaceEncode(url));
     } catch (e) {
-      console.error(
-        `[Originator Profile] Invalid URLPattern: ${value} (url: ${url})`,
-      );
+      console.error(`Invalid URLPattern: ${value} (url: ${url})`);
     }
     return false;
   });
