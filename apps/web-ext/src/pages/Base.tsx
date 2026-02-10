@@ -22,6 +22,7 @@ import Unsupported from "../components/Unsupported";
 import {
   FetchCredentialsMessagingFailed,
   FramesVerifiedCas,
+  SupportedVerifiedCas,
   useCredentials,
 } from "../components/credentials";
 import { useFrameCasLocationProvider } from "../components/frameCas";
@@ -38,17 +39,20 @@ function Redirect({
   ops?: VerifiedOps;
   framesCas?: FramesVerifiedCas;
 }) {
-  const pageCas =
-    framesCas?.find((frameCas) => frameCas.parentFrameId === -1)?.cas ?? [];
-  const [ca] = pageCas ?? [];
+  const cas: SupportedVerifiedCas | undefined = framesCas
+    ?.sort((a, b) => a.parentFrameId - b.parentFrameId)
+    ?.flatMap((frame) => frame.cas);
+  const ca = cas?.[0];
   useMount(() => {
-    if (pageCas) {
+    if (ca) {
       void overlayExtensionMessenger.sendMessage(
         "enter",
         {
           framesCas: framesCas ?? [],
           activeCa: ca ?? null,
-          wmps: flush(ops?.map((op) => op.media?.doc) ?? []),
+          wmps: flush(
+            ops?.flatMap((op) => op.media?.map((m) => m.doc) ?? []) ?? [],
+          ),
         },
         tabId,
       );

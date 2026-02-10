@@ -83,13 +83,13 @@ describe("Site Profileの検証", async () => {
     annotations: [
       await signJwtVc(certificate, certifier.privateKey, signOptions),
     ],
-    media: await signJwtVc(wmp, authority.privateKey, signOptions),
+    media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
   };
   const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
-  const sp: SiteProfile = {
+  const sp = {
     originators: ops,
-    credential: await signJwtVc(wsp, originator.privateKey, signOptions),
-  };
+    sites: [await signJwtVc(wsp, originator.privateKey, signOptions)],
+  } satisfies SiteProfile;
 
   test("SiteProfileの検証に成功", async () => {
     const verify = SpVerifier(
@@ -135,14 +135,16 @@ describe("Site Profileの検証", async () => {
               certifier.publicKey,
             ),
           ],
-          media: verifyResult.create(
-            wmp,
-            originatorOp.media,
-            authority.publicKey,
-          ),
+          media: [
+            verifyResult.create(
+              wmp,
+              originatorOp.media[0],
+              authority.publicKey,
+            ),
+          ],
         },
       ],
-      credential: verifyResult.create(wsp, sp.credential, originator.publicKey),
+      sites: [verifyResult.create(wsp, sp.sites[0], originator.publicKey)],
     });
   });
 
@@ -196,20 +198,19 @@ describe("Site Profileの検証", async () => {
               true,
             ),
           ],
-          media: verifyResult.create(
-            wmp,
-            originatorOp.media,
-            authority.publicKey,
-            true,
-          ),
+          media: [
+            verifyResult.create(
+              wmp,
+              originatorOp.media[0],
+              authority.publicKey,
+              true,
+            ),
+          ],
         },
       ],
-      credential: verifyResult.create(
-        wsp,
-        sp.credential,
-        originator.publicKey,
-        true,
-      ),
+      sites: [
+        verifyResult.create(wsp, sp.sites[0], originator.publicKey, true),
+      ],
     });
   });
 
@@ -258,14 +259,16 @@ describe("Site Profileの検証", async () => {
               certifier.publicKey,
             ),
           ],
-          media: verifyResult.create(
-            wmp,
-            originatorOp.media,
-            authority.publicKey,
-          ),
+          media: [
+            verifyResult.create(
+              wmp,
+              originatorOp.media[0],
+              authority.publicKey,
+            ),
+          ],
         },
       ],
-      credential: verifyResult.create(wsp, sp.credential, originator.publicKey),
+      sites: [verifyResult.create(wsp, sp.sites[0], originator.publicKey)],
     });
   });
 
@@ -320,7 +323,7 @@ describe("Site Profileの検証", async () => {
     ]);
     const evilSp = {
       originators: evilOps,
-      credential: await signJwtVc(wsp, evil.privateKey, signOptions),
+      sites: [await signJwtVc(wsp, evil.privateKey, signOptions)],
     };
     const verify = SpVerifier(
       evilSp,
@@ -361,9 +364,9 @@ describe("Site Profileの検証", async () => {
         certifier.publicKey,
       ),
     );
-    expect(resultOp[2].result.media).toStrictEqual(
-      verifyResult.create(wmp, originatorOp.media, authority.publicKey),
-    );
+    expect(resultOp[2].result.media).toStrictEqual([
+      verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+    ]);
   });
 
   test("SiteProfileのうちWSP部分の署名の検証に失敗", async () => {
@@ -371,7 +374,7 @@ describe("Site Profileの検証", async () => {
     const evilWsp = await signJwtVc(wsp, evil.privateKey, signOptions);
     const evilSp = {
       originators: ops,
-      credential: evilWsp,
+      sites: [evilWsp],
     };
     const verify = SpVerifier(
       evilSp,
@@ -384,7 +387,8 @@ describe("Site Profileの検証", async () => {
     expect(resultSp).not.instanceOf(SiteProfileInvalid);
     expect(resultSp).instanceOf(SiteProfileVerifyFailed);
     // @ts-expect-error verify failed Sp
-    const { originators: resultOps, credential: resultWsp } = resultSp.result;
+    const { originators: resultOps, sites } = resultSp.result;
+    const resultWsp = sites?.[0];
     expect(resultOps).toStrictEqual([
       {
         core: verifyResult.create(
@@ -417,11 +421,9 @@ describe("Site Profileの検証", async () => {
             certifier.publicKey,
           ),
         ],
-        media: verifyResult.create(
-          wmp,
-          originatorOp.media,
-          authority.publicKey,
-        ),
+        media: [
+          verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+        ],
       },
     ]);
     expect(resultWsp).instanceOf(VcVerifyFailed);
@@ -443,7 +445,7 @@ describe("Site Profileの検証", async () => {
     const invalidSp = patch(sp, [
       {
         op: "replace",
-        path: ["credential"],
+        path: ["sites", 0],
         value: invalidCredential,
       },
     ]);
@@ -457,7 +459,8 @@ describe("Site Profileの検証", async () => {
 
     expect(resultSp).instanceOf(SiteProfileInvalid);
     // @ts-expect-error invalid Sp
-    const { originators: resultOps, credential: resultWsp } = resultSp.result;
+    const { originators: resultOps, sites } = resultSp.result;
+    const resultWsp = sites?.[0];
     expect(resultOps[0]).toStrictEqual({
       core: verifyResult.create(
         authorityCp,
@@ -489,7 +492,9 @@ describe("Site Profileの検証", async () => {
           certifier.publicKey,
         ),
       ],
-      media: verifyResult.create(wmp, originatorOp.media, authority.publicKey),
+      media: [
+        verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+      ],
     });
     expect(resultWsp).instanceOf(CoreProfileNotFound);
   });
@@ -528,11 +533,13 @@ describe("Site Profileの検証", async () => {
 
     const evilSp: SiteProfile = {
       originators: ops,
-      credential: await signJwtVc(
-        wspWithNullCredentialSubjectUrl,
-        originator.privateKey,
-        signOptions,
-      ),
+      sites: [
+        await signJwtVc(
+          wspWithNullCredentialSubjectUrl,
+          originator.privateKey,
+          signOptions,
+        ),
+      ],
     };
 
     const verify = SpVerifier(
@@ -579,11 +586,13 @@ describe("Site Profileの検証", async () => {
 
     const evilSp: SiteProfile = {
       originators: ops,
-      credential: await signJwtVc(
-        wspWithNullCredentialSubjectUrl,
-        originator.privateKey,
-        signOptions,
-      ),
+      sites: [
+        await signJwtVc(
+          wspWithNullCredentialSubjectUrl,
+          originator.privateKey,
+          signOptions,
+        ),
+      ],
     };
 
     const verify = SpVerifier(
@@ -594,5 +603,139 @@ describe("Site Profileの検証", async () => {
     );
     const resultSp = await verify();
     expect(resultSp).instanceOf(SiteProfileVerifyFailed);
+  });
+
+  test("複数のWSP(sites配列)の検証に成功", async () => {
+    const wspEn: WebsiteProfile = patch(wsp, [
+      {
+        op: "replace",
+        path: ["@context", 3, "@language"],
+        value: "en",
+      },
+      {
+        op: "replace",
+        path: ["credentialSubject", "name"],
+        value: "Example Website EN",
+      },
+    ]);
+
+    const wspFr: WebsiteProfile = patch(wsp, [
+      {
+        op: "replace",
+        path: ["@context", 3, "@language"],
+        value: "fr",
+      },
+      {
+        op: "replace",
+        path: ["credentialSubject", "name"],
+        value: "Example Website FR",
+      },
+    ]);
+
+    const multiSp: SiteProfile = {
+      originators: ops,
+      sites: [
+        await signJwtVc(wsp, originator.privateKey, signOptions),
+        await signJwtVc(wspEn, originator.privateKey, signOptions),
+        await signJwtVc(wspFr, originator.privateKey, signOptions),
+      ],
+    };
+
+    const verify = SpVerifier(
+      multiSp,
+      LocalKeys({ keys: [authority.publicKey] }),
+      opId.authority,
+      "https://originator.example.org",
+    );
+    const resultSp = await verify();
+
+    expect(resultSp).not.instanceOf(SiteProfileInvalid);
+    expect(resultSp).not.instanceOf(SiteProfileVerifyFailed);
+    expect(resultSp).toMatchObject({
+      originators: expect.any(Array),
+      sites: expect.any(Array),
+    });
+    // @ts-expect-error verified sp
+    expect(resultSp.sites).toHaveLength(3);
+    // @ts-expect-error verified sp
+    expect(resultSp.sites[0].doc.credentialSubject.name).toBe(
+      "Example Website",
+    );
+    // @ts-expect-error verified sp
+    expect(resultSp.sites[1].doc.credentialSubject.name).toBe(
+      "Example Website EN",
+    );
+    // @ts-expect-error verified sp
+    expect(resultSp.sites[2].doc.credentialSubject.name).toBe(
+      "Example Website FR",
+    );
+  });
+
+  test("複数のWSPのうち一つだけ署名検証に失敗", async () => {
+    const evil = await generateKey();
+    const wspEn: WebsiteProfile = patch(wsp, [
+      {
+        op: "replace",
+        path: ["@context", 3, "@language"],
+        value: "en",
+      },
+    ]);
+
+    const multiSp: SiteProfile = {
+      originators: ops,
+      sites: [
+        await signJwtVc(wsp, originator.privateKey, signOptions),
+        await signJwtVc(wspEn, evil.privateKey, signOptions), // 悪意のある署名
+      ],
+    };
+
+    const verify = SpVerifier(
+      multiSp,
+      LocalKeys({ keys: [authority.publicKey] }),
+      opId.authority,
+      "https://originator.example.org",
+    );
+    const resultSp = await verify();
+
+    expect(resultSp).instanceOf(SiteProfileVerifyFailed);
+    // @ts-expect-error verify failed Sp
+    const { sites } = resultSp.result;
+    expect(sites).toHaveLength(2);
+    expect(sites[0]).toMatchObject({ doc: wsp });
+    expect(sites[1]).instanceOf(VcVerifyFailed);
+  });
+
+  test("複数のWSPのうち一つだけオリジンが一致しない", async () => {
+    const wspDifferentOrigin: WebsiteProfile = patch(wsp, [
+      {
+        op: "replace",
+        path: ["credentialSubject", "allowedOrigin"],
+        value: ["https://different-origin.example.org"],
+      },
+    ]);
+
+    const multiSp: SiteProfile = {
+      originators: ops,
+      sites: [
+        await signJwtVc(wsp, originator.privateKey, signOptions),
+        await signJwtVc(wspDifferentOrigin, originator.privateKey, signOptions),
+      ],
+    };
+
+    const verify = SpVerifier(
+      multiSp,
+      LocalKeys({ keys: [authority.publicKey] }),
+      opId.authority,
+      "https://originator.example.org",
+    );
+    const resultSp = await verify();
+
+    expect(resultSp).instanceOf(SiteProfileVerifyFailed);
+    // @ts-expect-error verify failed Sp
+    const { sites } = resultSp.result;
+    expect(sites).toHaveLength(2);
+    expect(sites[0]).toMatchObject({ doc: wsp });
+    expect(sites[1]).instanceOf(Error);
+    expect(sites[1].message).toBe("Origin not allowed");
   });
 });

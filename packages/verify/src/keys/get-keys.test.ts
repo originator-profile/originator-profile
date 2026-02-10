@@ -47,14 +47,14 @@ describe("get-keys", async () => {
         doc: someCp,
         source: "",
       },
-      media: { doc: wmp, source: "" },
+      media: [{ doc: wmp, source: "" }],
     },
     {
       core: {
         doc: anotherCp,
         source: "",
       },
-      media: { doc: wmp, source: "" },
+      media: [{ doc: wmp, source: "" }],
     },
   ];
 
@@ -134,7 +134,7 @@ describe("get-keys", async () => {
         path: [2],
         value: {
           core: { doc: cpWithMultipleKeys, source: "" },
-          media: { doc: wmp, source: "" },
+          media: [{ doc: wmp, source: "" }],
         },
       },
     ]);

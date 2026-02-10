@@ -30,7 +30,7 @@ export function SiteProfile(props: SiteProfileProps) {
             className="w-fit text-base text-gray-700 mb-2"
             data-testid="site-profile-wsp-name"
           >
-            {props.siteProfile.credential.doc.credentialSubject.name}
+            {props.wsp.credentialSubject.name}
           </h1>
           <ReliabilityGuide className="mb-3" contentType="ContentType_Site" />
         </div>

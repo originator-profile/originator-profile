@@ -31,7 +31,7 @@ describe("Originator Profile Set", () => {
     {
       core: "eyJ...",
       annotations: ["eyJ..."],
-      media: "eyJ...",
+      media: ["eyJ..."],
     },
   ];
 
@@ -98,14 +98,14 @@ describe("<script> 要素が2つ以上存在するとき", () => {
     {
       core: "eyJ...",
       annotations: ["eyJ..."],
-      media: "eyJ...",
+      media: ["eyJ..."],
     },
   ];
   const ops2 = [
     {
       core: "eyJ...",
       annotations: ["eyJ..."],
-      media: "eyJ...",
+      media: ["eyJ..."],
     },
   ];
   test("有効な Originator Profile Set が得られる", async () => {
@@ -152,7 +152,7 @@ describe("<script>要素から Originator Profile Set を取得する", () => {
     {
       core: "eyJ...",
       annotations: ["eyJ..."],
-      media: "eyJ...",
+      media: ["eyJ..."],
     },
   ];
 

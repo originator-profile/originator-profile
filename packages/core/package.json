@@ -1,6 +1,6 @@
 {
   "name": "@originator-profile/core",
-  "version": "0.5.0-beta.0",
+  "version": "0.5.0-beta.1",
   "license": "Apache-2.0",
   "homepage": "https://docs.originator-profile.org",
   "repository": {
@@ -37,6 +37,7 @@
   "devDependencies": {
     "@js-temporal/polyfill": "^0.5.1",
     "@originator-profile/tsconfig": "workspace:*",
+    "bcp-47-match": "^2.0.3",
     "date-fns": "^4.1.0",
     "eslint": "^9.25.1",
     "eslint-config-originator-profile": "workspace:*",

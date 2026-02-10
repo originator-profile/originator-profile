@@ -42,7 +42,8 @@ const subject = {
   properties: {
     id: {
       type: "string",
-      title: "Web サイトのオリジン (形式: https://<ホスト名>)",
+      description:
+        "It MUST be the Web site URL. If the same content exists on multiple URLs, specify the most representative URL.",
       format: "uri",
     },
     type: {
@@ -50,12 +51,12 @@ const subject = {
     },
     name: {
       type: "string",
-      title: "Web サイトの名称",
+      description: "The name of the Web site.",
     },
     image: Image,
     description: {
       type: "string",
-      title: "Web サイトの説明",
+      description: "A description of the Web site.",
     },
     allowedOrigin: AllowedOrigin,
   },

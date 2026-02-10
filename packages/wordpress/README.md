@@ -2,6 +2,8 @@
 
 WordPress での記事の公開時の Content Attestation (CA) の発行に役立つプラグインです。
 
+電通総研CAサーバを利用する場合には、電通総研CAサーバの設定マニュアルを併せてご参照下さい。
+
 ## 機能
 
 このプラグインの主な機能は以下の通りです。
@@ -33,55 +35,7 @@ WordPress での記事の公開時の Content Attestation (CA) の発行に役�
 5. `/.well-known/sp.json` の配置:
    詳細は「[サイトのOP対応](https://cip.docs.originator-profile.org/studies/general-instruction/sp-setup-guide/)」を参照
 
-### プラグインの設定
-
-### 利用テーマに追加function
-
-```
-themes/functions.php
-```
-
-### 配置ファイル(WEBサーバ)
-
-```
-/extra/cas-auth.php (pluginディレクトリパスを要確認)
-```
-
-### 固定ページ追加(API認証リダイレクト用)
-
-- 固定ページ作成
-  - タイトル：cas-auth
-  - 公開して page_id をメモ
-- ヘッダー/フッター削除
-  - 外観 > テーマ > カスタマイズ > スタイル > 追加CSS
-  - 以下の追加CSSを貼り付ける
-    ```
-    /* API認証固定ページでヘッダーとフッターを非表示にする */
-        .page-id-[固定ページID] header,
-        .page-id-[固定ページID] footer {
-          display: none;
-        }
-    ```
-- ショートコード配置
-  ```
-  [requireApiAuth]
-  ```
-- パーマリンク(/cas-auth/)
-  - 設定 > パーマリンク
-  - パーマリンク構造：投稿名
-
 ## 設定
-
-### (事前)CAサーバ管理画面
-
-- APIアカウント設定
-  - APIアカウントメールアドレス
-  - APIアカウントパスワード
-  - WebサイトURL
-  - クライアントID
-  - クライアントシークレット
-  - リダイレクトURL(https://サイトURL/cas-auth/)
-- WP認証情報の取得
 
 ![](./assets/ca-manager.webp)
 
@@ -296,8 +250,11 @@ participant CAサーバー
 
 管理者->>WordPress: プラグインのインストール
 管理者->>WordPress: 投稿・更新
+管理者->>WordPress: 非公開・削除
 WordPress->>プラグイン: transition_post_status
+WordPress->>プラグイン: before_delete_post
 プラグイン->>CAサーバー: CAの登録・更新
+プラグイン->>CAサーバー: CAの削除
 
 利用者->>WordPress: 投稿の閲覧
 WordPress->>プラグイン: wp_head
@@ -311,7 +268,9 @@ WordPress-->>利用者: CAS
 
 [Hooks](https://developer.wordpress.org/plugins/hooks/) に応じた処理を実行します。
 
-- `transition_post_status` : 投稿・更新のタイミングでトリガーされ、そのコンテンツの内容を変換し、CAサーバーの登録・更新エンドポイントに送信します
+- `transition_post_status` : 投稿・更新のタイミングでトリガーされ、そのコンテンツの内容を変換し、CAサーバーの登録・更新エンドポイントに送信します  
+  また、公開から非公開や下書きなど公開以外の状態になったタイミングでトリガーされ、対象コンテンツのCA IDを利用してCAサーバーの削除エンドポイントに送信します
+- `before_delete_post` : 投稿が削除されるタイミングでトリガーされ、対象コンテンツのCA IDを利用してCAサーバーの削除エンドポイントに送信します
 - `wp_head` : 投稿の閲覧のタイミングでトリガーされ、埋め込まれた `<script>` 要素を介して利用者はCASを取得します
 
 以上の処理により、投稿したコンテンツは自動的に管理され、利用者はその真正性を確認できます。
@@ -407,6 +366,12 @@ Autoptimizeによるminify前のHTMLがCA Serverに送信される場合、実�
 Pro版では、画像がCDN経由で変換され、URLが変化する場合があります。これにより署名対象のHTMLと実際の表示内容に差異が生じます。
 
 **対応方針**: CDN変換後の画像URLを取得し、それを反映したHTMLをCA Serverに送信
+
+### CA サーバー側でのデータ削除
+
+メタデータ `_profile_post_cas` に CAS が保存されている状態で、 CA サーバー側のデータが手動で削除された場合、記事更新時に UUID を指定した新規登録が試みられます。これはサーバー側でエラーとなる可能性があります。
+
+**回避策**： 一度記事を非公開にすることで、メタデータがクリアされます。その後再度公開することで UUID を指定しない新規登録となり、正常に登録されます。
 
 ## 開発ガイド
 
