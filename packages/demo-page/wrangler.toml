@@ -1,5 +1,5 @@
 name = "demo-exp"
-account_id = "${CF_ACCOUNT_ID}"
+account_id = "490ebc8878106b938b84c112d545802b"
 compatibility_date = "2025-07-03"
 main = "./worker/index.ts"
 routes = [
