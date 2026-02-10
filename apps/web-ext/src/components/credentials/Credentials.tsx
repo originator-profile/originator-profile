@@ -80,7 +80,11 @@ export function Credentials(props: CredentialsProps) {
   return (
     <div data-testid="cas" className="flex">
       <div className="flex flex-col border-r border-gray-200">
-        <CaFilter caListType={caListType} setCaListType={onFilterUpdate} />
+        <CaFilter
+          caListType={caListType}
+          setCaListType={onFilterUpdate}
+          cas={props.cas}
+        />
         <nav className="shrink-0 w-16 overflow-y-auto bg-white sticky top-0 z-10 border-t border-gray-200">
           <CaSelector filteredCas={filteredCas} onClickCa={handleClickCa} />
         </nav>
