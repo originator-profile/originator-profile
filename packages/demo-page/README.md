@@ -27,6 +27,9 @@ pnpm install
 # wranglerにログインします。
 npx wrangler login
 
+# ログインしたアカウントを確認します（wrangler.tomlのaccount_idと一致することを確認）。
+npx wrangler whoami
+
 # デプロイします。
 # ※ ./dist の内容がデプロイされますので、pnpm build 後にデプロイしてください。
 npx wrangler deploy
