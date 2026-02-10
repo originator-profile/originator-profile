@@ -39,20 +39,23 @@ export function Credentials(props: CredentialsProps) {
     setCaListType(newFilterType);
     const newlyFilteredCas = listCas(props.cas, newFilterType);
     const [ca] = newlyFilteredCas;
+
+    // フィルター結果が空でもオーバーレイを更新する
+    void overlayExtensionMessenger.sendMessage(
+      "enter",
+      {
+        framesCas: props.framesCas,
+        activeCa: ca ?? null,
+        wmps: flush(
+          props.ops.flatMap((op) => op.media?.map((m) => m.doc) ?? []),
+        ),
+        filterType: newFilterType,
+      },
+      Number(tabId),
+    );
+
     if (ca) {
       void navigate(buildPublUrl(tabId, ca.attestation.doc));
-      void overlayExtensionMessenger.sendMessage(
-        "enter",
-        {
-          framesCas: props.framesCas,
-          activeCa: ca,
-          wmps: flush(
-            props.ops.flatMap((op) => op.media?.map((m) => m.doc) ?? []),
-          ),
-          filterType: newFilterType,
-        },
-        Number(tabId),
-      );
     }
   }
 
