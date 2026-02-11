@@ -8,6 +8,8 @@ import {
 } from "@originator-profile/securing-mechanism";
 import {
   FetchIntegrityResult,
+  IntegrityFetchFailed,
+  IntegrityVerificationFailed,
   IntegrityVerifyResult,
   verifyIntegrity as nativeVerifyIntegrity,
   VerifyIntegrity,
@@ -60,6 +62,50 @@ async function checkUrlAndOrigin<T extends ContentAttestation>(
   return result;
 }
 
+function checkIntegrityResults<T extends ContentAttestation>(
+  integrityResults: IntegrityResult[],
+  urlResult: VerifiedCa<T>,
+): CaVerifyFailed | undefined {
+  // Integrity の取得に失敗した場合
+  const fetchFailedResults = integrityResults.filter(
+    (r) =>
+      r.verifyResult instanceof Error &&
+      r.verifyResult.code === IntegrityFetchFailed.code,
+  );
+
+  if (fetchFailedResults.length > 0) {
+    const failedIntegritiesMessage = fetchFailedResults
+      .map((result) => {
+        return `target[${result.index}] Expected: ${result.expectedIntegrity}`;
+      })
+      .join(", ");
+
+    return new CaVerifyFailed(
+      `Content Attestation Target integrity fetch failed for element(s): ${failedIntegritiesMessage}`,
+      urlResult,
+    );
+  }
+
+  // Integrityの検証に失敗した場合
+  const verificationFailedResults = integrityResults.filter(
+    (r) =>
+      r.verifyResult instanceof Error &&
+      r.verifyResult.code === IntegrityVerificationFailed.code,
+  );
+
+  if (verificationFailedResults.length > 0) {
+    const failedIntegritiesMessage = verificationFailedResults
+      .map((result) => {
+        return `target[${result.index}] Expected: ${result.expectedIntegrity}`;
+      })
+      .join(", ");
+
+    return new CaVerifyFailed(
+      `Content Attestation Target integrity verification failed for element(s): ${failedIntegritiesMessage}`,
+      urlResult,
+    );
+  }
+}
 /**
  * Content Attestation 検証機の作成
  * @param ca Content Attestation
@@ -104,22 +150,9 @@ export function CaVerifier<T extends ContentAttestation>(
         })),
       );
 
-      // Integrity の取得に失敗した場合
-      const fetchFailedResults = integrityResults.filter(
-        (r) => r.verifyResult instanceof Error,
-      );
-
-      if (fetchFailedResults.length > 0) {
-        const failedIntegritiesMessage = fetchFailedResults
-          .map((result) => {
-            return `target[${result.index}] Expected: ${result.expectedIntegrity}`;
-          })
-          .join(", ");
-
-        return new CaVerifyFailed(
-          `Content Attestation Target integrity fetch failed for element(s): ${failedIntegritiesMessage}`,
-          urlResult,
-        );
+      const error = checkIntegrityResults(integrityResults, urlResult);
+      if (error) {
+        return error;
       }
 
       const failedIndices = integrityResults
