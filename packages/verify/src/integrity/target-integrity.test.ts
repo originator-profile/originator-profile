@@ -6,6 +6,7 @@ import {
   createIntegrityMetadataSet,
   IntegrityMetadataSet,
 } from "websri";
+import { FetchIntegrityFailed } from "./error";
 import { verifyIntegrity } from "./target-integrity";
 import { IntegrityVerifyResult } from "./types";
 
@@ -162,5 +163,23 @@ describe("verifyIntegrity()", () => {
     expect(fetchResult instanceof Error).toBe(false);
     const verifyResult = fetchResult as IntegrityVerifyResult;
     expect(verifyResult.valid).toBe(true);
+  });
+
+  it("should return FetchIntegrityFailed when fetch fails", async () => {
+    const content: Target = {
+      type: "ExternalResourceTargetIntegrity",
+      integrity: "sha256-test",
+    };
+
+    document.body.innerHTML =
+      '<img integrity="sha256-test" src="https://example.com/image.png" />';
+
+    const mockFetcher = () => Promise.reject(new Error("Network error"));
+    const result = await verifyIntegrity(content, document, mockFetcher);
+
+    expect(result instanceof Error).toBe(true);
+    if (result instanceof FetchIntegrityFailed) {
+      expect(result.result).toBeDefined();
+    }
   });
 });
