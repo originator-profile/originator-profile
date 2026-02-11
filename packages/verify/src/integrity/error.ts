@@ -1,14 +1,14 @@
-export class FetchIntegrityFailed extends Error {
+export class IntegrityFetchFailed extends Error {
   static get code() {
-    return "ERR_FETCH_INTEGRITY_FAILED" as const;
+    return "ERR_INTEGRITY_FETCH_FAILED" as const;
   }
-  readonly code = FetchIntegrityFailed.code;
+  readonly code = IntegrityFetchFailed.code;
   readonly ok = false;
 
   /** 取得結果 */
   result?: Error;
 
-  constructor(message: string, result: FetchIntegrityFailed["result"]) {
+  constructor(message: string, result: IntegrityFetchFailed["result"]) {
     super(message);
     this.result = result;
   }

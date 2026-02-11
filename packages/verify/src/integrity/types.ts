@@ -1,4 +1,4 @@
-import { FetchIntegrityFailed, IntegrityVerificationFailed } from "./error";
+import { IntegrityFetchFailed, IntegrityVerificationFailed } from "./error";
 
 export type IntegrityVerifyResult = {
   valid: boolean;
@@ -7,5 +7,5 @@ export type IntegrityVerifyResult = {
 
 export type FetchIntegrityResult =
   | IntegrityVerifyResult
-  | FetchIntegrityFailed
+  | IntegrityFetchFailed
   | IntegrityVerificationFailed;

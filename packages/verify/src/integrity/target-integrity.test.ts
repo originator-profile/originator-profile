@@ -6,7 +6,7 @@ import {
   createIntegrityMetadataSet,
   IntegrityMetadataSet,
 } from "websri";
-import { FetchIntegrityFailed } from "./error";
+import { IntegrityFetchFailed } from "./error";
 import { verifyIntegrity } from "./target-integrity";
 import { IntegrityVerifyResult } from "./types";
 
@@ -178,7 +178,7 @@ describe("verifyIntegrity()", () => {
     const result = await verifyIntegrity(content, document, mockFetcher);
 
     expect(result instanceof Error).toBe(true);
-    if (result instanceof FetchIntegrityFailed) {
+    if (result instanceof IntegrityFetchFailed) {
       expect(result.result).toBeDefined();
     }
   });
