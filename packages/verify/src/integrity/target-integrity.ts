@@ -11,7 +11,7 @@ import {
   selectByIntegrity,
 } from "@originator-profile/sign";
 import { createIntegrityMetadataSet, IntegrityMetadataSet } from "websri";
-import { FetchIntegrityFailed } from "./error";
+import { FetchIntegrityFailed, IntegrityVerificationFailed } from "./error";
 import { FetchIntegrityResult, IntegrityVerifyResult } from "./types";
 
 class IntegrityVerifier {
@@ -102,12 +102,10 @@ export async function verifyIntegrity(
     return await integrityVerifier.verify(content, doc);
   } catch (e) {
     if (e instanceof FetchFailed) {
-      return new FetchIntegrityFailed("Verify integrity failed", {
-        error: e.error,
-      });
+      return new FetchIntegrityFailed("Verify integrity failed", e.error);
     }
 
-    return new FetchIntegrityFailed("Verify integrity failed", { payload: e });
+    return new IntegrityVerificationFailed("Verify integrity failed", e);
   }
 }
 

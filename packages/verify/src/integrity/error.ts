@@ -1,17 +1,30 @@
 export class FetchIntegrityFailed extends Error {
   static get code() {
-    return "ERR_VERIFY_INTEGRITY_FAILED" as const;
+    return "ERR_FETCH_INTEGRITY_FAILED" as const;
   }
   readonly code = FetchIntegrityFailed.code;
   readonly ok = false;
 
   /** 取得結果 */
-  result: {
-    error?: Error;
-    payload?: unknown;
-  };
+  result?: Error;
 
   constructor(message: string, result: FetchIntegrityFailed["result"]) {
+    super(message);
+    this.result = result;
+  }
+}
+
+export class IntegrityVerificationFailed extends Error {
+  static get code() {
+    return "ERR_INTEGRITY_VERIFICATION_FAILED" as const;
+  }
+  readonly code = IntegrityVerificationFailed.code;
+  readonly ok = false;
+
+  /** 取得結果 */
+  result?: unknown;
+
+  constructor(message: string, result: IntegrityVerificationFailed["result"]) {
     super(message);
     this.result = result;
   }
