@@ -245,7 +245,7 @@ describe("verify-allowed-url", () => {
   });
   test("*だけの不正なURLパターンでfalseが返されるか", async () => {
     expect(
-      await verifyAllowedUrl("*", "https://example.com/maps/"),
+      await verifyAllowedUrl("https://example.com/maps/", "*"),
     ).toBeFalsy();
   });
 });
