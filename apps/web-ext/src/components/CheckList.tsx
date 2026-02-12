@@ -75,11 +75,13 @@ function DisplayResults({
   code,
   message,
   payload,
+  showPayload = true,
   className,
 }: {
   code?: string;
   message?: string;
   payload: unknown;
+  showPayload?: boolean;
   className?: string;
 }) {
   const safeValue = (() => {
@@ -104,12 +106,14 @@ function DisplayResults({
           <p>{message}</p>
         </div>
       )}
-      <div className="text-gray-700 mb-1">
-        <p className="font-bold mb-1">payload</p>
-        <pre className="overflow-auto">
-          <JsonView value={safeValue} collapsed={true} />
-        </pre>
-      </div>
+      {showPayload && (
+        <div className="text-gray-700 mb-1">
+          <p className="font-bold mb-1">payload</p>
+          <pre className="overflow-auto">
+            <JsonView value={safeValue} collapsed={true} />
+          </pre>
+        </div>
+      )}
     </div>
   );
 }
@@ -127,11 +131,13 @@ function DetailItem({ label, icon, children, className }: DetailItemProps) {
 function ResultItem({
   label,
   value,
+  showPayload = true,
   children,
   className,
 }: {
   label: string;
   value: unknown;
+  showPayload?: boolean;
   children?: React.ReactNode;
   className?: string;
 }) {
@@ -148,10 +154,15 @@ function ResultItem({
           code={value.code}
           message={value.message}
           payload={value}
+          showPayload={showPayload}
           className="ml-7"
         />
       ) : (
-        <DisplayResults payload={value} className="ml-7" />
+        <DisplayResults
+          payload={value}
+          showPayload={showPayload}
+          className="ml-7"
+        />
       )}
       {children}
     </DetailItem>
@@ -233,6 +244,7 @@ function OriginatorsCheckList({
             key={index}
             label={`Originator Profile #${index}`}
             value={op}
+            showPayload={false}
           >
             <DisplayOriginators op={isError ? op.result : op} />
           </ResultItem>
@@ -260,6 +272,7 @@ function OriginatorProfileSetCheck({
     <ResultItem
       label="Originator Profile Set"
       value={originators}
+      showPayload={false}
       className="pl-4 mb-2"
     >
       {listValue && <OriginatorsCheckList originators={listValue} />}
@@ -283,7 +296,12 @@ function SiteProfileCheck({
       : undefined;
 
   return (
-    <ResultItem label="Site Profile" value={siteProfile} className="pl-4 mb-2">
+    <ResultItem
+      label="Site Profile"
+      value={siteProfile}
+      showPayload={false}
+      className="pl-4 mb-2"
+    >
       {originatorValue && (
         <OriginatorProfileSetCheck originators={originatorValue} />
       )}
@@ -325,6 +343,7 @@ function ContentAttestationSetCheck({
     <ResultItem
       label="Content Attestation Set"
       value={cas}
+      showPayload={false}
       className="pl-4 mb-2"
     >
       {isVerifyFailed && <ContentAttestationCheck cas={cas.result} />}
