@@ -50,8 +50,6 @@ function DetailInfo({
             className="pl-4 mb-8 overflow-auto"
             value={JSON.parse(
               stringifyWithError({
-                "Site Profile": sp ?? null,
-                "Originator Profile Set": ops ?? null,
                 "Content Attestation Set (Per Frame)": framesCas ?? null,
               }),
             )}
