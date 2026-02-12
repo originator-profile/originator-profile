@@ -106,13 +106,15 @@ function DisplayResults({
           <p>{message}</p>
         </div>
       )}
-      {showPayload && (
+      {showPayload ? (
         <div className="text-gray-700 mb-1">
           <p className="font-bold mb-1">payload</p>
           <pre className="overflow-auto">
             <JsonView value={safeValue} collapsed={true} />
           </pre>
         </div>
+      ) : (
+        <div className="mb-2" />
       )}
     </div>
   );
@@ -205,7 +207,7 @@ function DisplayOriginators({
 }) {
   return (
     <div className="ml-7">
-      <ResultItem label={"Core Profile"} value={op.core} />
+      <ResultItem label={"Core Profile"} value={op.core} className="mb-2" />
       {op.annotations?.map(
         // annotation が存在しなければ表示しません。
         (annotation, index) => (
@@ -213,6 +215,7 @@ function DisplayOriginators({
             key={index}
             label={`Profile Annotation #${index}`}
             value={annotation}
+            className="mb-2"
           />
         ),
       )}
@@ -223,6 +226,7 @@ function DisplayOriginators({
             key={index}
             label={`Web Media Profile #${index}`}
             value={media}
+            className="mb-2"
           />
         ),
       )}
@@ -245,6 +249,7 @@ function OriginatorsCheckList({
             label={`Originator Profile #${index}`}
             value={op}
             showPayload={false}
+            className="mb-2"
           >
             <DisplayOriginators op={isError ? op.result : op} />
           </ResultItem>
