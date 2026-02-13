@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router";
+import EnvironmentBanner from "./components/EnvironmentBanner";
 import { overlayExtensionMessenger } from "./components/overlay/extension-events";
 import Base from "./pages/Base";
 import Credentials from "./pages/Credentials";
@@ -27,32 +28,35 @@ function App() {
   }, []);
 
   return (
-    <Routes>
-      <Route path="/">
-        <Route index element={<Navigate to="/tab" replace />} />
-        <Route path={paths.base}>
-          <Route index element={<Base />} />
-          <Route path={paths.site}>
-            <Route index element={<SiteProfile />} />
-            <Route path={paths.org} element={<Org back="../.." />} />
+    <div className="flex flex-col">
+      <EnvironmentBanner mode={import.meta.env.MODE} />
+      <Routes>
+        <Route path="/">
+          <Route index element={<Navigate to="/tab" replace />} />
+          <Route path={paths.base}>
+            <Route index element={<Base />} />
+            <Route path={paths.site}>
+              <Route index element={<SiteProfile />} />
+              <Route path={paths.org} element={<Org back="../.." />} />
+            </Route>
+            <Route path={paths.publ}>
+              <Route
+                index
+                element={
+                  <div className="flex flex-col divide-y divide-gray-200">
+                    <SiteProfile />
+                    <Credentials />
+                  </div>
+                }
+              />
+              <Route path={paths.org} element={<Org back="../.." />} />
+            </Route>
+            <Route path={paths.prohibition} element={<Prohibition />} />
+            <Route path={paths.detail} element={<DetailInfo back=".." />} />
           </Route>
-          <Route path={paths.publ}>
-            <Route
-              index
-              element={
-                <div className="flex flex-col divide-y divide-gray-200">
-                  <SiteProfile />
-                  <Credentials />
-                </div>
-              }
-            />
-            <Route path={paths.org} element={<Org back="../.." />} />
-          </Route>
-          <Route path={paths.prohibition} element={<Prohibition />} />
-          <Route path={paths.detail} element={<DetailInfo back=".." />} />
         </Route>
-      </Route>
-    </Routes>
+      </Routes>
+    </div>
   );
 }
 

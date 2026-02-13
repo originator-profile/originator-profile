@@ -78,13 +78,28 @@ const firefox = {
  *
  * @param {object} arg
  * @param {string} arg.target 拡張機能のランタイム
+ * @param {string} [arg.mode] ビルドモード
  */
-export default function esbuildPluginManifest({ target }) {
-  const manifest = {
+export default function esbuildPluginManifest({ target, mode = "production" }) {
+  const base = {
     chromium,
     "firefox-desktop": firefox,
     "firefox-android": firefox,
   }[target];
+
+  if (!base) {
+    throw new Error(`Unsupported target: ${target}`);
+  }
+
+  const manifest = {
+    ...base,
+    ...(mode === "production"
+      ? {}
+      : {
+          name: `[${mode.toUpperCase()}] ${base.name}`,
+          description: `⚠️ ${base.description} (${mode.charAt(0).toUpperCase()}${mode.slice(1)} Build) ⚠️`,
+        }),
+  };
 
   return {
     name: "plugin:manifest",

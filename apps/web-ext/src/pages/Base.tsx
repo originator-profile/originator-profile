@@ -114,7 +114,16 @@ function Base() {
   const { tabId, siteProfile, error: sp_error } = useSiteProfile();
   const { ops, cas, framesCas, error: credentials_error } = useCredentials();
   useFrameCasLocationProvider(tabId, framesCas ?? []);
-  useTitle([_("Base_ContentsInformation"), origin].filter(Boolean).join(" ― "));
+  useTitle(
+    [
+      import.meta.env.MODE !== "production" &&
+        `[${import.meta.env.MODE.toUpperCase()}]`,
+      _("Base_ContentsInformation"),
+      origin,
+    ]
+      .filter(Boolean)
+      .join(" ― "),
+  );
   window.addEventListener(
     "pagehide",
     useCallback(
