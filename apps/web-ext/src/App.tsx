@@ -1,6 +1,6 @@
 import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router";
-import EnvironmentBanner from "./components/EnvironmentBanner";
+import { EnvironmentBanner } from "./components/environment";
 import { overlayExtensionMessenger } from "./components/overlay/extension-events";
 import Base from "./pages/Base";
 import Credentials from "./pages/Credentials";

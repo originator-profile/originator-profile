@@ -1,6 +1,10 @@
 // @ts-check
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import {
+  formatBuildMode,
+  formatBuildModeTitle,
+} from "./src/components/environment/build-mode.js";
 
 const pkg = await readFile(new URL("./package.json", import.meta.url))
   .then(String)
@@ -93,12 +97,8 @@ export default function esbuildPluginManifest({ target, mode = "production" }) {
 
   const manifest = {
     ...base,
-    ...(mode === "production"
-      ? {}
-      : {
-          name: `[${mode.toUpperCase()}] ${base.name}`,
-          description: `⚠️ ${base.description} (${mode.charAt(0).toUpperCase()}${mode.slice(1)} Build) ⚠️`,
-        }),
+    name: formatBuildModeTitle(mode, base.name),
+    description: formatBuildMode(mode, base.description),
   };
 
   return {
