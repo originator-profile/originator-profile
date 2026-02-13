@@ -156,6 +156,6 @@ pnpm e2e --update-snapshots
 // テスト
 await expect(ext?.getByTestId("site-profile")).toBeVisible();
 expect(await ext?.getByTestId("site-profile-wsp-name").innerText()).toBe(
-  "SiteProfileの取得検証",
+  "SiteProfile の取得検証",
 );
 ```
