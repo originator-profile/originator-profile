@@ -294,6 +294,7 @@ function SiteProfileCheck({
   const isSiteError =
     siteProfile instanceof SiteProfileInvalid ||
     siteProfile instanceof SiteProfileVerifyFailed;
+  const isFetchError = isError && !isSiteError;
   const originatorValue = isSiteError
     ? siteProfile.result.originators
     : !isError
@@ -304,13 +305,13 @@ function SiteProfileCheck({
     <ResultItem
       label="Site Profile"
       value={siteProfile}
-      showPayload={false}
+      showPayload={isFetchError}
       className="pl-4 mb-2"
     >
       {originatorValue && (
         <OriginatorProfileSetCheck originators={originatorValue} />
       )}
-      {(isSiteError || !isError) && <SitesCheck siteProfile={siteProfile} />}
+      {!isFetchError && <SitesCheck siteProfile={siteProfile} />}
     </ResultItem>
   );
 }
