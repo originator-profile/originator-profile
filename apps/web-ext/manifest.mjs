@@ -86,10 +86,10 @@ const firefox = {
  */
 export default function esbuildPluginManifest({ target, mode = "production" }) {
   const targetManifest = {
-chromium,
-"firefox-desktop": firefox,
-"firefox-android": firefox,
-}[target];
+    chromium,
+    "firefox-desktop": firefox,
+    "firefox-android": firefox,
+  }[target];
 
   if (!targetManifest) {
     throw new Error(`Unsupported target: ${target}`);
