@@ -85,20 +85,20 @@ const firefox = {
  * @param {string} [arg.mode] ビルドモード
  */
 export default function esbuildPluginManifest({ target, mode = "production" }) {
-  const base = {
-    chromium,
-    "firefox-desktop": firefox,
-    "firefox-android": firefox,
-  }[target];
+  const targetManifest = {
+chromium,
+"firefox-desktop": firefox,
+"firefox-android": firefox,
+}[target];
 
-  if (!base) {
+  if (!targetManifest) {
     throw new Error(`Unsupported target: ${target}`);
   }
 
   const manifest = {
-    ...base,
-    name: formatBuildModeTitle(mode, base.name),
-    description: formatBuildMode(mode, base.description),
+    ...targetManifest,
+    name: formatBuildModeTitle(mode, targetManifest.name),
+    description: formatBuildMode(mode, targetManifest.description),
   };
 
   return {
