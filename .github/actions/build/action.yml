@@ -1,6 +1,10 @@
 name: build
 description: Build
 inputs:
+  NODE_ENV:
+    description: Build mode (e.g., "production" or "testing")
+    required: false
+    default: "production"
   BASIC_AUTH:
     description: レジストリ API の Basic 認証
     required: false
@@ -21,6 +25,7 @@ runs:
     - run: pnpm build
       shell: bash
       env:
+        NODE_ENV: ${{ inputs.NODE_ENV }}
         BASIC_AUTH: ${{ inputs.BASIC_AUTH }}
         BASIC_AUTH_CREDENTIALS: ${{ inputs.BASIC_AUTH_CREDENTIALS }}
         REGISTRY_OPS: ${{ inputs.REGISTRY_OPS }}
