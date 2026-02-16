@@ -1,0 +1,28 @@
+name: canary
+run-name: "${{ github.ref_name }}-canary-${{ github.run_number }}"
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+jobs:
+  main:
+    environment:
+      name: release
+      url: ${{ steps.build.outputs.artifact-url }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v6
+      - name: Setup
+        uses: "./.github/actions/setup"
+      - name: Bump canary version
+        run: pnpm exec lerna version --yes --no-git-tag-version --preid '${{ github.ref_name }}-canary-${{ github.run_number }}' prerelease
+      - name: Build
+        id: build
+        uses: "./.github/actions/build"
+        with:
+          BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
+          REGISTRY_OPS: ${{ secrets.REGISTRY_OPS }}
+      - name: Build for WordPress plugin
+        uses: "./.github/actions/wordpress_build"

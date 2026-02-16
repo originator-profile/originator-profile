@@ -25,6 +25,7 @@ import {
   SupportedVerifiedCas,
   useCredentials,
 } from "../components/credentials";
+import { formatBuildModeTitle } from "../components/environment";
 import { useFrameCasLocationProvider } from "../components/frameCas";
 import { overlayExtensionMessenger } from "../components/overlay/extension-events";
 import { useSiteProfile } from "../components/siteProfile";
@@ -114,7 +115,7 @@ function Base() {
   const { tabId, siteProfile, error: sp_error } = useSiteProfile();
   const { ops, cas, framesCas, error: credentials_error } = useCredentials();
   useFrameCasLocationProvider(tabId, framesCas ?? []);
-  useTitle([_("Base_ContentsInformation"), origin].filter(Boolean).join(" ― "));
+
   window.addEventListener(
     "pagehide",
     useCallback(
@@ -122,6 +123,11 @@ function Base() {
       [tabId],
     ),
   );
+
+  const title = [_("Base_ContentsInformation"), origin]
+    .filter(Boolean)
+    .join(" ― ");
+  useTitle(formatBuildModeTitle(import.meta.env.MODE, title));
 
   if (isLoading({ siteProfile, sp_error, ops, cas, credentials_error })) {
     return <Loading />;

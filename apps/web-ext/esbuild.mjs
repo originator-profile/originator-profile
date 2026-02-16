@@ -133,6 +133,7 @@ const buildOptions = {
     postcss,
     manifest({
       target: args.values.target,
+      mode: args.values.mode,
     }),
   ],
 };

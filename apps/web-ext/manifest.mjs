@@ -1,6 +1,10 @@
 // @ts-check
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
+import {
+  formatBuildMode,
+  formatBuildModeTitle,
+} from "./src/components/environment/build-mode.js";
 
 const pkg = await readFile(new URL("./package.json", import.meta.url))
   .then(String)
@@ -78,13 +82,24 @@ const firefox = {
  *
  * @param {object} arg
  * @param {string} arg.target 拡張機能のランタイム
+ * @param {string} [arg.mode] ビルドモード
  */
-export default function esbuildPluginManifest({ target }) {
-  const manifest = {
+export default function esbuildPluginManifest({ target, mode = "production" }) {
+  const targetManifest = {
     chromium,
     "firefox-desktop": firefox,
     "firefox-android": firefox,
   }[target];
+
+  if (!targetManifest) {
+    throw new Error(`Unsupported target: ${target}`);
+  }
+
+  const manifest = {
+    ...targetManifest,
+    name: formatBuildModeTitle(mode, targetManifest.name),
+    description: formatBuildMode(mode, targetManifest.description),
+  };
 
   return {
     name: "plugin:manifest",
