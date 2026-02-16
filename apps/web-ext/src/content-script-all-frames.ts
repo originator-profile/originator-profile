@@ -326,12 +326,16 @@ frameCasWindowMessenger.onMessage(
       senderAncestor.at(-1)?.parentFrameId ?? coordinate.parentFrameId;
     if (frameId === -1) return;
     const frame = frames.find((frame) => frame.frameId === frameId);
-    if (!frame) return;
+    if (!frame) return console.error(`frame not found. frame id: ${frameId}`);
     const senderOrigin = frames.find(
       (f) =>
         f.frameId === (senderAncestor.at(-1)?.frameId ?? coordinate.frameId),
     )?.origin;
-    if (origin !== senderOrigin) return;
+    if (origin !== senderOrigin) {
+      return console.error(
+        `origin mismatch. sender: ${senderOrigin}, receiver: ${origin}`,
+      );
+    }
     const ancestor = updateAncestor(source, frame, senderAncestor);
     sendFrameCasMessage(frame, ancestor, coordinate, frames);
   },
