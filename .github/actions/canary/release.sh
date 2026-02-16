@@ -15,5 +15,19 @@ for f in *.zip; do
 done
 cd -
 
+NOTE="<details>
+
+## Download
+
+Download from the Assets below.
+
+- Testing Extension (Chrome) _testing_profile_web_extension-chromium-canary.zip
+- Testing Extension (Firefox) _testing_profile_web_extension-firefox-desktop-canary.zip
+- Extension (Chrome) profile_web_extension-chromium-canary.zip
+- Extension (Firefox) profile_web_extension-firefox-desktop-canary.zip
+- WordPress Plugin wordpress-ca-manager.zip
+
+</details>"
+
 gh release delete canary --yes --cleanup-tag 2>/dev/null || :
-gh release create canary --prerelease --title "Canary Release" .github/dist/*
+gh release create canary --prerelease --title "Canary Release" --notes "$NOTE" .github/dist/*
