@@ -1,3 +1,4 @@
+import { _ } from "@originator-profile/ui";
 import { useSearchParams } from "react-router";
 
 const isValidUrl = (url: string) => {
@@ -33,13 +34,11 @@ const WarningIcon = () => {
 export default function Warning() {
   const [searchParams] = useSearchParams();
   const target = searchParams.get("target");
-  // const reason = searchParams.get("reason");
   const sourceOrg = searchParams.get("sourceOrg");
   const destOrg = searchParams.get("destOrg");
   const expectedOrg = searchParams.get("expectedOrg");
 
   const safeTarget = target && isValidUrl(target) ? target : null;
-  // const safeReason = reason?.slice(0, 500) ?? null;
 
   const handleProceed = async () => {
     if (safeTarget) {
@@ -73,21 +72,20 @@ export default function Warning() {
       <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
         <WarningIcon />
         <h1 className="text-xl font-bold text-gray-800 mb-2">
-          サイトの身元を確認できません
+          {_("Warning_Title")}
         </h1>
         <p className="text-gray-600 mb-6">
           {sourceOrg ? (
             <>
-              {expectedOrg ? `${expectedOrg}のサイトを開くことを意図した` : ""}
-              {sourceOrg}の広告をクリックしましたが、
+              {expectedOrg ? _("Warning_IntendedSite", expectedOrg) : ""}
+              {_("Warning_ClickedAd", sourceOrg)}
               {destOrg
-                ? `リンク先は${destOrg}が運営しています。`
-                : "リンク先のサイト運営者の確認ができませんでした。"}
+                ? _("Warning_OperatedBy", destOrg)
+                : _("Warning_CannotVerify")}
             </>
           ) : (
-            "予期されたOriginator Profile (OPID) と一致しませんでした。"
+            _("Warning_OpidMismatch")
           )}
-          {/* details/reason hidden as per user request */}
         </p>
         <div className="space-y-3">
           <button
@@ -95,24 +93,23 @@ export default function Warning() {
             className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-200"
           >
             {window.history.length > 1
-              ? "前のページに戻る"
-              : "このタブを閉じる"}
+              ? _("Warning_GoBack")
+              : _("Warning_CloseTab")}
           </button>
           <button
             onClick={handleProceed}
             disabled={!safeTarget}
-            className={`w-full py-2 px-4 rounded transition duration-200 ${
-              safeTarget
+            className={`w-full py-2 px-4 rounded transition duration-200 ${safeTarget
                 ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 : "bg-gray-100 text-gray-400 cursor-not-allowed"
-            }`}
+              }`}
           >
-            このままアクセスする
+            {_("Warning_Proceed")}
           </button>
         </div>
         {safeTarget && (
           <div className="mt-6 text-xs text-gray-400 break-all">
-            遷移先: {safeTarget}
+            {_("Warning_Destination")}{safeTarget}
           </div>
         )}
       </div>

@@ -1,3 +1,4 @@
+import { _ } from "@originator-profile/ui";
 import { useLinkVerification } from "./credentials/use-link-verification";
 
 type VerificationResult = NonNullable<ReturnType<typeof useLinkVerification>>;
@@ -13,10 +14,12 @@ function VerificationMessage({
     return (
       <p className="text-sm">
         {result.destinationOrgName
-          ? `${result.destinationOrgName}のサイトを開くことを意図した`
+          ? _("LinkVerification_Matched_IntendedSite", result.destinationOrgName)
           : ""}
-        {result.sourceOrgName ? `${result.sourceOrgName}の` : ""}
-        広告をクリックし、正しいリンク先に遷移したことを確認できました
+        {result.sourceOrgName
+          ? _("LinkVerification_SourceOrg", result.sourceOrgName)
+          : ""}
+        {_("LinkVerification_Matched_Confirmed")}
       </p>
     );
   }
@@ -24,13 +27,15 @@ function VerificationMessage({
   return (
     <p className="text-sm mb-1">
       {result.expectedOrgName
-        ? `${result.expectedOrgName}のサイトを開くことを意図した`
+        ? _("LinkVerification_Matched_IntendedSite", result.expectedOrgName)
         : ""}
-      {result.sourceOrgName ? `${result.sourceOrgName}の` : ""}
-      広告をクリックしましたが、
+      {result.sourceOrgName
+        ? _("LinkVerification_SourceOrg", result.sourceOrgName)
+        : ""}
+      {_("LinkVerification_Mismatched_ClickedAd")}
       {result.destinationOrgName
-        ? `リンク先は${result.destinationOrgName}が運営しています。`
-        : "リンク先のサイト運営者の確認ができませんでした。"}
+        ? _("LinkVerification_Mismatched_OperatedBy", result.destinationOrgName)
+        : _("LinkVerification_Mismatched_CannotVerify")}
     </p>
   );
 }
@@ -47,14 +52,15 @@ export default function LinkVerification() {
 
   return (
     <div
-      className={`p-4 border-b ${
-        isMatched
+      className={`p-4 border-b ${isMatched
           ? "bg-green-50 border-green-200 text-green-800"
           : "bg-red-50 border-red-200 text-red-800"
-      }`}
+        }`}
     >
       <h2 className="font-bold mb-1">
-        {isMatched ? "リンク先確認成功" : "サイトの身元を確認できません"}
+        {isMatched
+          ? _("LinkVerification_Matched_Title")
+          : _("LinkVerification_Mismatched_Title")}
       </h2>
       <VerificationMessage result={verificationResult} isMatched={isMatched} />
     </div>

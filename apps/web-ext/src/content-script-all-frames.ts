@@ -113,7 +113,7 @@ const setupOpMetaListener = () => {
       if (Array.isArray(ops)) {
         for (const op of ops) {
           // デコード済みOPペイロードの型（nameを含む）
-          type DecodedOpPayload = OpVc & {
+          type DecodedOpPayload = Omit<OpVc, "credentialSubject"> & {
             credentialSubject: OpVc["credentialSubject"] & {
               name?: string;
             };

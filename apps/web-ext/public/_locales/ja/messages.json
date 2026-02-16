@@ -346,5 +346,116 @@
   },
   "Link_OriginatorProfile": {
     "message": "Originator Profile についてより詳しく（外部サイト）"
+  },
+  "LinkVerification_Matched_Title": {
+    "message": "リンク先確認成功"
+  },
+  "LinkVerification_Mismatched_Title": {
+    "message": "サイトの身元を確認できません"
+  },
+  "LinkVerification_Matched_IntendedSite": {
+    "message": "$dest_org$のサイトを開くことを意図した",
+    "placeholders": {
+      "dest_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "LinkVerification_SourceOrg": {
+    "message": "$source_org$の",
+    "placeholders": {
+      "source_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "LinkVerification_Matched_Confirmed": {
+    "message": "広告をクリックし、正しいリンク先に遷移したことを確認できました"
+  },
+  "LinkVerification_Mismatched_ClickedAd": {
+    "message": "広告をクリックしましたが、"
+  },
+  "LinkVerification_Mismatched_OperatedBy": {
+    "message": "リンク先は$dest_org$が運営しています。",
+    "placeholders": {
+      "dest_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "LinkVerification_Mismatched_CannotVerify": {
+    "message": "リンク先のサイト運営者の確認ができませんでした。"
+  },
+  "Warning_Title": {
+    "message": "サイトの身元を確認できません"
+  },
+  "Warning_IntendedSite": {
+    "message": "$expected_org$のサイトを開くことを意図した",
+    "placeholders": {
+      "expected_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "Warning_ClickedAd": {
+    "message": "$source_org$の広告をクリックしましたが、",
+    "placeholders": {
+      "source_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "Warning_OperatedBy": {
+    "message": "リンク先は$dest_org$が運営しています。",
+    "placeholders": {
+      "dest_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "Warning_CannotVerify": {
+    "message": "リンク先のサイト運営者の確認ができませんでした。"
+  },
+  "Warning_OpidMismatch": {
+    "message": "予期されたOriginator Profile (OPID) と一致しませんでした。"
+  },
+  "Warning_GoBack": {
+    "message": "前のページに戻る"
+  },
+  "Warning_CloseTab": {
+    "message": "このタブを閉じる"
+  },
+  "Warning_Proceed": {
+    "message": "このままアクセスする"
+  },
+  "Warning_Destination": {
+    "message": "遷移先: "
+  },
+  "Verification_InvalidOps": {
+    "message": "無効なOPS (デコード失敗)"
+  },
+  "Verification_InvalidOpsDetail": {
+    "message": "無効なOPS (デコード失敗): $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Invalid JWT format"
+      }
+    }
+  },
+  "Verification_OpidMissing": {
+    "message": "OPIDが存在しません"
+  },
+  "Verification_OpidMismatch": {
+    "message": "OPID不一致"
+  },
+  "Verification_FetchFailed": {
+    "message": "クレデンシャルが見つかりません (取得失敗)"
   }
 }

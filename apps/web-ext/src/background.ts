@@ -310,8 +310,8 @@ const createErrorResult = (
     expectedOrgName,
     reason:
       import.meta.env.MODE === "development"
-        ? `無効なOPS (デコード失敗): ${error.message}`
-        : "無効なOPS (デコード失敗)",
+        ? chrome.i18n.getMessage("Verification_InvalidOpsDetail", error.message)
+        : chrome.i18n.getMessage("Verification_InvalidOps"),
   };
 };
 
@@ -396,7 +396,9 @@ const createMismatchResult = (
   destinationOrgName: string | undefined,
   isMissing: boolean,
 ): LinkVerificationResult => {
-  const reason = isMissing ? "OPIDが存在しません" : "OPID不一致";
+  const reason = isMissing
+    ? chrome.i18n.getMessage("Verification_OpidMissing")
+    : chrome.i18n.getMessage("Verification_OpidMismatch");
   return {
     status: isMissing ? "missing_opid" : "mismatched",
     expectedOpId: targetOpId,
@@ -457,7 +459,7 @@ const getVerificationResult = async (
       isMissing,
     );
   } catch (e: unknown) {
-    const reason = "クレデンシャルが見つかりません (取得失敗)";
+    const reason = chrome.i18n.getMessage("Verification_FetchFailed");
     return {
       status: "error",
       expectedOpId: targetOpId,
@@ -564,7 +566,7 @@ frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
 });
 
 // https://www.typescriptlang.org/tsconfig#non-module-files
-export {};
+export { };
 
 // NOTE: gh-1583
 if (import.meta.env.MODE === "development") {
@@ -588,10 +590,10 @@ if (import.meta.env.BASIC_AUTH) {
         urls:
           credential.domain === "localhost"
             ? [
-                "http://localhost:8080/*",
-                // Firefox のため
-                "http://localhost/*",
-              ]
+              "http://localhost:8080/*",
+              // Firefox のため
+              "http://localhost/*",
+            ]
             : [`https://${credential.domain}/*`],
       },
       ["blocking"],
