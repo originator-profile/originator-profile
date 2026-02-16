@@ -14,7 +14,10 @@ function VerificationMessage({
     return (
       <p className="text-sm">
         {result.destinationOrgName
-          ? _("LinkVerification_Matched_IntendedSite", result.destinationOrgName)
+          ? _(
+              "LinkVerification_Matched_IntendedSite",
+              result.destinationOrgName,
+            )
           : ""}
         {result.sourceOrgName
           ? _("LinkVerification_SourceOrg", result.sourceOrgName)
@@ -52,10 +55,11 @@ export default function LinkVerification() {
 
   return (
     <div
-      className={`p-4 border-b ${isMatched
+      className={`p-4 border-b ${
+        isMatched
           ? "bg-green-50 border-green-200 text-green-800"
           : "bg-red-50 border-red-200 text-red-800"
-        }`}
+      }`}
     >
       <h2 className="font-bold mb-1">
         {isMatched
