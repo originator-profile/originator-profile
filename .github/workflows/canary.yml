@@ -29,4 +29,4 @@ jobs:
       - name: Testing Build
         run: pnpm --filter=@originator-profile/web-ext build --mode testing
       - name: Canary Release
-        run: .github/scripts/canary/release.sh
+        run: .github/actions/canary/release.sh
