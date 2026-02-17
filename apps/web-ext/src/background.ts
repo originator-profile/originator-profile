@@ -161,8 +161,12 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (sender.tab?.id) {
       allowNavigation(sender.tab.id, message.url);
       sendResponse({ success: true });
+    } else {
+      sendResponse({ success: false, reason: "no tab id" });
     }
+    return;
   }
+  return false;
 });
 
 // Use webNavigation to correctly associate new tabs with the specific frame that opened them
