@@ -34,3 +34,5 @@ jobs:
         run: pnpm --filter=@originator-profile/web-ext build --mode testing
       - name: Canary Release
         run: .github/actions/canary/release.sh
+        env:
+          GH_TOKEN: ${{ github.token }}
