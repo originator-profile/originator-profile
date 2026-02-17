@@ -15,7 +15,10 @@ for f in *.zip; do
 done
 cd -
 
-NOTE="<details>
+NOTE="> [!WARNING]
+> **こちらは試験目的のビルドです。通常サイトの検証には[通常版](https://github.com/originator-profile/originator-profile/releases/latest)をご利用ください。**
+
+<details>
 
 ## Download
 
