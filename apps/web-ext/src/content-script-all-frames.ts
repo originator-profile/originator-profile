@@ -23,6 +23,7 @@ import {
   type FrameCasCoordinate,
 } from "./components/frameCas";
 import { frameCasExtensionMessenger } from "./components/frameCas/extension-events";
+import { FetchIntegrityMessageResult } from "./components/integrity/type";
 import "./utils/cors-basic-auth";
 
 const toFetchCredentialsMessageResult = <T>(
@@ -50,7 +51,7 @@ credentialsMessenger.onMessage("fetchCredentials", async () => {
 credentialsMessenger.onMessage("verifyIntegrity", async ({ data }) => {
   const [content] = data;
   const result = await verifyIntegrity(content);
-  return result;
+  return serializeIfError(result) as FetchIntegrityMessageResult;
 });
 
 frameCasExtensionMessenger.onMessage(
