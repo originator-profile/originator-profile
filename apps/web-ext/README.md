@@ -103,7 +103,7 @@ $ REGISTRY_OPS=$(cat registry-ops.json) pnpm build
   - `-t, --target`: 対象のランタイムを指定します。ランタイムを変更すると出力先も変更されます。
   - `--mode`: ビルドモードを指定します。`production`（デフォルト）、`development`、`testing` のいずれかを指定できます。
     - `testing` モード: テスト用のビルドを作成します。拡張機能名に「[TESTING]」プレフィックスが付与されます。
-    - 実行例: `pnpm build -- --mode testing`
+    - 実行例: `pnpm build --mode testing`
 - `pnpm dev`: 拡張機能をブラウザーでプレビューします。
   - `-t, --target`: プレビューする対象のランタイムを指定します。
   - `-u, --url`: プレビュー開始時に表示される URL を指定します。

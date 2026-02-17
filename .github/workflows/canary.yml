@@ -5,6 +5,10 @@ on:
   push:
     branches:
       - main
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+permissions:
+  contents: write
 jobs:
   main:
     environment:
@@ -26,3 +30,7 @@ jobs:
           REGISTRY_OPS: ${{ secrets.REGISTRY_OPS }}
       - name: Build for WordPress plugin
         uses: "./.github/actions/wordpress_build"
+      - name: Testing Build
+        run: pnpm --filter=@originator-profile/web-ext build --mode testing
+      - name: Canary Release
+        run: .github/actions/canary/release.sh
