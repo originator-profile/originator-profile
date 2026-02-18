@@ -144,7 +144,8 @@ function ResultItem({
   children?: React.ReactNode;
   className?: string;
 }) {
-  const isError = isCodedError(value);
+  const isCodeError = isCodedError(value);
+  const isError = value instanceof Error;
 
   return (
     <DetailItem
@@ -152,7 +153,7 @@ function ResultItem({
       icon={isError ? "cancel" : "check"}
       className={className}
     >
-      {isError ? (
+      {isCodeError ? (
         <DisplayResults
           code={value.code}
           message={value.message}
