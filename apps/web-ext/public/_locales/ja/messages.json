@@ -341,6 +341,9 @@
   "DetailInfo_VerificationResults": {
     "message": "検証結果"
   },
+  "OtherErrors": {
+    "message": "その他のエラー"
+  },
   "Link_OriginatorProfile": {
     "message": "Originator Profile についてより詳しく（外部サイト）"
   }

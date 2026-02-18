@@ -1,5 +1,6 @@
 import { Icon } from "@iconify/react";
 import { stringifyWithError } from "@originator-profile/core";
+import { _ } from "@originator-profile/ui";
 import {
   CasVerificationFailure,
   CasVerifyFailed,
@@ -358,6 +359,19 @@ function ContentAttestationSetCheck({
   );
 }
 
+function DisplayOtherErrors({ errors }: { errors: Error[] }) {
+  return (
+    <div className="pl-4">
+      <h2 className="mt-4 mb-4 text-sm font-bold text-gray-700">
+        {_("OtherErrors")}
+      </h2>
+      {errors.map((error, index) => (
+        <DisplayResults key={index} payload={error} className="pl-2 mb-2" />
+      ))}
+    </div>
+  );
+}
+
 /**
  * SP / OPS / CAS の検証結果をチェックリストとして表示するコンポーネント
  *
@@ -391,6 +405,7 @@ function CheckList({
   errors: Error[];
 }) {
   const codedErrors = errors.filter(isCodedError);
+  const nonCodedErrors = errors.filter((e) => !isCodedError(e));
 
   const spError = findError(codedErrors, [
     "ERR_SITE_PROFILE_FETCH_INVALID",
@@ -449,6 +464,9 @@ function CheckList({
         >
           <DisplayResults payload={cas} className="ml-7" />
         </DetailItem>
+      )}
+      {nonCodedErrors.length !== 0 && (
+        <DisplayOtherErrors errors={nonCodedErrors} />
       )}
     </>
   );
