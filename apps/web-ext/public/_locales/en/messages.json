@@ -341,6 +341,9 @@
   "DetailInfo_VerificationResults": {
     "message": "Verification Results"
   },
+  "OtherErrors": {
+    "message": "Other Errors"
+  },
   "Link_OriginatorProfile": {
     "message": "Learn more about Originator Profile (external site)"
   }
