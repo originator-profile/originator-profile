@@ -50,39 +50,9 @@
     ]
   </script>
   <script type="application/cas+json">
-    [{
-      "@context": [
-        "https://www.w3.org/ns/credentials/v2",
-        "https://originator-profile.org/ns/credentials/v1",
-        "https://originator-profile.org/ns/cip/v1",
-        {
-          "@language": "ja-JP"
-        }
-      ],
-      "type": ["VerifiableCredential", "ContentAttestation"],
-      "issuer": "dns:localhost",
-      "credentialSubject": {
-        "type": "Article",
-        "headline": "OPSとCASの外部リンクがあるWebページ",
-        "image": {
-          "id": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg=="
-        },
-        "description": "<Webページの説明>",
-        "author": ["山田花子"],
-        "editor": ["山田太郎"],
-        "datePublished": "2023-07-04T19:14:00Z",
-        "dateModified": "2023-07-04T19:14:00Z",
-        "genre": "Arts & Entertainment"
-      },
-      "allowedUrl": "http://localhost:8080/*",
-      "target": [
-        {
-          "type": "TextTargetIntegrity",
-          "cssSelector": "#text-target-integrity",
-          "integrity": "sha256-NuU4YVWLE6u/ANawTxxwBDHdO+Su1XfXcTr/4BwlI6U="
-        }
-      ]
-    }]
+    [
+      "eyJhbGciOiJFUzI1NiIsImtpZCI6ImpKWXM1X0lMZ1VjODE4MEwtcEJQeEJwZ0EzUUM3ZVp1OXdLT2toOW1ZUFUiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphLUpQIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ29udGVudEF0dGVzdGF0aW9uIl0sImlzc3VlciI6ImRuczpsb2NhbGhvc3QiLCJjcmVkZW50aWFsU3ViamVjdCI6eyJ0eXBlIjoiT25saW5lQWQiLCJuYW1lIjoiPOW6g-WRiuOBruOCv-OCpOODiOODqz4iLCJpbWFnZSI6eyJpZCI6ImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaVBqd3ZjM1puUGc9PSIsImRpZ2VzdFNSSSI6InNoYTI1Ni1qWnRMZVVyL3hkcjA2dm9TNE1ZcFNyTWFydTB6Q0lZVVZuYTlhNE11aTVnPSJ9LCJkZXNjcmlwdGlvbiI6IjzluoPlkYrjga7oqqzmmI4-IiwiYXV0aG9yIjpbIuWxseeUsOiKseWtkCJdLCJlZGl0b3IiOlsi5bGx55Sw5aSq6YOOIl0sImdlbnJlIjoiQXJ0cyAmIEVudGVydGFpbm1lbnQiLCJsYW5kaW5nUGFnZVVybCI6Imh0dHBzOi8vYWR2ZXJ0aXNlci5leGFtcGxlLmNvbSIsImFkUmVwb3J0Q29udGFjdCI6eyJpZCI6Imh0dHBzOi8vYWQuZXhhbXBsZS5jb20vY29udGFjdCIsIm5hbWUiOiLloLHlkYrnqpPlj6MifSwiYWRSZXZpZXdHdWlkZWxpbmVzIjp7ImlkIjoiaHR0cHM6Ly9hZC5leGFtcGxlLmNvbS9ndWlkZWxpbmVzIiwibmFtZSI6IuW6g-WRiuWvqeafu-OCrOOCpOODieODqeOCpOODsyJ9LCJ0YXJnZXRpbmdQb2xpY3kiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL3RhcmdldGluZyIsIm5hbWUiOiLjgr_jg7zjgrLjg4bjgqPjg7PjgrDluoPlkYrjg53jg6rjgrfjg7wifSwiYWREYXRhSGFuZGxpbmdQb2xpY3kiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL2RhdGFoYW5kbGluZyIsIm5hbWUiOiLluoPlkYrphY3kv6HjgavplqLjgZnjgovmg4XloLHjga7lj5bjgormibHjgYTjgavjgaTjgYTjgaYifSwiYWREaXNwbGF5UmF0aW9uYWxlIjp7InBhZ2UiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL3JhdGlvbmFsZSIsIm5hbWUiOiLjgarjgZzjgZPjga7luoPlkYrjgYzooajnpLrjgZXjgozjgb7jgZnjgYvvvJ8ifSwiZGVzY3JpcHRpb24iOiLnj77lnKjplrLopqfkuK3jga7jgrPjg7Pjg4bjg7Pjg4TjgajplqLpgKPmgKfjgYzpq5jjgYTjgZ_jgoHjgIIifSwiaWQiOiJ1cm46dXVpZDpkYjU1NjczNS0xMmYzLTQyNGYtYWZkZi01N2JkYWIyNmUwM2IifSwiYWxsb3dlZFVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MC8qIiwidGFyZ2V0IjpbeyJ0eXBlIjoiVGV4dFRhcmdldEludGVncml0eSIsImNzc1NlbGVjdG9yIjoiI3RleHQtdGFyZ2V0LWludGVncml0eSIsImludGVncml0eSI6InNoYTI1Ni1zZ092L0dUaXJ0UVd0WExYWDYxMXlMZnhCQTl6djlvL285ZWk4RDdjT0FzPSJ9XSwiaXNzIjoiZG5zOmxvY2FsaG9zdCIsInN1YiI6InVybjp1dWlkOmRiNTU2NzM1LTEyZjMtNDI0Zi1hZmRmLTU3YmRhYjI2ZTAzYiIsImlhdCI6MTc3MDM3MjY2MSwiZXhwIjoyMDg1OTQ4NjM5fQ.mHfVHA6CvZ3N4b5yG1Oly_X3AxjtdQIHV_lhyh38PdRY65c8bn86Xd3adg7Rc6YLvpTzemLgkg2vFpGgubmMIw"
+    ]
   </script>
   <div style="padding: 20px; background: #e0f7fa; text-align: center;">
     <p>正常な広告</p>
@@ -130,39 +100,9 @@
     ]
   </script>
   <script type="application/cas+json">
-    [{
-      "@context": [
-        "https://www.w3.org/ns/credentials/v2",
-        "https://originator-profile.org/ns/credentials/v1",
-        "https://originator-profile.org/ns/cip/v1",
-        {
-          "@language": "ja-JP"
-        }
-      ],
-      "type": ["VerifiableCredential", "ContentAttestation"],
-      "issuer": "dns:localhost",
-      "credentialSubject": {
-        "type": "Article",
-        "headline": "OPSとCASの外部リンクがあるWebページ",
-        "image": {
-          "id": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg=="
-        },
-        "description": "<Webページの説明>",
-        "author": ["山田花子"],
-        "editor": ["山田太郎"],
-        "datePublished": "2023-07-04T19:14:00Z",
-        "dateModified": "2023-07-04T19:14:00Z",
-        "genre": "Arts & Entertainment"
-      },
-      "allowedUrl": "http://localhost:8080/*",
-      "target": [
-        {
-          "type": "TextTargetIntegrity",
-          "cssSelector": "#text-target-integrity",
-          "integrity": "sha256-NuU4YVWLE6u/ANawTxxwBDHdO+Su1XfXcTr/4BwlI6U="
-        }
-      ]
-    }]
+    [
+      "eyJhbGciOiJFUzI1NiIsImtpZCI6ImpKWXM1X0lMZ1VjODE4MEwtcEJQeEJwZ0EzUUM3ZVp1OXdLT2toOW1ZUFUiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphLUpQIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ29udGVudEF0dGVzdGF0aW9uIl0sImlzc3VlciI6ImRuczpsb2NhbGhvc3QiLCJjcmVkZW50aWFsU3ViamVjdCI6eyJ0eXBlIjoiT25saW5lQWQiLCJuYW1lIjoiPOW6g-WRiuOBruOCv-OCpOODiOODqz4iLCJpbWFnZSI6eyJpZCI6ImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaVBqd3ZjM1puUGc9PSIsImRpZ2VzdFNSSSI6InNoYTI1Ni1qWnRMZVVyL3hkcjA2dm9TNE1ZcFNyTWFydTB6Q0lZVVZuYTlhNE11aTVnPSJ9LCJkZXNjcmlwdGlvbiI6IjzluoPlkYrjga7oqqzmmI4-IiwiYXV0aG9yIjpbIuWxseeUsOiKseWtkCJdLCJlZGl0b3IiOlsi5bGx55Sw5aSq6YOOIl0sImdlbnJlIjoiQXJ0cyAmIEVudGVydGFpbm1lbnQiLCJsYW5kaW5nUGFnZVVybCI6Imh0dHBzOi8vYWR2ZXJ0aXNlci5leGFtcGxlLmNvbSIsImFkUmVwb3J0Q29udGFjdCI6eyJpZCI6Imh0dHBzOi8vYWQuZXhhbXBsZS5jb20vY29udGFjdCIsIm5hbWUiOiLloLHlkYrnqpPlj6MifSwiYWRSZXZpZXdHdWlkZWxpbmVzIjp7ImlkIjoiaHR0cHM6Ly9hZC5leGFtcGxlLmNvbS9ndWlkZWxpbmVzIiwibmFtZSI6IuW6g-WRiuWvqeafu-OCrOOCpOODieODqeOCpOODsyJ9LCJ0YXJnZXRpbmdQb2xpY3kiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL3RhcmdldGluZyIsIm5hbWUiOiLjgr_jg7zjgrLjg4bjgqPjg7PjgrDluoPlkYrjg53jg6rjgrfjg7wifSwiYWREYXRhSGFuZGxpbmdQb2xpY3kiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL2RhdGFoYW5kbGluZyIsIm5hbWUiOiLluoPlkYrphY3kv6HjgavplqLjgZnjgovmg4XloLHjga7lj5bjgormibHjgYTjgavjgaTjgYTjgaYifSwiYWREaXNwbGF5UmF0aW9uYWxlIjp7InBhZ2UiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL3JhdGlvbmFsZSIsIm5hbWUiOiLjgarjgZzjgZPjga7luoPlkYrjgYzooajnpLrjgZXjgozjgb7jgZnjgYvvvJ8ifSwiZGVzY3JpcHRpb24iOiLnj77lnKjplrLopqfkuK3jga7jgrPjg7Pjg4bjg7Pjg4TjgajplqLpgKPmgKfjgYzpq5jjgYTjgZ_jgoHjgIIifSwiaWQiOiJ1cm46dXVpZDpkYjU1NjczNS0xMmYzLTQyNGYtYWZkZi01N2JkYWIyNmUwM2IifSwiYWxsb3dlZFVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MC8qIiwidGFyZ2V0IjpbeyJ0eXBlIjoiVGV4dFRhcmdldEludGVncml0eSIsImNzc1NlbGVjdG9yIjoiI3RleHQtdGFyZ2V0LWludGVncml0eSIsImludGVncml0eSI6InNoYTI1Ni1zZ092L0dUaXJ0UVd0WExYWDYxMXlMZnhCQTl6djlvL285ZWk4RDdjT0FzPSJ9XSwiaXNzIjoiZG5zOmxvY2FsaG9zdCIsInN1YiI6InVybjp1dWlkOmRiNTU2NzM1LTEyZjMtNDI0Zi1hZmRmLTU3YmRhYjI2ZTAzYiIsImlhdCI6MTc3MDM3MjY2MSwiZXhwIjoyMDg1OTQ4NjM5fQ.mHfVHA6CvZ3N4b5yG1Oly_X3AxjtdQIHV_lhyh38PdRY65c8bn86Xd3adg7Rc6YLvpTzemLgkg2vFpGgubmMIw"
+    ]
   </script>
   <div style="padding: 20px; background: #e0f7fa; text-align: center;">
     <p>正常な広告 (window.open)</p>
@@ -210,39 +150,9 @@
     ]
   </script>
   <script type="application/cas+json">
-    [{
-      "@context": [
-        "https://www.w3.org/ns/credentials/v2",
-        "https://originator-profile.org/ns/credentials/v1",
-        "https://originator-profile.org/ns/cip/v1",
-        {
-          "@language": "ja-JP"
-        }
-      ],
-      "type": ["VerifiableCredential", "ContentAttestation"],
-      "issuer": "dns:localhost",
-      "credentialSubject": {
-        "type": "Article",
-        "headline": "OPSとCASの外部リンクがあるWebページ",
-        "image": {
-          "id": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg=="
-        },
-        "description": "<Webページの説明>",
-        "author": ["山田花子"],
-        "editor": ["山田太郎"],
-        "datePublished": "2023-07-04T19:14:00Z",
-        "dateModified": "2023-07-04T19:14:00Z",
-        "genre": "Arts & Entertainment"
-      },
-      "allowedUrl": "http://localhost:8080/*",
-      "target": [
-        {
-          "type": "TextTargetIntegrity",
-          "cssSelector": "#text-target-integrity",
-          "integrity": "sha256-NuU4YVWLE6u/ANawTxxwBDHdO+Su1XfXcTr/4BwlI6U="
-        }
-      ]
-    }]
+    [
+      "eyJhbGciOiJFUzI1NiIsImtpZCI6ImpKWXM1X0lMZ1VjODE4MEwtcEJQeEJwZ0EzUUM3ZVp1OXdLT2toOW1ZUFUiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphLUpQIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ29udGVudEF0dGVzdGF0aW9uIl0sImlzc3VlciI6ImRuczpsb2NhbGhvc3QiLCJjcmVkZW50aWFsU3ViamVjdCI6eyJ0eXBlIjoiT25saW5lQWQiLCJuYW1lIjoiPOW6g-WRiuOBruOCv-OCpOODiOODqz4iLCJpbWFnZSI6eyJpZCI6ImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaVBqd3ZjM1puUGc9PSIsImRpZ2VzdFNSSSI6InNoYTI1Ni1qWnRMZVVyL3hkcjA2dm9TNE1ZcFNyTWFydTB6Q0lZVVZuYTlhNE11aTVnPSJ9LCJkZXNjcmlwdGlvbiI6IjzluoPlkYrjga7oqqzmmI4-IiwiYXV0aG9yIjpbIuWxseeUsOiKseWtkCJdLCJlZGl0b3IiOlsi5bGx55Sw5aSq6YOOIl0sImdlbnJlIjoiQXJ0cyAmIEVudGVydGFpbm1lbnQiLCJsYW5kaW5nUGFnZVVybCI6Imh0dHBzOi8vYWR2ZXJ0aXNlci5leGFtcGxlLmNvbSIsImFkUmVwb3J0Q29udGFjdCI6eyJpZCI6Imh0dHBzOi8vYWQuZXhhbXBsZS5jb20vY29udGFjdCIsIm5hbWUiOiLloLHlkYrnqpPlj6MifSwiYWRSZXZpZXdHdWlkZWxpbmVzIjp7ImlkIjoiaHR0cHM6Ly9hZC5leGFtcGxlLmNvbS9ndWlkZWxpbmVzIiwibmFtZSI6IuW6g-WRiuWvqeafu-OCrOOCpOODieODqeOCpOODsyJ9LCJ0YXJnZXRpbmdQb2xpY3kiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL3RhcmdldGluZyIsIm5hbWUiOiLjgr_jg7zjgrLjg4bjgqPjg7PjgrDluoPlkYrjg53jg6rjgrfjg7wifSwiYWREYXRhSGFuZGxpbmdQb2xpY3kiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL2RhdGFoYW5kbGluZyIsIm5hbWUiOiLluoPlkYrphY3kv6HjgavplqLjgZnjgovmg4XloLHjga7lj5bjgormibHjgYTjgavjgaTjgYTjgaYifSwiYWREaXNwbGF5UmF0aW9uYWxlIjp7InBhZ2UiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL3JhdGlvbmFsZSIsIm5hbWUiOiLjgarjgZzjgZPjga7luoPlkYrjgYzooajnpLrjgZXjgozjgb7jgZnjgYvvvJ8ifSwiZGVzY3JpcHRpb24iOiLnj77lnKjplrLopqfkuK3jga7jgrPjg7Pjg4bjg7Pjg4TjgajplqLpgKPmgKfjgYzpq5jjgYTjgZ_jgoHjgIIifSwiaWQiOiJ1cm46dXVpZDpkYjU1NjczNS0xMmYzLTQyNGYtYWZkZi01N2JkYWIyNmUwM2IifSwiYWxsb3dlZFVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MC8qIiwidGFyZ2V0IjpbeyJ0eXBlIjoiVGV4dFRhcmdldEludGVncml0eSIsImNzc1NlbGVjdG9yIjoiI3RleHQtdGFyZ2V0LWludGVncml0eSIsImludGVncml0eSI6InNoYTI1Ni1zZ092L0dUaXJ0UVd0WExYWDYxMXlMZnhCQTl6djlvL285ZWk4RDdjT0FzPSJ9XSwiaXNzIjoiZG5zOmxvY2FsaG9zdCIsInN1YiI6InVybjp1dWlkOmRiNTU2NzM1LTEyZjMtNDI0Zi1hZmRmLTU3YmRhYjI2ZTAzYiIsImlhdCI6MTc3MDM3MjY2MSwiZXhwIjoyMDg1OTQ4NjM5fQ.mHfVHA6CvZ3N4b5yG1Oly_X3AxjtdQIHV_lhyh38PdRY65c8bn86Xd3adg7Rc6YLvpTzemLgkg2vFpGgubmMIw"
+    ]
   </script>
   <div style="padding: 20px; background: #f3e5f5; text-align: center;">
     <p>外部サイト広告</p>
@@ -291,39 +201,9 @@
     ]
   </script>
   <script type="application/cas+json">
-    [{
-      "@context": [
-        "https://www.w3.org/ns/credentials/v2",
-        "https://originator-profile.org/ns/credentials/v1",
-        "https://originator-profile.org/ns/cip/v1",
-        {
-          "@language": "ja-JP"
-        }
-      ],
-      "type": ["VerifiableCredential", "ContentAttestation"],
-      "issuer": "dns:localhost",
-      "credentialSubject": {
-        "type": "Article",
-        "headline": "OPSとCASの外部リンクがあるWebページ",
-        "image": {
-          "id": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg=="
-        },
-        "description": "<Webページの説明>",
-        "author": ["山田花子"],
-        "editor": ["山田太郎"],
-        "datePublished": "2023-07-04T19:14:00Z",
-        "dateModified": "2023-07-04T19:14:00Z",
-        "genre": "Arts & Entertainment"
-      },
-      "allowedUrl": "http://localhost:8080/*",
-      "target": [
-        {
-          "type": "TextTargetIntegrity",
-          "cssSelector": "#text-target-integrity",
-          "integrity": "sha256-NuU4YVWLE6u/ANawTxxwBDHdO+Su1XfXcTr/4BwlI6U="
-        }
-      ]
-    }]
+    [
+      "eyJhbGciOiJFUzI1NiIsImtpZCI6ImpKWXM1X0lMZ1VjODE4MEwtcEJQeEJwZ0EzUUM3ZVp1OXdLT2toOW1ZUFUiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphLUpQIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ29udGVudEF0dGVzdGF0aW9uIl0sImlzc3VlciI6ImRuczpsb2NhbGhvc3QiLCJjcmVkZW50aWFsU3ViamVjdCI6eyJ0eXBlIjoiT25saW5lQWQiLCJuYW1lIjoiPOW6g-WRiuOBruOCv-OCpOODiOODqz4iLCJpbWFnZSI6eyJpZCI6ImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaVBqd3ZjM1puUGc9PSIsImRpZ2VzdFNSSSI6InNoYTI1Ni1qWnRMZVVyL3hkcjA2dm9TNE1ZcFNyTWFydTB6Q0lZVVZuYTlhNE11aTVnPSJ9LCJkZXNjcmlwdGlvbiI6IjzluoPlkYrjga7oqqzmmI4-IiwiYXV0aG9yIjpbIuWxseeUsOiKseWtkCJdLCJlZGl0b3IiOlsi5bGx55Sw5aSq6YOOIl0sImdlbnJlIjoiQXJ0cyAmIEVudGVydGFpbm1lbnQiLCJsYW5kaW5nUGFnZVVybCI6Imh0dHBzOi8vYWR2ZXJ0aXNlci5leGFtcGxlLmNvbSIsImFkUmVwb3J0Q29udGFjdCI6eyJpZCI6Imh0dHBzOi8vYWQuZXhhbXBsZS5jb20vY29udGFjdCIsIm5hbWUiOiLloLHlkYrnqpPlj6MifSwiYWRSZXZpZXdHdWlkZWxpbmVzIjp7ImlkIjoiaHR0cHM6Ly9hZC5leGFtcGxlLmNvbS9ndWlkZWxpbmVzIiwibmFtZSI6IuW6g-WRiuWvqeafu-OCrOOCpOODieODqeOCpOODsyJ9LCJ0YXJnZXRpbmdQb2xpY3kiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL3RhcmdldGluZyIsIm5hbWUiOiLjgr_jg7zjgrLjg4bjgqPjg7PjgrDluoPlkYrjg53jg6rjgrfjg7wifSwiYWREYXRhSGFuZGxpbmdQb2xpY3kiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL2RhdGFoYW5kbGluZyIsIm5hbWUiOiLluoPlkYrphY3kv6HjgavplqLjgZnjgovmg4XloLHjga7lj5bjgormibHjgYTjgavjgaTjgYTjgaYifSwiYWREaXNwbGF5UmF0aW9uYWxlIjp7InBhZ2UiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL3JhdGlvbmFsZSIsIm5hbWUiOiLjgarjgZzjgZPjga7luoPlkYrjgYzooajnpLrjgZXjgozjgb7jgZnjgYvvvJ8ifSwiZGVzY3JpcHRpb24iOiLnj77lnKjplrLopqfkuK3jga7jgrPjg7Pjg4bjg7Pjg4TjgajplqLpgKPmgKfjgYzpq5jjgYTjgZ_jgoHjgIIifSwiaWQiOiJ1cm46dXVpZDpkYjU1NjczNS0xMmYzLTQyNGYtYWZkZi01N2JkYWIyNmUwM2IifSwiYWxsb3dlZFVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MC8qIiwidGFyZ2V0IjpbeyJ0eXBlIjoiVGV4dFRhcmdldEludGVncml0eSIsImNzc1NlbGVjdG9yIjoiI3RleHQtdGFyZ2V0LWludGVncml0eSIsImludGVncml0eSI6InNoYTI1Ni1zZ092L0dUaXJ0UVd0WExYWDYxMXlMZnhCQTl6djlvL285ZWk4RDdjT0FzPSJ9XSwiaXNzIjoiZG5zOmxvY2FsaG9zdCIsInN1YiI6InVybjp1dWlkOmRiNTU2NzM1LTEyZjMtNDI0Zi1hZmRmLTU3YmRhYjI2ZTAzYiIsImlhdCI6MTc3MDM3MjY2MSwiZXhwIjoyMDg1OTQ4NjM5fQ.mHfVHA6CvZ3N4b5yG1Oly_X3AxjtdQIHV_lhyh38PdRY65c8bn86Xd3adg7Rc6YLvpTzemLgkg2vFpGgubmMIw"
+    ]
   </script>
   <div style="padding: 20px; background: #f3e5f5; text-align: center;">
     <p>外部サイト広告 (window.open)</p>
@@ -368,39 +248,9 @@
     ]
   </script>
   <script type="application/cas+json">
-    [{
-      "@context": [
-        "https://www.w3.org/ns/credentials/v2",
-        "https://originator-profile.org/ns/credentials/v1",
-        "https://originator-profile.org/ns/cip/v1",
-        {
-          "@language": "ja-JP"
-        }
-      ],
-      "type": ["VerifiableCredential", "ContentAttestation"],
-      "issuer": "dns:localhost",
-      "credentialSubject": {
-        "type": "Article",
-        "headline": "OPSとCASの外部リンクがあるWebページ",
-        "image": {
-          "id": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg=="
-        },
-        "description": "<Webページの説明>",
-        "author": ["山田花子"],
-        "editor": ["山田太郎"],
-        "datePublished": "2023-07-04T19:14:00Z",
-        "dateModified": "2023-07-04T19:14:00Z",
-        "genre": "Arts & Entertainment"
-      },
-      "allowedUrl": "http://localhost:8080/*",
-      "target": [
-        {
-          "type": "TextTargetIntegrity",
-          "cssSelector": "#text-target-integrity",
-          "integrity": "sha256-NuU4YVWLE6u/ANawTxxwBDHdO+Su1XfXcTr/4BwlI6U="
-        }
-      ]
-    }]
+    [
+      "eyJhbGciOiJFUzI1NiIsImtpZCI6ImpKWXM1X0lMZ1VjODE4MEwtcEJQeEJwZ0EzUUM3ZVp1OXdLT2toOW1ZUFUiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphLUpQIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ29udGVudEF0dGVzdGF0aW9uIl0sImlzc3VlciI6ImRuczpsb2NhbGhvc3QiLCJjcmVkZW50aWFsU3ViamVjdCI6eyJ0eXBlIjoiT25saW5lQWQiLCJuYW1lIjoiPOW6g-WRiuOBruOCv-OCpOODiOODqz4iLCJpbWFnZSI6eyJpZCI6ImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaVBqd3ZjM1puUGc9PSIsImRpZ2VzdFNSSSI6InNoYTI1Ni1qWnRMZVVyL3hkcjA2dm9TNE1ZcFNyTWFydTB6Q0lZVVZuYTlhNE11aTVnPSJ9LCJkZXNjcmlwdGlvbiI6IjzluoPlkYrjga7oqqzmmI4-IiwiYXV0aG9yIjpbIuWxseeUsOiKseWtkCJdLCJlZGl0b3IiOlsi5bGx55Sw5aSq6YOOIl0sImdlbnJlIjoiQXJ0cyAmIEVudGVydGFpbm1lbnQiLCJsYW5kaW5nUGFnZVVybCI6Imh0dHBzOi8vYWR2ZXJ0aXNlci5leGFtcGxlLmNvbSIsImFkUmVwb3J0Q29udGFjdCI6eyJpZCI6Imh0dHBzOi8vYWQuZXhhbXBsZS5jb20vY29udGFjdCIsIm5hbWUiOiLloLHlkYrnqpPlj6MifSwiYWRSZXZpZXdHdWlkZWxpbmVzIjp7ImlkIjoiaHR0cHM6Ly9hZC5leGFtcGxlLmNvbS9ndWlkZWxpbmVzIiwibmFtZSI6IuW6g-WRiuWvqeafu-OCrOOCpOODieODqeOCpOODsyJ9LCJ0YXJnZXRpbmdQb2xpY3kiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL3RhcmdldGluZyIsIm5hbWUiOiLjgr_jg7zjgrLjg4bjgqPjg7PjgrDluoPlkYrjg53jg6rjgrfjg7wifSwiYWREYXRhSGFuZGxpbmdQb2xpY3kiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL2RhdGFoYW5kbGluZyIsIm5hbWUiOiLluoPlkYrphY3kv6HjgavplqLjgZnjgovmg4XloLHjga7lj5bjgormibHjgYTjgavjgaTjgYTjgaYifSwiYWREaXNwbGF5UmF0aW9uYWxlIjp7InBhZ2UiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL3JhdGlvbmFsZSIsIm5hbWUiOiLjgarjgZzjgZPjga7luoPlkYrjgYzooajnpLrjgZXjgozjgb7jgZnjgYvvvJ8ifSwiZGVzY3JpcHRpb24iOiLnj77lnKjplrLopqfkuK3jga7jgrPjg7Pjg4bjg7Pjg4TjgajplqLpgKPmgKfjgYzpq5jjgYTjgZ_jgoHjgIIifSwiaWQiOiJ1cm46dXVpZDpkYjU1NjczNS0xMmYzLTQyNGYtYWZkZi01N2JkYWIyNmUwM2IifSwiYWxsb3dlZFVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MC8qIiwidGFyZ2V0IjpbeyJ0eXBlIjoiVGV4dFRhcmdldEludGVncml0eSIsImNzc1NlbGVjdG9yIjoiI3RleHQtdGFyZ2V0LWludGVncml0eSIsImludGVncml0eSI6InNoYTI1Ni1zZ092L0dUaXJ0UVd0WExYWDYxMXlMZnhCQTl6djlvL285ZWk4RDdjT0FzPSJ9XSwiaXNzIjoiZG5zOmxvY2FsaG9zdCIsInN1YiI6InVybjp1dWlkOmRiNTU2NzM1LTEyZjMtNDI0Zi1hZmRmLTU3YmRhYjI2ZTAzYiIsImlhdCI6MTc3MDM3MjY2MSwiZXhwIjoyMDg1OTQ4NjM5fQ.mHfVHA6CvZ3N4b5yG1Oly_X3AxjtdQIHV_lhyh38PdRY65c8bn86Xd3adg7Rc6YLvpTzemLgkg2vFpGgubmMIw"
+    ]
   </script>
   <div style="padding: 20px; background: #ffebee; text-align: center;">
     <p>不正な広告</p>
@@ -448,39 +298,9 @@
     ]
   </script>
   <script type="application/cas+json">
-    [{
-      "@context": [
-        "https://www.w3.org/ns/credentials/v2",
-        "https://originator-profile.org/ns/credentials/v1",
-        "https://originator-profile.org/ns/cip/v1",
-        {
-          "@language": "ja-JP"
-        }
-      ],
-      "type": ["VerifiableCredential", "ContentAttestation"],
-      "issuer": "dns:localhost",
-      "credentialSubject": {
-        "type": "Article",
-        "headline": "OPSとCASの外部リンクがあるWebページ",
-        "image": {
-          "id": "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg=="
-        },
-        "description": "<Webページの説明>",
-        "author": ["山田花子"],
-        "editor": ["山田太郎"],
-        "datePublished": "2023-07-04T19:14:00Z",
-        "dateModified": "2023-07-04T19:14:00Z",
-        "genre": "Arts & Entertainment"
-      },
-      "allowedUrl": "http://localhost:8080/*",
-      "target": [
-        {
-          "type": "TextTargetIntegrity",
-          "cssSelector": "#text-target-integrity",
-          "integrity": "sha256-NuU4YVWLE6u/ANawTxxwBDHdO+Su1XfXcTr/4BwlI6U="
-        }
-      ]
-    }]
+    [
+      "eyJhbGciOiJFUzI1NiIsImtpZCI6ImpKWXM1X0lMZ1VjODE4MEwtcEJQeEJwZ0EzUUM3ZVp1OXdLT2toOW1ZUFUiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphLUpQIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ29udGVudEF0dGVzdGF0aW9uIl0sImlzc3VlciI6ImRuczpsb2NhbGhvc3QiLCJjcmVkZW50aWFsU3ViamVjdCI6eyJ0eXBlIjoiT25saW5lQWQiLCJuYW1lIjoiPOW6g-WRiuOBruOCv-OCpOODiOODqz4iLCJpbWFnZSI6eyJpZCI6ImRhdGE6aW1hZ2Uvc3ZnK3htbDtiYXNlNjQsUEhOMlp5QjRiV3h1Y3owaWFIUjBjRG92TDNkM2R5NTNNeTV2Y21jdk1qQXdNQzl6ZG1jaVBqd3ZjM1puUGc9PSIsImRpZ2VzdFNSSSI6InNoYTI1Ni1qWnRMZVVyL3hkcjA2dm9TNE1ZcFNyTWFydTB6Q0lZVVZuYTlhNE11aTVnPSJ9LCJkZXNjcmlwdGlvbiI6IjzluoPlkYrjga7oqqzmmI4-IiwiYXV0aG9yIjpbIuWxseeUsOiKseWtkCJdLCJlZGl0b3IiOlsi5bGx55Sw5aSq6YOOIl0sImdlbnJlIjoiQXJ0cyAmIEVudGVydGFpbm1lbnQiLCJsYW5kaW5nUGFnZVVybCI6Imh0dHBzOi8vYWR2ZXJ0aXNlci5leGFtcGxlLmNvbSIsImFkUmVwb3J0Q29udGFjdCI6eyJpZCI6Imh0dHBzOi8vYWQuZXhhbXBsZS5jb20vY29udGFjdCIsIm5hbWUiOiLloLHlkYrnqpPlj6MifSwiYWRSZXZpZXdHdWlkZWxpbmVzIjp7ImlkIjoiaHR0cHM6Ly9hZC5leGFtcGxlLmNvbS9ndWlkZWxpbmVzIiwibmFtZSI6IuW6g-WRiuWvqeafu-OCrOOCpOODieODqeOCpOODsyJ9LCJ0YXJnZXRpbmdQb2xpY3kiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL3RhcmdldGluZyIsIm5hbWUiOiLjgr_jg7zjgrLjg4bjgqPjg7PjgrDluoPlkYrjg53jg6rjgrfjg7wifSwiYWREYXRhSGFuZGxpbmdQb2xpY3kiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL2RhdGFoYW5kbGluZyIsIm5hbWUiOiLluoPlkYrphY3kv6HjgavplqLjgZnjgovmg4XloLHjga7lj5bjgormibHjgYTjgavjgaTjgYTjgaYifSwiYWREaXNwbGF5UmF0aW9uYWxlIjp7InBhZ2UiOnsiaWQiOiJodHRwczovL2FkLmV4YW1wbGUuY29tL3JhdGlvbmFsZSIsIm5hbWUiOiLjgarjgZzjgZPjga7luoPlkYrjgYzooajnpLrjgZXjgozjgb7jgZnjgYvvvJ8ifSwiZGVzY3JpcHRpb24iOiLnj77lnKjplrLopqfkuK3jga7jgrPjg7Pjg4bjg7Pjg4TjgajplqLpgKPmgKfjgYzpq5jjgYTjgZ_jgoHjgIIifSwiaWQiOiJ1cm46dXVpZDpkYjU1NjczNS0xMmYzLTQyNGYtYWZkZi01N2JkYWIyNmUwM2IifSwiYWxsb3dlZFVybCI6Imh0dHA6Ly9sb2NhbGhvc3Q6ODA4MC8qIiwidGFyZ2V0IjpbeyJ0eXBlIjoiVGV4dFRhcmdldEludGVncml0eSIsImNzc1NlbGVjdG9yIjoiI3RleHQtdGFyZ2V0LWludGVncml0eSIsImludGVncml0eSI6InNoYTI1Ni1zZ092L0dUaXJ0UVd0WExYWDYxMXlMZnhCQTl6djlvL285ZWk4RDdjT0FzPSJ9XSwiaXNzIjoiZG5zOmxvY2FsaG9zdCIsInN1YiI6InVybjp1dWlkOmRiNTU2NzM1LTEyZjMtNDI0Zi1hZmRmLTU3YmRhYjI2ZTAzYiIsImlhdCI6MTc3MDM3MjY2MSwiZXhwIjoyMDg1OTQ4NjM5fQ.mHfVHA6CvZ3N4b5yG1Oly_X3AxjtdQIHV_lhyh38PdRY65c8bn86Xd3adg7Rc6YLvpTzemLgkg2vFpGgubmMIw"
+    ]
   </script>
   <div style="padding: 20px; background: #ffebee; text-align: center;">
     <p>不正な広告 (window.open)</p>

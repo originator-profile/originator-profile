@@ -1,5 +1,5 @@
 import { serializeIfError } from "@originator-profile/core";
-import { ContentAttestation, OpVc } from "@originator-profile/model";
+import { OpVc } from "@originator-profile/model";
 import {
   fetchCredentials,
   FetchCredentialSetResult,
@@ -76,38 +76,48 @@ const setupOpMetaListener = () => {
       const AD_CA_TYPES = ["OnlineAd", "Advertorial"] as const;
       type AdCaType = (typeof AD_CA_TYPES)[number];
 
-      const isContentAttestation = (
-        item: unknown,
-      ): item is ContentAttestation => {
-        return (
-          typeof item === "object" &&
-          item !== null &&
-          "credentialSubject" in item
-        );
-      };
-
-      const getCasIssuer = (casItem: unknown): string | undefined => {
-        if (!isContentAttestation(casItem)) return undefined;
-        return casItem.issuer;
-      };
-
-      const getSubjectType = (casItem: unknown): string | undefined => {
-        if (!isContentAttestation(casItem)) return undefined;
-        return casItem.credentialSubject?.type;
-      };
-
       const isAdCaType = (type: string | undefined): type is AdCaType => {
         return type !== undefined && AD_CA_TYPES.includes(type as AdCaType);
       };
 
-      // 広告関連CAのみをフィルタリング
-      const adCas = Array.isArray(cas)
-        ? cas.filter((item) => isAdCaType(getSubjectType(item)))
-        : [];
+      // CAS JWTをデコードしてペイロードを取得
+      const decodeCasJwtPayload = (
+        casItem: unknown,
+      ):
+        | {
+            issuer?: string;
+            credentialSubject?: { type?: string };
+          }
+        | undefined => {
+        const jwt = normalizeCasItem(casItem).attestation;
+        if (typeof jwt !== "string") return undefined;
+        try {
+          const payload = jwt.split(".")[1];
+          if (payload) {
+            const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+            const binaryString = atob(base64);
+            const bytes = Uint8Array.from(
+              binaryString,
+              (c) => c.codePointAt(0) ?? 0,
+            );
+            return JSON.parse(new TextDecoder().decode(bytes));
+          }
+        } catch (e) {
+          console.error("[ContentScript] Failed to decode CAS JWT", e);
+        }
+        return undefined;
+      };
 
+      // 広告関連CAS(OnlineAd/Advertorial)のissuerを取得
       let casIssuer: string | undefined;
-      if (adCas.length > 0) {
-        casIssuer = getCasIssuer(adCas[0]);
+      if (Array.isArray(cas)) {
+        for (const casItem of cas) {
+          const decoded = decodeCasJwtPayload(casItem);
+          if (decoded && isAdCaType(decoded.credentialSubject?.type)) {
+            casIssuer = decoded.issuer;
+            break;
+          }
+        }
       }
 
       if (Array.isArray(ops)) {
@@ -149,10 +159,6 @@ const setupOpMetaListener = () => {
               return;
             }
 
-            if (!sourceOrgName) {
-              sourceOrgName = decodedPayload.credentialSubject.name;
-            }
-
             const isMatch = (targetId: string) => {
               return (
                 decodedPayload.issuer === targetId ||
@@ -160,10 +166,18 @@ const setupOpMetaListener = () => {
               );
             };
 
-            // If CAS issuer is present, use it to find expectedOrgName
-            if (casIssuer && isMatch(casIssuer)) {
-              expectedOrgName = decodedPayload.credentialSubject.name;
-            } else if (opMeta.targetopid && isMatch(opMeta.targetopid)) {
+            // sourceOrgName: 広告CAS(OnlineAd/Advertorial)のissuerと一致するOPの名前
+            if (!sourceOrgName && casIssuer && isMatch(casIssuer)) {
+              sourceOrgName = decodedPayload.credentialSubject.name;
+            }
+
+            // expectedOrgName: CAS(全種類)が存在する場合、targetopidと一致するOPの名前
+            if (
+              Array.isArray(cas) &&
+              cas.length > 0 &&
+              opMeta.targetopid &&
+              isMatch(opMeta.targetopid)
+            ) {
               expectedOrgName = decodedPayload.credentialSubject.name;
             }
           };

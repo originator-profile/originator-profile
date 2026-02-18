@@ -354,16 +354,16 @@
     "message": "サイトの身元を確認できません"
   },
   "LinkVerification_Matched_IntendedSite": {
-    "message": "$dest_org$のサイトを開くことを意図した",
+    "message": "$expected_org$のサイトを開くことを意図した",
     "placeholders": {
-      "dest_org": {
+      "expected_org": {
         "content": "$1",
         "example": "Example Corp"
       }
     }
   },
-  "LinkVerification_SourceOrg": {
-    "message": "$source_org$の",
+  "LinkVerification_Matched_ClickedAd": {
+    "message": "$source_org$の広告をクリックし、",
     "placeholders": {
       "source_org": {
         "content": "$1",
@@ -371,10 +371,40 @@
       }
     }
   },
+  "LinkVerification_Matched_ClickedAdGeneric": {
+    "message": "広告をクリックし、"
+  },
+  "LinkVerification_Matched_DestConfirmed": {
+    "message": "正しいリンク先（$dest_org$のサイト）に遷移したことを確認できました。",
+    "placeholders": {
+      "dest_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
   "LinkVerification_Matched_Confirmed": {
-    "message": "広告をクリックし、正しいリンク先に遷移したことを確認できました"
+    "message": "正しいリンク先に遷移したことを確認できました。"
+  },
+  "LinkVerification_Mismatched_IntendedSite": {
+    "message": "$expected_org$のサイトを開くことを意図した",
+    "placeholders": {
+      "expected_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
   },
   "LinkVerification_Mismatched_ClickedAd": {
+    "message": "$source_org$の広告をクリックしましたが、",
+    "placeholders": {
+      "source_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "LinkVerification_Mismatched_ClickedAdGeneric": {
     "message": "広告をクリックしましたが、"
   },
   "LinkVerification_Mismatched_OperatedBy": {

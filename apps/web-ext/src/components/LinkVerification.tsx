@@ -13,16 +13,18 @@ function VerificationMessage({
   if (isMatched) {
     return (
       <p className="text-sm">
-        {result.destinationOrgName
-          ? _(
-              "LinkVerification_Matched_IntendedSite",
-              result.destinationOrgName,
-            )
+        {result.expectedOrgName
+          ? _("LinkVerification_Matched_IntendedSite", result.expectedOrgName)
           : ""}
         {result.sourceOrgName
-          ? _("LinkVerification_SourceOrg", result.sourceOrgName)
-          : ""}
-        {_("LinkVerification_Matched_Confirmed")}
+          ? _("LinkVerification_Matched_ClickedAd", result.sourceOrgName)
+          : _("LinkVerification_Matched_ClickedAdGeneric")}
+        {result.destinationOrgName
+          ? _(
+              "LinkVerification_Matched_DestConfirmed",
+              result.destinationOrgName,
+            )
+          : _("LinkVerification_Matched_Confirmed")}
       </p>
     );
   }
@@ -30,12 +32,11 @@ function VerificationMessage({
   return (
     <p className="text-sm mb-1">
       {result.expectedOrgName
-        ? _("LinkVerification_Matched_IntendedSite", result.expectedOrgName)
+        ? _("LinkVerification_Mismatched_IntendedSite", result.expectedOrgName)
         : ""}
       {result.sourceOrgName
-        ? _("LinkVerification_SourceOrg", result.sourceOrgName)
-        : ""}
-      {_("LinkVerification_Mismatched_ClickedAd")}
+        ? _("LinkVerification_Mismatched_ClickedAd", result.sourceOrgName)
+        : _("LinkVerification_Mismatched_ClickedAdGeneric")}
       {result.destinationOrgName
         ? _("LinkVerification_Mismatched_OperatedBy", result.destinationOrgName)
         : _("LinkVerification_Mismatched_CannotVerify")}

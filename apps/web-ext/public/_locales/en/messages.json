@@ -354,16 +354,16 @@
     "message": "Unable to verify site identity"
   },
   "LinkVerification_Matched_IntendedSite": {
-    "message": "intended to open $dest_org$'s site, ",
+    "message": "Intended for $expected_org$'s site, ",
     "placeholders": {
-      "dest_org": {
+      "expected_org": {
         "content": "$1",
         "example": "Example Corp"
       }
     }
   },
-  "LinkVerification_SourceOrg": {
-    "message": "$source_org$'s ",
+  "LinkVerification_Matched_ClickedAd": {
+    "message": "you clicked $source_org$'s ad, ",
     "placeholders": {
       "source_org": {
         "content": "$1",
@@ -371,10 +371,40 @@
       }
     }
   },
+  "LinkVerification_Matched_ClickedAdGeneric": {
+    "message": "You clicked an ad, "
+  },
+  "LinkVerification_Matched_DestConfirmed": {
+    "message": "and the destination ($dest_org$'s site) has been verified.",
+    "placeholders": {
+      "dest_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
   "LinkVerification_Matched_Confirmed": {
-    "message": "You clicked an ad and the correct destination has been confirmed."
+    "message": "and the correct destination has been confirmed."
+  },
+  "LinkVerification_Mismatched_IntendedSite": {
+    "message": "Intended for $expected_org$'s site, ",
+    "placeholders": {
+      "expected_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
   },
   "LinkVerification_Mismatched_ClickedAd": {
+    "message": "you clicked $source_org$'s ad, but ",
+    "placeholders": {
+      "source_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "LinkVerification_Mismatched_ClickedAdGeneric": {
     "message": "You clicked an ad, but "
   },
   "LinkVerification_Mismatched_OperatedBy": {
