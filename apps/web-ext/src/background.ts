@@ -14,6 +14,7 @@ import {
   allowNavigation,
   cleanupNavigationState,
   consumeAllowedNavigation,
+  normalizeUrl,
 } from "./utils/navigation-state";
 
 const windowSize = {
@@ -115,6 +116,7 @@ const pendingOpIdVerification = new PersistentMap<{
   targetOpId: string;
   sourceOrgName?: string;
   expectedOrgName?: string;
+  warnedUrl?: string;
 }>("pendingOpIdVerification");
 
 const verificationResults = new PersistentMap<LinkVerificationResult>(
@@ -508,10 +510,22 @@ const handleVerification = async (
       result.destinationOrgName,
       result.expectedOrgName,
     );
+    // 警告を出したURLを記録し、ユーザーが手動で別のURLへ移動した際にpendingを解除できるようにする
+    const current = pendingOpIdVerification.get(tabId);
+    if (current) {
+      pendingOpIdVerification.set(tabId, { ...current, warnedUrl: url });
+    }
     return;
   }
 
   pendingOpIdVerification.delete(tabId);
+};
+
+const restoreVerificationFromCache = (tabId: number, url: string) => {
+  const cached = verificationCache.get(tabId)?.[url];
+  if (cached) {
+    verificationResults.set(tabId, cached);
+  }
 };
 
 chrome.webNavigation.onCommitted.addListener(async (details) => {
@@ -532,6 +546,16 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
 
   const pending = pendingOpIdVerification.get(details.tabId);
   if (pending) {
+    if (
+      pending.warnedUrl &&
+      normalizeUrl(pending.warnedUrl) !== normalizeUrl(details.url)
+    ) {
+      // 警告画面から別のURLへ手動ナビゲートした（または新規タブで別URLを開いた）場合は、検証フローを中止する
+      pendingOpIdVerification.delete(details.tabId);
+      restoreVerificationFromCache(details.tabId, details.url);
+      return;
+    }
+
     await handleVerification(
       details.tabId,
       details.url,
@@ -541,10 +565,7 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
     );
   } else {
     // If no pending verification (e.g. Back/Forward navigation), try to restore from cache
-    const cached = verificationCache.get(details.tabId)?.[details.url];
-    if (cached) {
-      verificationResults.set(details.tabId, cached);
-    }
+    restoreVerificationFromCache(details.tabId, details.url);
   }
 });
 

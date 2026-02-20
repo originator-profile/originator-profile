@@ -62,6 +62,100 @@ credentialsMessenger.onMessage("fetchCredentials", async () => {
   };
 });
 
+const AD_CA_TYPES = ["OnlineAd", "Advertorial"] as const;
+type AdCaType = (typeof AD_CA_TYPES)[number];
+
+const isAdCaType = (type: string | undefined): type is AdCaType => {
+  return type !== undefined && AD_CA_TYPES.includes(type as AdCaType);
+};
+
+// CAS JWTをデコードしてペイロードを取得
+const decodeCasJwtPayload = (
+  casItem: unknown,
+):
+  | {
+      issuer?: string;
+      credentialSubject?: { type?: string };
+    }
+  | undefined => {
+  const jwt = normalizeCasItem(casItem).attestation;
+  if (typeof jwt !== "string") return undefined;
+  try {
+    const payload = jwt.split(".")[1];
+    if (payload) {
+      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const binaryString = atob(base64);
+      const bytes = Uint8Array.from(binaryString, (c) => c.codePointAt(0) ?? 0);
+      return JSON.parse(new TextDecoder().decode(bytes));
+    }
+  } catch (e) {
+    console.error("[ContentScript] Failed to decode CAS JWT", e);
+  }
+  return undefined;
+};
+
+// 広告関連CAS(OnlineAd/Advertorial)のissuerを取得
+const getCasIssuer = (cas: unknown): string | undefined => {
+  if (!Array.isArray(cas)) return undefined;
+  for (const casItem of cas) {
+    const decoded = decodeCasJwtPayload(casItem);
+    if (decoded && isAdCaType(decoded.credentialSubject?.type)) {
+      return decoded.issuer;
+    }
+  }
+  return undefined;
+};
+
+// デコード済みOPペイロードの型（nameを含む）
+type DecodedOpPayload = Omit<OpVc, "credentialSubject"> & {
+  credentialSubject: OpVc["credentialSubject"] & {
+    name?: string;
+  };
+};
+
+const decodeJwt = (jwt: string | undefined): DecodedOpPayload | undefined => {
+  if (!jwt) return undefined;
+  try {
+    const payload = jwt.split(".")[1];
+    if (payload) {
+      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const binaryString = atob(base64);
+      const bytes = Uint8Array.from(binaryString, (c) => c.codePointAt(0) ?? 0);
+      return JSON.parse(new TextDecoder().decode(bytes)) as DecodedOpPayload;
+    }
+  } catch (e) {
+    console.error("[ContentScript] Failed to decode JWT", e);
+  }
+  return undefined;
+};
+
+const updateOrgNames = (
+  decodedPayload: DecodedOpPayload | undefined,
+  casIssuer: string | undefined,
+  hasCas: boolean,
+  targetopid: string | undefined,
+  currentNames: { sourceOrgName?: string; expectedOrgName?: string },
+) => {
+  if (!decodedPayload?.credentialSubject?.name) {
+    return;
+  }
+
+  const isMatch = (targetId: string) => {
+    return (
+      decodedPayload.issuer === targetId ||
+      decodedPayload.credentialSubject?.id === targetId
+    );
+  };
+
+  if (!currentNames.sourceOrgName && casIssuer && isMatch(casIssuer)) {
+    currentNames.sourceOrgName = decodedPayload.credentialSubject.name;
+  }
+
+  if (hasCas && targetopid && isMatch(targetopid)) {
+    currentNames.expectedOrgName = decodedPayload.credentialSubject.name;
+  }
+};
+
 let isListenerSetup = false;
 const setupOpMetaListener = () => {
   if (isListenerSetup) return;
@@ -69,122 +163,28 @@ const setupOpMetaListener = () => {
   if (opMeta) {
     const sendAdClicked = async () => {
       const { ops, cas } = await fetchCredentials(document);
-      let sourceOrgName: string | undefined;
-      let expectedOrgName: string | undefined;
+      const names: { sourceOrgName?: string; expectedOrgName?: string } = {};
 
-      // 広告関連のCAタイプ（リンク先確認に使用）
-      const AD_CA_TYPES = ["OnlineAd", "Advertorial"] as const;
-      type AdCaType = (typeof AD_CA_TYPES)[number];
-
-      const isAdCaType = (type: string | undefined): type is AdCaType => {
-        return type !== undefined && AD_CA_TYPES.includes(type as AdCaType);
-      };
-
-      // CAS JWTをデコードしてペイロードを取得
-      const decodeCasJwtPayload = (
-        casItem: unknown,
-      ):
-        | {
-            issuer?: string;
-            credentialSubject?: { type?: string };
-          }
-        | undefined => {
-        const jwt = normalizeCasItem(casItem).attestation;
-        if (typeof jwt !== "string") return undefined;
-        try {
-          const payload = jwt.split(".")[1];
-          if (payload) {
-            const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-            const binaryString = atob(base64);
-            const bytes = Uint8Array.from(
-              binaryString,
-              (c) => c.codePointAt(0) ?? 0,
-            );
-            return JSON.parse(new TextDecoder().decode(bytes));
-          }
-        } catch (e) {
-          console.error("[ContentScript] Failed to decode CAS JWT", e);
-        }
-        return undefined;
-      };
-
-      // 広告関連CAS(OnlineAd/Advertorial)のissuerを取得
-      let casIssuer: string | undefined;
-      if (Array.isArray(cas)) {
-        for (const casItem of cas) {
-          const decoded = decodeCasJwtPayload(casItem);
-          if (decoded && isAdCaType(decoded.credentialSubject?.type)) {
-            casIssuer = decoded.issuer;
-            break;
-          }
-        }
-      }
+      const casIssuer = getCasIssuer(cas);
+      const hasCas = Array.isArray(cas) && cas.length > 0;
 
       if (Array.isArray(ops)) {
         for (const op of ops) {
-          // デコード済みOPペイロードの型（nameを含む）
-          type DecodedOpPayload = Omit<OpVc, "credentialSubject"> & {
-            credentialSubject: OpVc["credentialSubject"] & {
-              name?: string;
-            };
-          };
-
-          const decodeJwt = (
-            jwt: string | undefined,
-          ): DecodedOpPayload | undefined => {
-            if (!jwt) return undefined;
-            try {
-              const payload = jwt.split(".")[1];
-              if (payload) {
-                const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-                const binaryString = atob(base64);
-                const bytes = Uint8Array.from(
-                  binaryString,
-                  (c) => c.codePointAt(0) ?? 0,
-                );
-                return JSON.parse(
-                  new TextDecoder().decode(bytes),
-                ) as DecodedOpPayload;
-              }
-            } catch (e) {
-              console.error("[ContentScript] Failed to decode JWT", e);
-            }
-            return undefined;
-          };
-
-          const processPayload = (
-            decodedPayload: DecodedOpPayload | undefined,
-          ) => {
-            if (!decodedPayload?.credentialSubject?.name) {
-              return;
-            }
-
-            const isMatch = (targetId: string) => {
-              return (
-                decodedPayload.issuer === targetId ||
-                decodedPayload.credentialSubject?.id === targetId
-              );
-            };
-
-            // sourceOrgName: 広告CAS(OnlineAd/Advertorial)のissuerと一致するOPの名前
-            if (!sourceOrgName && casIssuer && isMatch(casIssuer)) {
-              sourceOrgName = decodedPayload.credentialSubject.name;
-            }
-
-            // expectedOrgName: CAS(全種類)が存在する場合、targetopidと一致するOPの名前
-            if (
-              Array.isArray(cas) &&
-              cas.length > 0 &&
-              opMeta.targetopid &&
-              isMatch(opMeta.targetopid)
-            ) {
-              expectedOrgName = decodedPayload.credentialSubject.name;
-            }
-          };
-
           const mediaJwt = Array.isArray(op.media) ? op.media[0] : op.media;
-          processPayload(decodeJwt(mediaJwt));
-          processPayload(decodeJwt(op.core));
+          updateOrgNames(
+            decodeJwt(mediaJwt),
+            casIssuer,
+            hasCas,
+            opMeta.targetopid,
+            names,
+          );
+          updateOrgNames(
+            decodeJwt(op.core),
+            casIssuer,
+            hasCas,
+            opMeta.targetopid,
+            names,
+          );
         }
       }
 
@@ -196,9 +196,9 @@ const setupOpMetaListener = () => {
 
       void credentialsMessenger.sendMessage("adClicked", {
         targetopid: opMeta.targetopid,
-        sourceOrgName,
+        sourceOrgName: names.sourceOrgName,
         expectedOrgName:
-          expectedOrgName ??
+          names.expectedOrgName ??
           getOpMetaProperty("targetOrgName") ??
           getOpMetaProperty("targetname"),
       });

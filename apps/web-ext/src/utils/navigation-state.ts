@@ -2,7 +2,7 @@
 // キー形式: `${tabId}:${url}`
 const allowedNavigations: { [key: string]: boolean } = {};
 
-const normalizeUrl = (url: string) => {
+export const normalizeUrl = (url: string) => {
   try {
     const u = new URL(url);
     // Remove trailing slash for consistency
