@@ -59,12 +59,19 @@ test("CASの検証に成功するが、SiteProfileのWMPの取得に失敗した
   const ext = await popup(context);
   await expect(ext?.getByTestId("site-profile")).toBeVisible();
 
-  const wspMissing = ext?.getByTestId("web-media-profile-missing");
-  await expect(wspMissing).toHaveCount(2);
-  expect(await wspMissing?.nth(0).innerText()).toBe(
+  // SiteProfileとCredentialsの両方でMissingが表示されることを確認
+  const siteProfileMissing = ext
+    ?.getByTestId("site-profile")
+    .getByTestId("web-media-profile-missing");
+  const credentialsMissing = ext
+    ?.getByTestId("cas")
+    .getByTestId("web-media-profile-missing");
+  await expect(siteProfileMissing).toBeVisible();
+  await expect(credentialsMissing).toBeVisible();
+  expect(await siteProfileMissing.innerText()).toBe(
     "このサイト運営者に対応する組織情報を正しく読み取れませんでした",
   );
-  expect(await wspMissing?.nth(1).innerText()).toBe(
+  expect(await credentialsMissing.innerText()).toBe(
     "このサイト運営者に対応する組織情報を正しく読み取れませんでした",
   );
 });
