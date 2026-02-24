@@ -58,6 +58,7 @@ test("CASの検証に成功するが、SiteProfileのWMPの取得に失敗した
   await page.goto(credentialsPage.endpoint);
   const ext = await popup(context);
   await expect(ext?.getByTestId("site-profile")).toBeVisible();
+  await expect(ext?.getByTestId("cas")).toBeVisible();
 
   // SiteProfileとCredentialsの両方でMissingが表示されることを確認
   const siteProfileMissing = ext
