@@ -78,10 +78,6 @@ export function Credentials(props: CredentialsProps) {
   const ca = props.ca.attestation.doc;
 
   const renderWebMediaProfileSummaryCard = () => {
-    if (props.orgPath && props.wmp) {
-      return <WebMediaProfileSummaryCard to={props.orgPath} wmp={props.wmp} />;
-    }
-
     return props.orgPath && props.wmp ? (
       <div className="mb-3" data-testid="ps-json-holder">
         <WebMediaProfileSummaryCard to={props.orgPath} wmp={props.wmp} />
