@@ -1,6 +1,6 @@
 import { Icon } from "@iconify/react";
 import { stringifyWithError } from "@originator-profile/core";
-import { _ } from "@originator-profile/ui";
+import { _, ExternalLink } from "@originator-profile/ui";
 import {
   CasVerificationFailure,
   CasVerifyFailed,
@@ -98,7 +98,13 @@ function DisplayResults({
       {code && (
         <div className="text-gray-700 mb-1">
           <p className="font-bold mb-1">Code</p>
-          <p>{code}</p>
+          <p>
+            <ExternalLink
+              href={`https://docs.originator-profile.org/error-reference/${code}/`}
+            >
+              {code}
+            </ExternalLink>
+          </p>
         </div>
       )}
       {message && (
