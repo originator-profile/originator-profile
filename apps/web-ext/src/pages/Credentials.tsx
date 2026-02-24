@@ -28,23 +28,28 @@ export default function Credentials() {
       (m) => m.doc.credentialSubject.id === ca.attestation.doc.issuer,
     ),
   );
-  if (!op?.media) return null;
-  const selectedWmp = selectByLocale(op.media.map((m) => m.doc));
-  if (!selectedWmp) return null;
+  const selectedWmp = selectByLocale(op?.media?.map((m) => m.doc) ?? []);
+
+  const getOrgPath = () => {
+    if (!op?.media || !selectedWmp) return undefined;
+
+    return {
+      pathname: routes.org.build(
+        routes.org.getParams({
+          contentType: getContentType(ca),
+          cp: op.core.doc,
+        }),
+      ),
+      search: queryParams.toString(),
+    };
+  };
+
   return (
     <Template
       ca={ca}
       cas={cas}
       ops={ops}
-      orgPath={{
-        pathname: routes.org.build(
-          routes.org.getParams({
-            contentType: getContentType(ca),
-            cp: op.core.doc,
-          }),
-        ),
-        search: queryParams.toString(),
-      }}
+      orgPath={getOrgPath()}
       wmp={selectedWmp}
       framesCas={framesCas}
     />
