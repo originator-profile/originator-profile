@@ -74,9 +74,9 @@ const decodeCasJwtPayload = (
   casItem: unknown,
 ):
   | {
-    issuer?: string;
-    credentialSubject?: { type?: string };
-  }
+      issuer?: string;
+      credentialSubject?: { type?: string };
+    }
   | undefined => {
   const jwt = normalizeCasItem(casItem).attestation;
   if (typeof jwt !== "string") return undefined;
@@ -156,7 +156,9 @@ const updateOrgNames = (
   }
 };
 
-let cachedNames: { sourceOrgName?: string; expectedOrgName?: string } | undefined;
+let cachedNames:
+  | { sourceOrgName?: string; expectedOrgName?: string }
+  | undefined;
 
 const tryCacheNames = () => {
   const opMeta = fetchOpMeta(document);
