@@ -15,6 +15,7 @@ type CredentialsProtocolMap = {
     targetopid: string;
     sourceOrgName?: string;
     expectedOrgName?: string;
+    isNewTab?: boolean;
   }): void;
   getVerificationResult(tabId: number): LinkVerificationResult;
 };

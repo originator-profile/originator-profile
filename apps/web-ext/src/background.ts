@@ -178,7 +178,14 @@ chrome.webNavigation.onCreatedNavigationTarget.addListener(async (details) => {
   // If we already have a pending click from this source frame, associate it immediately
   const sourcePendingClicks = pendingClicks.get(sourceTabId);
   if (sourcePendingClicks?.[sourceFrameId]) {
-    pendingOpIdVerification.set(tabId, sourcePendingClicks[sourceFrameId]);
+    const pendingClick = sourcePendingClicks[sourceFrameId];
+    pendingOpIdVerification.set(tabId, pendingClick);
+
+    // Clear from source tab if it had the exact same verification (consumed by new tab)
+    const currentMainPending = pendingOpIdVerification.get(sourceTabId);
+    if (currentMainPending && currentMainPending.targetOpId === pendingClick.targetOpId) {
+      pendingOpIdVerification.delete(sourceTabId);
+    }
   } else {
     // Otherwise, store usage association for when the click message arrives
     pendingNewTabAssociations.update(sourceTabId, (current) => {
@@ -215,6 +222,7 @@ const handleAdClicked = (
   targetOpId: string,
   sourceOrgName?: string,
   expectedOrgName?: string,
+  isNewTab?: boolean,
 ) => {
   // Store the click for this frame
   pendingClicks.update(tabId, (current) => {
@@ -227,12 +235,15 @@ const handleAdClicked = (
     return next;
   });
 
-  // Also update main pending map for same-tab navigations (overwrites last click in tab)
-  pendingOpIdVerification.set(tabId, {
-    targetOpId,
-    sourceOrgName,
-    expectedOrgName,
-  });
+  // Only update main pending map if it's not explicitly a new-tab click 
+  // (Prevents source tab from showing verification warnings if it simultaneously navigates)
+  if (!isNewTab) {
+    pendingOpIdVerification.set(tabId, {
+      targetOpId,
+      sourceOrgName,
+      expectedOrgName,
+    });
+  }
 
   // Check if any new tabs were already created by this frame waiting for this opId
   const tabAssociations = pendingNewTabAssociations.get(tabId);
@@ -249,6 +260,14 @@ const handleAdClicked = (
     // Clear associations as they are fulfilled
     delete tabAssociations[frameId];
     pendingNewTabAssociations.set(tabId, tabAssociations);
+
+    // If a new tab consumed this click, ensure we clear it from the source tab
+    if (waitingTabs.length > 0) {
+      const currentMainPending = pendingOpIdVerification.get(tabId);
+      if (currentMainPending && currentMainPending.targetOpId === targetOpId) {
+        pendingOpIdVerification.delete(tabId);
+      }
+    }
   }
 };
 
@@ -261,6 +280,7 @@ credentialsMessenger.onMessage("adClicked", async ({ data, sender }) => {
       data.targetopid,
       data.sourceOrgName,
       data.expectedOrgName,
+      data.isNewTab,
     );
   }
 });
@@ -531,8 +551,34 @@ const restoreVerificationFromCache = (tabId: number, url: string) => {
 chrome.webNavigation.onCommitted.addListener(async (details) => {
   await stateReady;
   if (details.frameId !== 0) return;
-  if (details.transitionQualifiers.includes("forward_back")) {
+
+  const isFromAddressBar = details.transitionQualifiers.includes("from_address_bar");
+  const isForwardBack = details.transitionQualifiers.includes("forward_back");
+  const isBookmark = details.transitionType === "auto_bookmark";
+  const isReload = details.transitionType === "reload";
+  const isClientRedirect = details.transitionQualifiers.includes("client_redirect");
+  const isServerRedirect = details.transitionQualifiers.includes("server_redirect");
+
+  const isTypedOrGenerated = [
+    "typed",
+    "generated",
+    "keyword",
+    "keyword_generated",
+  ].includes(details.transitionType);
+
+  // 明示的な手動操作やリロードの場合はキャンセル
+  if (isFromAddressBar || isForwardBack || isBookmark || isReload) {
     pendingOpIdVerification.delete(details.tabId);
+    console.error(details.transitionType, "isFromAddressBar [webNavigation.onCommitted] url:", details.url, "pendingExists:", !!pendingOpIdVerification.get(details.tabId));
+    return;
+  }
+
+  // typedやgenerated（外部アプリからのリンク等含む）でも、
+  // リダイレクト（window.open() 等で付与されることが多い）を伴わない場合は手動遷移とみなしてキャンセル
+  if (isTypedOrGenerated && !isClientRedirect && !isServerRedirect) {
+    pendingOpIdVerification.delete(details.tabId);
+    console.error("isTypedOrGenerated [webNavigation.onCommitted] url:", details.url, "pendingExists:", !!pendingOpIdVerification.get(details.tabId));
+    return;
   }
 });
 
@@ -591,7 +637,7 @@ frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
 });
 
 // https://www.typescriptlang.org/tsconfig#non-module-files
-export {};
+export { };
 
 // NOTE: gh-1583
 if (import.meta.env.MODE === "development") {
@@ -615,10 +661,10 @@ if (import.meta.env.BASIC_AUTH) {
         urls:
           credential.domain === "localhost"
             ? [
-                "http://localhost:8080/*",
-                // Firefox のため
-                "http://localhost/*",
-              ]
+              "http://localhost:8080/*",
+              // Firefox のため
+              "http://localhost/*",
+            ]
             : [`https://${credential.domain}/*`],
       },
       ["blocking"],

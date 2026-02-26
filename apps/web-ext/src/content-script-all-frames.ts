@@ -74,9 +74,9 @@ const decodeCasJwtPayload = (
   casItem: unknown,
 ):
   | {
-      issuer?: string;
-      credentialSubject?: { type?: string };
-    }
+    issuer?: string;
+    credentialSubject?: { type?: string };
+  }
   | undefined => {
   const jwt = normalizeCasItem(casItem).attestation;
   if (typeof jwt !== "string") return undefined;
@@ -156,13 +156,19 @@ const updateOrgNames = (
   }
 };
 
-let isListenerSetup = false;
-const setupOpMetaListener = () => {
-  if (isListenerSetup) return;
+let cachedNames: { sourceOrgName?: string; expectedOrgName?: string } | undefined;
+
+const tryCacheNames = () => {
   const opMeta = fetchOpMeta(document);
-  if (opMeta) {
-    const sendAdClicked = async () => {
-      const { ops, cas } = await fetchCredentials(document);
+  if (!opMeta) return;
+
+  const getOpMetaProperty = (key: string): string | undefined => {
+    const value = (opMeta as Record<string, unknown>)[key];
+    return typeof value === "string" ? value : undefined;
+  };
+
+  void fetchCredentials(document)
+    .then(({ ops, cas }) => {
       const names: { sourceOrgName?: string; expectedOrgName?: string } = {};
 
       const casIssuer = getCasIssuer(cas);
@@ -188,61 +194,96 @@ const setupOpMetaListener = () => {
         }
       }
 
-      // OpMetaの追加プロパティを取得するヘルパー
-      const getOpMetaProperty = (key: string): string | undefined => {
-        const value = (opMeta as Record<string, unknown>)[key];
-        return typeof value === "string" ? value : undefined;
-      };
-
-      void credentialsMessenger.sendMessage("adClicked", {
-        targetopid: opMeta.targetopid,
+      cachedNames = {
         sourceOrgName: names.sourceOrgName,
         expectedOrgName:
           names.expectedOrgName ??
           getOpMetaProperty("targetOrgName") ??
           getOpMetaProperty("targetname"),
-      });
-    };
-    const handleLinkClick = (e: MouseEvent) => {
-      const target = e.target as HTMLElement;
-      if (target.closest("a")) {
-        void sendAdClicked();
-      }
-    };
-    document.addEventListener("click", handleLinkClick);
-    document.addEventListener("mousedown", handleLinkClick);
-    document.addEventListener("keydown", (e) => {
-      if (e.key === "Enter") {
-        const target = e.target as HTMLElement;
-        if (target.closest("a")) {
-          void sendAdClicked();
-        }
-        return;
-      }
-      if (e.key === " " || e.key === "Spacebar") {
-        const target = e.target as HTMLElement;
-        const tagName = target.tagName;
-        const role = target.getAttribute("role");
-        if (
-          tagName === "BUTTON" ||
-          tagName === "INPUT" ||
-          tagName === "SELECT" ||
-          tagName === "TEXTAREA" ||
-          role === "button"
-        ) {
-          void sendAdClicked();
-        }
-      }
+      };
+    })
+    .catch((e) => {
+      console.error("[ContentScript] Pre-fetch credentials failed", e);
     });
-    isListenerSetup = true;
-  }
 };
 
 if (document.readyState === "loading") {
-  document.addEventListener("DOMContentLoaded", setupOpMetaListener);
+  tryCacheNames();
+  document.addEventListener("DOMContentLoaded", tryCacheNames);
 } else {
-  setupOpMetaListener();
+  tryCacheNames();
 }
+
+const sendAdClicked = (opMeta: any, isNewTab: boolean = false) => {
+  const getOpMetaProperty = (key: string): string | undefined => {
+    const value = (opMeta as Record<string, unknown>)[key];
+    return typeof value === "string" ? value : undefined;
+  };
+
+  const names = cachedNames ?? {
+    expectedOrgName:
+      getOpMetaProperty("targetOrgName") ?? getOpMetaProperty("targetname"),
+  };
+
+  void credentialsMessenger.sendMessage("adClicked", {
+    targetopid: opMeta.targetopid,
+    sourceOrgName: names.sourceOrgName,
+    expectedOrgName: names.expectedOrgName,
+    isNewTab,
+  });
+};
+
+const handleLinkClick = (e: MouseEvent) => {
+  const target = e.target as HTMLElement;
+  const anchor = target.closest("a");
+  if (anchor) {
+    const opMeta = fetchOpMeta(document);
+    if (opMeta) {
+      let isNewTab = anchor.target === "_blank";
+      if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
+        isNewTab = true;
+      }
+      void sendAdClicked(opMeta, isNewTab);
+    }
+  }
+};
+
+document.addEventListener("click", handleLinkClick);
+document.addEventListener("mousedown", handleLinkClick);
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    const target = e.target as HTMLElement;
+    const anchor = target.closest("a");
+    if (anchor) {
+      const opMeta = fetchOpMeta(document);
+      if (opMeta) {
+        let isNewTab = anchor.target === "_blank";
+        if (e.ctrlKey || e.metaKey || e.shiftKey) {
+          isNewTab = true;
+        }
+        void sendAdClicked(opMeta, isNewTab);
+      }
+    }
+    return;
+  }
+  if (e.key === " " || e.key === "Spacebar") {
+    const target = e.target as HTMLElement;
+    const tagName = target.tagName;
+    const role = target.getAttribute("role");
+    if (
+      tagName === "BUTTON" ||
+      tagName === "INPUT" ||
+      tagName === "SELECT" ||
+      tagName === "TEXTAREA" ||
+      role === "button"
+    ) {
+      const opMeta = fetchOpMeta(document);
+      if (opMeta) {
+        void sendAdClicked(opMeta, false);
+      }
+    }
+  }
+});
 
 credentialsMessenger.onMessage("verifyIntegrity", async ({ data }) => {
   const [content] = data;
