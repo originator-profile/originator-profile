@@ -1,4 +1,5 @@
 import { frameCasExtensionMessenger } from "./components/frameCas";
+import { updateBadge, verifyTabCredentials } from "./components/tabBadge";
 import "./utils/cors-basic-auth";
 
 const windowSize = {
@@ -6,9 +7,74 @@ const windowSize = {
   height: 640,
 } as const;
 
-chrome.action.onClicked.addListener(async function (tab) {
+/** バッジ更新のデバウンス時間（ミリ秒） */
+const BADGE_UPDATE_DEBOUNCE_MS = 300;
+
+chrome.action.onClicked.addListener(async (tab) => {
+  if (tab.id === undefined) return;
   const url = `${chrome.runtime.getURL("index.html")}#/tab/${tab.id}`;
   await chrome.windows.create({ url, type: "popup", ...windowSize });
+});
+
+/**
+ * タブのバッジを更新する
+ * @param tabId タブID
+ */
+async function updateTabBadge(tabId: number): Promise<void> {
+  try {
+    const result = await verifyTabCredentials(tabId);
+    await updateBadge(tabId, result?.count ?? 0);
+  } catch (error) {
+    console.error(
+      `[updateTabBadge] Failed to update badge for tab ${tabId}:`,
+      error,
+    );
+  }
+}
+
+// デバウンス用のタイマーID（タブIDごとに管理）
+const pendingBadgeUpdateTimers = new Map<
+  number,
+  ReturnType<typeof setTimeout>
+>();
+
+/**
+ * タブのバッジ更新をデバウンス付きで要求する
+ * @param tabId タブID
+ */
+function requestTabBadgeUpdate(tabId: number): void {
+  const existingTimer = pendingBadgeUpdateTimers.get(tabId);
+  if (existingTimer !== undefined) {
+    clearTimeout(existingTimer);
+  }
+
+  const timer = setTimeout(() => {
+    pendingBadgeUpdateTimers.delete(tabId);
+    void updateTabBadge(tabId);
+  }, BADGE_UPDATE_DEBOUNCE_MS);
+
+  pendingBadgeUpdateTimers.set(tabId, timer);
+}
+
+// タブ切り替え時にバッジを更新
+chrome.tabs.onActivated.addListener(({ tabId }) => {
+  requestTabBadgeUpdate(tabId);
+});
+
+// ページ遷移完了時にバッジを更新（アクティブタブのみ）
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === "complete" && tab.active) {
+    requestTabBadgeUpdate(tabId);
+  }
+});
+
+// タブ削除時にデバウンスタイマーをクリーンアップ
+chrome.tabs.onRemoved.addListener((tabId) => {
+  const timer = pendingBadgeUpdateTimers.get(tabId);
+  if (timer !== undefined) {
+    clearTimeout(timer);
+    pendingBadgeUpdateTimers.delete(tabId);
+  }
 });
 
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
@@ -31,6 +97,7 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   }
 });
 
+// iframeのCAS位置情報をコンテンツスクリプトに配信
 frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
   const { tabId, framesCas } = data;
   const targetFramesCas = framesCas.filter(
@@ -50,9 +117,6 @@ frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
     );
   }
 });
-
-// https://www.typescriptlang.org/tsconfig#non-module-files
-export {};
 
 // NOTE: gh-1583
 if (import.meta.env.MODE === "development") {

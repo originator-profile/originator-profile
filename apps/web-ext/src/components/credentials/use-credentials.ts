@@ -1,22 +1,17 @@
 import {
   CasVerifyFailed,
   OpsInvalid,
-  OpsVerifier,
   OpsVerifyFailed,
   VerifiedOps,
   VerifiedSp,
-  verifyCas,
 } from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
-import { getRegistryKeys } from "../../utils/get-registry-keys";
 import { useSiteProfile } from "../siteProfile";
-import { FrameIntegrityVerifier, fetchTabCredentials } from "./messaging";
-import type {
-  FramesVerifiedCas,
-  SupportedCa,
-  SupportedVerifiedCas,
-} from "./types";
+import { deduplicateCas } from "./deduplicate-cas";
+import { fetchTabCredentials } from "./messaging";
+import type { FramesVerifiedCas, SupportedVerifiedCas } from "./types";
+import { verifyFramesCas, verifyOps } from "./verify-credentials";
 
 const CREDENTIALS_KEY = "credentials";
 
@@ -39,59 +34,41 @@ async function fetchVerifiedCredentials([, tabId, sp]: [
   sp?: VerifiedSp,
 ]): Promise<FetchVerifiedCredentialsResult> {
   const { frames, ...page } = await fetchTabCredentials(tabId);
-  const verifiedSiteOps = sp?.originators ?? [];
 
-  const [issuer, keys] = getRegistryKeys();
-  const opsVerifier = OpsVerifier(
-    [
-      ...import.meta.env.REGISTRY_OPS,
-      ...page.ops,
-      ...frames.flatMap((frame) => frame.ops),
-    ],
-    keys,
-    issuer,
-  );
-
-  const verifiedOps = await opsVerifier();
+  // OPS 検証
+  const verifiedOps = await verifyOps(page, frames, sp);
   if (
     verifiedOps instanceof OpsInvalid ||
     verifiedOps instanceof OpsVerifyFailed
   ) {
     throw verifiedOps;
   }
-  verifiedOps.push(...verifiedSiteOps);
-  const verifiedCasResults = await Promise.all(
-    [page, ...frames].map(({ cas, ops: _, ...frame }) =>
-      verifyCas<SupportedCa>(
-        cas,
-        verifiedOps,
-        frame.url,
-        FrameIntegrityVerifier(tabId, frame.frameId),
-      ).then((result) => ({ result, frame })),
-    ),
+
+  // CAS 検証
+  const casResults = await verifyFramesCas(
+    tabId,
+    [page, ...frames],
+    verifiedOps,
   );
-  for (const { result } of verifiedCasResults) {
+  for (const { result } of casResults) {
     if (result instanceof CasVerifyFailed) {
       throw result;
     }
   }
+
   return {
     ops: verifiedOps,
-    cas: Array.from(
-      new Map(
-        verifiedCasResults.flatMap(({ result }) =>
-          (result as SupportedVerifiedCas).map((ca) => [
-            ca.attestation.doc.credentialSubject.id,
-            ca,
-          ]),
-        ),
-      ).values(),
+    cas: deduplicateCas(
+      casResults.flatMap(({ result }) => result as SupportedVerifiedCas),
     ),
     origin: page.origin,
     url: page.url,
-    framesCas: verifiedCasResults.map(({ result, frame }) => ({
+    framesCas: casResults.map(({ result, frame }) => ({
       cas: result as SupportedVerifiedCas,
-      ...frame,
+      url: frame.url,
+      origin: frame.origin,
+      frameId: frame.frameId,
+      parentFrameId: frame.parentFrameId,
     })),
   };
 }
