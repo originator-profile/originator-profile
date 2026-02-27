@@ -141,12 +141,14 @@ function ResultItem({
   label,
   value,
   showPayload = true,
+  verificationKey = true,
   children,
   className,
 }: {
   label: string;
   value: unknown;
   showPayload?: boolean;
+  verificationKey?: boolean;
   children?: React.ReactNode;
   className?: string;
 }) {
@@ -156,7 +158,7 @@ function ResultItem({
   return (
     <DetailItem
       label={label}
-      icon={isError ? "cancel" : "check"}
+      icon={isError ? "cancel" : verificationKey ? "check" : "null"}
       className={className}
     >
       {isCodeError ? (
@@ -215,7 +217,12 @@ function DisplayOriginators({
 }) {
   return (
     <div className="ml-7">
-      <ResultItem label={"Core Profile"} value={op.core} className="mb-2" />
+      <ResultItem
+        label={"Core Profile"}
+        value={op.core}
+        verificationKey={"verificationKey" in op.core}
+        className="mb-2"
+      />
       {op.annotations?.map(
         // annotation が存在しなければ表示しません。
         (annotation, index) => (
@@ -223,6 +230,7 @@ function DisplayOriginators({
             key={index}
             label={`Profile Annotation #${index}`}
             value={annotation}
+            verificationKey={"verificationKey" in annotation}
             className="mb-2"
           />
         ),
@@ -234,6 +242,7 @@ function DisplayOriginators({
             key={index}
             label={`Web Media Profile #${index}`}
             value={media}
+            verificationKey={"verificationKey" in media}
             className="mb-2"
           />
         ),
