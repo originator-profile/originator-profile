@@ -127,19 +127,18 @@ export function SpVerifier(
           return verified;
         }
 
-        await verifyImageDigestSri(verified.doc.credentialSubject.image);
-
         if (verifyOrigin) {
           const allowedOrigin =
-            "allowedOrigin" in decodedWsp.doc.credentialSubject
-              ? (decodedWsp.doc.credentialSubject
-                  .allowedOrigin as AllowedOrigin)
-              : decodedWsp.doc.credentialSubject.url; // NOTE: 後方互換性のため 2026-10-01 まで url プロパティを許容
+            "allowedOrigin" in verified.doc.credentialSubject
+              ? (verified.doc.credentialSubject.allowedOrigin as AllowedOrigin)
+              : verified.doc.credentialSubject.url; // NOTE: 後方互換性のため 2026-10-01 まで url プロパティを許容
 
           if (!verifyAllowedOrigin(origin, allowedOrigin)) {
             return new Error("Origin not allowed");
           }
         }
+
+        await verifyImageDigestSri(verified.doc.credentialSubject.image);
 
         return verified;
       }),
