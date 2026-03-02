@@ -92,7 +92,7 @@ async function verifyAnnotations(
       }
 
       await verifyImageDigestSri(
-        annotation.doc.credentialSubject.image as Image,
+        annotation.doc.credentialSubject.image as Image | undefined,
       );
 
       // 有効期限の検証
