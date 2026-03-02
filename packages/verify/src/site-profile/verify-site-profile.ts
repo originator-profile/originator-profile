@@ -127,7 +127,7 @@ export function SpVerifier(
           return verified;
         }
 
-        await verifyImageDigestSri(decodedWsp.doc.credentialSubject.image);
+        await verifyImageDigestSri(verified.doc.credentialSubject.image);
 
         if (verifyOrigin) {
           const allowedOrigin =

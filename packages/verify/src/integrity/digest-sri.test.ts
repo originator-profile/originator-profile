@@ -127,44 +127,46 @@ test("Invalid integrity metadata format", async () => {
 describe("verifyImageDigestSri", () => {
   test("digestSRI 検証に成功した場合、warn を出さない", async () => {
     const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValue(new Response("Hello, World!"));
 
-    await verifyImageDigestSri({
-      id: content.id,
-      digestSRI: content.digestSRI,
-    });
+    await verifyImageDigestSri(
+      {
+        id: content.id,
+        digestSRI: content.digestSRI,
+      },
+      fetcher,
+    );
 
     expect(consoleSpy).not.toHaveBeenCalled();
     consoleSpy.mockRestore();
-    fetchSpy.mockRestore();
   });
 
   test("digestSRI 検証に失敗した場合、warn を出す (2027年まで)", async () => {
     const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const fetchSpy = vi
-      .spyOn(globalThis, "fetch")
-      .mockResolvedValue(new Response("wrong content"));
+    const fetcher = async () => new Response("wrong content");
 
-    await verifyImageDigestSri({
-      id: content.id,
-      digestSRI: content.digestSRI,
-    });
+    await verifyImageDigestSri(
+      {
+        id: content.id,
+        digestSRI: content.digestSRI,
+      },
+      fetcher,
+    );
 
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining("digestSRI verification failed"),
     );
     consoleSpy.mockRestore();
-    fetchSpy.mockRestore();
   });
 
   test("digestSRI が存在しない場合、warn を出す (2027年まで)", async () => {
     const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    await verifyImageDigestSri({
-      id: "https://example.org/image.png",
-    });
+    await verifyImageDigestSri(
+      {
+        id: "https://example.org/image.png",
+      },
+      fetcher,
+    );
 
     expect(consoleSpy).toHaveBeenCalledWith(
       expect.stringContaining("digestSRI is missing"),
@@ -175,7 +177,7 @@ describe("verifyImageDigestSri", () => {
   test("undefined の場合、何もしない", async () => {
     const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
-    await verifyImageDigestSri(undefined);
+    await verifyImageDigestSri(undefined, fetcher);
 
     expect(consoleSpy).not.toHaveBeenCalled();
     consoleSpy.mockRestore();

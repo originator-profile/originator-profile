@@ -47,6 +47,7 @@ export async function verifyDigestSri(
  */
 export async function verifyImageDigestSri(
   value: Image | undefined,
+  fetcher = fetch,
 ): Promise<void> {
   if (!value) return;
 
@@ -55,7 +56,7 @@ export async function verifyImageDigestSri(
     return;
   }
 
-  const valid = await verifyDigestSri(value);
+  const valid = await verifyDigestSri(value, fetcher);
   if (!valid) {
     console.warn(`digestSRI verification failed. ${WARN_SUFFIX}`);
   }
