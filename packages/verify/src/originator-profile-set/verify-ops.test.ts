@@ -3,6 +3,7 @@ import {
   Certificate,
   CoreProfile,
   OriginatorProfileSet,
+  WebMediaProfile,
 } from "@originator-profile/model";
 import {
   signJwtVc,
@@ -997,5 +998,193 @@ describe("OPSの検証", async () => {
     // @ts-expect-error invalid Ops
     const { result: resultOp } = resultOps;
     expect(resultOp[2]).instanceOf(OpInvalid);
+  });
+
+  test("annotationのcredentialSubjectにimageがあるがdigestSRIがない場合、warnが出るが検証は成功する (2027年まで)", async () => {
+    const certificateWithImage: Certificate = patch(certificate, [
+      {
+        op: "add",
+        path: ["credentialSubject", "image"],
+        value: { id: "https://example.org/cert-image.png" },
+      },
+    ]);
+
+    const opWithImage = {
+      core: await signCp(cp, authority.privateKey, signOptions),
+      annotations: [
+        await signJwtVc(
+          certificateWithImage,
+          certifier.privateKey,
+          signOptions,
+        ),
+      ],
+      media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
+    };
+    const opsWithImage: OriginatorProfileSet = [
+      authorityOp,
+      certifierOp,
+      opWithImage,
+    ];
+
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const verify = OpsVerifier(
+      opsWithImage,
+      LocalKeys({ keys: [authority.publicKey] }),
+      opId.authority,
+    );
+    const resultOps = await verify();
+
+    expect(resultOps).not.instanceOf(OpsInvalid);
+    expect(resultOps).not.instanceOf(OpsVerifyFailed);
+    expect(
+      consoleSpy.mock.calls.filter((c) =>
+        String(c[0]).includes("digestSRI is missing"),
+      ),
+    ).toHaveLength(1);
+    consoleSpy.mockRestore();
+  });
+
+  test("annotationのcredentialSubjectにimageの不正なdigestSRIがある場合、warnが出るが検証は成功する (2027年まで)", async () => {
+    const certificateWithBadImage: Certificate = patch(certificate, [
+      {
+        op: "add",
+        path: ["credentialSubject", "image"],
+        value: {
+          id: "https://example.org/cert-image.png",
+          digestSRI: "sha256-invalid",
+        },
+      },
+    ]);
+
+    const opWithBadImage = {
+      core: await signCp(cp, authority.privateKey, signOptions),
+      annotations: [
+        await signJwtVc(
+          certificateWithBadImage,
+          certifier.privateKey,
+          signOptions,
+        ),
+      ],
+      media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
+    };
+    const opsWithBadImage: OriginatorProfileSet = [
+      authorityOp,
+      certifierOp,
+      opWithBadImage,
+    ];
+
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    const verify = OpsVerifier(
+      opsWithBadImage,
+      LocalKeys({ keys: [authority.publicKey] }),
+      opId.authority,
+    );
+    const resultOps = await verify();
+
+    expect(resultOps).not.instanceOf(OpsInvalid);
+    expect(resultOps).not.instanceOf(OpsVerifyFailed);
+    expect(
+      consoleSpy.mock.calls.filter((c) =>
+        String(c[0]).includes("digestSRI verification failed"),
+      ),
+    ).toHaveLength(1);
+    consoleSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
+  });
+
+  test("mediaのcredentialSubjectにlogoがあるがdigestSRIがない場合、warnが出るが検証は成功する (2027年まで)", async () => {
+    const wmpWithLogo: WebMediaProfile = patch(wmp, [
+      {
+        op: "add",
+        path: ["credentialSubject", "logo"],
+        value: { id: "https://example.org/logo.svg" },
+      },
+    ]);
+
+    const opWithLogo = {
+      core: await signCp(cp, authority.privateKey, signOptions),
+      annotations: [
+        await signJwtVc(certificate, certifier.privateKey, signOptions),
+      ],
+      media: [await signJwtVc(wmpWithLogo, authority.privateKey, signOptions)],
+    };
+    const opsWithLogo: OriginatorProfileSet = [
+      authorityOp,
+      certifierOp,
+      opWithLogo,
+    ];
+
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    const verify = OpsVerifier(
+      opsWithLogo,
+      LocalKeys({ keys: [authority.publicKey] }),
+      opId.authority,
+    );
+    const resultOps = await verify();
+
+    expect(resultOps).not.instanceOf(OpsInvalid);
+    expect(resultOps).not.instanceOf(OpsVerifyFailed);
+    expect(
+      consoleSpy.mock.calls.filter((c) =>
+        String(c[0]).includes("digestSRI is missing"),
+      ),
+    ).toHaveLength(1);
+    consoleSpy.mockRestore();
+  });
+
+  test("mediaのcredentialSubjectにlogoの不正なdigestSRIがある場合、warnが出るが検証は成功する (2027年まで)", async () => {
+    const wmpWithBadLogo: WebMediaProfile = patch(wmp, [
+      {
+        op: "add",
+        path: ["credentialSubject", "logo"],
+        value: {
+          id: "https://example.org/logo.svg",
+          digestSRI: "sha256-invalid",
+        },
+      },
+    ]);
+
+    const opWithBadLogo = {
+      core: await signCp(cp, authority.privateKey, signOptions),
+      annotations: [
+        await signJwtVc(certificate, certifier.privateKey, signOptions),
+      ],
+      media: [
+        await signJwtVc(wmpWithBadLogo, authority.privateKey, signOptions),
+      ],
+    };
+    const opsWithBadLogo: OriginatorProfileSet = [
+      authorityOp,
+      certifierOp,
+      opWithBadLogo,
+    ];
+
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const consoleErrorSpy = vi
+      .spyOn(console, "error")
+      .mockImplementation(() => {});
+
+    const verify = OpsVerifier(
+      opsWithBadLogo,
+      LocalKeys({ keys: [authority.publicKey] }),
+      opId.authority,
+    );
+    const resultOps = await verify();
+
+    expect(resultOps).not.instanceOf(OpsInvalid);
+    expect(resultOps).not.instanceOf(OpsVerifyFailed);
+    expect(
+      consoleSpy.mock.calls.filter((c) =>
+        String(c[0]).includes("digestSRI verification failed"),
+      ),
+    ).toHaveLength(1);
+    consoleSpy.mockRestore();
+    consoleErrorSpy.mockRestore();
   });
 });

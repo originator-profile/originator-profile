@@ -1,5 +1,5 @@
 import { Keys } from "@originator-profile/cryptography";
-import { ContentAttestation } from "@originator-profile/model";
+import { ContentAttestation, type Image } from "@originator-profile/model";
 import {
   JwtVcVerifier,
   VcValidateFailed,
@@ -12,6 +12,7 @@ import {
   IntegrityVerificationFailed,
   IntegrityVerifyResult,
   verifyIntegrity as nativeVerifyIntegrity,
+  verifyImageDigestSri,
   VerifyIntegrity,
 } from "../integrity";
 import { verifyAllowedOrigin } from "../verify-allowed-origin";
@@ -137,6 +138,9 @@ export function CaVerifier<T extends ContentAttestation>(
     if (urlResult instanceof Error) {
       return urlResult;
     }
+    await verifyImageDigestSri(
+      urlResult.doc.credentialSubject.image as Image | undefined,
+    );
     if (urlResult.doc.target) {
       if (urlResult.doc.target.length === 0) {
         return new CaInvalid("Target is empty", urlResult);

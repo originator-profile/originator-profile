@@ -6,6 +6,7 @@ import {
   OpVc,
   OriginatorProfileSet,
   WebMediaProfile,
+  type Image,
 } from "@originator-profile/model";
 import {
   JwtVcVerifier,
@@ -13,6 +14,7 @@ import {
   VcValidator,
   VerifiedJwtVc,
 } from "@originator-profile/securing-mechanism";
+import { verifyImageDigestSri } from "../integrity";
 import { getMappedKeys, type MappedKeys } from "../keys";
 import { decodeOps } from "./decode-ops";
 import {
@@ -89,6 +91,10 @@ async function verifyAnnotations(
         return result;
       }
 
+      await verifyImageDigestSri(
+        annotation.doc.credentialSubject.image as Image,
+      );
+
       // 有効期限の検証
       return validateCertificateExpiry(result);
     }),
@@ -103,13 +109,20 @@ async function verifyMedia(
 ) {
   if (!media) return;
   return await Promise.all(
-    media.map((m) => {
+    media.map(async (m) => {
       const verify = OpVerifier<WebMediaProfile>(
         wmpIssuerKeys,
         m,
         validator?.(WebMediaProfile),
       );
-      return verify(m.source);
+      const result = await verify(m.source);
+      if (result instanceof Error) {
+        return result;
+      }
+
+      await verifyImageDigestSri(m.doc.credentialSubject.logo);
+
+      return result;
     }),
   );
 }

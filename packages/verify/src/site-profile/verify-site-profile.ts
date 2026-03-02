@@ -12,6 +12,7 @@ import {
   VcValidator,
   VerifiedJwtVc,
 } from "@originator-profile/securing-mechanism";
+import { verifyImageDigestSri } from "../integrity";
 import {
   CoreProfileNotFound,
   OpsInvalid,
@@ -125,6 +126,8 @@ export function SpVerifier(
         if (verified instanceof Error) {
           return verified;
         }
+
+        await verifyImageDigestSri(decodedWsp.doc.credentialSubject.image);
 
         if (verifyOrigin) {
           const allowedOrigin =

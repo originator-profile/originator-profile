@@ -1,7 +1,7 @@
 import { DigestSriContent } from "@originator-profile/sign";
-import { expect, test } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import { createIntegrityMetadata } from "websri";
-import { verifyDigestSri } from "./digest-sri";
+import { verifyDigestSri, verifyImageDigestSri } from "./digest-sri";
 
 async function fetcher(): Promise<Response> {
   return new Response("Hello, World!");
@@ -44,12 +44,30 @@ test("Unsupported algorithm", async () => {
   expect(await verifyDigestSri(unsupportedAlgContent, fetcher)).toBe(false);
 });
 
-test("Fetch failure", async () => {
+test("Fetch failure returns false", async () => {
   async function failure(): Promise<Response> {
     throw new TypeError("failure");
   }
 
-  await expect(verifyDigestSri(content, failure)).rejects.toThrowError();
+  expect(await verifyDigestSri(content, failure)).toBe(false);
+});
+
+test("Fetch failure logs error to console", async () => {
+  const consoleSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  const error = new TypeError("network error");
+
+  async function failure(): Promise<Response> {
+    throw error;
+  }
+
+  await verifyDigestSri(content, failure);
+
+  expect(consoleSpy).toHaveBeenCalledWith(
+    "Failed to access content for digestSRI verification:",
+    error,
+  );
+
+  consoleSpy.mockRestore();
 });
 
 test("Multiple hash algorithms - verify with strongest", async () => {
@@ -104,4 +122,62 @@ test("Invalid integrity metadata format", async () => {
   };
 
   expect(await verifyDigestSri(invalidContent, fetcher)).toBe(false);
+});
+
+describe("verifyImageDigestSri", () => {
+  test("digestSRI 検証に成功した場合、warn を出さない", async () => {
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("Hello, World!"));
+
+    await verifyImageDigestSri({
+      id: content.id,
+      digestSRI: content.digestSRI,
+    });
+
+    expect(consoleSpy).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
+    fetchSpy.mockRestore();
+  });
+
+  test("digestSRI 検証に失敗した場合、warn を出す (2027年まで)", async () => {
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    const fetchSpy = vi
+      .spyOn(globalThis, "fetch")
+      .mockResolvedValue(new Response("wrong content"));
+
+    await verifyImageDigestSri({
+      id: content.id,
+      digestSRI: content.digestSRI,
+    });
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("digestSRI verification failed"),
+    );
+    consoleSpy.mockRestore();
+    fetchSpy.mockRestore();
+  });
+
+  test("digestSRI が存在しない場合、warn を出す (2027年まで)", async () => {
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    await verifyImageDigestSri({
+      id: "https://example.org/image.png",
+    });
+
+    expect(consoleSpy).toHaveBeenCalledWith(
+      expect.stringContaining("digestSRI is missing"),
+    );
+    consoleSpy.mockRestore();
+  });
+
+  test("undefined の場合、何もしない", async () => {
+    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+
+    await verifyImageDigestSri(undefined);
+
+    expect(consoleSpy).not.toHaveBeenCalled();
+    consoleSpy.mockRestore();
+  });
 });
