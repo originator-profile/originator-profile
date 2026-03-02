@@ -124,7 +124,7 @@ async function verifyMedia(
         return result;
       }
 
-      await verifyImageDigestSri(m.doc.credentialSubject.logo);
+      await verifyImageDigestSri(result.doc.credentialSubject.logo);
 
       return result;
     }),
