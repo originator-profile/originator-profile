@@ -3,7 +3,15 @@ import { ContentAttestation, Jwk } from "@originator-profile/model";
 import { signJwtVc, VcValidator } from "@originator-profile/securing-mechanism";
 import { addYears, fromUnixTime, getUnixTime } from "date-fns";
 import { diffApply } from "just-diff-apply";
-import { describe, expect, test, vi } from "vitest";
+import {
+  type MockInstance,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 import { createIntegrityMetadata } from "websri";
 import { verifyIntegrity } from "../integrity";
 import { CaInvalid, CaVerifyFailed } from "./errors";
@@ -167,82 +175,76 @@ describe("Content Attestationの検証", async () => {
     expect(result).instanceOf(CaInvalid);
   });
 
-  test("Content AttestationのcredentialSubjectにimageがあるがdigestSRIがない場合、warnが出るが検証は成功する (2027年まで)", async () => {
-    const caWithImage = patch(ca, [
-      {
-        op: "add",
-        path: ["credentialSubject", "image"],
-        value: { id: "https://example.org/image.png" },
-      },
-    ]);
-    const signedCaWithImage = await signJwtVc(
-      caWithImage,
-      issuer.privateKey,
-      signOptions,
-    );
+  describe("image digestSRI検証 (2027年まではwarn扱い)", () => {
+    let warnSpy: MockInstance;
 
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    beforeEach(() => {
+      warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    });
 
-    const verifier = CaVerifier(
-      signedCaWithImage,
-      LocalKeys({ keys: [issuer.publicKey] }),
-      caIssuer,
-      caUrl,
-      verifyIntegrity,
-      validator,
-    );
-    const result = await verifier();
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
 
-    expect(result).not.instanceOf(CaInvalid);
-    expect(result).not.instanceOf(CaVerifyFailed);
-    expect(
-      consoleSpy.mock.calls.filter((c) =>
-        String(c[0]).includes("digestSRI is missing"),
-      ),
-    ).toHaveLength(1);
-    consoleSpy.mockRestore();
-  });
+    test("digestSRIがない場合、warnが出るが検証は成功する", async () => {
+      const signed = await signJwtVc(
+        patch(ca, [
+          {
+            op: "add",
+            path: ["credentialSubject", "image"],
+            value: { id: "https://example.org/image.png" },
+          },
+        ]),
+        issuer.privateKey,
+        signOptions,
+      );
 
-  test("Content AttestationのcredentialSubjectにimageのdigestSRIが不正な場合、warnが出るが検証は成功する (2027年まで)", async () => {
-    const caWithBadImage = patch(ca, [
-      {
-        op: "add",
-        path: ["credentialSubject", "image"],
-        value: {
-          id: "https://example.org/image.png",
-          digestSRI: "sha256-invalid",
-        },
-      },
-    ]);
-    const signedCaWithBadImage = await signJwtVc(
-      caWithBadImage,
-      issuer.privateKey,
-      signOptions,
-    );
+      const result = await CaVerifier(
+        signed,
+        LocalKeys({ keys: [issuer.publicKey] }),
+        caIssuer,
+        caUrl,
+        verifyIntegrity,
+        validator,
+      )();
 
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const consoleErrorSpy = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
+      expect(result).not.instanceOf(CaInvalid);
+      expect(result).not.instanceOf(CaVerifyFailed);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("digestSRI is missing"),
+      );
+    });
 
-    const verifier = CaVerifier(
-      signedCaWithBadImage,
-      LocalKeys({ keys: [issuer.publicKey] }),
-      caIssuer,
-      caUrl,
-      verifyIntegrity,
-      validator,
-    );
-    const result = await verifier();
+    test("digestSRIが不正な場合、warnが出るが検証は成功する", async () => {
+      const signed = await signJwtVc(
+        patch(ca, [
+          {
+            op: "add",
+            path: ["credentialSubject", "image"],
+            value: {
+              id: "https://example.org/image.png",
+              digestSRI: "sha256-invalid",
+            },
+          },
+        ]),
+        issuer.privateKey,
+        signOptions,
+      );
 
-    expect(result).not.instanceOf(CaInvalid);
-    expect(result).not.instanceOf(CaVerifyFailed);
-    expect(
-      consoleSpy.mock.calls.filter((c) =>
-        String(c[0]).includes("digestSRI verification failed"),
-      ),
-    ).toHaveLength(1);
-    consoleSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
+      const result = await CaVerifier(
+        signed,
+        LocalKeys({ keys: [issuer.publicKey] }),
+        caIssuer,
+        caUrl,
+        verifyIntegrity,
+        validator,
+      )();
+
+      expect(result).not.instanceOf(CaInvalid);
+      expect(result).not.instanceOf(CaVerifyFailed);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("digestSRI verification failed"),
+      );
+    });
   });
 });

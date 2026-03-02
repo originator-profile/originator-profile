@@ -11,7 +11,15 @@ import {
 } from "@originator-profile/securing-mechanism";
 import { signCp } from "@originator-profile/sign";
 import { addYears, fromUnixTime, getUnixTime } from "date-fns";
-import { describe, expect, test, vi } from "vitest";
+import {
+  type MockInstance,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 import {
   certificate,
   cp,
@@ -1000,191 +1008,173 @@ describe("OPSの検証", async () => {
     expect(resultOp[2]).instanceOf(OpInvalid);
   });
 
-  test("annotationのcredentialSubjectにimageがあるがdigestSRIがない場合、warnが出るが検証は成功する (2027年まで)", async () => {
-    const certificateWithImage: Certificate = patch(certificate, [
-      {
-        op: "add",
-        path: ["credentialSubject", "image"],
-        value: { id: "https://example.org/cert-image.png" },
-      },
-    ]);
+  describe("annotation image digestSRI検証 (2027年まではwarn扱い)", () => {
+    let warnSpy: MockInstance;
 
-    const opWithImage = {
-      core: await signCp(cp, authority.privateKey, signOptions),
-      annotations: [
-        await signJwtVc(
-          certificateWithImage,
-          certifier.privateKey,
-          signOptions,
-        ),
-      ],
-      media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
-    };
-    const opsWithImage: OriginatorProfileSet = [
-      authorityOp,
-      certifierOp,
-      opWithImage,
-    ];
+    beforeEach(() => {
+      warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    });
 
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
 
-    const verify = OpsVerifier(
-      opsWithImage,
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
-    );
-    const resultOps = await verify();
-
-    expect(resultOps).not.instanceOf(OpsInvalid);
-    expect(resultOps).not.instanceOf(OpsVerifyFailed);
-    expect(
-      consoleSpy.mock.calls.filter((c) =>
-        String(c[0]).includes("digestSRI is missing"),
-      ),
-    ).toHaveLength(1);
-    consoleSpy.mockRestore();
-  });
-
-  test("annotationのcredentialSubjectにimageの不正なdigestSRIがある場合、warnが出るが検証は成功する (2027年まで)", async () => {
-    const certificateWithBadImage: Certificate = patch(certificate, [
-      {
-        op: "add",
-        path: ["credentialSubject", "image"],
-        value: {
-          id: "https://example.org/cert-image.png",
-          digestSRI: "sha256-invalid",
+    test("digestSRIがない場合、warnが出るが検証は成功する", async () => {
+      const certWithImage: Certificate = patch(certificate, [
+        {
+          op: "add",
+          path: ["credentialSubject", "image"],
+          value: { id: "https://example.org/cert-image.png" },
         },
-      },
-    ]);
+      ]);
 
-    const opWithBadImage = {
-      core: await signCp(cp, authority.privateKey, signOptions),
-      annotations: [
-        await signJwtVc(
-          certificateWithBadImage,
-          certifier.privateKey,
-          signOptions,
-        ),
-      ],
-      media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
-    };
-    const opsWithBadImage: OriginatorProfileSet = [
-      authorityOp,
-      certifierOp,
-      opWithBadImage,
-    ];
+      const result = await OpsVerifier(
+        [
+          authorityOp,
+          certifierOp,
+          {
+            core: await signCp(cp, authority.privateKey, signOptions),
+            annotations: [
+              await signJwtVc(certWithImage, certifier.privateKey, signOptions),
+            ],
+            media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
+          },
+        ],
+        LocalKeys({ keys: [authority.publicKey] }),
+        opId.authority,
+      )();
 
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const consoleErrorSpy = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
+      expect(result).not.instanceOf(OpsInvalid);
+      expect(result).not.instanceOf(OpsVerifyFailed);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("digestSRI is missing"),
+      );
+    });
 
-    const verify = OpsVerifier(
-      opsWithBadImage,
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
-    );
-    const resultOps = await verify();
-
-    expect(resultOps).not.instanceOf(OpsInvalid);
-    expect(resultOps).not.instanceOf(OpsVerifyFailed);
-    expect(
-      consoleSpy.mock.calls.filter((c) =>
-        String(c[0]).includes("digestSRI verification failed"),
-      ),
-    ).toHaveLength(1);
-    consoleSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
-  });
-
-  test("mediaのcredentialSubjectにlogoがあるがdigestSRIがない場合、warnが出るが検証は成功する (2027年まで)", async () => {
-    const wmpWithLogo: WebMediaProfile = patch(wmp, [
-      {
-        op: "add",
-        path: ["credentialSubject", "logo"],
-        value: { id: "https://example.org/logo.svg" },
-      },
-    ]);
-
-    const opWithLogo = {
-      core: await signCp(cp, authority.privateKey, signOptions),
-      annotations: [
-        await signJwtVc(certificate, certifier.privateKey, signOptions),
-      ],
-      media: [await signJwtVc(wmpWithLogo, authority.privateKey, signOptions)],
-    };
-    const opsWithLogo: OriginatorProfileSet = [
-      authorityOp,
-      certifierOp,
-      opWithLogo,
-    ];
-
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-
-    const verify = OpsVerifier(
-      opsWithLogo,
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
-    );
-    const resultOps = await verify();
-
-    expect(resultOps).not.instanceOf(OpsInvalid);
-    expect(resultOps).not.instanceOf(OpsVerifyFailed);
-    expect(
-      consoleSpy.mock.calls.filter((c) =>
-        String(c[0]).includes("digestSRI is missing"),
-      ),
-    ).toHaveLength(1);
-    consoleSpy.mockRestore();
-  });
-
-  test("mediaのcredentialSubjectにlogoの不正なdigestSRIがある場合、warnが出るが検証は成功する (2027年まで)", async () => {
-    const wmpWithBadLogo: WebMediaProfile = patch(wmp, [
-      {
-        op: "add",
-        path: ["credentialSubject", "logo"],
-        value: {
-          id: "https://example.org/logo.svg",
-          digestSRI: "sha256-invalid",
+    test("digestSRIが不正な場合、warnが出るが検証は成功する", async () => {
+      const certWithBadImage: Certificate = patch(certificate, [
+        {
+          op: "add",
+          path: ["credentialSubject", "image"],
+          value: {
+            id: "https://example.org/cert-image.png",
+            digestSRI: "sha256-invalid",
+          },
         },
-      },
-    ]);
+      ]);
 
-    const opWithBadLogo = {
-      core: await signCp(cp, authority.privateKey, signOptions),
-      annotations: [
-        await signJwtVc(certificate, certifier.privateKey, signOptions),
-      ],
-      media: [
-        await signJwtVc(wmpWithBadLogo, authority.privateKey, signOptions),
-      ],
-    };
-    const opsWithBadLogo: OriginatorProfileSet = [
-      authorityOp,
-      certifierOp,
-      opWithBadLogo,
-    ];
+      const result = await OpsVerifier(
+        [
+          authorityOp,
+          certifierOp,
+          {
+            core: await signCp(cp, authority.privateKey, signOptions),
+            annotations: [
+              await signJwtVc(
+                certWithBadImage,
+                certifier.privateKey,
+                signOptions,
+              ),
+            ],
+            media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
+          },
+        ],
+        LocalKeys({ keys: [authority.publicKey] }),
+        opId.authority,
+      )();
 
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const consoleErrorSpy = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
+      expect(result).not.instanceOf(OpsInvalid);
+      expect(result).not.instanceOf(OpsVerifyFailed);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("digestSRI verification failed"),
+      );
+    });
+  });
 
-    const verify = OpsVerifier(
-      opsWithBadLogo,
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
-    );
-    const resultOps = await verify();
+  describe("media logo digestSRI検証 (2027年まではwarn扱い)", () => {
+    let warnSpy: MockInstance;
 
-    expect(resultOps).not.instanceOf(OpsInvalid);
-    expect(resultOps).not.instanceOf(OpsVerifyFailed);
-    expect(
-      consoleSpy.mock.calls.filter((c) =>
-        String(c[0]).includes("digestSRI verification failed"),
-      ),
-    ).toHaveLength(1);
-    consoleSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
+    beforeEach(() => {
+      warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
+
+    test("digestSRIがない場合、warnが出るが検証は成功する", async () => {
+      const wmpWithLogo: WebMediaProfile = patch(wmp, [
+        {
+          op: "add",
+          path: ["credentialSubject", "logo"],
+          value: { id: "https://example.org/logo.svg" },
+        },
+      ]);
+
+      const result = await OpsVerifier(
+        [
+          authorityOp,
+          certifierOp,
+          {
+            core: await signCp(cp, authority.privateKey, signOptions),
+            annotations: [
+              await signJwtVc(certificate, certifier.privateKey, signOptions),
+            ],
+            media: [
+              await signJwtVc(wmpWithLogo, authority.privateKey, signOptions),
+            ],
+          },
+        ],
+        LocalKeys({ keys: [authority.publicKey] }),
+        opId.authority,
+      )();
+
+      expect(result).not.instanceOf(OpsInvalid);
+      expect(result).not.instanceOf(OpsVerifyFailed);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("digestSRI is missing"),
+      );
+    });
+
+    test("digestSRIが不正な場合、warnが出るが検証は成功する", async () => {
+      const wmpWithBadLogo: WebMediaProfile = patch(wmp, [
+        {
+          op: "add",
+          path: ["credentialSubject", "logo"],
+          value: {
+            id: "https://example.org/logo.svg",
+            digestSRI: "sha256-invalid",
+          },
+        },
+      ]);
+
+      const result = await OpsVerifier(
+        [
+          authorityOp,
+          certifierOp,
+          {
+            core: await signCp(cp, authority.privateKey, signOptions),
+            annotations: [
+              await signJwtVc(certificate, certifier.privateKey, signOptions),
+            ],
+            media: [
+              await signJwtVc(
+                wmpWithBadLogo,
+                authority.privateKey,
+                signOptions,
+              ),
+            ],
+          },
+        ],
+        LocalKeys({ keys: [authority.publicKey] }),
+        opId.authority,
+      )();
+
+      expect(result).not.instanceOf(OpsInvalid);
+      expect(result).not.instanceOf(OpsVerifyFailed);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("digestSRI verification failed"),
+      );
+    });
   });
 });

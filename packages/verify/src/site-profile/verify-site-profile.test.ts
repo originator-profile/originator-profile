@@ -13,7 +13,15 @@ import {
 } from "@originator-profile/securing-mechanism";
 import { signCp } from "@originator-profile/sign";
 import { addYears, fromUnixTime, getUnixTime } from "date-fns";
-import { describe, expect, test, vi } from "vitest";
+import {
+  type MockInstance,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 import {
   certificate,
   cp,
@@ -739,82 +747,78 @@ describe("Site Profileの検証", async () => {
     expect(sites[1].message).toBe("Origin not allowed");
   });
 
-  test("WSPのcredentialSubjectにimageがあるがdigestSRIがない場合、warnが出るが検証は成功する (2027年まで)", async () => {
-    const wspWithImage: WebsiteProfile = patch(wsp, [
-      {
-        op: "add",
-        path: ["credentialSubject", "image"],
-        value: { id: "https://example.org/image.png" },
-      },
-    ]);
+  describe("WSP image digestSRI検証 (2027年まではwarn扱い)", () => {
+    let warnSpy: MockInstance;
 
-    const spWithImage: SiteProfile = {
-      originators: ops,
-      sites: [
-        await signJwtVc(wspWithImage, originator.privateKey, signOptions),
-      ],
-    };
+    beforeEach(() => {
+      warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    });
 
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
 
-    const verify = SpVerifier(
-      spWithImage,
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
-      "https://originator.example.org",
-    );
-    const resultSp = await verify();
-
-    expect(resultSp).not.instanceOf(SiteProfileInvalid);
-    expect(resultSp).not.instanceOf(SiteProfileVerifyFailed);
-    expect(
-      consoleSpy.mock.calls.filter((c) =>
-        String(c[0]).includes("digestSRI is missing"),
-      ),
-    ).toHaveLength(1);
-    consoleSpy.mockRestore();
-  });
-
-  test("WSPのcredentialSubjectにimageのdigestSRIが不正な場合、warnが出るが検証は成功する (2027年まで)", async () => {
-    const wspWithBadImage: WebsiteProfile = patch(wsp, [
-      {
-        op: "add",
-        path: ["credentialSubject", "image"],
-        value: {
-          id: "https://example.org/image.png",
-          digestSRI: "sha256-invalid",
+    test("digestSRIがない場合、warnが出るが検証は成功する", async () => {
+      const wspWithImage: WebsiteProfile = patch(wsp, [
+        {
+          op: "add",
+          path: ["credentialSubject", "image"],
+          value: { id: "https://example.org/image.png" },
         },
-      },
-    ]);
+      ]);
 
-    const spWithBadImage: SiteProfile = {
-      originators: ops,
-      sites: [
-        await signJwtVc(wspWithBadImage, originator.privateKey, signOptions),
-      ],
-    };
+      const result = await SpVerifier(
+        {
+          originators: ops,
+          sites: [
+            await signJwtVc(wspWithImage, originator.privateKey, signOptions),
+          ],
+        },
+        LocalKeys({ keys: [authority.publicKey] }),
+        opId.authority,
+        "https://originator.example.org",
+      )();
 
-    const consoleSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
-    const consoleErrorSpy = vi
-      .spyOn(console, "error")
-      .mockImplementation(() => {});
+      expect(result).not.instanceOf(SiteProfileInvalid);
+      expect(result).not.instanceOf(SiteProfileVerifyFailed);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("digestSRI is missing"),
+      );
+    });
 
-    const verify = SpVerifier(
-      spWithBadImage,
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
-      "https://originator.example.org",
-    );
-    const resultSp = await verify();
+    test("digestSRIが不正な場合、warnが出るが検証は成功する", async () => {
+      const wspWithBadImage: WebsiteProfile = patch(wsp, [
+        {
+          op: "add",
+          path: ["credentialSubject", "image"],
+          value: {
+            id: "https://example.org/image.png",
+            digestSRI: "sha256-invalid",
+          },
+        },
+      ]);
 
-    expect(resultSp).not.instanceOf(SiteProfileInvalid);
-    expect(resultSp).not.instanceOf(SiteProfileVerifyFailed);
-    expect(
-      consoleSpy.mock.calls.filter((c) =>
-        String(c[0]).includes("digestSRI verification failed"),
-      ),
-    ).toHaveLength(1);
-    consoleSpy.mockRestore();
-    consoleErrorSpy.mockRestore();
+      const result = await SpVerifier(
+        {
+          originators: ops,
+          sites: [
+            await signJwtVc(
+              wspWithBadImage,
+              originator.privateKey,
+              signOptions,
+            ),
+          ],
+        },
+        LocalKeys({ keys: [authority.publicKey] }),
+        opId.authority,
+        "https://originator.example.org",
+      )();
+
+      expect(result).not.instanceOf(SiteProfileInvalid);
+      expect(result).not.instanceOf(SiteProfileVerifyFailed);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("digestSRI verification failed"),
+      );
+    });
   });
 });
