@@ -91,12 +91,16 @@ async function verifyAnnotations(
         return result;
       }
 
+      const valid = validateCertificateExpiry(result);
+      if (valid instanceof CertificateExpired) {
+        return valid;
+      }
+
       await verifyImageDigestSri(
-        annotation.doc.credentialSubject.image as Image | undefined,
+        valid.doc.credentialSubject.image as Image | undefined,
       );
 
-      // 有効期限の検証
-      return validateCertificateExpiry(result);
+      return valid;
     }),
   );
 }
