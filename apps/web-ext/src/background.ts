@@ -266,7 +266,10 @@ const handleAdClicked = (
 
     // 新規タブが引き受けた場合、元タブ側の検証情報をクリア
     const currentMainPending = pendingOpIdVerification.get(tabId);
-    if (waitingTabs.length > 0 && currentMainPending?.targetOpId === targetOpId) {
+    if (
+      waitingTabs.length > 0 &&
+      currentMainPending?.targetOpId === targetOpId
+    ) {
       pendingOpIdVerification.delete(tabId);
     }
   }
@@ -672,10 +675,10 @@ if (import.meta.env.BASIC_AUTH) {
         urls:
           credential.domain === "localhost"
             ? [
-              "http://localhost:8080/*",
-              // Firefox のため
-              "http://localhost/*",
-            ]
+                "http://localhost:8080/*",
+                // Firefox のため
+                "http://localhost/*",
+              ]
             : [`https://${credential.domain}/*`],
       },
       ["blocking"],

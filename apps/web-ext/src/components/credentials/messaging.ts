@@ -118,19 +118,19 @@ export async function fetchTabCredentials(
  */
 export const FrameIntegrityVerifier =
   (tabId: number, frameId: number): VerifyIntegrity =>
-    async (content) => {
-      const messageResult = await credentialsMessenger.sendMessage(
-        "verifyIntegrity",
-        [content],
-        {
-          tabId,
-          frameId,
-        },
-      );
+  async (content) => {
+    const messageResult = await credentialsMessenger.sendMessage(
+      "verifyIntegrity",
+      [content],
+      {
+        tabId,
+        frameId,
+      },
+    );
 
-      const parsed = deserializeIfError(messageResult);
-      return parsed as FetchIntegrityResult;
-    };
+    const parsed = deserializeIfError(messageResult);
+    return parsed as FetchIntegrityResult;
+  };
 
 /**
  * リンク検証結果を取得する

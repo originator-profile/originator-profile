@@ -207,10 +207,14 @@ if (document.readyState === "loading") {
   tryCacheNames();
 }
 
-const sendAdClicked = (opMeta: Record<string, unknown>, isNewTab: boolean = false) => {
+const sendAdClicked = (
+  opMeta: Record<string, unknown>,
+  isNewTab: boolean = false,
+) => {
   const names = cachedNames ?? {
     expectedOrgName:
-      getOpMetaProperty(opMeta, "targetOrgName") ?? getOpMetaProperty(opMeta, "targetname"),
+      getOpMetaProperty(opMeta, "targetOrgName") ??
+      getOpMetaProperty(opMeta, "targetname"),
   };
 
   void credentialsMessenger.sendMessage("adClicked", {
@@ -226,7 +230,8 @@ const handleLinkClick = (e: MouseEvent) => {
   const anchor = target.closest("a");
   const opMeta = anchor ? fetchOpMeta(document) : undefined;
   if (anchor && opMeta) {
-    const isModifierKey = e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1;
+    const isModifierKey =
+      e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1;
     const isNewTab = anchor.target === "_blank" || isModifierKey;
     void sendAdClicked(opMeta as Record<string, unknown>, isNewTab);
   }

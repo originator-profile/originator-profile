@@ -75,32 +75,32 @@ async function fetchVerifiedCredentials([, tabId, sp]: [
 
 type UseCredentialsResult =
   | {
-    cas: undefined;
-    error: undefined;
-    framesCas: undefined;
-    isLoading: true;
-    ops: undefined;
-    origin: undefined;
-    tabId: number;
-  }
+      cas: undefined;
+      error: undefined;
+      framesCas: undefined;
+      isLoading: true;
+      ops: undefined;
+      origin: undefined;
+      tabId: number;
+    }
   | {
-    cas: undefined;
-    error: Error;
-    framesCas: undefined;
-    isLoading: false;
-    ops: undefined;
-    origin: undefined;
-    tabId: number;
-  }
+      cas: undefined;
+      error: Error;
+      framesCas: undefined;
+      isLoading: false;
+      ops: undefined;
+      origin: undefined;
+      tabId: number;
+    }
   | {
-    cas: SupportedVerifiedCas;
-    error: undefined;
-    framesCas: FramesVerifiedCas;
-    isLoading: false;
-    ops: VerifiedOps;
-    origin: string;
-    tabId: number;
-  };
+      cas: SupportedVerifiedCas;
+      error: undefined;
+      framesCas: FramesVerifiedCas;
+      isLoading: false;
+      ops: VerifiedOps;
+      origin: string;
+      tabId: number;
+    };
 
 /**
  * Credentials 取得 (要 Base コンポーネント)
