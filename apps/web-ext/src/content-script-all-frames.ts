@@ -69,29 +69,27 @@ const isAdCaType = (type: string | undefined): type is AdCaType => {
   return type !== undefined && AD_CA_TYPES.includes(type as AdCaType);
 };
 
-// CAS JWTをデコードしてペイロードを取得
-const decodeCasJwtPayload = (
-  casItem: unknown,
-):
-  | {
-    issuer?: string;
-    credentialSubject?: { type?: string };
-  }
-  | undefined => {
-  const jwt = normalizeCasItem(casItem).attestation;
-  if (typeof jwt !== "string") return undefined;
+// JWTペイロードのBase64デコード
+const decodeJwtPayload = <T = unknown>(jwt: string): T | undefined => {
   try {
     const payload = jwt.split(".")[1];
     if (payload) {
       const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
       const binaryString = atob(base64);
       const bytes = Uint8Array.from(binaryString, (c) => c.codePointAt(0) ?? 0);
-      return JSON.parse(new TextDecoder().decode(bytes));
+      return JSON.parse(new TextDecoder().decode(bytes)) as T;
     }
   } catch (e) {
-    console.error("[ContentScript] Failed to decode CAS JWT", e);
+    console.error("[ContentScript] Failed to decode JWT payload", e);
   }
   return undefined;
+};
+
+const decodeCasJwtPayload = (
+  casItem: unknown,
+): { issuer?: string; credentialSubject?: { type?: string } } | undefined => {
+  const jwt = normalizeCasItem(casItem).attestation;
+  return typeof jwt === "string" ? decodeJwtPayload(jwt) : undefined;
 };
 
 // 広告関連CAS(OnlineAd/Advertorial)のissuerを取得
@@ -106,27 +104,24 @@ const getCasIssuer = (cas: unknown): string | undefined => {
   return undefined;
 };
 
-// デコード済みOPペイロードの型（nameを含む）
 type DecodedOpPayload = Omit<OpVc, "credentialSubject"> & {
   credentialSubject: OpVc["credentialSubject"] & {
     name?: string;
   };
 };
 
-const decodeJwt = (jwt: string | undefined): DecodedOpPayload | undefined => {
+const decodeOpJwt = (jwt: string | undefined): DecodedOpPayload | undefined => {
   if (!jwt) return undefined;
-  try {
-    const payload = jwt.split(".")[1];
-    if (payload) {
-      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-      const binaryString = atob(base64);
-      const bytes = Uint8Array.from(binaryString, (c) => c.codePointAt(0) ?? 0);
-      return JSON.parse(new TextDecoder().decode(bytes)) as DecodedOpPayload;
-    }
-  } catch (e) {
-    console.error("[ContentScript] Failed to decode JWT", e);
-  }
-  return undefined;
+  return decodeJwtPayload<DecodedOpPayload>(jwt);
+};
+
+// opMetaオブジェクトからプロパティを文字列として取得
+const getOpMetaProperty = (
+  opMeta: Record<string, unknown>,
+  key: string,
+): string | undefined => {
+  const value = opMeta[key];
+  return typeof value === "string" ? value : undefined;
 };
 
 const updateOrgNames = (
@@ -163,11 +158,7 @@ let cachedNames:
 const tryCacheNames = () => {
   const opMeta = fetchOpMeta(document);
   if (!opMeta) return;
-
-  const getOpMetaProperty = (key: string): string | undefined => {
-    const value = (opMeta as Record<string, unknown>)[key];
-    return typeof value === "string" ? value : undefined;
-  };
+  const meta = opMeta as Record<string, unknown>;
 
   void fetchCredentials(document)
     .then(({ ops, cas }) => {
@@ -180,14 +171,14 @@ const tryCacheNames = () => {
         for (const op of ops) {
           const mediaJwt = Array.isArray(op.media) ? op.media[0] : op.media;
           updateOrgNames(
-            decodeJwt(mediaJwt),
+            decodeOpJwt(mediaJwt),
             casIssuer,
             hasCas,
             opMeta.targetopid,
             names,
           );
           updateOrgNames(
-            decodeJwt(op.core),
+            decodeOpJwt(op.core),
             casIssuer,
             hasCas,
             opMeta.targetopid,
@@ -200,8 +191,8 @@ const tryCacheNames = () => {
         sourceOrgName: names.sourceOrgName,
         expectedOrgName:
           names.expectedOrgName ??
-          getOpMetaProperty("targetOrgName") ??
-          getOpMetaProperty("targetname"),
+          getOpMetaProperty(meta, "targetOrgName") ??
+          getOpMetaProperty(meta, "targetname"),
       };
     })
     .catch((e) => {
@@ -217,18 +208,13 @@ if (document.readyState === "loading") {
 }
 
 const sendAdClicked = (opMeta: Record<string, unknown>, isNewTab: boolean = false) => {
-  const getOpMetaProperty = (key: string): string | undefined => {
-    const value = opMeta[key];
-    return typeof value === "string" ? value : undefined;
-  };
-
   const names = cachedNames ?? {
     expectedOrgName:
-      getOpMetaProperty("targetOrgName") ?? getOpMetaProperty("targetname"),
+      getOpMetaProperty(opMeta, "targetOrgName") ?? getOpMetaProperty(opMeta, "targetname"),
   };
 
   void credentialsMessenger.sendMessage("adClicked", {
-    targetopid: getOpMetaProperty("targetopid") as string,
+    targetopid: getOpMetaProperty(opMeta, "targetopid") as string,
     sourceOrgName: names.sourceOrgName,
     expectedOrgName: names.expectedOrgName,
     isNewTab,

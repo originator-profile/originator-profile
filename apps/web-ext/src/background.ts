@@ -147,7 +147,7 @@ const stateReady = Promise.all([
   pendingNewTabAssociations.load(),
 ]);
 
-// Clean up state when a tab is closed to prevent memory leaks
+// タブが閉じられたとき、メモリリーク防止のために状態をクリーンアップ
 chrome.tabs.onRemoved.addListener(async (tabId) => {
   await stateReady;
   pendingOpIdVerification.delete(tabId);
@@ -171,17 +171,17 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return false;
 });
 
-// Use webNavigation to correctly associate new tabs with the specific frame that opened them
+// webNavigationを利用して、新規タブを開いたフレームと正確に紐付ける
 chrome.webNavigation.onCreatedNavigationTarget.addListener(async (details) => {
   await stateReady;
   const { sourceTabId, sourceFrameId, tabId } = details;
-  // If we already have a pending click from this source frame, associate it immediately
+  // 元フレームからのクリック情報が既にあれば、即座に紐付け
   const sourcePendingClicks = pendingClicks.get(sourceTabId);
   if (sourcePendingClicks?.[sourceFrameId]) {
     const pendingClick = sourcePendingClicks[sourceFrameId];
     pendingOpIdVerification.set(tabId, pendingClick);
 
-    // Clear from source tab if it had the exact same verification (consumed by new tab)
+    // 新規タブに引き渡されたため、元タブの同一検証情報をクリア
     const currentMainPending = pendingOpIdVerification.get(sourceTabId);
     if (
       currentMainPending &&
@@ -190,7 +190,7 @@ chrome.webNavigation.onCreatedNavigationTarget.addListener(async (details) => {
       pendingOpIdVerification.delete(sourceTabId);
     }
   } else {
-    // Otherwise, store usage association for when the click message arrives
+    // クリックメッセージ到着時の紐付け用に保存
     pendingNewTabAssociations.update(sourceTabId, (current) => {
       const next = current || {};
       if (!next[sourceFrameId]) {
@@ -202,13 +202,13 @@ chrome.webNavigation.onCreatedNavigationTarget.addListener(async (details) => {
   }
 });
 
-// Propagate verification state to new tabs opened via window.open (Legacy/Fallback)
+// window.openで開かれた新規タブへ検証状態を引き継ぐ（フォールバック）
 chrome.tabs.onCreated.addListener(async (tab) => {
   await stateReady;
   const openerId = tab.openerTabId;
   if (openerId !== undefined) {
     const pending = pendingOpIdVerification.get(openerId);
-    // Only inherit if we haven't already set it via onCreatedNavigationTarget (which is more precise)
+    // onCreatedNavigationTargetで既に設定済みの場合は重複を避ける
     if (
       pending &&
       tab.id !== undefined &&
@@ -227,7 +227,7 @@ const handleAdClicked = (
   expectedOrgName?: string,
   isNewTab?: boolean,
 ) => {
-  // Store the click for this frame
+  // このフレームのクリック情報を保存
   pendingClicks.update(tabId, (current) => {
     const next = current || {};
     next[frameId] = {
@@ -238,8 +238,8 @@ const handleAdClicked = (
     return next;
   });
 
-  // Only update main pending map if it's not explicitly a new-tab click
-  // (Prevents source tab from showing verification warnings if it simultaneously navigates)
+  // 新規タブでのクリックでなければ、元タブの検証状態を更新
+  // （元タブが同時にナビゲーションした場合の誤検出を防止）
   if (!isNewTab) {
     pendingOpIdVerification.set(tabId, {
       targetOpId,
@@ -248,7 +248,7 @@ const handleAdClicked = (
     });
   }
 
-  // Check if any new tabs were already created by this frame waiting for this opId
+  // このフレームから既に作成された新規タブがあれば、検証情報を引き渡す
   const tabAssociations = pendingNewTabAssociations.get(tabId);
   const waitingTabs = tabAssociations?.[frameId];
 
@@ -260,11 +260,11 @@ const handleAdClicked = (
         expectedOrgName,
       });
     }
-    // Clear associations as they are fulfilled
+    // 処理済みの紐付け情報をクリア
     delete tabAssociations[frameId];
     pendingNewTabAssociations.set(tabId, tabAssociations);
 
-    // If a new tab consumed this click, ensure we clear it from the source tab
+    // 新規タブが引き受けた場合、元タブ側の検証情報をクリア
     const currentMainPending = pendingOpIdVerification.get(tabId);
     if (waitingTabs.length > 0 && currentMainPending?.targetOpId === targetOpId) {
       pendingOpIdVerification.delete(tabId);
@@ -345,7 +345,7 @@ const createErrorResult = (
 const decodeWsps = (sp: SiteProfile | null) => {
   if (!sp) return [];
   const decodeWsp = JwtVcDecoder<WebsiteProfile>();
-  // Handle both 'sites' (new) and 'credential' (legacy)
+  // 'sites'（新形式）と 'credential'（旧形式）の両方に対応
   const sources = sp.sites ?? (sp.credential ? [sp.credential] : []);
   return sources
     .map((jwt) => {
@@ -379,7 +379,7 @@ const resolveName = (
     const orgName = getOrgNameFromOp(op);
     if (orgName) return orgName;
   }
-  // WSP name fallback
+  // WSP名のフォールバック
   if ("name" in wsp.doc.credentialSubject) {
     return wsp.doc.credentialSubject.name;
   }
@@ -391,14 +391,14 @@ const getDestinationOrgName = (
   decodedWsps: ReturnType<typeof decodeWsps>,
   targetOpId: string,
 ): string | undefined => {
-  // Find WSP that matches targetOpId
+  // targetOpIdに一致するWSPを検索
   const matchedWsp = decodedWsps.find((wsp) => wsp.doc.issuer === targetOpId);
 
   if (matchedWsp) {
     return resolveName(matchedWsp, decodedOps);
   }
 
-  // Fallback: If no match, try to get name from first available WSP
+  // フォールバック: 一致するものがなければ先頭のWSPから取得を試みる
   if (decodedWsps.length > 0) {
     const firstWsp = decodedWsps[0];
     if (firstWsp) {
@@ -456,8 +456,7 @@ const getVerificationResult = async (
       );
     }
 
-    // Note: We don't strictly error if SP is invalid here, just treat as mismatch/missing.
-    // Or should we? The original code didn't check WMP validity deeply beyond decodeOps return.
+    // SPが不正な場合はエラーとせず、不一致/未設定として扱う
 
     const matched = isMatched(decodedWsps, targetOpId);
 
@@ -504,7 +503,7 @@ const handleVerification = async (
   sourceOrgName?: string,
   expectedOrgName?: string,
 ) => {
-  // Check if user allowed this destination.
+  // ユーザーがこの遷移先を許可済みかどうかを確認
   const isAllowed = await consumeAllowedNavigation(tabId, url);
   const result = await getVerificationResult(
     tabId,
@@ -514,7 +513,7 @@ const handleVerification = async (
   );
   verificationResults.set(tabId, result);
 
-  // Cache the result for history navigation
+  // 履歴ナビゲーション用に結果をキャッシュ
   verificationCache.update(tabId, (current) => {
     const next = current || {};
     next[url] = result;
@@ -625,7 +624,7 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
       pending.expectedOrgName,
     );
   } else {
-    // If no pending verification (e.g. Back/Forward navigation), try to restore from cache
+    // 保留中の検証がない場合（戻る/進むなど）はキャッシュから復元
     restoreVerificationFromCache(details.tabId, details.url);
   }
 });
@@ -650,9 +649,6 @@ frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
     );
   }
 });
-
-// https://www.typescriptlang.org/tsconfig#non-module-files
-export { };
 
 // NOTE: gh-1583
 if (import.meta.env.MODE === "development") {
