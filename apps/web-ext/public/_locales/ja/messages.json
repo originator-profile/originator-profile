@@ -344,6 +344,15 @@
   "OtherErrors": {
     "message": "その他のエラー"
   },
+  "DetailInfo_LinkVerification": {
+    "message": "リンク先確認"
+  },
+  "DetailInfo_ExpectedLinkDestination": {
+    "message": "意図したリンク先"
+  },
+  "DetailInfo_SourceAdOrganization": {
+    "message": "リンク元広告の組織"
+  },
   "Link_OriginatorProfile": {
     "message": "Originator Profile についてより詳しく（外部サイト）"
   },
@@ -351,7 +360,10 @@
     "message": "リンク先確認成功"
   },
   "LinkVerification_Mismatched_Title": {
-    "message": "サイトの身元を確認できません"
+    "message": "予期されたリンク先と異なります"
+  },
+  "LinkVerification_MissingOpid_Title": {
+    "message": "リンク先のサイト運営者の確認ができませんでした"
   },
   "LinkVerification_Matched_IntendedSite": {
     "message": "$expected_org$のサイトを開くことを意図した",

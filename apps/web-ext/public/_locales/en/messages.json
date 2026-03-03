@@ -344,6 +344,15 @@
   "OtherErrors": {
     "message": "Other Errors"
   },
+  "DetailInfo_LinkVerification": {
+    "message": "Link Verification"
+  },
+  "DetailInfo_ExpectedLinkDestination": {
+    "message": "Expected Link Destination"
+  },
+  "DetailInfo_SourceAdOrganization": {
+    "message": "Source Ad Organization"
+  },
   "Link_OriginatorProfile": {
     "message": "Learn more about Originator Profile (external site)"
   },
@@ -351,7 +360,10 @@
     "message": "Link destination verified"
   },
   "LinkVerification_Mismatched_Title": {
-    "message": "Unable to verify site identity"
+    "message": "Unexpected link destination"
+  },
+  "LinkVerification_MissingOpid_Title": {
+    "message": "Unable to verify link destination"
   },
   "LinkVerification_Matched_IntendedSite": {
     "message": "Intended for $expected_org$'s site, ",

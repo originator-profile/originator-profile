@@ -1,9 +1,10 @@
 import { stringifyWithError } from "@originator-profile/core";
-import { _, ProjectSummary, ProjectTitle } from "@originator-profile/ui";
+import { _, ProjectSummary, ProjectTitle, Table, TableRow } from "@originator-profile/ui";
 import type { VerifiedOps, VerifiedSp } from "@originator-profile/verify";
 import JsonView from "@uiw/react-json-view";
 import BackHeader from "../components/BackHeader";
 import CheckList from "../components/CheckList";
+import { useLinkVerification } from "../components/credentials/use-link-verification";
 import type {
   FrameVerifiedCas,
   SupportedVerifiedCas,
@@ -29,6 +30,9 @@ function DetailInfo({
   errors,
   backPath,
 }: DetailInfoProps) {
+  const linkVerification = useLinkVerification();
+  const hasLinkVerification = linkVerification && linkVerification.status !== "none";
+
   return (
     <>
       <BackHeader className="sticky top-0 z-10" to={backPath}>
@@ -43,6 +47,27 @@ function DetailInfo({
             </h2>
             <CheckList sp={sp} ops={ops} cas={cas} errors={errors} />
           </div>
+
+          {hasLinkVerification && (
+            <div className="mb-8">
+              <h2 className="pl-4 mb-4 text-sm font-bold text-gray-700">
+                {_("DetailInfo_LinkVerification")}
+              </h2>
+              <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
+                <Table>
+                  <TableRow
+                    header={_("DetailInfo_ExpectedLinkDestination")}
+                    data={linkVerification.expectedOrgName || "-"}
+                  />
+                  <TableRow
+                    header={_("DetailInfo_SourceAdOrganization")}
+                    data={linkVerification.sourceOrgName || "-"}
+                  />
+                </Table>
+              </div>
+            </div>
+          )}
+
           <h2 className="pl-4 mb-4 text-sm font-bold text-gray-700">
             {_("DetailInfo")}
           </h2>

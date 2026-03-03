@@ -1,7 +1,6 @@
 import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router";
 import { EnvironmentBanner } from "./components/environment";
-import LinkVerification from "./components/LinkVerification";
 import { overlayExtensionMessenger } from "./components/overlay/extension-events";
 import Base from "./pages/Base";
 import Credentials from "./pages/Credentials";
@@ -42,7 +41,6 @@ function App() {
                 index
                 element={
                   <div className="flex flex-col divide-y divide-gray-200">
-                    <LinkVerification />
                     <SiteProfile />
                   </div>
                 }
@@ -54,7 +52,6 @@ function App() {
                 index
                 element={
                   <div className="flex flex-col divide-y divide-gray-200">
-                    <LinkVerification />
                     <SiteProfile />
                     <Credentials />
                   </div>
