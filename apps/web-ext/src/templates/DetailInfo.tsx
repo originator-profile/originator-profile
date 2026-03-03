@@ -1,14 +1,20 @@
 import { stringifyWithError } from "@originator-profile/core";
-import { _, ProjectSummary, ProjectTitle, Table, TableRow } from "@originator-profile/ui";
+import {
+  _,
+  ProjectSummary,
+  ProjectTitle,
+  Table,
+  TableRow,
+} from "@originator-profile/ui";
 import type { VerifiedOps, VerifiedSp } from "@originator-profile/verify";
 import JsonView from "@uiw/react-json-view";
 import BackHeader from "../components/BackHeader";
 import CheckList from "../components/CheckList";
-import { useLinkVerification } from "../components/credentials/use-link-verification";
 import type {
   FrameVerifiedCas,
   SupportedVerifiedCas,
 } from "../components/credentials";
+import { useLinkVerification } from "../components/credentials/use-link-verification";
 
 type DetailInfoProps = {
   sp?: VerifiedSp;
@@ -31,7 +37,8 @@ function DetailInfo({
   backPath,
 }: DetailInfoProps) {
   const linkVerification = useLinkVerification();
-  const hasLinkVerification = linkVerification && linkVerification.status !== "none";
+  const hasLinkVerification =
+    linkVerification && linkVerification.status !== "none";
 
   return (
     <>

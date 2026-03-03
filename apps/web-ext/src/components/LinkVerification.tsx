@@ -1,7 +1,11 @@
 import { _ } from "@originator-profile/ui";
 import { useLinkVerification } from "./credentials/use-link-verification";
 
-export default function LinkVerification({ inline = false }: { inline?: boolean }) {
+export default function LinkVerification({
+  inline = false,
+}: {
+  inline?: boolean;
+}) {
   const verificationResult = useLinkVerification();
 
   if (!verificationResult || verificationResult.status === "none") {
@@ -20,10 +24,9 @@ export default function LinkVerification({ inline = false }: { inline?: boolean 
     return (
       <div className="relative flex flex-col items-center mt-1">
         <span
-          className={`font-bold text-xs ${isMatched
-            ? "text-green-700"
-            : "text-red-700"
-            }`}
+          className={`font-bold text-xs ${
+            isMatched ? "text-green-700" : "text-red-700"
+          }`}
         >
           {_(titleKey)}
         </span>
@@ -33,14 +36,11 @@ export default function LinkVerification({ inline = false }: { inline?: boolean 
 
   return (
     <div
-      className={`mb-3 text-left w-full ${isMatched
-        ? "text-green-700"
-        : "text-red-700"
-        }`}
+      className={`mb-3 text-left w-full ${
+        isMatched ? "text-green-700" : "text-red-700"
+      }`}
     >
-      <h2 className="font-bold text-sm">
-        {_(titleKey)}
-      </h2>
+      <h2 className="font-bold text-sm">{_(titleKey)}</h2>
     </div>
   );
 }

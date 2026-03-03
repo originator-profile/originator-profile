@@ -4,11 +4,15 @@ import { useLinkVerification } from "../components/credentials/use-link-verifica
 
 function Prohibition() {
   const verificationResult = useLinkVerification();
-  const hasLinkVerification = verificationResult && verificationResult.status !== "none" && verificationResult.status !== "matched";
+  const hasLinkVerification =
+    verificationResult &&
+    verificationResult.status !== "none" &&
+    verificationResult.status !== "matched";
 
-  const titleKey = verificationResult?.status === "mismatched"
-    ? "LinkVerification_Mismatched_Title"
-    : "LinkVerification_MissingOpid_Title";
+  const titleKey =
+    verificationResult?.status === "mismatched"
+      ? "LinkVerification_Mismatched_Title"
+      : "LinkVerification_MissingOpid_Title";
 
   return (
     <>
