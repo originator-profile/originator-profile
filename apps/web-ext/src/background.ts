@@ -265,11 +265,9 @@ const handleAdClicked = (
     pendingNewTabAssociations.set(tabId, tabAssociations);
 
     // If a new tab consumed this click, ensure we clear it from the source tab
-    if (waitingTabs.length > 0) {
-      const currentMainPending = pendingOpIdVerification.get(tabId);
-      if (currentMainPending && currentMainPending.targetOpId === targetOpId) {
-        pendingOpIdVerification.delete(tabId);
-      }
+    const currentMainPending = pendingOpIdVerification.get(tabId);
+    if (waitingTabs.length > 0 && currentMainPending?.targetOpId === targetOpId) {
+      pendingOpIdVerification.delete(tabId);
     }
   }
 };
@@ -654,7 +652,7 @@ frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
 });
 
 // https://www.typescriptlang.org/tsconfig#non-module-files
-export {};
+export { };
 
 // NOTE: gh-1583
 if (import.meta.env.MODE === "development") {
@@ -678,10 +676,10 @@ if (import.meta.env.BASIC_AUTH) {
         urls:
           credential.domain === "localhost"
             ? [
-                "http://localhost:8080/*",
-                // Firefox のため
-                "http://localhost/*",
-              ]
+              "http://localhost:8080/*",
+              // Firefox のため
+              "http://localhost/*",
+            ]
             : [`https://${credential.domain}/*`],
       },
       ["blocking"],

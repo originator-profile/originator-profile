@@ -74,9 +74,9 @@ const decodeCasJwtPayload = (
   casItem: unknown,
 ):
   | {
-      issuer?: string;
-      credentialSubject?: { type?: string };
-    }
+    issuer?: string;
+    credentialSubject?: { type?: string };
+  }
   | undefined => {
   const jwt = normalizeCasItem(casItem).attestation;
   if (typeof jwt !== "string") return undefined;
@@ -216,9 +216,9 @@ if (document.readyState === "loading") {
   tryCacheNames();
 }
 
-const sendAdClicked = (opMeta: any, isNewTab: boolean = false) => {
+const sendAdClicked = (opMeta: Record<string, unknown>, isNewTab: boolean = false) => {
   const getOpMetaProperty = (key: string): string | undefined => {
-    const value = (opMeta as Record<string, unknown>)[key];
+    const value = opMeta[key];
     return typeof value === "string" ? value : undefined;
   };
 
@@ -228,7 +228,7 @@ const sendAdClicked = (opMeta: any, isNewTab: boolean = false) => {
   };
 
   void credentialsMessenger.sendMessage("adClicked", {
-    targetopid: opMeta.targetopid,
+    targetopid: getOpMetaProperty("targetopid") as string,
     sourceOrgName: names.sourceOrgName,
     expectedOrgName: names.expectedOrgName,
     isNewTab,
@@ -238,52 +238,54 @@ const sendAdClicked = (opMeta: any, isNewTab: boolean = false) => {
 const handleLinkClick = (e: MouseEvent) => {
   const target = e.target as HTMLElement;
   const anchor = target.closest("a");
-  if (anchor) {
-    const opMeta = fetchOpMeta(document);
-    if (opMeta) {
-      let isNewTab = anchor.target === "_blank";
-      if (e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1) {
-        isNewTab = true;
-      }
-      void sendAdClicked(opMeta, isNewTab);
-    }
+  const opMeta = anchor ? fetchOpMeta(document) : undefined;
+  if (anchor && opMeta) {
+    const isModifierKey = e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1;
+    const isNewTab = anchor.target === "_blank" || isModifierKey;
+    void sendAdClicked(opMeta as Record<string, unknown>, isNewTab);
   }
 };
 
 document.addEventListener("click", handleLinkClick);
 document.addEventListener("mousedown", handleLinkClick);
+
+const handleEnterKey = (e: KeyboardEvent) => {
+  const target = e.target as HTMLElement;
+  const anchor = target.closest("a");
+  const opMeta = anchor ? fetchOpMeta(document) : undefined;
+  if (anchor && opMeta) {
+    const isModifierKey = e.ctrlKey || e.metaKey || e.shiftKey;
+    const isNewTab = anchor.target === "_blank" || isModifierKey;
+    void sendAdClicked(opMeta as Record<string, unknown>, isNewTab);
+  }
+};
+
+const handleSpaceKey = (e: KeyboardEvent) => {
+  const target = e.target as HTMLElement;
+  const tagName = target.tagName;
+  const role = target.getAttribute("role");
+  const isButtonOrInput =
+    tagName === "BUTTON" ||
+    tagName === "INPUT" ||
+    tagName === "SELECT" ||
+    tagName === "TEXTAREA" ||
+    role === "button";
+
+  if (isButtonOrInput) {
+    const opMeta = fetchOpMeta(document);
+    if (opMeta) {
+      void sendAdClicked(opMeta as Record<string, unknown>, false);
+    }
+  }
+};
+
 document.addEventListener("keydown", (e) => {
   if (e.key === "Enter") {
-    const target = e.target as HTMLElement;
-    const anchor = target.closest("a");
-    if (anchor) {
-      const opMeta = fetchOpMeta(document);
-      if (opMeta) {
-        let isNewTab = anchor.target === "_blank";
-        if (e.ctrlKey || e.metaKey || e.shiftKey) {
-          isNewTab = true;
-        }
-        void sendAdClicked(opMeta, isNewTab);
-      }
-    }
+    handleEnterKey(e);
     return;
   }
   if (e.key === " " || e.key === "Spacebar") {
-    const target = e.target as HTMLElement;
-    const tagName = target.tagName;
-    const role = target.getAttribute("role");
-    if (
-      tagName === "BUTTON" ||
-      tagName === "INPUT" ||
-      tagName === "SELECT" ||
-      tagName === "TEXTAREA" ||
-      role === "button"
-    ) {
-      const opMeta = fetchOpMeta(document);
-      if (opMeta) {
-        void sendAdClicked(opMeta, false);
-      }
-    }
+    handleSpaceKey(e);
   }
 });
 
