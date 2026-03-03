@@ -137,16 +137,19 @@ function DetailItem({ label, icon, children, className }: DetailItemProps) {
 }
 
 // value がエラーかどうかを判定し、チェック or キャンセルのアイコンと内容を表示するコンポーネントです。
+// デコード済みではあるが、未検証のものに対しては警告マークを表示します。
 function ResultItem({
   label,
   value,
   showPayload = true,
+  isVerified = true,
   children,
   className,
 }: {
   label: string;
   value: unknown;
   showPayload?: boolean;
+  isVerified?: boolean;
   children?: React.ReactNode;
   className?: string;
 }) {
@@ -156,7 +159,7 @@ function ResultItem({
   return (
     <DetailItem
       label={label}
-      icon={isError ? "cancel" : "check"}
+      icon={isError ? "cancel" : isVerified ? "check" : "null"}
       className={className}
     >
       {isCodeError ? (
@@ -215,7 +218,12 @@ function DisplayOriginators({
 }) {
   return (
     <div className="ml-7">
-      <ResultItem label={"Core Profile"} value={op.core} className="mb-2" />
+      <ResultItem
+        label={"Core Profile"}
+        value={op.core}
+        isVerified={"verificationKey" in op.core}
+        className="mb-2"
+      />
       {op.annotations?.map(
         // annotation が存在しなければ表示しません。
         (annotation, index) => (
@@ -223,6 +231,7 @@ function DisplayOriginators({
             key={index}
             label={`Profile Annotation #${index}`}
             value={annotation}
+            isVerified={"verificationKey" in annotation}
             className="mb-2"
           />
         ),
@@ -234,6 +243,7 @@ function DisplayOriginators({
             key={index}
             label={`Web Media Profile #${index}`}
             value={media}
+            isVerified={"verificationKey" in media}
             className="mb-2"
           />
         ),
