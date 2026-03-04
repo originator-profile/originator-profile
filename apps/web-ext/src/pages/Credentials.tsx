@@ -17,7 +17,7 @@ export default function Credentials() {
   const { ops, cas, framesCas, isLoading, error } = useCredentials();
   if (isLoading) return <Loading />;
   if (error) {
-    console.error(`Error loading credentials: ${error}`);
+    console.error("Error loading credentials:", error);
     return null;
   }
   const ca = cas.find(
