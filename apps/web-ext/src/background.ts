@@ -10,12 +10,7 @@ import "./utils/cors-basic-auth";
 
 import { PersistentMap } from "./utils/persistent-map";
 
-import {
-  allowNavigation,
-  cleanupNavigationState,
-  consumeAllowedNavigation,
-  normalizeUrl,
-} from "./utils/navigation-state";
+import { normalizeUrl } from "./utils/navigation-state";
 
 const windowSize = {
   width: 520,
@@ -127,25 +122,14 @@ const verificationCache = new PersistentMap<{
   [url: string]: LinkVerificationResult;
 }>("verificationCache");
 
-const pendingClicks = new PersistentMap<{
-  [frameId: number]: {
-    targetOpId: string;
-    sourceOrgName?: string;
-    expectedOrgName?: string;
-  };
-}>("pendingClicks");
-
-const pendingNewTabAssociations = new PersistentMap<{
-  [frameId: number]: number[];
-}>("pendingNewTabAssociations");
-
 const stateReady = Promise.all([
   pendingOpIdVerification.load(),
   verificationResults.load(),
   verificationCache.load(),
-  pendingClicks.load(),
-  pendingNewTabAssociations.load(),
 ]);
+
+// window.openや<a target="_blank">で開かれた新規タブを追跡（openerTabId → newTabId[]）
+const recentlyOpenedTabs = new Map<number, number[]>();
 
 // タブが閉じられたとき、メモリリーク防止のために状態をクリーンアップ
 chrome.tabs.onRemoved.addListener(async (tabId) => {
@@ -153,15 +137,19 @@ chrome.tabs.onRemoved.addListener(async (tabId) => {
   pendingOpIdVerification.delete(tabId);
   verificationResults.delete(tabId);
   verificationCache.delete(tabId);
-  pendingClicks.delete(tabId);
-  pendingNewTabAssociations.delete(tabId);
-  cleanupNavigationState(tabId);
+  recentlyOpenedTabs.delete(tabId);
 });
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === "allowNavigation") {
+  if (message.type === "clearPendingVerification") {
+    // 送信元が拡張機能の Warning ページであることを検証
+    const isFromExtension = sender.url?.startsWith(chrome.runtime.getURL(""));
+    if (!isFromExtension) {
+      sendResponse({ success: false, reason: "unauthorized sender" });
+      return;
+    }
     if (sender.tab?.id) {
-      allowNavigation(sender.tab.id, message.url);
+      pendingOpIdVerification.delete(sender.tab.id);
       sendResponse({ success: true });
     } else {
       sendResponse({ success: false, reason: "no tab id" });
@@ -171,49 +159,18 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   return false;
 });
 
-// webNavigationを利用して、新規タブを開いたフレームと正確に紐付ける
-chrome.webNavigation.onCreatedNavigationTarget.addListener(async (details) => {
-  await stateReady;
-  const { sourceTabId, sourceFrameId, tabId } = details;
-  // 元フレームからのクリック情報が既にあれば、即座に紐付け
-  const sourcePendingClicks = pendingClicks.get(sourceTabId);
-  if (sourcePendingClicks?.[sourceFrameId]) {
-    const pendingClick = sourcePendingClicks[sourceFrameId];
-    pendingOpIdVerification.set(tabId, pendingClick);
-
-    // 新規タブに引き渡されたため、元タブの同一検証情報をクリア
-    const currentMainPending = pendingOpIdVerification.get(sourceTabId);
-    if (
-      currentMainPending &&
-      currentMainPending.targetOpId === pendingClick.targetOpId
-    ) {
-      pendingOpIdVerification.delete(sourceTabId);
-    }
-  } else {
-    // クリックメッセージ到着時の紐付け用に保存
-    pendingNewTabAssociations.update(sourceTabId, (current) => {
-      const next = current || {};
-      if (!next[sourceFrameId]) {
-        next[sourceFrameId] = [];
-      }
-      next[sourceFrameId].push(tabId);
-      return next;
-    });
-  }
-});
-
-// window.openで開かれた新規タブへ検証状態を引き継ぐ（フォールバック）
 chrome.tabs.onCreated.addListener(async (tab) => {
   await stateReady;
   const openerId = tab.openerTabId;
-  if (openerId !== undefined) {
+  if (openerId !== undefined && tab.id !== undefined) {
+    // opener → new tab のマッピングを記録（FIFOキューで複数クリック時の順序を維持）
+    const existing = recentlyOpenedTabs.get(openerId) || [];
+    existing.push(tab.id);
+    recentlyOpenedTabs.set(openerId, existing);
+
+    // 元タブに pendingOpIdVerification があれば即座にコピー
     const pending = pendingOpIdVerification.get(openerId);
-    // onCreatedNavigationTargetで既に設定済みの場合は重複を避ける
-    if (
-      pending &&
-      tab.id !== undefined &&
-      !pendingOpIdVerification.get(tab.id)
-    ) {
+    if (pending && !pendingOpIdVerification.get(tab.id)) {
       pendingOpIdVerification.set(tab.id, pending);
     }
   }
@@ -221,66 +178,73 @@ chrome.tabs.onCreated.addListener(async (tab) => {
 
 const handleAdClicked = (
   tabId: number,
-  frameId: number,
   targetOpId: string,
   sourceOrgName?: string,
   expectedOrgName?: string,
   isNewTab?: boolean,
 ) => {
-  // このフレームのクリック情報を保存
-  pendingClicks.update(tabId, (current) => {
-    const next = current || {};
-    next[frameId] = {
-      targetOpId,
-      sourceOrgName,
-      expectedOrgName,
-    };
-    return next;
-  });
-
   // 新規タブでのクリックでなければ、元タブの検証状態を更新
-  // （元タブが同時にナビゲーションした場合の誤検出を防止）
   if (!isNewTab) {
     pendingOpIdVerification.set(tabId, {
       targetOpId,
       sourceOrgName,
       expectedOrgName,
     });
+    return;
   }
 
-  // このフレームから既に作成された新規タブがあれば、検証情報を引き渡す
-  const tabAssociations = pendingNewTabAssociations.get(tabId);
-  const waitingTabs = tabAssociations?.[frameId];
+  // 新規タブへの検証情報引き渡し（openerTabId ベース）
+  const openerTabs = recentlyOpenedTabs.get(tabId);
+  if (!openerTabs || openerTabs.length === 0) return;
 
-  if (tabAssociations && waitingTabs) {
-    for (const newTabId of waitingTabs) {
-      pendingOpIdVerification.set(newTabId, {
-        targetOpId,
-        sourceOrgName,
-        expectedOrgName,
-      });
-    }
-    // 処理済みの紐付け情報をクリア
-    delete tabAssociations[frameId];
-    pendingNewTabAssociations.set(tabId, tabAssociations);
+  // FIFOで消費（複数クリック時の順序を維持）
+  const newTabId = openerTabs.shift();
+  if (newTabId === undefined) return;
+  if (openerTabs.length === 0) {
+    recentlyOpenedTabs.delete(tabId);
+  }
+  pendingOpIdVerification.set(newTabId, {
+    targetOpId,
+    sourceOrgName,
+    expectedOrgName,
+  });
+  // 新規タブが既に読み込み完了している場合、onCompleted は既に通過済みなので
+  // ここで即座に検証を実行する（レースコンディション対策）
+  void chrome.tabs
+    .get(newTabId)
+    .then(async (tab) => {
+      if (!pendingOpIdVerification.get(newTabId)) return;
+      if (
+        tab.status === "complete" &&
+        tab.url &&
+        !tab.url.startsWith(chrome.runtime.getURL(""))
+      ) {
+        // eslint-disable-next-line no-use-before-define
+        await handleVerification(
+          newTabId,
+          tab.url,
+          targetOpId,
+          sourceOrgName,
+          expectedOrgName,
+        );
+      }
+    })
+    .catch(() => {
+      // タブが既に閉じられている場合は無視
+    });
 
-    // 新規タブが引き受けた場合、元タブ側の検証情報をクリア
-    const currentMainPending = pendingOpIdVerification.get(tabId);
-    if (
-      waitingTabs.length > 0 &&
-      currentMainPending?.targetOpId === targetOpId
-    ) {
-      pendingOpIdVerification.delete(tabId);
-    }
+  // 元タブ側の検証情報をクリア
+  const currentMainPending = pendingOpIdVerification.get(tabId);
+  if (currentMainPending?.targetOpId === targetOpId) {
+    pendingOpIdVerification.delete(tabId);
   }
 };
 
 credentialsMessenger.onMessage("adClicked", async ({ data, sender }) => {
   await stateReady;
-  if (sender.tab?.id && sender.frameId !== undefined) {
+  if (sender.tab?.id) {
     handleAdClicked(
       sender.tab.id,
-      sender.frameId,
       data.targetopid,
       data.sourceOrgName,
       data.expectedOrgName,
@@ -499,6 +463,9 @@ const getVerificationResult = async (
   }
 };
 
+// handleVerification の二重実行を防止するガード
+const verificationInProgress = new Set<number>();
+
 const handleVerification = async (
   tabId: number,
   url: string,
@@ -506,42 +473,48 @@ const handleVerification = async (
   sourceOrgName?: string,
   expectedOrgName?: string,
 ) => {
-  // ユーザーがこの遷移先を許可済みかどうかを確認
-  const isAllowed = await consumeAllowedNavigation(tabId, url);
-  const result = await getVerificationResult(
-    tabId,
-    targetOpId,
-    sourceOrgName,
-    expectedOrgName,
-  );
-  verificationResults.set(tabId, result);
-
-  // 履歴ナビゲーション用に結果をキャッシュ
-  verificationCache.update(tabId, (current) => {
-    const next = current || {};
-    next[url] = result;
-    return next;
-  });
-
-  if (result.status !== "matched" && !isAllowed) {
-    const reason = result.reason ?? "Unknown Error";
-    executeWarningRedirect(
+  if (verificationInProgress.has(tabId)) return;
+  verificationInProgress.add(tabId);
+  try {
+    const result = await getVerificationResult(
       tabId,
-      url,
-      reason,
-      result.sourceOrgName,
-      result.destinationOrgName,
-      result.expectedOrgName,
+      targetOpId,
+      sourceOrgName,
+      expectedOrgName,
     );
-    // 警告を出したURLを記録し、ユーザーが手動で別のURLへ移動した際にpendingを解除できるようにする
-    const current = pendingOpIdVerification.get(tabId);
-    if (current) {
-      pendingOpIdVerification.set(tabId, { ...current, warnedUrl: url });
-    }
-    return;
-  }
+    verificationResults.set(tabId, result);
 
-  pendingOpIdVerification.delete(tabId);
+    // 履歴ナビゲーション用に結果をキャッシュ
+    verificationCache.update(tabId, (current) => {
+      const next = current || {};
+      next[url] = result;
+      return next;
+    });
+
+    if (result.status !== "matched") {
+      const reason = result.reason ?? "Unknown Error";
+      executeWarningRedirect(
+        tabId,
+        url,
+        reason,
+        result.sourceOrgName,
+        result.destinationOrgName,
+        result.expectedOrgName,
+      );
+      // 警告を出したURLを記録し、ユーザーが手動で別のURLへ移動した際にpendingを解除できるようにする
+      pendingOpIdVerification.set(tabId, {
+        targetOpId,
+        sourceOrgName,
+        expectedOrgName,
+        warnedUrl: url,
+      });
+      return;
+    }
+
+    pendingOpIdVerification.delete(tabId);
+  } finally {
+    verificationInProgress.delete(tabId);
+  }
 };
 
 const restoreVerificationFromCache = (tabId: number, url: string) => {
@@ -575,13 +548,6 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
   // 明示的な手動操作やリロードの場合はキャンセル
   if (isFromAddressBar || isForwardBack || isBookmark || isReload) {
     pendingOpIdVerification.delete(details.tabId);
-    console.error(
-      details.transitionType,
-      "isFromAddressBar [webNavigation.onCommitted] url:",
-      details.url,
-      "pendingExists:",
-      !!pendingOpIdVerification.get(details.tabId),
-    );
     return;
   }
 
@@ -589,12 +555,6 @@ chrome.webNavigation.onCommitted.addListener(async (details) => {
   // リダイレクト（window.open() 等で付与されることが多い）を伴わない場合は手動遷移とみなしてキャンセル
   if (isTypedOrGenerated && !isClientRedirect && !isServerRedirect) {
     pendingOpIdVerification.delete(details.tabId);
-    console.error(
-      "isTypedOrGenerated [webNavigation.onCommitted] url:",
-      details.url,
-      "pendingExists:",
-      !!pendingOpIdVerification.get(details.tabId),
-    );
     return;
   }
 });
@@ -675,10 +635,10 @@ if (import.meta.env.BASIC_AUTH) {
         urls:
           credential.domain === "localhost"
             ? [
-                "http://localhost:8080/*",
-                // Firefox のため
-                "http://localhost/*",
-              ]
+              "http://localhost:8080/*",
+              // Firefox のため
+              "http://localhost/*",
+            ]
             : [`https://${credential.domain}/*`],
       },
       ["blocking"],

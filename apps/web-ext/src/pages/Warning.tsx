@@ -43,14 +43,11 @@ export default function Warning() {
   const handleProceed = async () => {
     if (safeTarget) {
       try {
-        // Send message to background to allow navigation
+        // 検証状態をクリアして、次の onCompleted で再検証されないようにする
         await chrome.runtime.sendMessage({
-          type: "allowNavigation",
-          url: safeTarget,
+          type: "clearPendingVerification",
         });
       } catch (error) {
-        // If message fails (e.g. background script suspended), log it but proceed anyway.
-        // The user explicitly chose to proceed, so we shouldn't block them.
         console.warn("Failed to notify background script:", error);
       } finally {
         // Navigate to the target URL regardless of message success
@@ -99,11 +96,10 @@ export default function Warning() {
           <button
             onClick={handleProceed}
             disabled={!safeTarget}
-            className={`w-full py-2 px-4 rounded transition duration-200 ${
-              safeTarget
+            className={`w-full py-2 px-4 rounded transition duration-200 ${safeTarget
                 ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 : "bg-gray-100 text-gray-400 cursor-not-allowed"
-            }`}
+              }`}
           >
             {_("Warning_Proceed")}
           </button>

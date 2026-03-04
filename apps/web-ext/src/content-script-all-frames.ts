@@ -232,13 +232,22 @@ const handleLinkClick = (e: MouseEvent) => {
   if (anchor && opMeta) {
     const isModifierKey =
       e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1;
-    const isNewTab = anchor.target === "_blank" || isModifierKey;
+    // href="javascript:..." は window.open() 等で新規タブを開くパターン
+    const isJavascriptHref = anchor.href.startsWith("javascript:");
+    const isNewTab =
+      anchor.target === "_blank" || isModifierKey || isJavascriptHref;
     void sendAdClicked(opMeta as Record<string, unknown>, isNewTab);
   }
 };
 
 document.addEventListener("click", handleLinkClick);
-document.addEventListener("mousedown", handleLinkClick);
+document.addEventListener("mousedown", (e: MouseEvent) => {
+  // ミドルクリック（button === 1）のみを処理
+  // 左クリックは click イベントで処理済みのため、二重送信を防止
+  if (e.button === 1) {
+    handleLinkClick(e);
+  }
+});
 
 const handleEnterKey = (e: KeyboardEvent) => {
   const target = e.target as HTMLElement;
