@@ -5,7 +5,7 @@ import {
 } from "@originator-profile/sign";
 import { IntegrityMetadataSet } from "websri";
 
-const WARN_SUFFIX = `This will become an error after 2027. See: https://docs.originator-profile.org/`;
+const WARN_SUFFIX = `This will become an error after 2027. See: https://docs.originator-profile.org/en/opb/context/#the-image-datatype`;
 
 /**
  * `digestSRI` の検証
