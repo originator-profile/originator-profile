@@ -77,6 +77,26 @@ export function Credentials(props: CredentialsProps) {
   const contentType = getContentType(props.ca);
   const ca = props.ca.attestation.doc;
 
+  const renderWebMediaProfileSummaryCard = () => {
+    return props.orgPath && props.wmp ? (
+      <div className="mb-3" data-testid="ps-json-holder">
+        <WebMediaProfileSummaryCard to={props.orgPath} wmp={props.wmp} />
+      </div>
+    ) : (
+      <div>
+        <h1
+          className="text-base text-center mb-6"
+          data-testid="web-media-profile-missing"
+        >
+          {_("WebMediaProfile_Missing")}
+        </h1>
+        <p className="whitespace-pre-line text-xs text-gray-700 text-center leading-5">
+          {_("WebMediaProfile_Missing_Reason")}
+        </p>
+      </div>
+    );
+  };
+
   return (
     <div data-testid="cas" className="flex">
       <div className="flex flex-col border-r border-gray-200">
@@ -93,9 +113,7 @@ export function Credentials(props: CredentialsProps) {
         <div className="bg-gray-100 min-h-screen p-4">
           <div className="pt-4">
             <ReliabilityGuide className="mb-3" contentType={contentType} />
-            <div className="mb-3" data-testid="ps-json-holder">
-              <WebMediaProfileSummaryCard to={props.orgPath} wmp={props.wmp} />
-            </div>
+            {renderWebMediaProfileSummaryCard()}
             <hr className="mb-3" />
             <div className="flex flex-row gap-3 mb-2">
               <Image
