@@ -32,5 +32,28 @@ Download from the Assets below.
 
 </details>"
 
+NOTE+="
+---
+
+<details>
+<summary>English</summary>
+
+> [!WARNING]
+> **This is a build for testing purposes. Please use the [regular version](https://github.com/originator-profile/originator-profile/releases/latest) to verify the regular site.**
+
+## Download
+
+Download from the Assets below.
+
+- Testing Extension (Chrome) _testing_profile_web_extension-chromium-canary.zip
+- Testing Extension (Firefox) _testing_profile_web_extension-firefox-desktop-canary.zip
+- Extension (Chrome) profile_web_extension-chromium-canary.zip
+- Extension (Firefox) profile_web_extension-firefox-desktop-canary.zip
+- WordPress Plugin wordpress-ca-manager.zip
+
+</details>
+"
+
+
 gh release delete canary --yes --cleanup-tag 2>/dev/null || :
 gh release create canary --prerelease --title "Canary Release" --notes "$NOTE" .github/dist/*
