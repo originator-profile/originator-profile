@@ -31,6 +31,40 @@ const WarningIcon = () => {
   );
 };
 
+/**
+ * 戻るボタンのナビゲーション処理
+ */
+function navigateBack(
+  isNewTab: boolean,
+  safeOriginal: string | null,
+): void {
+  if (isNewTab) {
+    window.close();
+    return;
+  }
+  if (safeOriginal) {
+    // location.replace で遷移されるため履歴が置き換わる場合がある。
+    // original パラメータ（広告クリック元ページのURL）があればそちらへ確実に戻る。
+    window.location.replace(safeOriginal);
+  } else if (window.history.length > 1) {
+    window.history.back();
+  } else {
+    window.close();
+  }
+}
+
+/**
+ * 戻るボタンのラベルを決定する
+ */
+function getBackButtonLabel(
+  isNewTab: boolean,
+  safeOriginal: string | null,
+): string {
+  if (isNewTab) return _("Warning_CloseTab");
+  if (safeOriginal || window.history.length > 1) return _("Warning_GoBack");
+  return _("Warning_CloseTab");
+}
+
 export default function Warning() {
   const [searchParams] = useSearchParams();
   const target = searchParams.get("target");
@@ -59,22 +93,6 @@ export default function Warning() {
     }
   };
 
-  const handleBack = () => {
-    if (isNewTab) {
-      window.close();
-      return;
-    }
-    if (safeOriginal) {
-      // location.replace で遷移されるため履歴が置き換わる場合がある。
-      // original パラメータ（広告クリック元ページのURL）があればそちらへ確実に戻る。
-      window.location.replace(safeOriginal);
-    } else if (window.history.length > 1) {
-      window.history.back();
-    } else {
-      window.close();
-    }
-  };
-
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
       <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
@@ -97,14 +115,10 @@ export default function Warning() {
         </p>
         <div className="space-y-3">
           <button
-            onClick={handleBack}
+            onClick={() => navigateBack(isNewTab, safeOriginal)}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-200"
           >
-            {isNewTab
-              ? _("Warning_CloseTab")
-              : safeOriginal || window.history.length > 1
-                ? _("Warning_GoBack")
-                : _("Warning_CloseTab")}
+            {getBackButtonLabel(isNewTab, safeOriginal)}
           </button>
           <button
             onClick={handleProceed}
