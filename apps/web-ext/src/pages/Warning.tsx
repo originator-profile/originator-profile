@@ -34,10 +34,7 @@ const WarningIcon = () => {
 /**
  * 戻るボタンのナビゲーション処理
  */
-function navigateBack(
-  isNewTab: boolean,
-  safeOriginal: string | null,
-): void {
+function navigateBack(isNewTab: boolean, safeOriginal: string | null): void {
   if (isNewTab) {
     window.close();
     return;
