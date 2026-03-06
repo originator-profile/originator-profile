@@ -41,6 +41,7 @@ export default function Warning() {
 
   const safeTarget = target && isValidUrl(target) ? target : null;
   const safeOriginal = original && isValidUrl(original) ? original : null;
+  const isNewTab = searchParams.get("isNewTab") === "true";
 
   const handleProceed = async () => {
     if (safeTarget) {
@@ -59,9 +60,13 @@ export default function Warning() {
   };
 
   const handleBack = () => {
+    if (isNewTab) {
+      window.close();
+      return;
+    }
     if (safeOriginal) {
       // location.replace で遷移されるため履歴が置き換わる場合がある。
-      // original パラメータ（元ページの referrer）があればそちらへ確実に戻る。
+      // original パラメータ（広告クリック元ページのURL）があればそちらへ確実に戻る。
       window.location.replace(safeOriginal);
     } else if (window.history.length > 1) {
       window.history.back();
@@ -95,18 +100,19 @@ export default function Warning() {
             onClick={handleBack}
             className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-200"
           >
-            {safeOriginal || window.history.length > 1
-              ? _("Warning_GoBack")
-              : _("Warning_CloseTab")}
+            {isNewTab
+              ? _("Warning_CloseTab")
+              : safeOriginal || window.history.length > 1
+                ? _("Warning_GoBack")
+                : _("Warning_CloseTab")}
           </button>
           <button
             onClick={handleProceed}
             disabled={!safeTarget}
-            className={`w-full py-2 px-4 rounded transition duration-200 ${
-              safeTarget
+            className={`w-full py-2 px-4 rounded transition duration-200 ${safeTarget
                 ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 : "bg-gray-100 text-gray-400 cursor-not-allowed"
-            }`}
+              }`}
           >
             {_("Warning_Proceed")}
           </button>

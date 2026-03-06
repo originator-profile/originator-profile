@@ -112,6 +112,8 @@ const pendingOpIdVerification = new PersistentMap<{
   sourceOrgName?: string;
   expectedOrgName?: string;
   warnedUrl?: string;
+  sourceUrl?: string;
+  isNewTab?: boolean;
 }>("pendingOpIdVerification");
 
 const verificationResults = new PersistentMap<LinkVerificationResult>(
@@ -168,10 +170,10 @@ chrome.tabs.onCreated.addListener(async (tab) => {
     existing.push(tab.id);
     recentlyOpenedTabs.set(openerId, existing);
 
-    // 元タブに pendingOpIdVerification があれば即座にコピー
+    // 元タブに pendingOpIdVerification があれば即座にコピー（新規タブとしてマーク）
     const pending = pendingOpIdVerification.get(openerId);
     if (pending && !pendingOpIdVerification.get(tab.id)) {
-      pendingOpIdVerification.set(tab.id, pending);
+      pendingOpIdVerification.set(tab.id, { ...pending, isNewTab: true });
     }
   }
 });
@@ -182,6 +184,7 @@ const handleAdClicked = (
   sourceOrgName?: string,
   expectedOrgName?: string,
   isNewTab?: boolean,
+  sourceUrl?: string,
 ) => {
   // 新規タブでのクリックでなければ、元タブの検証状態を更新
   if (!isNewTab) {
@@ -189,6 +192,7 @@ const handleAdClicked = (
       targetOpId,
       sourceOrgName,
       expectedOrgName,
+      sourceUrl,
     });
     return;
   }
@@ -207,6 +211,8 @@ const handleAdClicked = (
     targetOpId,
     sourceOrgName,
     expectedOrgName,
+    sourceUrl,
+    isNewTab: true,
   });
   // 新規タブが既に読み込み完了している場合、onCompleted は既に通過済みなので
   // ここで即座に検証を実行する（レースコンディション対策）
@@ -226,6 +232,8 @@ const handleAdClicked = (
           targetOpId,
           sourceOrgName,
           expectedOrgName,
+          sourceUrl,
+          true,
         );
       }
     })
@@ -249,6 +257,7 @@ credentialsMessenger.onMessage("adClicked", async ({ data, sender }) => {
       data.sourceOrgName,
       data.expectedOrgName,
       data.isNewTab,
+      sender.tab.url,
     );
   }
 });
@@ -268,6 +277,8 @@ const executeWarningRedirect = (
   sourceOrg?: string,
   destOrg?: string,
   expectedOrg?: string,
+  sourceUrl?: string,
+  isNewTab?: boolean,
 ) => {
   const params = new URLSearchParams({
     target: url,
@@ -276,16 +287,14 @@ const executeWarningRedirect = (
   if (sourceOrg) params.append("sourceOrg", sourceOrg);
   if (destOrg) params.append("destOrg", destOrg);
   if (expectedOrg) params.append("expectedOrg", expectedOrg);
+  if (sourceUrl) params.append("original", sourceUrl);
+  if (isNewTab) params.append("isNewTab", "true");
 
   const warningUrl = `${chrome.runtime.getURL("index.html")}#/warning?${params.toString()}`;
   void chrome.scripting.executeScript({
     target: { tabId },
     func: (destination) => {
-      const referrer = document.referrer;
-      const fullUrl =
-        destination +
-        (referrer ? `&original=${encodeURIComponent(referrer)}` : "");
-      window.location.replace(fullUrl);
+      window.location.replace(destination);
     },
     args: [warningUrl],
   });
@@ -472,6 +481,8 @@ const handleVerification = async (
   targetOpId: string,
   sourceOrgName?: string,
   expectedOrgName?: string,
+  sourceUrl?: string,
+  isNewTab?: boolean,
 ) => {
   if (verificationInProgress.has(tabId)) return;
   verificationInProgress.add(tabId);
@@ -500,6 +511,8 @@ const handleVerification = async (
         result.sourceOrgName,
         result.destinationOrgName,
         result.expectedOrgName,
+        sourceUrl,
+        isNewTab,
       );
       // 警告を出したURLを記録し、ユーザーが手動で別のURLへ移動した際にpendingを解除できるようにする
       pendingOpIdVerification.set(tabId, {
@@ -507,6 +520,8 @@ const handleVerification = async (
         sourceOrgName,
         expectedOrgName,
         warnedUrl: url,
+        sourceUrl,
+        isNewTab,
       });
       return;
     }
@@ -585,6 +600,8 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
       pending.targetOpId,
       pending.sourceOrgName,
       pending.expectedOrgName,
+      pending.sourceUrl,
+      pending.isNewTab,
     );
   } else {
     // 保留中の検証がない場合（戻る/進むなど）はキャッシュから復元
@@ -635,10 +652,10 @@ if (import.meta.env.BASIC_AUTH) {
         urls:
           credential.domain === "localhost"
             ? [
-                "http://localhost:8080/*",
-                // Firefox のため
-                "http://localhost/*",
-              ]
+              "http://localhost:8080/*",
+              // Firefox のため
+              "http://localhost/*",
+            ]
             : [`https://${credential.domain}/*`],
       },
       ["blocking"],
