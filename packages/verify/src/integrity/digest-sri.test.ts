@@ -1,7 +1,15 @@
 import { DigestSriContent } from "@originator-profile/sign";
-import { expect, test } from "vitest";
+import {
+  type MockInstance,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 import { createIntegrityMetadata } from "websri";
-import { verifyDigestSri } from "./digest-sri";
+import { verifyDigestSri, verifyImageDigestSri } from "./digest-sri";
 
 async function fetcher(): Promise<Response> {
   return new Response("Hello, World!");
@@ -44,12 +52,21 @@ test("Unsupported algorithm", async () => {
   expect(await verifyDigestSri(unsupportedAlgContent, fetcher)).toBe(false);
 });
 
-test("Fetch failure", async () => {
+test("Fetch failure returns false and logs error", async () => {
+  const errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+  const error = new TypeError("network error");
+
   async function failure(): Promise<Response> {
-    throw new TypeError("failure");
+    throw error;
   }
 
-  await expect(verifyDigestSri(content, failure)).rejects.toThrowError();
+  expect(await verifyDigestSri(content, failure)).toBe(false);
+  expect(errorSpy).toHaveBeenCalledWith(
+    "Failed to access content for digestSRI verification:",
+    error,
+  );
+
+  errorSpy.mockRestore();
 });
 
 test("Multiple hash algorithms - verify with strongest", async () => {
@@ -104,4 +121,52 @@ test("Invalid integrity metadata format", async () => {
   };
 
   expect(await verifyDigestSri(invalidContent, fetcher)).toBe(false);
+});
+
+describe("verifyImageDigestSri", () => {
+  let warnSpy: MockInstance;
+
+  beforeEach(() => {
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+  });
+
+  afterEach(() => {
+    warnSpy.mockRestore();
+  });
+
+  test("digestSRI 検証に成功した場合、warn を出さない", async () => {
+    await verifyImageDigestSri(
+      { id: content.id, digestSRI: content.digestSRI },
+      fetcher,
+    );
+
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
+  test("digestSRI 検証に失敗した場合、warn を出す", async () => {
+    await verifyImageDigestSri(
+      { id: content.id, digestSRI: content.digestSRI },
+      async () => new Response("wrong content"),
+    );
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("digestSRI verification failed"),
+    );
+  });
+
+  test("digestSRI が存在しない場合、warn を出す", async () => {
+    await verifyImageDigestSri(
+      { id: "https://example.org/image.png" },
+      fetcher,
+    );
+
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining("digestSRI is missing"),
+    );
+  });
+
+  test("undefined の場合、何もしない", async () => {
+    await verifyImageDigestSri(undefined, fetcher);
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
 });

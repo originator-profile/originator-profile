@@ -13,7 +13,15 @@ import {
 } from "@originator-profile/securing-mechanism";
 import { signCp } from "@originator-profile/sign";
 import { addYears, fromUnixTime, getUnixTime } from "date-fns";
-import { describe, expect, test } from "vitest";
+import {
+  type MockInstance,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 import {
   certificate,
   cp,
@@ -737,5 +745,80 @@ describe("Site Profileの検証", async () => {
     expect(sites[0]).toMatchObject({ doc: wsp });
     expect(sites[1]).instanceOf(Error);
     expect(sites[1].message).toBe("Origin not allowed");
+  });
+
+  describe("WSP image digestSRI検証 (2027年まではwarn扱い)", () => {
+    let warnSpy: MockInstance;
+
+    beforeEach(() => {
+      warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
+
+    test("digestSRIがない場合、warnが出るが検証は成功する", async () => {
+      const wspWithImage: WebsiteProfile = patch(wsp, [
+        {
+          op: "add",
+          path: ["credentialSubject", "image"],
+          value: { id: "https://example.org/image.png" },
+        },
+      ]);
+
+      const result = await SpVerifier(
+        {
+          originators: ops,
+          sites: [
+            await signJwtVc(wspWithImage, originator.privateKey, signOptions),
+          ],
+        },
+        LocalKeys({ keys: [authority.publicKey] }),
+        opId.authority,
+        "https://originator.example.org",
+      )();
+
+      expect(result).not.instanceOf(SiteProfileInvalid);
+      expect(result).not.instanceOf(SiteProfileVerifyFailed);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("digestSRI is missing"),
+      );
+    });
+
+    test("digestSRIが不正な場合、warnが出るが検証は成功する", async () => {
+      const wspWithBadImage: WebsiteProfile = patch(wsp, [
+        {
+          op: "add",
+          path: ["credentialSubject", "image"],
+          value: {
+            id: "https://example.org/image.png",
+            digestSRI: "sha256-invalid",
+          },
+        },
+      ]);
+
+      const result = await SpVerifier(
+        {
+          originators: ops,
+          sites: [
+            await signJwtVc(
+              wspWithBadImage,
+              originator.privateKey,
+              signOptions,
+            ),
+          ],
+        },
+        LocalKeys({ keys: [authority.publicKey] }),
+        opId.authority,
+        "https://originator.example.org",
+      )();
+
+      expect(result).not.instanceOf(SiteProfileInvalid);
+      expect(result).not.instanceOf(SiteProfileVerifyFailed);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("digestSRI verification failed"),
+      );
+    });
   });
 });

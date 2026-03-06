@@ -20,8 +20,8 @@ export type CredentialsProps = {
   ca: SupportedVerifiedCa;
   cas: SupportedVerifiedCas;
   ops: VerifiedOps;
-  orgPath: { pathname: string; search: string };
-  wmp: WebMediaProfile;
+  orgPath?: { pathname: string; search: string };
+  wmp?: WebMediaProfile;
   framesCas: FramesVerifiedCas;
 };
 export type FrameLocation = { origin: string; url: string };
