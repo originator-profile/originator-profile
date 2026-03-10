@@ -1,6 +1,6 @@
 import { Icon } from "@iconify/react";
 import { ModalDialog, _, useModalDialog } from "@originator-profile/ui";
-import clsx from "clsx";
+import { twMerge } from "tailwind-merge";
 
 type Props = {
   className?: string;
@@ -10,7 +10,7 @@ type Props = {
 export default function ReliabilityGuide(props: Props) {
   const dialog = useModalDialog();
   return (
-    <div className={clsx("text-center space-y-1", props.className)}>
+    <div className={twMerge("text-center space-y-1", props.className)}>
       <p className="whitespace-pre-line text-base font-bold text-primary-800">
         {props.contentType === "ContentType_Site"
           ? _("ReliabilityGuide_SiteOperator")

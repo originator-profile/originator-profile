@@ -11,8 +11,8 @@ import {
   useModalDialog,
 } from "@originator-profile/ui";
 import { Certificate, VerifiedOps } from "@originator-profile/verify";
-import clsx from "clsx";
 import { useMemo, useState } from "react";
+import { twMerge } from "tailwind-merge";
 import BackHeader from "../components/BackHeader";
 import ReliabilityGuide from "../components/ReliabilityGuide";
 import WebMediaProfileSummary from "../components/WebMediaProfileSummary";
@@ -20,7 +20,7 @@ import WebMediaProfileSummary from "../components/WebMediaProfileSummary";
 function ExternalLink(props: React.ComponentProps<"a">) {
   return (
     <a
-      className={clsx(
+      className={twMerge(
         "jumpu-card flex items-center gap-2.5 px-5 py-3 text-sm hover:bg-blue-50",
         props.className,
       )}
