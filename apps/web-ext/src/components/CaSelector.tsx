@@ -1,6 +1,6 @@
 import { Image } from "@originator-profile/ui";
 import placeholderDpThumbnail from "@originator-profile/ui/src/assets/placeholder-dp-thumbnail.png";
-import clsx from "clsx";
+import { twMerge } from "tailwind-merge";
 import { Link, useParams } from "react-router";
 import { buildPublUrl } from "../utils/routes";
 import { SupportedVerifiedCa, SupportedVerifiedCas } from "./credentials";
@@ -35,9 +35,9 @@ function CaSelector({ filteredCas, onClickCa }: Props) {
             >
               <div className="inline-block">
                 <Image
-                  className={clsx(
+                  className={twMerge(
                     "bg-gray-200 rounded-lg transition duration-300 ease-in-out hover:ring-2 hover:ring-gray-500 hover:ring-offset-2",
-                    { ["ring-2 ring-gray-500 ring-offset-2"]: active },
+                    active && "ring-2 ring-gray-500 ring-offset-2",
                   )}
                   src={ca.attestation.doc.credentialSubject.image?.id}
                   placeholderSrc={placeholderDpThumbnail}

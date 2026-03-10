@@ -1,6 +1,6 @@
 import { Icon } from "@iconify/react";
 import { _ } from "@originator-profile/ui";
-import clsx from "clsx";
+import { twMerge } from "tailwind-merge";
 import { useMemo } from "react";
 import { Menu, MenuButton, MenuItem, useMenuButton } from "./Menu";
 import { listCas } from "./credentials";
@@ -92,9 +92,7 @@ function CaFilter({ caListType, setCaListType, cas }: Props) {
               onClick={() => setCaListType(option.value)}
               onKeyDown={(e) => handleMenuKeyDown(e, option.value)}
               onMouseEnter={() => handleItemMouseEnter(index)}
-              className={clsx("h-8 text-xs", {
-                "cursor-default": isSelected,
-              })}
+              className={twMerge("h-8 text-xs", isSelected && "cursor-default")}
             >
               <div className="flex items-center w-full">
                 {isSelected && (
