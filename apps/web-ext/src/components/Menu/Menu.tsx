@@ -1,5 +1,5 @@
-import { twMerge } from "tailwind-merge";
 import { useCallback } from "react";
+import { twMerge } from "tailwind-merge";
 import "./Menu.css";
 
 interface MenuProps extends React.HTMLAttributes<HTMLUListElement> {

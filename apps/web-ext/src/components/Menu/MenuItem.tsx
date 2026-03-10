@@ -1,6 +1,6 @@
-import { twMerge } from "tailwind-merge";
 import { useEffect, useRef } from "react";
 import { Link } from "react-router";
+import { twMerge } from "tailwind-merge";
 
 interface MenuItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   role?: "menuitem";

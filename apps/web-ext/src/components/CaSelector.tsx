@@ -1,7 +1,7 @@
 import { Image } from "@originator-profile/ui";
 import placeholderDpThumbnail from "@originator-profile/ui/src/assets/placeholder-dp-thumbnail.png";
-import { twMerge } from "tailwind-merge";
 import { Link, useParams } from "react-router";
+import { twMerge } from "tailwind-merge";
 import { buildPublUrl } from "../utils/routes";
 import { SupportedVerifiedCa, SupportedVerifiedCas } from "./credentials";
 

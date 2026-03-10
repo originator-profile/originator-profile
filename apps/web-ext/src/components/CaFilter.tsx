@@ -1,7 +1,7 @@
 import { Icon } from "@iconify/react";
 import { _ } from "@originator-profile/ui";
-import { twMerge } from "tailwind-merge";
 import { useMemo } from "react";
+import { twMerge } from "tailwind-merge";
 import { Menu, MenuButton, MenuItem, useMenuButton } from "./Menu";
 import { listCas } from "./credentials";
 import type { SupportedVerifiedCas } from "./credentials/types";

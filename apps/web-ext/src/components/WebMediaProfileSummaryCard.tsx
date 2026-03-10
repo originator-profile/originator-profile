@@ -1,6 +1,6 @@
 import { WebMediaProfile } from "@originator-profile/model";
-import { twMerge } from "tailwind-merge";
 import { Link, LinkProps } from "react-router";
+import { twMerge } from "tailwind-merge";
 import WebMediaProfileSummary from "./WebMediaProfileSummary";
 
 type Props = {
@@ -12,7 +12,10 @@ type Props = {
 function WebMediaProfileSummaryCard({ className, to, wmp }: Props) {
   return (
     <Link
-      className={twMerge("jumpu-card block border-gray-200 p-4 gap-2", className)}
+      className={twMerge(
+        "jumpu-card block border-gray-200 p-4 gap-2",
+        className,
+      )}
       to={to}
     >
       <WebMediaProfileSummary wmp={wmp} />

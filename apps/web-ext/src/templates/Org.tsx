@@ -11,8 +11,8 @@ import {
   useModalDialog,
 } from "@originator-profile/ui";
 import { Certificate, VerifiedOps } from "@originator-profile/verify";
-import { twMerge } from "tailwind-merge";
 import { useMemo, useState } from "react";
+import { twMerge } from "tailwind-merge";
 import BackHeader from "../components/BackHeader";
 import ReliabilityGuide from "../components/ReliabilityGuide";
 import WebMediaProfileSummary from "../components/WebMediaProfileSummary";
