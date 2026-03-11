@@ -97,7 +97,6 @@ async function injectContentScriptsToExistingTabs(): Promise<void> {
         .executeScript({
           target: { tabId: tab.id, allFrames: cs.all_frames },
           files,
-          injectImmediately: cs.run_at === "document_start",
         })
         .catch(() => {
           // 注入できないページはスキップ
@@ -109,6 +108,8 @@ async function injectContentScriptsToExistingTabs(): Promise<void> {
 }
 
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
+  if (reason !== "install") return;
+
   await injectContentScriptsToExistingTabs();
 
   const [activeTab] = await chrome.tabs.query({
@@ -118,8 +119,6 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   if (activeTab?.id !== undefined) {
     requestTabBadgeUpdate(activeTab.id);
   }
-
-  if (reason !== "install") return;
 
   const granted = await chrome.permissions.contains({
     origins: ["<all_urls>"],
