@@ -31,6 +31,7 @@ interface CodedError extends Error {
 type DetailItemProps = {
   label: string;
   icon: "check" | "cancel" | "null";
+  isOpen?: boolean;
   children: React.ReactNode;
   className?: string;
 };
@@ -127,9 +128,9 @@ function DisplayResults({
   );
 }
 
-function DetailItem({ label, icon, children, className }: DetailItemProps) {
+function DetailItem({ label, icon, isOpen=false, children, className }: DetailItemProps) {
   return (
-    <details className={`[&[open]>summary>.icon]:rotate-90 ${className ?? ""}`}>
+    <details open={isOpen} className={`[&[open]>summary>.icon]:rotate-90 ${className ?? ""}`}>
       <DisplayStatus label={label} icon={icon} />
       {children}
     </details>
@@ -160,6 +161,7 @@ function ResultItem({
     <DetailItem
       label={label}
       icon={isError ? "cancel" : isVerified ? "check" : "null"}
+      isOpen={isError ? true : false}
       className={className}
     >
       {isCodeError ? (
