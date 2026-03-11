@@ -1,6 +1,6 @@
 import { AdvertisementCA } from "@originator-profile/model";
-import clsx from "clsx";
 import useSWR from "swr";
+import { twMerge } from "tailwind-merge";
 import { messages } from "./messages";
 import { findAdvertiser } from "./scripting";
 
@@ -40,7 +40,7 @@ export function BidResponse(props: BidResponseProps) {
   return (
     <section className={props.className}>
       <h2 className="mb-1 text-gray-500">{messages.rtb}</h2>
-      <p className={clsx("text-xs", textColor)}>{message.text}</p>
+      <p className={twMerge("text-xs", textColor)}>{message.text}</p>
     </section>
   );
 }

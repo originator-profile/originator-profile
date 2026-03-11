@@ -18,6 +18,9 @@ cd -
 NOTE="> [!WARNING]
 > **こちらは試験目的のビルドです。通常サイトの検証には[通常版](https://github.com/originator-profile/originator-profile/releases/latest)をご利用ください。**
 
+> [!WARNING]
+> **This is a build for testing purposes. Please use the [regular version](https://github.com/originator-profile/originator-profile/releases/latest) to verify the regular site.**
+
 <details>
 
 ## Download
