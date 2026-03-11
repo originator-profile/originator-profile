@@ -296,7 +296,8 @@ function create_uca_list( \WP_Post $post, string $issuer_id, ?string $uuid = nul
 		++$page;
 
 		$content            = \apply_filters( 'the_content', $content );
-		$html               = content_to_html( $content, \get_option( 'profile_ca_target_html', PROFILE_DEFAULT_CA_TARGET_HTML ) );
+		$title              = \esc_html( \get_the_title( $post ) );
+		$html               = content_to_html( $content, \get_option( 'profile_ca_target_html', PROFILE_DEFAULT_CA_TARGET_HTML ), $title );
 		$external_resources = external_resources_from_html( $html, '//*[contains(@class, "wp-block-image")]//img[@integrity]' );
 
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
@@ -352,11 +353,13 @@ function create_uca_list( \WP_Post $post, string $issuer_id, ?string $uuid = nul
  * WordPress post contentからHTMLへの変換
  *
  * @param string $content WordPress post content
- * @param string $template テンプレート (%CONTENT% を置換)
+ * @param string $template テンプレート (%TITLE% を置換、%CONTENT% を置換)
+ * @param string $title 投稿タイトル
  * @return string HTML
  */
-function content_to_html( string $content, string $template ): string {
-	return \str_replace( '%CONTENT%', $content, $template );
+function content_to_html( string $content, string $template, string $title = '' ): string {
+	$html = \str_replace( '%TITLE%', $title, $template );
+	return \str_replace( '%CONTENT%', $content, $html );
 }
 
 /**

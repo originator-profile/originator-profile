@@ -303,11 +303,11 @@ Content Attestation サーバーのリクエストアウト (秒) の初期値�
 
 #### PROFILE_DEFAULT_CA_TARGET_CSS_SELECTOR
 
-検証対象要素 CSS セレクターの初期値です。
+検証対象要素 CSS セレクターの初期値です。デフォルトでは記事タイトル (`.wp-block-post-title`) と記事本文の直下子要素 (`.wp-block-post-content>*:not(.post-nav-links)`) の両方を対象とします。
 
 #### PROFILE_DEFAULT_CA_TARGET_HTML
 
-検証対象要素の存在する HTML の初期値です。
+検証対象要素の存在する HTML の初期値です。`%TITLE%` は投稿タイトルに、`%CONTENT%` は `apply_filters()` 適用後の投稿本文に置換されます。
 
 ## 既知の問題
 
