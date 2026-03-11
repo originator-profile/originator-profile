@@ -29,7 +29,7 @@ interface CodedError extends Error {
 }
 
 type DetailItemProps = {
-  label: string;
+  label: React.ReactNode;
   icon: "check" | "cancel" | "null";
   isOpen?: boolean;
   children: React.ReactNode;
@@ -46,11 +46,55 @@ function findError(codedErrors: CodedError[], codes: string[]) {
   return codedErrors.find((error) => codes.includes(error.code));
 }
 
+function isObj(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null;
+}
+
+function getByPaths<T = unknown>(
+  value: unknown,
+  paths: (string | string[])[]
+): T | undefined {
+  if (!isObj(value)) return undefined;
+
+  for (const path of paths) {
+    const keys = Array.isArray(path) ? path : [path]; // 
+    let current: unknown = value;
+
+    for (const key of keys) {
+      if (!isObj(current) || !(key in current)) {
+        current = undefined;
+        break;
+      }
+      current = (current as Record<string, unknown>)[key];
+    }
+
+    if (current !== undefined) return current as T;
+  }
+
+  return undefined;
+}
+
+function findIssuer(value: unknown): string | undefined {
+  const raw = getByPaths(value, [
+    ["doc", "issuer"],
+    ["result", "doc", "issuer"],
+  ]);
+  return typeof raw === "string" ? raw : undefined;
+}
+
+function findMediaName(value: unknown): string | undefined {
+  const raw = getByPaths(value, [
+    ["doc", "credentialSubject", "name"],
+  ]);
+
+  return typeof raw === "string" ? raw : undefined;
+}
+
 function DisplayStatus({
   label,
   icon,
 }: {
-  label: string;
+  label: React.ReactNode;
   icon: "check" | "cancel" | "null";
 }) {
   const iconMap = {
@@ -93,6 +137,7 @@ function DisplayResults({
       return { error: "Failed to serialize payload" };
     }
   })();
+  const issuer = findIssuer(payload)
 
   return (
     <div className={className}>
@@ -112,6 +157,12 @@ function DisplayResults({
         <div className="text-gray-700 mb-1">
           <p className="font-bold mb-1">Message</p>
           <p>{message}</p>
+        </div>
+      )}
+      {issuer && (
+        <div className="text-gray-700 mb-1">
+          <p className="font-bold mb-1">Issuer</p>
+          <p>{issuer}</p>
         </div>
       )}
       {showPayload ? (
@@ -147,7 +198,7 @@ function ResultItem({
   children,
   className,
 }: {
-  label: string;
+  label: React.ReactNode;
   value: unknown;
   showPayload?: boolean;
   isVerified?: boolean;
@@ -263,10 +314,15 @@ function OriginatorsCheckList({
     <div className="ml-7">
       {originators.map((op, index) => {
         const isError = op instanceof Error;
+        const name = isError ? op.result.media?.map(media => findMediaName(media)) : op.media?.map(media => findMediaName(media)); 
         return (
           <ResultItem
             key={index}
-            label={`Originator Profile #${index}`}
+            label={
+              <span title={name?.join(",")}>
+                {`Originator Profile #${index}`}
+              </span>
+            }
             value={op}
             showPayload={false}
             className="mb-2"
