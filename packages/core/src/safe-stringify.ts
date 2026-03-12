@@ -1,4 +1,10 @@
-import { deserializeError, isErrorLike, serializeError } from "serialize-error";
+import {
+  type ErrorLike,
+  type ErrorObject,
+  deserializeError,
+  isErrorLike,
+  serializeError,
+} from "serialize-error";
 
 function replaceErrors(key: string, value: unknown): unknown {
   if (value instanceof Error) {
@@ -36,10 +42,16 @@ export function parseWithError(text: string): any {
   return JSON.parse(text, reviverErrors);
 }
 
-export function serializeIfError<T>(o: T): T | string {
-  return isErrorLike(o) ? (serializeError(o) as string) : o;
+export type SerializedError = ErrorObject;
+
+export type Serialized<T> = Exclude<T, Error> | SerializedError;
+
+export function serializeIfError<T>(o: T): Serialized<T> {
+  return isErrorLike(o)
+    ? serializeError(o as ErrorLike)
+    : (o as Exclude<T, Error>);
 }
 
-export function deserializeIfError<T>(o: T | string): T | Error {
+export function deserializeIfError<T>(o: T | SerializedError): T | Error {
   return isErrorLike(o) ? deserializeError(o) : (o as T);
 }

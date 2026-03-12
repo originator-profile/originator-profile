@@ -1,13 +1,13 @@
-import { VerifyIntegrity } from "@originator-profile/verify";
+import type { Target } from "@originator-profile/model";
 import { defineExtensionMessaging } from "@webext-core/messaging";
-import { FetchIntegrityMessageResult } from "../integrity/type";
-import { FetchCredentialsMessageResponse } from "./types";
+import {
+  FetchCredentialsMessageResponse,
+  SerializedIntegrityVerifyResult,
+} from "./types";
 
 type CredentialsProtocolMap = {
   fetchCredentials(message: null): FetchCredentialsMessageResponse;
-  verifyIntegrity(
-    message: Parameters<VerifyIntegrity>,
-  ): Awaited<FetchIntegrityMessageResult>;
+  verifyIntegrity(message: Target): SerializedIntegrityVerifyResult;
 };
 
 export const credentialsMessenger =

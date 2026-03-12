@@ -1,8 +1,5 @@
 import { serializeIfError } from "@originator-profile/core";
-import {
-  fetchCredentials,
-  FetchCredentialSetResult,
-} from "@originator-profile/presentation";
+import { fetchCredentials } from "@originator-profile/presentation";
 import {
   normalizeCasItem,
   TargetIntegrityAlgorithm,
@@ -10,10 +7,8 @@ import {
 } from "@originator-profile/verify";
 import {
   credentialsMessenger,
-  FetchCredentialsMessageResult,
   FrameLocation,
   FrameResponse,
-  VerifyFailed,
 } from "./components/credentials";
 import {
   frameCasWindowMessenger,
@@ -23,17 +18,7 @@ import {
   type FrameCasCoordinate,
 } from "./components/frameCas";
 import { frameCasExtensionMessenger } from "./components/frameCas/extension-events";
-import { FetchIntegrityMessageResult } from "./components/integrity/type";
 import "./utils/cors-basic-auth";
-
-const toFetchCredentialsMessageResult = <T>(
-  result: FetchCredentialSetResult<T>,
-): FetchCredentialsMessageResult<T, VerifyFailed> => {
-  return serializeIfError(result) as FetchCredentialsMessageResult<
-    T,
-    VerifyFailed
-  >;
-};
 
 credentialsMessenger.onMessage("fetchCredentials", async () => {
   const { ops, cas } = await fetchCredentials(document);
@@ -42,16 +27,15 @@ credentialsMessenger.onMessage("fetchCredentials", async () => {
     url: window.location.href,
   };
   return {
-    ops: toFetchCredentialsMessageResult(ops),
-    cas: toFetchCredentialsMessageResult(cas),
+    ops: serializeIfError(ops),
+    cas: serializeIfError(cas),
     ...frameLocation,
   };
 });
 
-credentialsMessenger.onMessage("verifyIntegrity", async ({ data }) => {
-  const [content] = data;
+credentialsMessenger.onMessage("verifyIntegrity", async ({ data: content }) => {
   const result = await verifyIntegrity(content);
-  return serializeIfError(result) as FetchIntegrityMessageResult;
+  return serializeIfError(result);
 });
 
 frameCasExtensionMessenger.onMessage(

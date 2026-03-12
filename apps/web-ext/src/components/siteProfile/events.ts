@@ -1,8 +1,8 @@
 import { defineExtensionMessaging } from "@webext-core/messaging";
-import { FetchSiteProfileMessageResult } from "./types";
+import { SerializedSiteProfileResult } from "./types";
 
 type SiteProfileProtocolMap = {
-  fetchSiteProfile(message: null): FetchSiteProfileMessageResult;
+  fetchSiteProfile(message: null): SerializedSiteProfileResult;
 };
 
 export const siteProfileMessenger =

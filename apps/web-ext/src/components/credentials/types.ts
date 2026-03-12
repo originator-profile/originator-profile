@@ -1,4 +1,5 @@
-import {
+import type { Serialized } from "@originator-profile/core";
+import type {
   AdvertisementCA,
   AdvertorialCA,
   ArticleCA,
@@ -6,7 +7,11 @@ import {
   OriginatorProfileSet,
   WebMediaProfile,
 } from "@originator-profile/model";
-import { VerifiedCas, VerifiedOps } from "@originator-profile/verify";
+import type {
+  IntegrityVerifyResult,
+  VerifiedCas,
+  VerifiedOps,
+} from "@originator-profile/verify";
 
 /** 表示に対応している CA */
 export type SupportedCa = ArticleCA | AdvertisementCA | AdvertorialCA;
@@ -21,14 +26,13 @@ export type CredentialsProps = {
   framesCas: FramesVerifiedCas;
 };
 export type FrameLocation = { origin: string; url: string };
-export type FetchCredentialsMessageResult<T, E> = T | E;
-
-export type VerifyFailed = string;
 
 export type FetchCredentialsMessageResponse = FrameLocation & {
-  ops: FetchCredentialsMessageResult<OriginatorProfileSet, VerifyFailed>;
-  cas: FetchCredentialsMessageResult<ContentAttestationSet, VerifyFailed>;
+  ops: Serialized<OriginatorProfileSet>;
+  cas: Serialized<ContentAttestationSet>;
 };
+
+export type SerializedIntegrityVerifyResult = Serialized<IntegrityVerifyResult>;
 
 export type FrameResponse = {
   frameId: number;
