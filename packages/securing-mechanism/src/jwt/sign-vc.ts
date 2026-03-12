@@ -3,13 +3,18 @@ import { Jwk, OpVc } from "@originator-profile/model";
 import { getUnixTime } from "date-fns";
 import { importJWK, SignJWT } from "jose";
 
+type SignableVc = {
+  issuer: string;
+  credentialSubject: { id: string };
+};
+
 /**
  * VC への署名
- * @param cp CoreProfile オブジェクト
- * @param privateKey プライベート鍵
+ * @param vc VC オブジェクト
+ * @param privateKey プライベートキー
  * @return JWT でエンコードされた VC
  */
-export async function signJwtVc<T extends OpVc>(
+export async function signJwtVc<T extends SignableVc>(
   vc: T,
   privateKey: Jwk,
   options: {
@@ -18,7 +23,7 @@ export async function signJwtVc<T extends OpVc>(
     expiredAt: Date;
   },
 ): Promise<string> {
-  const payload = vc;
+  const payload = vc as unknown as OpVc;
   const { alg = "ES256", issuedAt, expiredAt } = options;
   const header = {
     alg,
