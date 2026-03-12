@@ -1,4 +1,4 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 import { AllowedOrigin } from "../allowed-origin";
 import { AllowedUrl } from "../allowed-url";
 import { OpCipContext } from "../context/op-cip-context";
@@ -6,103 +6,53 @@ import { Image } from "../image";
 import { Page } from "../page";
 import { ContentAttestation } from "./content-attestation";
 
-const subject = {
-  type: "object",
-  additionalProperties: true,
-  properties: {
-    id: {
-      type: "string",
-      format: "uri",
-      description: "CA ID",
-    },
-    type: {
-      type: "string",
-      const: "OnlineAd",
-    },
-    name: {
-      type: "string",
-      description: "広告のタイトル。",
-    },
-    description: {
-      type: "string",
-      description: "広告の説明（プレーンテキスト）。",
-    },
-    image: Image,
-    genre: {
-      title: "ジャンル",
-      type: "string",
-    },
-    landingPageUrl: {
-      title: "ランディングページ URL",
-      type: "string",
-      format: "uri",
-    },
-    adReportContact: Page,
-    adReviewGuidelines: Page,
-    targetingPolicy: Page,
-    adDataHandlingPolicy: Page,
-    adDisplayRationale: {
-      title: "この広告が表示されている理由",
-      type: "object",
-      properties: {
-        page: Page,
-        description: {
-          type: "string",
-        },
-      },
-      anyOf: [{ required: ["page"] }, { required: ["description"] }],
-    },
-  },
-  required: ["id", "type"],
-  anyOf: [
-    { required: ["name"] },
-    { required: ["description"] },
-    { required: ["image"] },
-  ],
-} as const satisfies JSONSchema;
+const subject = z
+  .looseObject({
+    id: z.url().describe("CA ID"),
+    type: z.literal("OnlineAd"),
+    name: z.string().optional().describe("Title of the ad."),
+    description: z.string().optional().describe("Ad description (plain text)."),
+    image: Image.optional(),
+    genre: z.string().optional().describe("Genre"),
+    landingPageUrl: z.url().optional().describe("Landing page URL"),
+    adReportContact: Page.optional(),
+    adReviewGuidelines: Page.optional(),
+    targetingPolicy: Page.optional(),
+    adDataHandlingPolicy: Page.optional(),
+    adDisplayRationale: z
+      .object({
+        page: Page.optional(),
+        description: z.string().optional(),
+      })
+      .refine(
+        (obj) => obj.page !== undefined || obj.description !== undefined,
+        { error: "Either page or description must be provided" },
+      )
+      .optional()
+      .describe("The reason this ad is being displayed"),
+  })
+  .refine(
+    (obj) =>
+      obj.name !== undefined ||
+      obj.description !== undefined ||
+      obj.image !== undefined,
+    { error: "At least one of name, description, or image must be provided" },
+  );
 
-const AdvertisementCA = {
-  type: "object",
-  additionalProperties: true,
-  allOf: [
-    ContentAttestation,
-    {
-      type: "object",
-      additionalProperties: true,
-      properties: {
-        "@context": OpCipContext,
-        credentialSubject: subject,
-      },
-      required: ["@context", "type", "credentialSubject"],
-    },
-    {
-      oneOf: [
-        {
-          type: "object",
-          additionalProperties: true,
-          properties: {
-            allowedUrl: AllowedUrl,
-            allowedOrigin: {
-              enum: [],
-            },
-          },
-          required: ["allowedUrl"],
-        },
-        {
-          type: "object",
-          additionalProperties: true,
-          properties: {
-            allowedUrl: {
-              enum: [],
-            },
-            allowedOrigin: AllowedOrigin,
-          },
-          required: ["allowedOrigin"],
-        },
-      ],
-    },
-  ],
-} as const satisfies JSONSchema;
+const withAllowedUrl = z.object({
+  allowedUrl: AllowedUrl,
+  allowedOrigin: z.never().optional(),
+});
 
-export type AdvertisementSubject = FromSchema<typeof subject>;
-export type AdvertisementCA = FromSchema<typeof AdvertisementCA>;
+const withAllowedOrigin = z.object({
+  allowedUrl: z.never().optional(),
+  allowedOrigin: AllowedOrigin,
+});
+
+export const AdvertisementCA = ContentAttestation.extend({
+  "@context": OpCipContext,
+  credentialSubject: subject,
+}).and(z.union([withAllowedUrl, withAllowedOrigin]));
+
+export type AdvertisementCA = z.infer<typeof AdvertisementCA>;
+export type AdvertisementSubject = z.infer<typeof subject>;

@@ -1,21 +1,10 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 
-export const ReviewComment = {
-  title: "審査コメント",
-  description: "OP 発行申請の内容に対するコメント",
-  type: "object",
-  properties: {
-    requestFieldName: {
-      title: "申請項目名 (HTML 要素の name 属性)",
-      type: "string",
-    },
-    comment: {
-      title: "コメント",
-      type: "string",
-    },
-  },
-  required: ["requestFieldName", "comment"],
-  additionalProperties: false,
-} as const satisfies JSONSchema;
+export const ReviewComment = z.object({
+  requestFieldName: z
+    .string()
+    .describe("Request field name (name attribute of the HTML element)"),
+  comment: z.string().describe("Comment"),
+});
 
-export type ReviewComment = FromSchema<typeof ReviewComment>;
+export type ReviewComment = z.infer<typeof ReviewComment>;

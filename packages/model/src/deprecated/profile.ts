@@ -1,15 +1,11 @@
-import { FromSchema } from "json-schema-to-ts";
+import { z } from "zod";
 import Dp from "./dp";
 import Op from "./op";
 
 /** @deprecated */
-const Profile = {
-  deprecated: true,
-  title: "Profile",
-  anyOf: [Op, Dp],
-} as const;
+const Profile = z.union([Op, Dp]);
 
 /** @deprecated */
-type Profile = FromSchema<typeof Profile>;
+type Profile = z.infer<typeof Profile>;
 
 export default Profile;

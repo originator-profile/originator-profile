@@ -1,13 +1,9 @@
-import { FromSchema } from "json-schema-to-ts";
+import { z } from "zod";
 
 /** @deprecated */
-const DpUrl = {
-  title: "URL",
-  description: "対象の要素が存在するページの URL",
-  type: "string",
-} as const;
+const DpUrl = z.string().describe("対象の要素が存在するページの URL");
 
 /** @deprecated */
-type DpUrl = FromSchema<typeof DpUrl>;
+type DpUrl = z.infer<typeof DpUrl>;
 
 export default DpUrl;

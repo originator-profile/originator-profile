@@ -1,29 +1,10 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 
-export const User = {
-  title: "ユーザー",
-  description: "ユーザー",
-  type: "object",
-  properties: {
-    id: {
-      title: "ユーザーアカウント識別子",
-      type: "string",
-    },
-    email: {
-      title: "メールアドレス",
-      type: "string",
-    },
-    name: {
-      title: "名前",
-      type: "string",
-    },
-    picture: {
-      title: "画像",
-      type: "string",
-    },
-  },
-  required: ["id", "name", "picture"],
-  additionalProperties: false,
-} as const satisfies JSONSchema;
+export const User = z.object({
+  id: z.string().describe("User account identifier"),
+  email: z.string().optional().describe("Email address"),
+  name: z.string().describe("Name"),
+  picture: z.string().describe("Picture"),
+});
 
-export type User = FromSchema<typeof User>;
+export type User = z.infer<typeof User>;

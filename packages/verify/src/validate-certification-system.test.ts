@@ -16,6 +16,16 @@ test("有効な形式の認証制度のとき検証に成功", () => {
   expect(result).toMatchObject(certificationSystem);
 });
 
+test("余分なプロパティは除去される", () => {
+  const withExtra = {
+    ...certificationSystem,
+    invalid: "invalid",
+  };
+  const result = validateCertificationSystem(withExtra);
+  expect(result).toMatchObject(certificationSystem);
+  expect(result).not.toHaveProperty("invalid");
+});
+
 describe("無効な形式の認証制度のとき検証に失敗", () => {
   test("オブジェクトでない", () => {
     const invalidCertificationSystem = "invalid";
@@ -24,14 +34,6 @@ describe("無効な形式の認証制度のとき検証に失敗", () => {
   });
   test("必要なプロパティがない", () => {
     const invalidCertificationSystem = {};
-    const result = validateCertificationSystem(invalidCertificationSystem);
-    expect(result).instanceOf(CertificationSystemValidationFailed);
-  });
-  test("余分なプロパティがある", () => {
-    const invalidCertificationSystem = {
-      ...certificationSystem,
-      invalid: "invalid",
-    };
     const result = validateCertificationSystem(invalidCertificationSystem);
     expect(result).instanceOf(CertificationSystemValidationFailed);
   });

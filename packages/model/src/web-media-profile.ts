@@ -1,86 +1,52 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
+import { OpCipContext } from "./context/op-cip-context";
 import { Description } from "./description";
 import { Image } from "./image";
-import { OpVc } from "./op-vc";
+import { OpId } from "./op-id";
 
-const subject = {
-  type: "object",
-  additionalProperties: true,
-  properties: {
-    id: { title: "WMP 保有組織の OP ID", type: "string", format: "uri" },
-    type: { const: "OnlineBusiness" },
-    url: { title: "Web メディア URL", type: "string", format: "uri" },
-    name: { title: "Web メディア名", type: "string" },
-    logo: Image,
-    email: { title: "メールアドレス", type: "string", format: "email" },
-    telephone: { title: "電話番号", type: "string" },
-    contactPoint: {
-      type: "object",
-      properties: {
-        id: { title: "連絡先ページ URL", type: "string", format: "uri" },
-        name: { title: "連絡先ページ表示名", type: "string" },
-      },
-      required: ["id", "name"],
-    },
-    informationTransmissionPolicy: {
-      type: "object",
-      properties: {
-        id: { title: "情報発信ポリシー URL", type: "string", format: "uri" },
-        name: { title: "情報発信ポリシー表示名", type: "string" },
-      },
-      required: ["id", "name"],
-    },
-    publishingPrinciple: {
-      type: "object",
-      properties: {
-        id: { title: "編集ガイドライン URL", type: "string", format: "uri" },
-        name: { title: "編集ガイドライン表示名", type: "string" },
-      },
-      required: ["id", "name"],
-    },
-    privacyPolicy: {
-      type: "object",
-      properties: {
-        id: {
-          title: "プライバシーポリシーページ URL",
-          type: "string",
-          format: "uri",
-        },
-        name: { title: "プライバシーポリシーページ表示名", type: "string" },
-      },
-      required: ["id", "name"],
-    },
-    description: {
-      anyOf: [Description, { type: "array", items: Description }],
-    },
-  },
-  required: ["id", "type", "url", "name"],
-} as const satisfies JSONSchema;
+const subject = z.looseObject({
+  id: OpId.describe("OP ID of the WMP holding organization"),
+  type: z.literal("OnlineBusiness"),
+  url: z.url().describe("Web media URL"),
+  name: z.string().describe("Organization name"),
+  logo: Image.optional(),
+  email: z.email().optional().describe("Email address"),
+  telephone: z.string().optional().describe("Phone number"),
+  contactPoint: z
+    .object({
+      id: z.url().describe("Contact page URL"),
+      name: z.string().describe("Contact page display name"),
+    })
+    .optional(),
+  informationTransmissionPolicy: z
+    .object({
+      id: z.url().describe("Information transmission policy URL"),
+      name: z.string().describe("Information transmission policy display name"),
+    })
+    .optional(),
+  publishingPrinciple: z
+    .object({
+      id: z.url().describe("Editorial guidelines URL"),
+      name: z.string().describe("Editorial guidelines display name"),
+    })
+    .optional(),
+  privacyPolicy: z
+    .object({
+      id: z.url().describe("Privacy policy page URL"),
+      name: z.string().describe("Privacy policy page display name"),
+    })
+    .optional(),
+  description: z.union([Description, z.array(Description)]).optional(),
+});
 
-export const WebMediaProfile = {
-  title: "Web Media Profile",
-  type: "object",
-  additionalProperties: true,
-  allOf: [
-    OpVc,
-    {
-      type: "object",
-      properties: {
-        type: {
-          type: "array",
-          minItems: 2,
-          items: [
-            { const: "VerifiableCredential" },
-            { const: "WebMediaProfile" },
-          ],
-          additionalItems: false,
-        },
-        credentialSubject: subject,
-      },
-      required: ["type", "credentialSubject"],
-    },
-  ],
-  required: ["type", "credentialSubject"],
-} as const satisfies JSONSchema;
+export const WebMediaProfile = z.looseObject({
+  "@context": OpCipContext,
+  type: z.tuple([
+    z.literal("VerifiableCredential"),
+    z.literal("WebMediaProfile"),
+  ]),
+  issuer: OpId,
+  credentialSubject: subject,
+});
 
-export type WebMediaProfile = FromSchema<typeof WebMediaProfile>;
+export type WebMediaProfile = z.infer<typeof WebMediaProfile>;

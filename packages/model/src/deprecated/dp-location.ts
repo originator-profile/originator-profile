@@ -1,14 +1,11 @@
-import { FromSchema } from "json-schema-to-ts";
+import { z } from "zod";
 
 /** @deprecated */
-const DpLocation = {
-  deprecated: true,
-  title: "Location",
-  description: "対象の要素の場所を特定する CSS セレクター",
-  type: "string",
-} as const;
+const DpLocation = z
+  .string()
+  .describe("対象の要素の場所を特定する CSS セレクター");
 
 /** @deprecated */
-type DpLocation = FromSchema<typeof DpLocation>;
+type DpLocation = z.infer<typeof DpLocation>;
 
 export default DpLocation;

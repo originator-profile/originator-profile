@@ -1,19 +1,15 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 
-export const OpContextHead = {
-  type: "array",
-  allOf: [
+export const OpContextHead = z
+  .array(z.unknown())
+  .refine(
+    (arr) =>
+      arr.includes("https://www.w3.org/ns/credentials/v2") &&
+      arr.includes("https://originator-profile.org/ns/credentials/v1"),
     {
-      contains: {
-        const: "https://www.w3.org/ns/credentials/v2",
-      },
+      error:
+        "Context must include both W3C credentials v2 and OP credentials v1",
     },
-    {
-      contains: {
-        const: "https://originator-profile.org/ns/credentials/v1",
-      },
-    },
-  ],
-} as const satisfies JSONSchema;
+  );
 
-export type OpContextHead = FromSchema<typeof OpContextHead>;
+export type OpContextHead = z.infer<typeof OpContextHead>;

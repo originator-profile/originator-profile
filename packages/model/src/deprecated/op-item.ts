@@ -1,17 +1,13 @@
-import { FromSchema } from "json-schema-to-ts";
+import { z } from "zod";
 import OpCertifier from "./op-certifier";
 import OpCredential from "./op-credential";
 import OpHolder from "./op-holder";
 import OpVerifier from "./op-verifier";
 
 /** @deprecated */
-const OpItem = {
-  deprecated: true,
-  title: "Originator Profile Item",
-  anyOf: [OpHolder, OpCredential, OpCertifier, OpVerifier],
-} as const;
+const OpItem = z.union([OpHolder, OpCredential, OpCertifier, OpVerifier]);
 
 /** @deprecated */
-type OpItem = FromSchema<typeof OpItem>;
+type OpItem = z.infer<typeof OpItem>;
 
 export default OpItem;

@@ -1,29 +1,18 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 
 /** @deprecated */
-const Logo = {
-  title: "Logo",
-  type: "array",
-  items: {
-    title: "Logo",
-    type: "object",
-    properties: {
-      url: {
-        title: "ロゴ画像 URL",
-        type: "string",
-      },
-      isMain: {
-        title: "主なロゴ画像か否か",
-        description: "true: 主なロゴ画像、それ以外: ロゴ画像の候補",
-        type: "boolean",
-      },
-    },
-    required: ["url", "isMain"],
-    additionalProperties: false,
-  },
-} as const satisfies JSONSchema;
+const Logo = z
+  .array(
+    z.object({
+      url: z.string().describe("Logo image URL"),
+      isMain: z
+        .boolean()
+        .describe("true: main logo image, false: logo image candidate"),
+    }),
+  )
+  .describe("Logo");
 
 /** @deprecated */
-type Logo = FromSchema<typeof Logo>;
+type Logo = z.infer<typeof Logo>;
 
 export default Logo;

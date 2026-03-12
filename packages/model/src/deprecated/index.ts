@@ -1,6 +1,5 @@
 export { default as Advertisement } from "./advertisement";
 export { default as Dp } from "./dp";
-export { default as DpAllowedOrigins } from "./dp-allowed-origins";
 export { default as DpHtml } from "./dp-html";
 export { default as DpItem } from "./dp-item";
 export { default as DpText } from "./dp-text";

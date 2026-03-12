@@ -1,4 +1,4 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 import Advertisement from "./advertisement";
 import DpHtml from "./dp-html";
 import DpText from "./dp-text";
@@ -6,12 +6,15 @@ import DpVisibleText from "./dp-visible-text";
 import OgWebsite from "./og-website";
 
 /** @deprecated */
-const DpItem = {
-  title: "Document Profile Item",
-  anyOf: [DpVisibleText, DpText, DpHtml, OgWebsite, Advertisement],
-} as const satisfies JSONSchema;
+const DpItem = z.union([
+  DpVisibleText,
+  DpText,
+  DpHtml,
+  OgWebsite,
+  Advertisement,
+]);
 
 /** @deprecated */
-type DpItem = FromSchema<typeof DpItem>;
+type DpItem = z.infer<typeof DpItem>;
 
 export default DpItem;

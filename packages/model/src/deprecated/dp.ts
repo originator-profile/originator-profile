@@ -1,45 +1,22 @@
-import { FromSchema } from "json-schema-to-ts";
-import DpAllowedOrigins from "./dp-allowed-origins";
+import { z } from "zod";
 import DpItem from "./dp-item";
 
 /** @deprecated */
-const Dp = {
-  title: "Document Profile",
-  type: "object",
-  properties: {
-    type: { const: "dp" },
-    issuer: {
-      title: "Issuer",
-      description: "組織を表す一義的な識別子",
-      type: "string",
-    },
-    subject: {
-      title: "Subject",
-      description: "出版物を表す一義的な識別子",
-      type: "string",
-    },
-    issuedAt: {
-      title: "発行日時",
-      type: "string",
-      format: "date-time",
-    },
-    expiredAt: {
-      title: "期限切れ日時",
-      type: "string",
-      format: "date-time",
-    },
-    item: {
-      title: DpItem.title,
-      type: "array",
-      items: DpItem,
-    },
-    allowedOrigins: DpAllowedOrigins,
-  },
-  required: ["type", "issuer", "subject", "issuedAt", "expiredAt", "item"],
-  additionalProperties: false,
-} as const;
+const Dp = z.object({
+  type: z.literal("dp"),
+  issuer: z
+    .string()
+    .describe("Unique identifier representing the organization"),
+  subject: z
+    .string()
+    .describe("Unique identifier representing the publication"),
+  issuedAt: z.string().datetime().describe("Issued at"),
+  expiredAt: z.string().datetime().describe("Expired at"),
+  item: z.array(DpItem),
+  allowedOrigins: z.array(z.string()),
+});
 
 /** @deprecated */
-type Dp = FromSchema<typeof Dp>;
+type Dp = z.infer<typeof Dp>;
 
 export default Dp;

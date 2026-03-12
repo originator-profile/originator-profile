@@ -1,57 +1,25 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 import { AllowedOrigin } from "../allowed-origin";
 import { AllowedUrl } from "../allowed-url";
 import { OpContextHead } from "../context/op-context-head";
-import { OpVc } from "../op-vc";
+import { OpId } from "../op-id";
 import { RawTarget } from "../target/raw-target";
+import { subject } from "./content-attestation";
 
-const subject = {
-  type: "object",
-  additionalProperties: true,
-  properties: {
-    id: {
-      title: "CA ID",
-      type: "string",
-      format: "uri",
-    },
-    type: {
-      title: "JSON-LD タイプ",
-      type: "string",
-    },
-  },
-  required: ["id", "type"],
-} as const satisfies JSONSchema;
+export const UnsignedContentAttestation = z.looseObject({
+  "@context": OpContextHead,
+  type: z
+    .array(z.unknown())
+    .refine((arr) => arr.includes("ContentAttestation"), {
+      error: `type must include "ContentAttestation"`,
+    }),
+  issuer: OpId,
+  credentialSubject: subject,
+  allowedUrl: AllowedUrl.optional(),
+  allowedOrigin: AllowedOrigin.optional(),
+  target: z.array(RawTarget).min(1),
+});
 
-export const UnsignedContentAttestation = {
-  type: "object",
-  additionalProperties: true,
-  allOf: [
-    OpVc,
-    {
-      type: "object",
-      additionalProperties: true,
-      properties: {
-        "@context": OpContextHead,
-        type: {
-          type: "array",
-          contains: {
-            const: "ContentAttestation",
-          },
-        },
-        credentialSubject: subject,
-        allowedUrl: AllowedUrl,
-        allowedOrigin: AllowedOrigin,
-        target: {
-          type: "array",
-          items: RawTarget,
-          minItems: 1,
-        },
-      },
-      required: ["@context", "type", "credentialSubject", "target"],
-    },
-  ],
-} as const satisfies JSONSchema;
-
-export type UnsignedContentAttestation = FromSchema<
+export type UnsignedContentAttestation = z.infer<
   typeof UnsignedContentAttestation
 >;

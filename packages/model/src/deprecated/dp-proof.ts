@@ -1,21 +1,13 @@
-import { FromSchema } from "json-schema-to-ts";
+import { z } from "zod";
 
 /** @deprecated */
-const DpProof = {
-  title: "Proof",
-  description: "対象のテキストへの署名",
-  type: "object",
-  properties: {
-    jws: {
-      title: "Detached JSON Web Signature",
-      type: "string",
-    },
-  },
-  required: ["jws"],
-  additionalProperties: false,
-} as const;
+const DpProof = z
+  .object({
+    jws: z.string().describe("Detached JSON Web Signature"),
+  })
+  .describe("Signature for the target text");
 
 /** @deprecated */
-type DpProof = FromSchema<typeof DpProof>;
+type DpProof = z.infer<typeof DpProof>;
 
 export default DpProof;

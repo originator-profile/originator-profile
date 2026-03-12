@@ -1,107 +1,48 @@
-import { FromSchema } from "json-schema-to-ts";
-import { BusinessCategory } from "../business-category";
+import { z } from "zod";
 import Logo from "./logo";
 
 /** @deprecated */
-const OpVerifier = {
-  deprecated: true,
-  title: "Originator Profile Verifier",
-  description: "資格情報を検証する検証機関",
-  type: "object",
-  properties: {
-    type: { const: "verifier" },
-    domainName: {
-      title: "ドメイン名",
-      type: "string",
-    },
-    url: {
-      title: "ウェブサイトのURL",
-      type: "string",
-    },
-    name: {
-      title: "法人名",
-      type: "string",
-    },
-    description: {
-      title: "説明",
-      description:
-        "ウェブメディアそれを運用する法人、認定機関、業界団体等であることの記述",
-      type: "string",
-    },
-    corporateNumber: {
-      title: "法人番号",
-      type: "string",
-    },
-    businessCategory: BusinessCategory,
-    email: {
-      title: "メールアドレス",
-      type: "string",
-    },
-    phoneNumber: {
-      title: "電話番号",
-      type: "string",
-    },
-    postalCode: {
-      title: "郵便番号",
-      type: "string",
-    },
-    addressCountry: {
-      title: "国",
-      type: "string",
-    },
-    addressRegion: {
-      title: "都道府県",
-      type: "string",
-    },
-    addressLocality: {
-      title: "市区町村",
-      type: "string",
-    },
-    streetAddress: {
-      title: "番地・ビル名",
-      type: "string",
-    },
-    contactTitle: {
-      title: "連絡先表示名",
-      type: "string",
-    },
-    contactUrl: {
-      title: "連絡先URL",
-      type: "string",
-    },
-    privacyPolicyTitle: {
-      title: "プライバシーポリシー表示名",
-      type: "string",
-    },
-    privacyPolicyUrl: {
-      title: "プライバシーポリシーURL",
-      type: "string",
-    },
-    publishingPrincipleTitle: {
-      title: "編集ガイドライン表示名",
-      type: "string",
-    },
-    publishingPrincipleUrl: {
-      title: "編集ガイドラインURL",
-      type: "string",
-    },
-    logos: Logo,
-  },
-  required: [
-    "type",
-    "domainName",
-    "name",
-    "url",
-    "postalCode",
-    "addressCountry",
-    "addressRegion",
-    "addressLocality",
-    "streetAddress",
-  ],
-  additionalProperties: false,
-} as const;
+const OpVerifier = z
+  .object({
+    type: z.literal("verifier"),
+    domainName: z.string().describe("Domain name"),
+    url: z.string().describe("Website URL"),
+    name: z.string().describe("Corporate name"),
+    description: z
+      .string()
+      .optional()
+      .describe(
+        "Description of the web media, the corporation that operates it, certification bodies, industry associations, etc.",
+      ),
+    corporateNumber: z.string().optional().describe("Corporate number"),
+    businessCategory: z.array(z.string()).optional(),
+    email: z.string().optional().describe("Email address"),
+    phoneNumber: z.string().optional().describe("Phone number"),
+    postalCode: z.string().describe("Postal code"),
+    addressCountry: z.string().describe("Country"),
+    addressRegion: z.string().describe("Prefecture / State"),
+    addressLocality: z.string().describe("City / Municipality"),
+    streetAddress: z.string().describe("Street address"),
+    contactTitle: z.string().optional().describe("Contact display name"),
+    contactUrl: z.string().optional().describe("Contact URL"),
+    privacyPolicyTitle: z
+      .string()
+      .optional()
+      .describe("Privacy policy display name"),
+    privacyPolicyUrl: z.string().optional().describe("Privacy policy URL"),
+    publishingPrincipleTitle: z
+      .string()
+      .optional()
+      .describe("Editorial guidelines display name"),
+    publishingPrincipleUrl: z
+      .string()
+      .optional()
+      .describe("Editorial guidelines URL"),
+    logos: Logo.optional(),
+  })
+  .describe("Verification agency that verifies credentials");
 
 /** @deprecated */
-type OpVerifier = FromSchema<typeof OpVerifier>;
+type OpVerifier = z.infer<typeof OpVerifier>;
 
 export default OpVerifier;

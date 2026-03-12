@@ -26,7 +26,7 @@ const exampleWebsiteProfile = {
     },
     allowedOrigin: ["<Web サイトのオリジン (形式: https://<ホスト名>)>"],
   },
-} satisfies WebsiteProfile;
+};
 
 export class WspUnsigned extends Command {
   static summary = "未署名 Website Profile の取得";

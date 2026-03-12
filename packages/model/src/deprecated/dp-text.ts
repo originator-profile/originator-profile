@@ -1,24 +1,19 @@
-import { FromSchema } from "json-schema-to-ts";
+import { z } from "zod";
 import DpLocation from "./dp-location";
 import DpProof from "./dp-proof";
 import DpUrl from "./dp-url";
 
 /** @deprecated */
-const DpText = {
-  title: "Document Profile Text",
-  description: "対象の要素の子孫のテキストとそのテキストへの署名",
-  type: "object",
-  properties: {
-    type: { const: "text" },
-    url: DpUrl,
-    location: DpLocation,
+const DpText = z
+  .object({
+    type: z.literal("text"),
+    url: DpUrl.optional(),
+    location: DpLocation.optional(),
     proof: DpProof,
-  },
-  required: ["type", "proof"],
-  additionalProperties: false,
-} as const;
+  })
+  .describe("Text of the target element's descendants and its signature");
 
 /** @deprecated */
-type DpText = FromSchema<typeof DpText>;
+type DpText = z.infer<typeof DpText>;
 
 export default DpText;
