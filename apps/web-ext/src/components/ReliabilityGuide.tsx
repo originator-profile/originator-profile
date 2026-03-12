@@ -1,6 +1,6 @@
 import { Icon } from "@iconify/react";
 import { ModalDialog, _, useModalDialog } from "@originator-profile/ui";
-import clsx from "clsx";
+import { twMerge } from "tailwind-merge";
 import LinkVerification from "./LinkVerification";
 
 type Props = {
@@ -13,7 +13,7 @@ export default function ReliabilityGuide(props: Props) {
   const dialog = useModalDialog();
 
   return (
-    <div className={clsx("text-center space-y-2", props.className)}>
+    <div className={twMerge("text-center space-y-2", props.className)}>
       <div className="flex flex-col items-center justify-center gap-2">
         <div className="flex flex-row flex-wrap items-center justify-center gap-2">
           <p className="whitespace-pre-line text-base font-bold text-primary-800">

@@ -1,4 +1,4 @@
-import clsx from "clsx";
+import { twMerge } from "tailwind-merge";
 
 interface MenuButtonProps
   extends React.ButtonHTMLAttributes<HTMLButtonElement> {
@@ -18,7 +18,7 @@ export const MenuButton = ({
     <button
       ref={ref}
       type="button"
-      className={clsx(
+      className={twMerge(
         "inline-flex items-center justify-center",
         "focus:outline-none focus-visible:ring-2 focus-visible:ring-blue-500",
         className,

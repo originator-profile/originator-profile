@@ -1,5 +1,5 @@
-import clsx from "clsx";
 import { useCallback } from "react";
+import { twMerge } from "tailwind-merge";
 import "./Menu.css";
 
 interface MenuProps extends React.HTMLAttributes<HTMLUListElement> {
@@ -34,13 +34,11 @@ export const Menu = ({
     <ul
       ref={setRefs}
       data-open={isOpen}
-      className={clsx(
+      className={twMerge(
         "menu-container",
         "absolute z-20 min-w-0 rounded-lg bg-white py-2 shadow-lg",
         "focus:outline-none",
-        {
-          "ring-2 ring-blue-500": hasKeyboardFocus,
-        },
+        hasKeyboardFocus && "ring-2 ring-blue-500",
         className,
       )}
       {...props}
