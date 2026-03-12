@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { createIntegrityMetadata, type HashAlgorithm } from "websri";
 import { createDigestSri } from "./digest-sri";
-import type { DigestSriContent } from "./types";
+import type { DigestSriResult } from "./types";
 
 async function fetcher(): Promise<Response> {
   return new Response("Hello, World!");
@@ -20,7 +20,7 @@ test("Create Digest SRI", async () => {
   expect(await createDigestSri("sha256", resource, fetcher)).toEqual({
     id: "https://example.org/foo/bar",
     digestSRI: integrityMetadata.toString(),
-  } satisfies DigestSriContent);
+  } satisfies DigestSriResult);
 });
 
 test("Unsupported algorithm", async () => {
@@ -76,5 +76,5 @@ test("Multiple content URLs - hashes are joined with space", async () => {
   expect(result).toEqual({
     id: "https://example.org/foo/bar",
     digestSRI: `${meta1.toString()} ${meta2.toString()}`,
-  } satisfies DigestSriContent);
+  } satisfies DigestSriResult);
 });

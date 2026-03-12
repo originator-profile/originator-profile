@@ -3,7 +3,7 @@ import {
   HashAlgorithm,
   supportedHashAlgorithms,
 } from "websri";
-import { DigestSriContent } from "./types";
+import type { DigestSriContent, DigestSriSource } from "./types";
 
 /**
  * `digestSRI` の作成
@@ -41,12 +41,7 @@ import { DigestSriContent } from "./types";
  */
 export async function createDigestSri(
   alg: HashAlgorithm,
-  resource: {
-    /** URL */
-    id: string;
-    /** コンテンツ (URL) */
-    content?: Array<string> | string;
-  },
+  resource: DigestSriSource,
   fetcher = fetch,
 ): Promise<DigestSriContent> {
   if (!(alg in supportedHashAlgorithms)) {

@@ -1,4 +1,3 @@
-import { DigestSriContent } from "@originator-profile/sign";
 import {
   type MockInstance,
   afterEach,
@@ -20,7 +19,7 @@ const integrityMetadata = await createIntegrityMetadata(
   await new Response("Hello, World!").arrayBuffer(),
 );
 
-const content: DigestSriContent = {
+const content = {
   id: "https://example.org/foo/bar",
   digestSRI: integrityMetadata.toString(),
 };
@@ -35,7 +34,7 @@ test("Digest SRI mismatch", async () => {
     await new Response("mismatch").arrayBuffer(),
   );
 
-  const mismatchDigestSriContent: DigestSriContent = {
+  const mismatchDigestSriContent = {
     ...content,
     digestSRI: mismatch.toString(),
   };
@@ -44,7 +43,7 @@ test("Digest SRI mismatch", async () => {
 });
 
 test("Unsupported algorithm", async () => {
-  const unsupportedAlgContent: DigestSriContent = {
+  const unsupportedAlgContent = {
     id: "https://example.org/foo/bar",
     digestSRI: "md5-ZajifYh5KDgxtmS9i38K1A==",
   };
@@ -79,7 +78,7 @@ test("Multiple hash algorithms - verify with strongest", async () => {
     await new Response("Hello, World!").arrayBuffer(),
   );
 
-  const multiAlgContent: DigestSriContent = {
+  const multiAlgContent = {
     id: "https://example.org/foo/bar",
     digestSRI: `${sha256Metadata.toString()} ${sha384Metadata.toString()}`,
   };
@@ -97,7 +96,7 @@ test("Multiple hash algorithms - one mismatch", async () => {
     await new Response("wrong content").arrayBuffer(),
   );
 
-  const multiAlgContent: DigestSriContent = {
+  const multiAlgContent = {
     id: "https://example.org/foo/bar",
     digestSRI: `${wrongSha256.toString()} ${sha384Metadata.toString()}`,
   };
@@ -106,7 +105,7 @@ test("Multiple hash algorithms - one mismatch", async () => {
 });
 
 test("Empty algorithm list", async () => {
-  const emptyAlgContent: DigestSriContent = {
+  const emptyAlgContent = {
     id: "https://example.org/foo/bar",
     digestSRI: "",
   };
@@ -115,7 +114,7 @@ test("Empty algorithm list", async () => {
 });
 
 test("Invalid integrity metadata format", async () => {
-  const invalidContent: DigestSriContent = {
+  const invalidContent = {
     id: "https://example.org/foo/bar",
     digestSRI: "invalid-format-without-dash",
   };

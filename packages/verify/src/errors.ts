@@ -1,7 +1,9 @@
-import { ErrorObject } from "ajv";
+import type { SchemaIssue } from "@originator-profile/securing-mechanism";
 import { JWTPayload } from "jose";
 import { JOSEError } from "jose/errors";
 import { DecodeResult, VerifyTokenResult } from "./types";
+
+export type { SchemaIssue };
 
 export class ProfileGenericError extends Error {
   static get code() {
@@ -19,7 +21,7 @@ export class ProfileClaimsValidationFailed extends ProfileGenericError {
   /** 復号結果 */
   result: {
     error?: JOSEError;
-    errors?: ErrorObject[];
+    errors?: SchemaIssue[];
     payload?: JWTPayload;
     jwt: string;
   };

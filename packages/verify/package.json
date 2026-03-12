@@ -43,9 +43,8 @@
     "@originator-profile/securing-mechanism": "workspace:*",
     "@originator-profile/sign": "workspace:*",
     "@types/jsonld": "^1.5.15",
-    "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1",
     "jose": "^6.0.10",
+    "zod": "^4.3.6",
     "jsonld": "^9.0.0"
   },
   "devDependencies": {

@@ -1,23 +1,22 @@
 import { describe, expect, it } from "vitest";
 import { fetchAndSetDigestSri } from "./fetch-and-set-digest-sri";
-import type { DigestSriContent } from "./types";
 
 describe("fetchAndSetDigestSri()", () => {
   it("should set digestSRI when digestSRI is missing", async () => {
-    const resource: DigestSriContent = {
+    const resource = {
       id: "https://example.com/image.svg",
       content:
         "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==",
     };
 
-    await fetchAndSetDigestSri("sha256", resource);
+    const result = await fetchAndSetDigestSri("sha256", resource);
 
-    expect(resource.digestSRI).toBeDefined();
-    expect(resource.content).toBeUndefined();
+    expect(result).toHaveProperty("digestSRI");
+    expect(result).not.toHaveProperty("content");
   });
 
   it("should set digestSRI when digestSRI is missing with content array", async () => {
-    const resource: DigestSriContent = {
+    const resource = {
       id: "https://example.com/image.svg",
       content: [
         "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==",
@@ -25,34 +24,34 @@ describe("fetchAndSetDigestSri()", () => {
       ],
     };
 
-    await fetchAndSetDigestSri("sha256", resource);
+    const result = await fetchAndSetDigestSri("sha256", resource);
 
-    expect(resource.digestSRI).toBeDefined();
-    expect(resource.content).toBeUndefined();
+    expect(result).toHaveProperty("digestSRI");
+    expect(result).not.toHaveProperty("content");
   });
 
   it("should set digestSRI when content is missing", async () => {
-    const resource: DigestSriContent = {
+    const resource = {
       id: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==",
     };
 
-    await fetchAndSetDigestSri("sha256", resource);
+    const result = await fetchAndSetDigestSri("sha256", resource);
 
-    expect(resource.digestSRI).toBeDefined();
-    expect(resource.content).toBeUndefined();
+    expect(result).toHaveProperty("digestSRI");
+    expect(result).not.toHaveProperty("content");
   });
 
   it("should keep existing digestSRI unchanged", async () => {
-    const resource: DigestSriContent = {
+    const resource = {
       id: "https://example.com/image.svg",
       content:
         "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==",
       digestSRI: "existing-digest",
     };
 
-    await fetchAndSetDigestSri("sha256", resource);
+    const result = await fetchAndSetDigestSri("sha256", resource);
 
-    expect(resource.digestSRI).toBe("existing-digest");
-    expect(resource.content).toBeUndefined();
+    expect(result).toHaveProperty("digestSRI", "existing-digest");
+    expect(result).not.toHaveProperty("content");
   });
 });

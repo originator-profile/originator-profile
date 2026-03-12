@@ -178,8 +178,6 @@ describe("verifyIntegrity()", () => {
     const result = await verifyIntegrity(content, document, mockFetcher);
 
     expect(result instanceof Error).toBe(true);
-    if (result instanceof IntegrityFetchFailed) {
-      expect(result.result).toBeDefined();
-    }
+    expect(result).toBeInstanceOf(IntegrityFetchFailed);
   });
 });
