@@ -36,6 +36,11 @@ type DetailItemProps = {
   className?: string;
 };
 
+type Period = {
+  issuedAt: Date;
+  expiredAt: Date;
+};
+
 function isCodedError(error: unknown): error is CodedError {
   return (
     error instanceof Error && typeof (error as CodedError).code === "string"
@@ -50,25 +55,33 @@ function isObj(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null;
 }
 
+function toStringDate(v: unknown): string | undefined {
+  if (v instanceof Date) return v.toISOString();
+  if (typeof v === "string") return v;
+  return undefined;
+}
+
+function resolvePath(value: unknown, keys: string[]): unknown {
+  let current = value;
+
+  for (const key of keys) {
+    if (!isObj(current) || !(key in current)) return undefined;
+    current = current[key];
+  }
+
+  return current;
+}
+
 function getByPaths<T = unknown>(
   value: unknown,
-  paths: (string | string[])[]
+  paths: (string | string[])[],
 ): T | undefined {
   if (!isObj(value)) return undefined;
 
   for (const path of paths) {
-    const keys = Array.isArray(path) ? path : [path]; // 
-    let current: unknown = value;
-
-    for (const key of keys) {
-      if (!isObj(current) || !(key in current)) {
-        current = undefined;
-        break;
-      }
-      current = (current as Record<string, unknown>)[key];
-    }
-
-    if (current !== undefined) return current as T;
+    const keys = Array.isArray(path) ? path : [path];
+    const result = resolvePath(value, keys);
+    if (result !== undefined) return result as T;
   }
 
   return undefined;
@@ -83,11 +96,86 @@ function findIssuer(value: unknown): string | undefined {
 }
 
 function findMediaName(value: unknown): string | undefined {
-  const raw = getByPaths(value, [
-    ["doc", "credentialSubject", "name"],
-  ]);
-
+  const raw = getByPaths(value, [["doc", "credentialSubject", "name"]]);
   return typeof raw === "string" ? raw : undefined;
+}
+
+function findIssuedAt(value: unknown): Date | undefined {
+  const raw = getByPaths(value, [["issuedAt"], ["result", "issuedAt"]]);
+  return raw instanceof Date ? raw : undefined;
+}
+
+function findExpiredAt(value: unknown): Date | undefined {
+  const raw = getByPaths(value, [["expiredAt"], ["result", "expiredAt"]]);
+  return raw instanceof Date ? raw : undefined;
+}
+
+function isExpiredSoon(expiredAt: Date | undefined, months = 1): boolean {
+  if (!expiredAt) return false;
+
+  const now = new Date();
+  const threshold = new Date();
+  threshold.setMonth(threshold.getMonth() + months);
+
+  return expiredAt <= threshold && expiredAt >= now;
+}
+
+function getCommonPeriod(periods: Period[]): Period | null {
+  if (periods.length === 0) return null;
+
+  const start = new Date(
+    Math.max(...periods.map((period) => period.issuedAt.getTime())),
+  );
+
+  const end = new Date(
+    Math.min(...periods.map((period) => period.expiredAt.getTime())),
+  );
+
+  return start.getTime() <= end.getTime()
+    ? { issuedAt: start, expiredAt: end }
+    : null;
+}
+
+function extractPeriods(
+  op: OpVerificationFailure | OpDecodingFailure | VerifiedOp | DecodedOp,
+): Period[] {
+  const sources = [op.core, ...(op.annotations ?? []), ...(op.media ?? [])];
+
+  return sources.flatMap((source) => {
+    const issuedAt = findIssuedAt(source);
+    const expiredAt = findExpiredAt(source);
+    return issuedAt && expiredAt ? [{ issuedAt, expiredAt }] : [];
+  });
+}
+
+function MultipleValidity({
+  op,
+}: {
+  op: OpVerificationFailure | OpDecodingFailure | VerifiedOp | DecodedOp;
+}) {
+  const periods = extractPeriods(op);
+  const period = getCommonPeriod(periods);
+
+  return (
+    <div className="text-gray-700 mb-1">
+      <p className="font-bold mb-1">
+        {isExpiredSoon(period?.expiredAt) ? (
+          <span className="flex" title="有効期限が迫っています">
+            Common Validity Period
+            <Icon
+              icon="ic:round-warning"
+              className="size-4 ml-1 text-caution"
+            />
+          </span>
+        ) : (
+          "Common Validity Period"
+        )}
+      </p>
+      <p>
+        {toStringDate(period?.issuedAt)} ～ {toStringDate(period?.expiredAt)}
+      </p>
+    </div>
+  );
 }
 
 function DisplayStatus({
@@ -137,7 +225,9 @@ function DisplayResults({
       return { error: "Failed to serialize payload" };
     }
   })();
-  const issuer = findIssuer(payload)
+  const issuer = findIssuer(payload);
+  const issuedAt = findIssuedAt(payload);
+  const expiredAt = findExpiredAt(payload);
 
   return (
     <div className={className}>
@@ -165,6 +255,26 @@ function DisplayResults({
           <p>{issuer}</p>
         </div>
       )}
+      {toStringDate(issuedAt) && toStringDate(expiredAt) && (
+        <div className="text-gray-700 mb-1">
+          <p className="font-bold mb-1">
+            {isExpiredSoon(expiredAt) ? (
+              <span className="flex" title="有効期限が迫っています">
+                Validity Period
+                <Icon
+                  icon="ic:round-warning"
+                  className="size-4 ml-1 text-caution"
+                />
+              </span>
+            ) : (
+              "Validity Period"
+            )}
+          </p>
+          <p>
+            {toStringDate(issuedAt)} ～ {toStringDate(expiredAt)}
+          </p>
+        </div>
+      )}
       {showPayload ? (
         <div className="text-gray-700 mb-1">
           <p className="font-bold mb-1">payload</p>
@@ -179,9 +289,18 @@ function DisplayResults({
   );
 }
 
-function DetailItem({ label, icon, isOpen=false, children, className }: DetailItemProps) {
+function DetailItem({
+  label,
+  icon,
+  isOpen = false,
+  children,
+  className,
+}: DetailItemProps) {
   return (
-    <details open={isOpen} className={`[&[open]>summary>.icon]:rotate-90 ${className ?? ""}`}>
+    <details
+      open={isOpen}
+      className={`[&[open]>summary>.icon]:rotate-90 ${className ?? ""}`}
+    >
       <DisplayStatus label={label} icon={icon} />
       {children}
     </details>
@@ -212,7 +331,9 @@ function ResultItem({
     <DetailItem
       label={label}
       icon={isError ? "cancel" : isVerified ? "check" : "null"}
-      isOpen={isError ? true : false}
+      isOpen={
+        isError ? true : isExpiredSoon(findExpiredAt(value)) ? true : false
+      }
       className={className}
     >
       {isCodeError ? (
@@ -271,6 +392,7 @@ function DisplayOriginators({
 }) {
   return (
     <div className="ml-7">
+      <MultipleValidity op={op} />
       <ResultItem
         label={"Core Profile"}
         value={op.core}
@@ -314,7 +436,9 @@ function OriginatorsCheckList({
     <div className="ml-7">
       {originators.map((op, index) => {
         const isError = op instanceof Error;
-        const name = isError ? op.result.media?.map(media => findMediaName(media)) : op.media?.map(media => findMediaName(media)); 
+        const name = isError
+          ? op.result.media?.map((media) => findMediaName(media))
+          : op.media?.map((media) => findMediaName(media));
         return (
           <ResultItem
             key={index}
