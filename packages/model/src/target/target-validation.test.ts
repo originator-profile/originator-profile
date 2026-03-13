@@ -11,6 +11,7 @@ describe("target[].integrity バリデーション", () => {
         BasicTarget.safeParse({
           type: "TextTargetIntegrity",
           integrity: VALID_INTEGRITY,
+          cssSelector: "#main",
         }).success,
       ).toBe(true);
     });
@@ -21,6 +22,7 @@ describe("target[].integrity バリデーション", () => {
       const result = BasicTarget.safeParse({
         type: "TextTargetIntegrity",
         integrity: "md5-abcdef1234567890",
+        cssSelector: "#main",
       });
       expect(result.success).toBe(false);
       const msg = result.error?.issues[0].message;
@@ -31,6 +33,7 @@ describe("target[].integrity バリデーション", () => {
       const result = BasicTarget.safeParse({
         type: "TextTargetIntegrity",
         integrity: "A".repeat(44),
+        cssSelector: "#main",
       });
       expect(result.success).toBe(false);
     });
@@ -39,6 +42,7 @@ describe("target[].integrity バリデーション", () => {
       const result = BasicTarget.safeParse({
         type: "TextTargetIntegrity",
         integrity: `sha256-${"A".repeat(43)}==`,
+        cssSelector: "#main",
       });
       expect(result.success).toBe(false);
     });

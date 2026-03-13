@@ -8,7 +8,7 @@ export const BasicTarget = z.looseObject({
     "HtmlTargetIntegrity",
   ]),
   integrity: SubresourceIntegrity,
-  cssSelector: z.string().optional().describe("CSS selector"),
+  cssSelector: z.string().describe("CSS selector"),
 });
 
 export type BasicTarget = z.infer<typeof BasicTarget>;
