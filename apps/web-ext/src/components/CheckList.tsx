@@ -120,8 +120,8 @@ function isExpiredSoon(expiredAt: Date | undefined, months = 1): boolean {
   return expiredAt <= threshold && expiredAt >= now;
 }
 
-function getCommonPeriod(periods: Period[]): Period | null {
-  if (periods.length === 0) return null;
+function getCommonPeriod(periods: Period[]): Period | undefined {
+  if (periods.length === 0) return undefined;
 
   const start = new Date(
     Math.max(...periods.map((period) => period.issuedAt.getTime())),
@@ -133,14 +133,10 @@ function getCommonPeriod(periods: Period[]): Period | null {
 
   return start.getTime() <= end.getTime()
     ? { issuedAt: start, expiredAt: end }
-    : null;
+    : undefined;
 }
 
-function extractPeriods(
-  op: OpVerificationFailure | OpDecodingFailure | VerifiedOp | DecodedOp,
-): Period[] {
-  const sources = [op.core, ...(op.annotations ?? []), ...(op.media ?? [])];
-
+function extractPeriods(sources: unknown[]): Period[] {
   return sources.flatMap((source) => {
     const issuedAt = findIssuedAt(source);
     const expiredAt = findExpiredAt(source);
@@ -149,15 +145,14 @@ function extractPeriods(
 }
 
 function MultipleValidity({
-  op,
+  period,
+  className,
 }: {
-  op: OpVerificationFailure | OpDecodingFailure | VerifiedOp | DecodedOp;
+  period: Period;
+  className?: string;
 }) {
-  const periods = extractPeriods(op);
-  const period = getCommonPeriod(periods);
-
   return (
-    <div className="text-gray-700 mb-1">
+    <div className={`text-gray-700 mb-1 ${className}`}>
       <p className="font-bold mb-1">
         {isExpiredSoon(period?.expiredAt) ? (
           <span className="flex" title="有効期限が迫っています">
@@ -176,6 +171,46 @@ function MultipleValidity({
       </p>
     </div>
   );
+}
+
+function opToSources(
+  op: OpVerificationFailure | OpDecodingFailure | VerifiedOp | DecodedOp,
+): unknown[] {
+  return [op.core, ...(op.annotations ?? []), ...(op.media ?? [])];
+}
+
+function opsToSources(
+  originators: OpsVerificationFailure | OpsDecodingFailure | VerifiedOps,
+): unknown[] {
+  const list = originators.map((op) => (op instanceof Error ? op.result : op));
+  return list.flatMap(opToSources);
+}
+
+function spToSources(sp: SpVerificationResult): unknown[] {
+  // こいつが少し問題な気もする。
+  const originators =
+    sp instanceof Error ? sp.result.originators : sp.originators;
+  const wsp = sp instanceof Error ? sp.result.sites : sp.sites;
+
+  const opSources =
+    originators instanceof Error
+      ? opsToSources(originators.result)
+      : opsToSources(originators);
+
+  return [...opSources, ...wsp];
+}
+
+function casToSources(cas: CasVerificationFailure | VerifiedCas): unknown[] {
+  return cas.flatMap((ca) => ca.attestation);
+}
+
+function getCommonPeriodFrom<T>(
+  value: T,
+  toSources: (value: T) => unknown[],
+): Period | undefined {
+  const sources = toSources(value);
+  const periods = extractPeriods(sources);
+  return getCommonPeriod(periods);
 }
 
 function DisplayStatus({
@@ -390,9 +425,10 @@ function DisplayOriginators({
 }: {
   op: OpVerificationFailure | OpDecodingFailure | VerifiedOp | DecodedOp;
 }) {
+  const period = getCommonPeriodFrom(op, opToSources);
   return (
     <div className="ml-7">
-      <MultipleValidity op={op} />
+      {period && <MultipleValidity period={period} />}
       <ResultItem
         label={"Core Profile"}
         value={op.core}
@@ -432,8 +468,10 @@ function OriginatorsCheckList({
 }: {
   originators: OpsVerificationFailure | OpsDecodingFailure | VerifiedOps;
 }) {
+  const period = getCommonPeriodFrom(originators, opsToSources);
   return (
     <div className="ml-7">
+      {period && <MultipleValidity period={period} />}
       {originators.map((op, index) => {
         const isError = op instanceof Error;
         const name = isError
@@ -500,6 +538,9 @@ function SiteProfileCheck({
     : !isError
       ? siteProfile.originators
       : undefined;
+  const period = !isFetchError
+    ? getCommonPeriodFrom(siteProfile, spToSources)
+    : undefined;
 
   return (
     <ResultItem
@@ -508,6 +549,7 @@ function SiteProfileCheck({
       showPayload={isFetchError}
       className="pl-4 mb-2"
     >
+      {period && <MultipleValidity period={period} className="ml-7" />}
       {originatorValue && (
         <OriginatorProfileSetCheck originators={originatorValue} />
       )}
@@ -521,8 +563,10 @@ function ContentAttestationCheck({
 }: {
   cas: CasVerificationFailure | VerifiedCas;
 }) {
+  const period = getCommonPeriodFrom(cas, casToSources);
   return (
     <>
+      {period && <MultipleValidity period={period} className="ml-7" />}
       {cas.map((ca, index) => {
         return (
           <ResultItem
