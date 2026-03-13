@@ -20,7 +20,7 @@ export const JapaneseExistenceCertificateProperties = z.object({
   certificationSystem: CertificationSystem,
 });
 
-export const JapaneseExistenceCertificate = z.object({
+export const JapaneseExistenceCertificate = z.looseObject({
   "@context": OpCipContext,
   type: z.tuple([z.literal("VerifiableCredential"), z.literal("Certificate")]),
   issuer: OpId,
