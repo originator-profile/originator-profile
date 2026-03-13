@@ -14,7 +14,7 @@ const Item = z.string().refine(isValidOrigin, {
 });
 
 export const AllowedOrigin = z
-  .union([Item, z.array(Item)])
+  .union([Item, z.array(Item).min(1)])
   .describe(
     "@deprecated allowedOrigin is deprecated in Content Attestation. Use allowedUrl instead. Supported until September 2026.\n\n" +
       "The [origin](https://www.rfc-editor.org/rfc/rfc6454#section-7) of the information being asserted.",
