@@ -167,7 +167,7 @@ function MultipleValidity({
         )}
       </p>
       <p>
-        {toStringDate(period?.issuedAt)} ～ {toStringDate(period?.expiredAt)}
+        {toStringDate(period.issuedAt)} ～ {toStringDate(period.expiredAt)}
       </p>
     </div>
   );
@@ -200,7 +200,7 @@ function spToSources(sp: SpVerificationResult): unknown[] {
 }
 
 function casToSources(cas: CasVerificationFailure | VerifiedCas): unknown[] {
-  return cas.flatMap((ca) => ca.attestation);
+  return cas.map((ca) => ca.attestation);
 }
 
 function getCommonPeriodFrom<T>(
@@ -482,9 +482,12 @@ function OriginatorsCheckList({
       {period && <MultipleValidity period={period} />}
       {originators.map((op, index) => {
         const isError = op instanceof Error;
-        const name = isError
-          ? op.result.media?.map((media) => findMediaName(media))
-          : op.media?.map((media) => findMediaName(media));
+        const name = (isError ? op.result.media : op.media)?.flatMap(
+          (media) => {
+            const n = findMediaName(media);
+            return n ? [n] : [];
+          },
+        );
         const isOpen = isError
           ? shouldOpenFrom(op.result, opToSources)
           : shouldOpenFrom(op, opToSources);
