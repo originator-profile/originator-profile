@@ -155,7 +155,7 @@ function MultipleValidity({
     <div className={`text-gray-700 mb-1 ${className}`}>
       <p className="font-bold mb-1">
         {isExpiredSoon(period?.expiredAt) ? (
-          <span className="flex" title="有効期限が迫っています">
+          <span className="flex" title="The certificate is about to expire">
             Common Validity Period
             <Icon
               icon="ic:round-warning"
@@ -187,7 +187,6 @@ function opsToSources(
 }
 
 function spToSources(sp: SpVerificationResult): unknown[] {
-  // こいつが少し問題な気もする。
   const originators =
     sp instanceof Error ? sp.result.originators : sp.originators;
   const wsp = sp instanceof Error ? sp.result.sites : sp.sites;
@@ -211,6 +210,15 @@ function getCommonPeriodFrom<T>(
   const sources = toSources(value);
   const periods = extractPeriods(sources);
   return getCommonPeriod(periods);
+}
+
+function shouldOpenFrom<T>(
+  value: T,
+  toSources: (value: T) => unknown[],
+): boolean {
+  const sources = toSources(value);
+  const periods = extractPeriods(sources);
+  return periods.some((p) => isExpiredSoon(p.expiredAt));
 }
 
 function DisplayStatus({
@@ -294,7 +302,7 @@ function DisplayResults({
         <div className="text-gray-700 mb-1">
           <p className="font-bold mb-1">
             {isExpiredSoon(expiredAt) ? (
-              <span className="flex" title="有効期限が迫っています">
+              <span className="flex" title="The certificate is about to expire">
                 Validity Period
                 <Icon
                   icon="ic:round-warning"
@@ -349,6 +357,7 @@ function ResultItem({
   value,
   showPayload = true,
   isVerified = true,
+  isOpen = false,
   children,
   className,
 }: {
@@ -356,6 +365,7 @@ function ResultItem({
   value: unknown;
   showPayload?: boolean;
   isVerified?: boolean;
+  isOpen?: boolean;
   children?: React.ReactNode;
   className?: string;
 }) {
@@ -366,9 +376,7 @@ function ResultItem({
     <DetailItem
       label={label}
       icon={isError ? "cancel" : isVerified ? "check" : "null"}
-      isOpen={
-        isError ? true : isExpiredSoon(findExpiredAt(value)) ? true : false
-      }
+      isOpen={isOpen || isError || isExpiredSoon(findExpiredAt(value))}
       className={className}
     >
       {isCodeError ? (
@@ -477,6 +485,9 @@ function OriginatorsCheckList({
         const name = isError
           ? op.result.media?.map((media) => findMediaName(media))
           : op.media?.map((media) => findMediaName(media));
+        const isOpen = isError
+          ? shouldOpenFrom(op.result, opToSources)
+          : shouldOpenFrom(op, opToSources);
         return (
           <ResultItem
             key={index}
@@ -487,6 +498,7 @@ function OriginatorsCheckList({
             }
             value={op}
             showPayload={false}
+            isOpen={isOpen}
             className="mb-2"
           >
             <DisplayOriginators op={isError ? op.result : op} />
@@ -510,12 +522,16 @@ function OriginatorProfileSetCheck({
     : !isError
       ? originators
       : undefined;
+  const isOpen = listValue
+    ? shouldOpenFrom(listValue, opsToSources)
+    : undefined;
 
   return (
     <ResultItem
       label="Originator Profile Set"
       value={originators}
       showPayload={false}
+      isOpen={isOpen}
       className="pl-4 mb-2"
     >
       {listValue && <OriginatorsCheckList originators={listValue} />}
@@ -541,12 +557,16 @@ function SiteProfileCheck({
   const period = !isFetchError
     ? getCommonPeriodFrom(siteProfile, spToSources)
     : undefined;
+  const isOpen = !isFetchError
+    ? shouldOpenFrom(siteProfile, spToSources)
+    : undefined;
 
   return (
     <ResultItem
       label="Site Profile"
       value={siteProfile}
       showPayload={isFetchError}
+      isOpen={isOpen}
       className="pl-4 mb-2"
     >
       {period && <MultipleValidity period={period} className="ml-7" />}
@@ -588,12 +608,18 @@ function ContentAttestationSetCheck({
 }) {
   const isError = cas instanceof Error;
   const isVerifyFailed = cas instanceof CasVerifyFailed;
+  const isOpen = isVerifyFailed
+    ? shouldOpenFrom(cas.result, casToSources)
+    : !isError && cas.length
+      ? shouldOpenFrom(cas, casToSources)
+      : undefined;
 
   return (
     <ResultItem
       label="Content Attestation Set"
       value={cas}
       showPayload={false}
+      isOpen={isOpen}
       className="pl-4 mb-2"
     >
       {isVerifyFailed && <ContentAttestationCheck cas={cas.result} />}
