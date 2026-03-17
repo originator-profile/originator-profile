@@ -152,9 +152,9 @@ function MultipleValidity({
   className?: string;
 }) {
   return (
-    <div className={`text-gray-700 mb-1 ${className}`}>
+    <div className={`text-gray-700 mb-1 ${className ?? ""}`}>
       <p className="font-bold mb-1">
-        {isExpiredSoon(period?.expiredAt) ? (
+        {isExpiredSoon(period.expiredAt) ? (
           <span className="flex" title="The certificate is about to expire">
             Common Validity Period
             <Icon
@@ -203,22 +203,14 @@ function casToSources(cas: CasVerificationFailure | VerifiedCas): unknown[] {
   return cas.map((ca) => ca.attestation);
 }
 
-function getCommonPeriodFrom<T>(
-  value: T,
-  toSources: (value: T) => unknown[],
-): Period | undefined {
+function analyzeValidity<T>(value: T, toSources: (value: T) => unknown[]) {
   const sources = toSources(value);
   const periods = extractPeriods(sources);
-  return getCommonPeriod(periods);
-}
 
-function shouldOpenFrom<T>(
-  value: T,
-  toSources: (value: T) => unknown[],
-): boolean {
-  const sources = toSources(value);
-  const periods = extractPeriods(sources);
-  return periods.some((p) => isExpiredSoon(p.expiredAt));
+  return {
+    commonPeriod: getCommonPeriod(periods),
+    shouldOpen: periods.some((p) => isExpiredSoon(p.expiredAt)),
+  };
 }
 
 function DisplayStatus({
@@ -271,6 +263,8 @@ function DisplayResults({
   const issuer = findIssuer(payload);
   const issuedAt = findIssuedAt(payload);
   const expiredAt = findExpiredAt(payload);
+  const issuedAtStr = toStringDate(issuedAt);
+  const expiredAtStr = toStringDate(expiredAt);
 
   return (
     <div className={className}>
@@ -298,7 +292,7 @@ function DisplayResults({
           <p>{issuer}</p>
         </div>
       )}
-      {toStringDate(issuedAt) && toStringDate(expiredAt) && (
+      {issuedAtStr && expiredAtStr && (
         <div className="text-gray-700 mb-1">
           <p className="font-bold mb-1">
             {isExpiredSoon(expiredAt) ? (
@@ -314,7 +308,7 @@ function DisplayResults({
             )}
           </p>
           <p>
-            {toStringDate(issuedAt)} ～ {toStringDate(expiredAt)}
+            {issuedAtStr} ～ {expiredAtStr}
           </p>
         </div>
       )}
@@ -433,10 +427,10 @@ function DisplayOriginators({
 }: {
   op: OpVerificationFailure | OpDecodingFailure | VerifiedOp | DecodedOp;
 }) {
-  const period = getCommonPeriodFrom(op, opToSources);
+  const { commonPeriod } = analyzeValidity(op, opToSources);
   return (
     <div className="ml-7">
-      {period && <MultipleValidity period={period} />}
+      {commonPeriod && <MultipleValidity period={commonPeriod} />}
       <ResultItem
         label={"Core Profile"}
         value={op.core}
@@ -476,10 +470,10 @@ function OriginatorsCheckList({
 }: {
   originators: OpsVerificationFailure | OpsDecodingFailure | VerifiedOps;
 }) {
-  const period = getCommonPeriodFrom(originators, opsToSources);
+  const { commonPeriod } = analyzeValidity(originators, opsToSources);
   return (
     <div className="ml-7">
-      {period && <MultipleValidity period={period} />}
+      {commonPeriod && <MultipleValidity period={commonPeriod} />}
       {originators.map((op, index) => {
         const isError = op instanceof Error;
         const name = (isError ? op.result.media : op.media)?.flatMap(
@@ -488,9 +482,9 @@ function OriginatorsCheckList({
             return n ? [n] : [];
           },
         );
-        const isOpen = isError
-          ? shouldOpenFrom(op.result, opToSources)
-          : shouldOpenFrom(op, opToSources);
+        const { shouldOpen } = isError
+          ? analyzeValidity(op.result, opToSources)
+          : analyzeValidity(op, opToSources);
         return (
           <ResultItem
             key={index}
@@ -501,7 +495,7 @@ function OriginatorsCheckList({
             }
             value={op}
             showPayload={false}
-            isOpen={isOpen}
+            isOpen={shouldOpen}
             className="mb-2"
           >
             <DisplayOriginators op={isError ? op.result : op} />
@@ -525,16 +519,16 @@ function OriginatorProfileSetCheck({
     : !isError
       ? originators
       : undefined;
-  const isOpen = listValue
-    ? shouldOpenFrom(listValue, opsToSources)
-    : undefined;
+  const { shouldOpen } = listValue
+    ? analyzeValidity(listValue, opsToSources)
+    : { shouldOpen: undefined };
 
   return (
     <ResultItem
       label="Originator Profile Set"
       value={originators}
       showPayload={false}
-      isOpen={isOpen}
+      isOpen={shouldOpen}
       className="pl-4 mb-2"
     >
       {listValue && <OriginatorsCheckList originators={listValue} />}
@@ -557,22 +551,21 @@ function SiteProfileCheck({
     : !isError
       ? siteProfile.originators
       : undefined;
-  const period = !isFetchError
-    ? getCommonPeriodFrom(siteProfile, spToSources)
-    : undefined;
-  const isOpen = !isFetchError
-    ? shouldOpenFrom(siteProfile, spToSources)
-    : undefined;
+  const { commonPeriod, shouldOpen } = !isFetchError
+    ? analyzeValidity(siteProfile, spToSources)
+    : { commonPeriod: undefined, shouldOpen: undefined };
 
   return (
     <ResultItem
       label="Site Profile"
       value={siteProfile}
       showPayload={isFetchError}
-      isOpen={isOpen}
+      isOpen={shouldOpen}
       className="pl-4 mb-2"
     >
-      {period && <MultipleValidity period={period} className="ml-7" />}
+      {commonPeriod && (
+        <MultipleValidity period={commonPeriod} className="ml-7" />
+      )}
       {originatorValue && (
         <OriginatorProfileSetCheck originators={originatorValue} />
       )}
@@ -586,10 +579,12 @@ function ContentAttestationCheck({
 }: {
   cas: CasVerificationFailure | VerifiedCas;
 }) {
-  const period = getCommonPeriodFrom(cas, casToSources);
+  const { commonPeriod } = analyzeValidity(cas, casToSources);
   return (
     <>
-      {period && <MultipleValidity period={period} className="ml-7" />}
+      {commonPeriod && (
+        <MultipleValidity period={commonPeriod} className="ml-7" />
+      )}
       {cas.map((ca, index) => {
         return (
           <ResultItem
@@ -611,18 +606,18 @@ function ContentAttestationSetCheck({
 }) {
   const isError = cas instanceof Error;
   const isVerifyFailed = cas instanceof CasVerifyFailed;
-  const isOpen = isVerifyFailed
-    ? shouldOpenFrom(cas.result, casToSources)
+  const { shouldOpen } = isVerifyFailed
+    ? analyzeValidity(cas.result, casToSources)
     : !isError && cas.length
-      ? shouldOpenFrom(cas, casToSources)
-      : undefined;
+      ? analyzeValidity(cas, casToSources)
+      : { shouldOpen: undefined };
 
   return (
     <ResultItem
       label="Content Attestation Set"
       value={cas}
       showPayload={false}
-      isOpen={isOpen}
+      isOpen={shouldOpen}
       className="pl-4 mb-2"
     >
       {isVerifyFailed && <ContentAttestationCheck cas={cas.result} />}
