@@ -77,8 +77,48 @@ chrome.tabs.onRemoved.addListener((tabId) => {
   }
 });
 
+// 既存タブにContent Scriptを注入
+async function injectContentScriptsToExistingTabs(): Promise<void> {
+  const manifest = chrome.runtime.getManifest();
+  const tabs = await chrome.tabs.query({});
+  const injectableTabs = tabs.filter(
+    (tab): tab is chrome.tabs.Tab & { id: number } =>
+      tab.id !== undefined &&
+      tab.url !== undefined &&
+      /^https?:\/\//.test(tab.url),
+  );
+
+  const injections = (manifest.content_scripts ?? []).flatMap((cs) => {
+    const files = cs.js;
+    if (!files || files.length === 0) return [];
+
+    return injectableTabs.map((tab) =>
+      chrome.scripting
+        .executeScript({
+          target: { tabId: tab.id, allFrames: cs.all_frames },
+          files,
+        })
+        .catch(() => {
+          // 注入できないページはスキップ
+        }),
+    );
+  });
+
+  await Promise.all(injections);
+}
+
 chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   if (reason !== "install") return;
+
+  await injectContentScriptsToExistingTabs();
+
+  const [activeTab] = await chrome.tabs.query({
+    active: true,
+    currentWindow: true,
+  });
+  if (activeTab?.id !== undefined) {
+    requestTabBadgeUpdate(activeTab.id);
+  }
 
   const granted = await chrome.permissions.contains({
     origins: ["<all_urls>"],
@@ -117,15 +157,6 @@ frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
     );
   }
 });
-
-// NOTE: gh-1583
-if (import.meta.env.MODE === "development") {
-  chrome.runtime.onInstalled.addListener(({ reason }) => {
-    if (reason === "install") {
-      void chrome.tabs.reload();
-    }
-  });
-}
 
 if (import.meta.env.BASIC_AUTH) {
   for (const credential of import.meta.env.BASIC_AUTH_CREDENTIALS) {
