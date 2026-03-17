@@ -8,6 +8,7 @@ export * from "./description";
 export * from "./image";
 export * from "./jwk";
 export * from "./jwks";
+export * from "./op-meta";
 export * from "./op-vc";
 export * from "./originator-profile-set";
 export * from "./page";

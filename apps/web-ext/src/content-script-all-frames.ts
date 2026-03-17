@@ -1,16 +1,21 @@
 import { serializeIfError } from "@originator-profile/core";
+import { OpVc } from "@originator-profile/model";
 import {
   fetchCredentials,
   FetchCredentialSetResult,
+  fetchOpMeta,
+  fetchSiteProfile,
 } from "@originator-profile/presentation";
 import {
   normalizeCasItem,
   TargetIntegrityAlgorithm,
   verifyIntegrity,
 } from "@originator-profile/verify";
+
 import {
   credentialsMessenger,
   FetchCredentialsMessageResult,
+  FetchSiteProfileMessageResult,
   FrameLocation,
   FrameResponse,
   VerifyFailed,
@@ -35,8 +40,15 @@ const toFetchCredentialsMessageResult = <T>(
   >;
 };
 
+const toFetchSiteProfileMessageResult = (
+  result: Awaited<ReturnType<typeof fetchSiteProfile>>,
+): FetchSiteProfileMessageResult => {
+  return serializeIfError(result) as FetchSiteProfileMessageResult;
+};
+
 credentialsMessenger.onMessage("fetchCredentials", async () => {
-  const { ops, cas } = await fetchCredentials(document);
+  const { ops, cas, opMeta } = await fetchCredentials(document);
+  const sp = await fetchSiteProfile(document);
   const frameLocation: FrameLocation = {
     origin: window.origin,
     url: window.location.href,
@@ -44,8 +56,237 @@ credentialsMessenger.onMessage("fetchCredentials", async () => {
   return {
     ops: toFetchCredentialsMessageResult(ops),
     cas: toFetchCredentialsMessageResult(cas),
+    sp: toFetchSiteProfileMessageResult(sp),
+    opMeta,
     ...frameLocation,
   };
+});
+
+const AD_CA_TYPES = ["OnlineAd", "Advertorial"] as const;
+type AdCaType = (typeof AD_CA_TYPES)[number];
+
+const isAdCaType = (type: string | undefined): type is AdCaType => {
+  return type !== undefined && AD_CA_TYPES.includes(type as AdCaType);
+};
+
+// JWTペイロードのBase64デコード
+const decodeJwtPayload = <T = unknown>(jwt: string): T | undefined => {
+  try {
+    const payload = jwt.split(".")[1];
+    if (payload) {
+      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const binaryString = atob(base64);
+      const bytes = Uint8Array.from(binaryString, (c) => c.codePointAt(0) ?? 0);
+      return JSON.parse(new TextDecoder().decode(bytes)) as T;
+    }
+  } catch (e) {
+    console.error("[ContentScript] Failed to decode JWT payload", e);
+  }
+  return undefined;
+};
+
+const decodeCasJwtPayload = (
+  casItem: unknown,
+): { issuer?: string; credentialSubject?: { type?: string } } | undefined => {
+  const jwt = normalizeCasItem(casItem).attestation;
+  return typeof jwt === "string" ? decodeJwtPayload(jwt) : undefined;
+};
+
+// 広告関連CAS(OnlineAd/Advertorial)のissuerを取得
+const getCasIssuer = (cas: unknown): string | undefined => {
+  if (!Array.isArray(cas)) return undefined;
+  for (const casItem of cas) {
+    const decoded = decodeCasJwtPayload(casItem);
+    if (decoded && isAdCaType(decoded.credentialSubject?.type)) {
+      return decoded.issuer;
+    }
+  }
+  return undefined;
+};
+
+type DecodedOpPayload = Omit<OpVc, "credentialSubject"> & {
+  credentialSubject: OpVc["credentialSubject"] & {
+    name?: string;
+  };
+};
+
+const decodeOpJwt = (jwt: string | undefined): DecodedOpPayload | undefined => {
+  if (!jwt) return undefined;
+  return decodeJwtPayload<DecodedOpPayload>(jwt);
+};
+
+// opMetaオブジェクトからプロパティを文字列として取得
+const getOpMetaProperty = (
+  opMeta: Record<string, unknown>,
+  key: string,
+): string | undefined => {
+  const value = opMeta[key];
+  return typeof value === "string" ? value : undefined;
+};
+
+const updateOrgNames = (
+  decodedPayload: DecodedOpPayload | undefined,
+  casIssuer: string | undefined,
+  hasCas: boolean,
+  targetopid: string | undefined,
+  currentNames: { sourceOrgName?: string; expectedOrgName?: string },
+) => {
+  if (!decodedPayload?.credentialSubject?.name) {
+    return;
+  }
+
+  const isMatch = (targetId: string) => {
+    return (
+      decodedPayload.issuer === targetId ||
+      decodedPayload.credentialSubject?.id === targetId
+    );
+  };
+
+  if (!currentNames.sourceOrgName && casIssuer && isMatch(casIssuer)) {
+    currentNames.sourceOrgName = decodedPayload.credentialSubject.name;
+  }
+
+  if (hasCas && targetopid && isMatch(targetopid)) {
+    currentNames.expectedOrgName = decodedPayload.credentialSubject.name;
+  }
+};
+
+let cachedNames:
+  | { sourceOrgName?: string; expectedOrgName?: string }
+  | undefined;
+
+const tryCacheNames = () => {
+  const opMeta = fetchOpMeta(document);
+  if (!opMeta) return;
+  const meta = opMeta as Record<string, unknown>;
+
+  void fetchCredentials(document)
+    .then(({ ops, cas }) => {
+      const names: { sourceOrgName?: string; expectedOrgName?: string } = {};
+
+      const casIssuer = getCasIssuer(cas);
+      const hasCas = Array.isArray(cas) && cas.length > 0;
+
+      if (Array.isArray(ops)) {
+        for (const op of ops) {
+          const mediaJwt = Array.isArray(op.media) ? op.media[0] : op.media;
+          updateOrgNames(
+            decodeOpJwt(mediaJwt),
+            casIssuer,
+            hasCas,
+            opMeta.targetopid,
+            names,
+          );
+          updateOrgNames(
+            decodeOpJwt(op.core),
+            casIssuer,
+            hasCas,
+            opMeta.targetopid,
+            names,
+          );
+        }
+      }
+
+      cachedNames = {
+        sourceOrgName: names.sourceOrgName,
+        expectedOrgName:
+          names.expectedOrgName ??
+          getOpMetaProperty(meta, "targetOrgName") ??
+          getOpMetaProperty(meta, "targetname"),
+      };
+    })
+    .catch((e) => {
+      console.error("[ContentScript] Pre-fetch credentials failed", e);
+    });
+};
+
+if (document.readyState === "loading") {
+  tryCacheNames();
+  document.addEventListener("DOMContentLoaded", tryCacheNames);
+} else {
+  tryCacheNames();
+}
+
+const sendAdClicked = (
+  opMeta: Record<string, unknown>,
+  isNewTab: boolean = false,
+) => {
+  const names = cachedNames ?? {
+    expectedOrgName:
+      getOpMetaProperty(opMeta, "targetOrgName") ??
+      getOpMetaProperty(opMeta, "targetname"),
+  };
+
+  void credentialsMessenger.sendMessage("adClicked", {
+    targetopid: getOpMetaProperty(opMeta, "targetopid") as string,
+    sourceOrgName: names.sourceOrgName,
+    expectedOrgName: names.expectedOrgName,
+    isNewTab,
+  });
+};
+
+const handleLinkClick = (e: MouseEvent) => {
+  const target = e.target as HTMLElement;
+  const anchor = target.closest("a");
+  const opMeta = anchor ? fetchOpMeta(document) : undefined;
+  if (anchor && opMeta) {
+    const isModifierKey =
+      e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1;
+    // href="javascript:..." は window.open() 等で新規タブを開くパターン
+    const isJavascriptHref = anchor.href.startsWith("javascript:");
+    const isNewTab =
+      anchor.target === "_blank" || isModifierKey || isJavascriptHref;
+    void sendAdClicked(opMeta as Record<string, unknown>, isNewTab);
+  }
+};
+
+document.addEventListener("click", handleLinkClick);
+document.addEventListener("mousedown", (e: MouseEvent) => {
+  // ミドルクリック（button === 1）のみを処理
+  // 左クリックは click イベントで処理済みのため、二重送信を防止
+  if (e.button === 1) {
+    handleLinkClick(e);
+  }
+});
+
+const handleEnterKey = (e: KeyboardEvent) => {
+  const target = e.target as HTMLElement;
+  const anchor = target.closest("a");
+  const opMeta = anchor ? fetchOpMeta(document) : undefined;
+  if (anchor && opMeta) {
+    const isModifierKey = e.ctrlKey || e.metaKey || e.shiftKey;
+    const isNewTab = anchor.target === "_blank" || isModifierKey;
+    void sendAdClicked(opMeta as Record<string, unknown>, isNewTab);
+  }
+};
+
+const handleSpaceKey = (e: KeyboardEvent) => {
+  const target = e.target as HTMLElement;
+  const tagName = target.tagName;
+  const role = target.getAttribute("role");
+  const isButtonOrInput =
+    tagName === "BUTTON" ||
+    tagName === "INPUT" ||
+    tagName === "SELECT" ||
+    tagName === "TEXTAREA" ||
+    role === "button";
+
+  if (isButtonOrInput) {
+    const opMeta = fetchOpMeta(document);
+    if (opMeta) {
+      void sendAdClicked(opMeta as Record<string, unknown>, false);
+    }
+  }
+};
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Enter") {
+    handleEnterKey(e);
+    return;
+  }
+  if (e.key === " " || e.key === "Spacebar") {
+    handleSpaceKey(e);
+  }
 });
 
 credentialsMessenger.onMessage("verifyIntegrity", async ({ data }) => {

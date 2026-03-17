@@ -14,6 +14,7 @@ vendor
 /apps/web-ext/dist*
 /apps/web-ext/screenshots
 /apps/web-ext/web-ext-artifacts*
+/apps/web-ext/\\\\wsl.localhost\\*
 /apps/web-ext/.e2e-temp
 /public/ts
 

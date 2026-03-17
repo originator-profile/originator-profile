@@ -47,6 +47,7 @@ export const paths = {
   publ: "publ/:issuer/:subject",
   site: "site",
   prohibition: "prohibition",
+  warning: "warning",
   detail: "detail",
 } as const;
 
@@ -56,6 +57,7 @@ export const routes = {
   publ: urlParamsRoute(paths.publ, getPublParams),
   site: route(paths.site),
   prohibition: route(paths.prohibition),
+  warning: route(paths.warning),
   detail: route(paths.detail),
 } as const;
 

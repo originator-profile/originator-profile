@@ -389,27 +389,7 @@ function DisplayOtherErrors({ errors }: { errors: Error[] }) {
   );
 }
 
-/**
- * SP / OPS / CAS の検証結果をチェックリストとして表示するコンポーネント
- *
- * 検証済みの SP / OPS / CAS オブジェクトと、関連するErrorオブジェクトの配列を受け取り、
- * 各項目がエラーかどうかを判定したうえでチェックリスト形式で表示します。
- *
- * @param sp - VerifiedSp | undefined
- *   検証済みの SP
- * @param ops - VerifiedOps | undefined
- *   検証済みの OPS
- * @param cas - SupportedVerifiedCas | undefined
- *   検証済みの CAS
- * @param errors - Error[]
- *   各項目に対応するエラーオブジェクトの配列
- * @remarks
- * - エラーがない項目にはチェックマークを、エラーがある項目にはキャンセルマークを表示します。
- * - より細かい階層のデータが存在する場合は、入れ子構造のチェックリストとして表示します。
- * - `undefined` や空配列が渡された場合は、警告マークを表示します。
- * - 警告マークの「直接的なエラーではないが、異常の可能性がある状態」を示すために使用しています。
- *
- */
+/** SP / OPS / CAS の検証結果をチェックリスト形式で表示する */
 function CheckList({
   sp,
   ops,
