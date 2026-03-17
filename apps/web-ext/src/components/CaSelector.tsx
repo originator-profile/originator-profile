@@ -1,5 +1,5 @@
 import { Image } from "@originator-profile/ui";
-import placeholderDpThumbnail from "@originator-profile/ui/src/assets/placeholder-dp-thumbnail.png";
+import placeholderContentThumbnail from "@originator-profile/ui/src/assets/placeholder-content-thumbnail.png";
 import { Link, useParams } from "react-router";
 import { twMerge } from "tailwind-merge";
 import { buildPublUrl } from "../utils/routes";
@@ -40,7 +40,7 @@ function CaSelector({ filteredCas, onClickCa }: Props) {
                     active && "ring-2 ring-gray-500 ring-offset-2",
                   )}
                   src={ca.attestation.doc.credentialSubject.image?.id}
-                  placeholderSrc={placeholderDpThumbnail}
+                  placeholderSrc={placeholderContentThumbnail}
                   alt={(() => {
                     const subject = ca.attestation.doc.credentialSubject;
                     if (
