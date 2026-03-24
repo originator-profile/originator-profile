@@ -44,10 +44,13 @@ async function fetchAllFramesCredentials(
 
         const opsResult = deserializeIfError(result.ops);
         const casResult = deserializeIfError(result.cas);
+        const spResult = deserializeIfError(result.sp);
 
         return {
           ops: opsResult instanceof Error ? [] : opsResult,
           cas: casResult instanceof Error ? [] : casResult,
+          sp: spResult instanceof Error ? null : spResult.result,
+          opMeta: result.opMeta,
           url: result.url,
           origin: result.origin,
           ...frameResponse,
@@ -128,3 +131,9 @@ export const FrameIntegrityVerifier =
     const parsed = deserializeIfError(messageResult);
     return parsed as FetchIntegrityResult;
   };
+
+/**
+ * リンク検証結果を取得する
+ */
+export const fetchVerificationResult = (tabId: number) =>
+  credentialsMessenger.sendMessage("getVerificationResult", tabId);

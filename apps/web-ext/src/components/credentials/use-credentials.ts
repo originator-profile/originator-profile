@@ -9,7 +9,7 @@ import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
 import { useSiteProfile } from "../siteProfile";
 import { deduplicateCas } from "./deduplicate-cas";
-import { fetchTabCredentials } from "./messaging";
+import { fetchTabCredentials, fetchVerificationResult } from "./messaging";
 import type { FramesVerifiedCas, SupportedVerifiedCas } from "./types";
 import { verifyFramesCas, verifyOps } from "./verify-credentials";
 
@@ -131,3 +131,5 @@ export function useCredentials() {
     tabId,
   } as UseCredentialsResult;
 }
+
+export { fetchVerificationResult };

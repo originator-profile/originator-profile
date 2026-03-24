@@ -4,14 +4,19 @@ import type {
   AdvertorialCA,
   ArticleCA,
   ContentAttestationSet,
+  OpMeta,
   OriginatorProfileSet,
+  SiteProfile,
   WebMediaProfile,
 } from "@originator-profile/model";
+import type { FetchCredentialSetResult } from "@originator-profile/presentation";
 import type {
   IntegrityVerifyResult,
   VerifiedCas,
   VerifiedOps,
 } from "@originator-profile/verify";
+import { SerializedSiteProfileResult } from "../siteProfile/types";
+export { type SerializedSiteProfileResult } from "../siteProfile/types";
 
 /** 表示に対応している CA */
 export type SupportedCa = ArticleCA | AdvertisementCA | AdvertorialCA;
@@ -28,8 +33,10 @@ export type CredentialsProps = {
 export type FrameLocation = { origin: string; url: string };
 
 export type FetchCredentialsMessageResponse = FrameLocation & {
-  ops: Serialized<OriginatorProfileSet>;
-  cas: Serialized<ContentAttestationSet>;
+  ops: Serialized<FetchCredentialSetResult<OriginatorProfileSet>>;
+  cas: Serialized<FetchCredentialSetResult<ContentAttestationSet>>;
+  sp: SerializedSiteProfileResult;
+  opMeta?: OpMeta;
 };
 
 export type SerializedIntegrityVerifyResult = Serialized<IntegrityVerifyResult>;
@@ -42,8 +49,19 @@ export type FrameCredentials = FrameResponse &
   FrameLocation & {
     ops: OriginatorProfileSet;
     cas: ContentAttestationSet;
+    sp: SiteProfile | null;
+    opMeta?: OpMeta;
   };
 export type TabCredentials = FrameCredentials & { frames: FrameCredentials[] };
+
+export type LinkVerificationResult = {
+  status: "matched" | "mismatched" | "missing_opid" | "error" | "none";
+  expectedOpId?: string;
+  expectedOrgName?: string;
+  sourceOrgName?: string;
+  destinationOrgName?: string;
+  reason?: string;
+};
 
 export type FrameVerifiedCas = FrameResponse &
   FrameLocation & { cas: SupportedVerifiedCas };

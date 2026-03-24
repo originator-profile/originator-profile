@@ -344,7 +344,160 @@
   "OtherErrors": {
     "message": "Other Errors"
   },
+  "DetailInfo_LinkVerification": {
+    "message": "Link Verification"
+  },
+  "DetailInfo_ExpectedLinkDestination": {
+    "message": "Expected Link Destination"
+  },
+  "DetailInfo_SourceAdOrganization": {
+    "message": "Source Ad Organization"
+  },
   "Link_OriginatorProfile": {
     "message": "Learn more about Originator Profile (external site)"
+  },
+  "LinkVerification_Matched_Title": {
+    "message": "Link destination verified"
+  },
+  "LinkVerification_Mismatched_Title": {
+    "message": "Unexpected link destination"
+  },
+  "LinkVerification_MissingOpid_Title": {
+    "message": "Unable to verify link destination"
+  },
+  "LinkVerification_Matched_IntendedSite": {
+    "message": "Intended for $expected_org$'s site, ",
+    "placeholders": {
+      "expected_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "LinkVerification_Matched_ClickedAd": {
+    "message": "you clicked $source_org$'s ad, ",
+    "placeholders": {
+      "source_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "LinkVerification_Matched_ClickedAdGeneric": {
+    "message": "You clicked an ad, "
+  },
+  "LinkVerification_Matched_DestConfirmed": {
+    "message": "and the destination ($dest_org$'s site) has been verified.",
+    "placeholders": {
+      "dest_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "LinkVerification_Matched_Confirmed": {
+    "message": "and the correct destination has been confirmed."
+  },
+  "LinkVerification_Mismatched_IntendedSite": {
+    "message": "Intended for $expected_org$'s site, ",
+    "placeholders": {
+      "expected_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "LinkVerification_Mismatched_ClickedAd": {
+    "message": "you clicked $source_org$'s ad, but ",
+    "placeholders": {
+      "source_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "LinkVerification_Mismatched_ClickedAdGeneric": {
+    "message": "You clicked an ad, but "
+  },
+  "LinkVerification_Mismatched_OperatedBy": {
+    "message": "the destination is operated by $dest_org$.",
+    "placeholders": {
+      "dest_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "LinkVerification_Mismatched_CannotVerify": {
+    "message": "the site operator of the destination could not be verified."
+  },
+  "Warning_Title": {
+    "message": "Unable to verify site identity"
+  },
+  "Warning_IntendedSite": {
+    "message": "intended to open $expected_org$'s site, ",
+    "placeholders": {
+      "expected_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "Warning_ClickedAd": {
+    "message": "You clicked $source_org$'s ad, but ",
+    "placeholders": {
+      "source_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "Warning_OperatedBy": {
+    "message": "the destination is operated by $dest_org$.",
+    "placeholders": {
+      "dest_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "Warning_CannotVerify": {
+    "message": "the site operator of the destination could not be verified."
+  },
+  "Warning_OpidMismatch": {
+    "message": "The expected Originator Profile (OPID) did not match."
+  },
+  "Warning_GoBack": {
+    "message": "Go back to previous page"
+  },
+  "Warning_CloseTab": {
+    "message": "Close this tab"
+  },
+  "Warning_Proceed": {
+    "message": "Proceed anyway"
+  },
+  "Warning_Destination": {
+    "message": "Destination: "
+  },
+  "Verification_InvalidOps": {
+    "message": "Invalid OPS (decode failed)"
+  },
+  "Verification_InvalidOpsDetail": {
+    "message": "Invalid OPS (decode failed): $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Invalid JWT format"
+      }
+    }
+  },
+  "Verification_OpidMissing": {
+    "message": "OPID not found"
+  },
+  "Verification_OpidMismatch": {
+    "message": "OPID mismatch"
+  },
+  "Verification_FetchFailed": {
+    "message": "Credentials not found (fetch failed)"
   }
 }

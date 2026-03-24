@@ -1,6 +1,6 @@
-import { type SerializedError } from "@originator-profile/core";
+import { type Serialized } from "@originator-profile/core";
 import { WebMediaProfile, WebsiteProfile } from "@originator-profile/model";
-import { FetchSiteProfileSuccess } from "@originator-profile/presentation";
+import { FetchSiteProfileResult } from "@originator-profile/presentation";
 import { VerifiedSp } from "@originator-profile/verify";
 
 export type SiteProfileProps = {
@@ -10,6 +10,4 @@ export type SiteProfileProps = {
   wsp: WebsiteProfile;
 };
 
-export type SerializedSiteProfileResult =
-  | FetchSiteProfileSuccess
-  | SerializedError;
+export type SerializedSiteProfileResult = Serialized<FetchSiteProfileResult>;
