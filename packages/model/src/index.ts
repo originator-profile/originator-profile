@@ -16,5 +16,6 @@ export * from "./page";
 export * from "./site-profile";
 export * from "./sri";
 export * from "./target/";
+export * from "./unsigned-website-profile";
 export * from "./web-media-profile";
 export * from "./website-profile";
