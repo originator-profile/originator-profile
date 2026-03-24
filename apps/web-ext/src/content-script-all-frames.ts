@@ -15,7 +15,6 @@ import {
   credentialsMessenger,
   FrameLocation,
   FrameResponse,
-  SerializedSiteProfileResult,
 } from "./components/credentials";
 import {
   frameCasWindowMessenger,
@@ -27,12 +26,6 @@ import {
 import { frameCasExtensionMessenger } from "./components/frameCas/extension-events";
 import "./utils/cors-basic-auth";
 
-const toSerializedSiteProfileResult = (
-  result: Awaited<ReturnType<typeof fetchSiteProfile>>,
-): SerializedSiteProfileResult => {
-  return serializeIfError(result) as SerializedSiteProfileResult;
-};
-
 credentialsMessenger.onMessage("fetchCredentials", async () => {
   const { ops, cas, opMeta } = await fetchCredentials(document);
   const sp = await fetchSiteProfile(document);
@@ -43,7 +36,7 @@ credentialsMessenger.onMessage("fetchCredentials", async () => {
   return {
     ops: serializeIfError(ops),
     cas: serializeIfError(cas),
-    sp: toSerializedSiteProfileResult(sp),
+    sp: serializeIfError(sp),
     opMeta,
     ...frameLocation,
   };

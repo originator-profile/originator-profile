@@ -16,7 +16,6 @@ import type {
   VerifiedOps,
 } from "@originator-profile/verify";
 import { SerializedSiteProfileResult } from "../siteProfile/types";
-export { type SerializedSiteProfileResult } from "../siteProfile/types";
 
 /** 表示に対応している CA */
 export type SupportedCa = ArticleCA | AdvertisementCA | AdvertorialCA;
