@@ -166,7 +166,7 @@ export function OpsVerifier(
     }
     const paOrWmpIssuerKeys = getMappedKeys(decoded);
     const resultOps = await Promise.all(
-      decoded.map(async (op): Promise<OpVerificationResult> => {
+      decoded.map(async (op, opIndex): Promise<OpVerificationResult> => {
         const core = await verifyCp(op.core.source);
         const annotations = await verifyAnnotations(
           paOrWmpIssuerKeys,
@@ -177,20 +177,43 @@ export function OpsVerifier(
         const resultOp = { core, annotations, media };
 
         if (core instanceof Error) {
-          return new OpVerifyFailed("Core Profile verify failed", resultOp);
+          return new OpVerifyFailed(
+            `Core Profile verify failed (OP[${opIndex}])`,
+            resultOp,
+          );
         }
         if (
           annotations &&
           annotations.some((annotation) => annotation instanceof Error)
         ) {
+          const details = annotations
+            .map((annotation, index) => {
+              if (!(annotation instanceof Error)) return null;
+              const src = op.annotations?.[index];
+              const info = src
+                ? ` issuer: ${src.doc.issuer}, subject: ${src.doc.credentialSubject.id}`
+                : "";
+              return `OP[${opIndex}].PA[${index}]${info}`;
+            })
+            .filter((d): d is string => d !== null);
           return new OpVerifyFailed(
-            "Profile Annotation verify failed",
+            `Profile Annotation verify failed (${details.join(", ")})`,
             resultOp,
           );
         }
         if (media && media.some((m) => m instanceof Error)) {
+          const details = media
+            .map((m, index) => {
+              if (!(m instanceof Error)) return null;
+              const src = op.media?.[index];
+              const info = src
+                ? ` issuer: ${src.doc.issuer}, subject: ${src.doc.credentialSubject.id}`
+                : "";
+              return `OP[${opIndex}].WMP[${index}]${info}`;
+            })
+            .filter((d): d is string => d !== null);
           return new OpVerifyFailed(
-            "Web Media Profile verify failed",
+            `Web Media Profile verify failed (${details.join(", ")})`,
             resultOp,
           );
         }

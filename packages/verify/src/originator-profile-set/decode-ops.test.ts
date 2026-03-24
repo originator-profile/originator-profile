@@ -185,6 +185,7 @@ describe("OPSの復号", async () => {
       media: undefined,
     });
     expect(resultOp[2]).instanceOf(OpInvalid);
+    expect(resultOp[2].message).toBe("Core Profile decode failed (OP[2])");
     expect(resultOp[2].result.core).instanceOf(VcDecodeFailed);
     expect(resultOp[2].result.annotations[0]).toStrictEqual(
       toDecodeResult(certificate, holderOp.annotations[0]),
@@ -214,6 +215,9 @@ describe("OPSの復号", async () => {
       media: undefined,
     });
     expect(resultOp[2]).instanceOf(OpInvalid);
+    expect(resultOp[2].message).toBe(
+      "Profile Annotation decode failed (OP[2].PA[0])",
+    );
     expect(resultOp[2].result.core).toStrictEqual(
       toDecodeResult(cp, holderOp.core),
     );
@@ -243,6 +247,9 @@ describe("OPSの復号", async () => {
       media: undefined,
     });
     expect(resultOp[2]).instanceOf(OpInvalid);
+    expect(resultOp[2].message).toBe(
+      "Web Media Profile decode failed (OP[2].WMP[0])",
+    );
     expect(resultOp[2].result.core).toStrictEqual(
       toDecodeResult(cp, holderOp.core),
     );
