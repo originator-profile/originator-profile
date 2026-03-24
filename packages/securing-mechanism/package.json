@@ -37,9 +37,8 @@
   "dependencies": {
     "@originator-profile/cryptography": "workspace:*",
     "@originator-profile/model": "workspace:*",
-    "ajv": "^8.17.1",
-    "ajv-formats": "^3.0.1",
-    "jose": "^6.0.10"
+    "jose": "^6.0.10",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",

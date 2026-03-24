@@ -1,9 +1,18 @@
-import Ajv from "ajv";
 import { expect, test } from "vitest";
 import { OpVc } from "../src/op-vc";
 
 test("op vc schema is valid", () => {
-  const ajv = new Ajv();
-  const valid = ajv.validateSchema(OpVc);
-  expect(valid).toBe(true);
+  const sampleOpVc = {
+    "@context": [
+      "https://www.w3.org/ns/credentials/v2",
+      "https://originator-profile.org/ns/credentials/v1",
+    ],
+    type: ["VerifiableCredential"],
+    issuer: "dns:example.com",
+    credentialSubject: {
+      id: "dns:example.com",
+    },
+  };
+  const result = OpVc.safeParse(sampleOpVc);
+  expect(result.success).toBe(true);
 });

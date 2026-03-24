@@ -1,13 +1,8 @@
-import type { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 
-export const Page = {
-  title: "ページ",
-  type: "object",
-  properties: {
-    id: { title: "ページ URL", type: "string", format: "uri" },
-    name: { title: "ページ表示名", type: "string" },
-  },
-  required: ["id", "name"],
-} as const satisfies JSONSchema;
+export const Page = z.object({
+  id: z.url(),
+  name: z.string(),
+});
 
-export type Page = FromSchema<typeof Page>;
+export type Page = z.infer<typeof Page>;

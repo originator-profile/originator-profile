@@ -1,27 +1,30 @@
-import Ajv, { AnySchema, ValidationError } from "ajv";
-import addFormats from "ajv-formats";
+import type { ZodType } from "zod";
 import { VcValidateFailed } from "./errors";
-import { UnverifiedVc, VcValidationFailure, VcValidationResult } from "./types";
+import {
+  SchemaValidationError,
+  UnverifiedVc,
+  VcValidationFailure,
+  VcValidationResult,
+} from "./types";
 
 /** データモデルへの適合性確認のためのバリデーター */
-export function VcValidator<V extends UnverifiedVc>(jsonSchema: AnySchema) {
-  const ajv = new Ajv();
-  addFormats(ajv);
-  const validateVcPayload = ajv.compile(jsonSchema);
+export function VcValidator<V extends UnverifiedVc>(schema: ZodType) {
   /**
    * VC の妥当性確認
    * @param vc VC (未検証 or 検証済み)
    * @return 妥当性確認結果
    */
   function validate(vc: V): VcValidationResult<V, VcValidationFailure<V>> {
-    if (!validateVcPayload(vc.doc)) {
-      return new VcValidateFailed<VcValidationFailure<V>>(
-        ajv.errorsText(validateVcPayload.errors),
-        {
-          ...vc,
-          error: new ValidationError(validateVcPayload.errors ?? []),
-        },
-      );
+    const result = schema.safeParse(vc.doc);
+    if (!result.success) {
+      const issues = result.error.issues.map((i) => ({
+        path: i.path.join("."),
+        message: i.message,
+      }));
+      return new VcValidateFailed(result.error.message, {
+        ...vc,
+        error: new SchemaValidationError(issues),
+      });
     }
 
     return vc;

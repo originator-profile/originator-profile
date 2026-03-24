@@ -2,7 +2,6 @@ import { serializeIfError } from "@originator-profile/core";
 import { OpVc } from "@originator-profile/model";
 import {
   fetchCredentials,
-  FetchCredentialSetResult,
   fetchOpMeta,
   fetchSiteProfile,
 } from "@originator-profile/presentation";
@@ -14,11 +13,8 @@ import {
 
 import {
   credentialsMessenger,
-  FetchCredentialsMessageResult,
-  FetchSiteProfileMessageResult,
   FrameLocation,
   FrameResponse,
-  VerifyFailed,
 } from "./components/credentials";
 import {
   frameCasWindowMessenger,
@@ -28,23 +24,7 @@ import {
   type FrameCasCoordinate,
 } from "./components/frameCas";
 import { frameCasExtensionMessenger } from "./components/frameCas/extension-events";
-import { FetchIntegrityMessageResult } from "./components/integrity/type";
 import "./utils/cors-basic-auth";
-
-const toFetchCredentialsMessageResult = <T>(
-  result: FetchCredentialSetResult<T>,
-): FetchCredentialsMessageResult<T, VerifyFailed> => {
-  return serializeIfError(result) as FetchCredentialsMessageResult<
-    T,
-    VerifyFailed
-  >;
-};
-
-const toFetchSiteProfileMessageResult = (
-  result: Awaited<ReturnType<typeof fetchSiteProfile>>,
-): FetchSiteProfileMessageResult => {
-  return serializeIfError(result) as FetchSiteProfileMessageResult;
-};
 
 credentialsMessenger.onMessage("fetchCredentials", async () => {
   const { ops, cas, opMeta } = await fetchCredentials(document);
@@ -54,9 +34,9 @@ credentialsMessenger.onMessage("fetchCredentials", async () => {
     url: window.location.href,
   };
   return {
-    ops: toFetchCredentialsMessageResult(ops),
-    cas: toFetchCredentialsMessageResult(cas),
-    sp: toFetchSiteProfileMessageResult(sp),
+    ops: serializeIfError(ops),
+    cas: serializeIfError(cas),
+    sp: serializeIfError(sp),
     opMeta,
     ...frameLocation,
   };
@@ -289,10 +269,9 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-credentialsMessenger.onMessage("verifyIntegrity", async ({ data }) => {
-  const [content] = data;
+credentialsMessenger.onMessage("verifyIntegrity", async ({ data: content }) => {
   const result = await verifyIntegrity(content);
-  return serializeIfError(result) as FetchIntegrityMessageResult;
+  return serializeIfError(result);
 });
 
 frameCasExtensionMessenger.onMessage(

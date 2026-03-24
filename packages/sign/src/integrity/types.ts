@@ -1,6 +1,8 @@
-import type { Image, RawTarget } from "@originator-profile/model";
+import type { RawTarget } from "@originator-profile/model";
 
-export type DigestSriContent = Image;
+export type DigestSriSource = { id: string; content?: string | string[] };
+export type DigestSriResult = { id: string; digestSRI: string };
+export type DigestSriContent = DigestSriSource | DigestSriResult;
 
 export type ContentFetcher = (
   elements: ReadonlyArray<HTMLElement>,

@@ -306,7 +306,10 @@ credentialsMessenger.onMessage(
   "getVerificationResult",
   async ({ data: tabId }) => {
     await stateReady;
-    return verificationResults.get(tabId) ?? { status: "none" };
+    return (
+      verificationResults.get(tabId) ??
+      ({ status: "none" } satisfies LinkVerificationResult)
+    );
   },
 );
 

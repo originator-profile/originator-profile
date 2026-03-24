@@ -1,6 +1,6 @@
 import type { HashAlgorithm } from "websri";
 import { createDigestSri } from "./digest-sri";
-import type { DigestSriContent } from "./types";
+import type { DigestSriResult, DigestSriSource } from "./types";
 
 /**
  * オブジェクトへの `digestSRI` の割り当て
@@ -28,17 +28,17 @@ import type { DigestSriContent } from "./types";
 export async function fetchAndSetDigestSri(
   alg: HashAlgorithm,
   content: unknown,
-): Promise<DigestSriContent | undefined> {
+): Promise<DigestSriResult | undefined> {
   if (!content) return content as undefined;
 
-  if (typeof (content as DigestSriContent).digestSRI !== "string") {
+  if (typeof (content as DigestSriResult).digestSRI !== "string") {
     Object.assign(
       content,
-      await createDigestSri(alg, content as DigestSriContent),
+      await createDigestSri(alg, content as DigestSriSource),
     );
   }
 
-  delete (content as DigestSriContent).content;
+  delete (content as DigestSriSource).content;
 
-  return content as DigestSriContent;
+  return content as DigestSriResult;
 }

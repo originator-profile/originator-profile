@@ -335,22 +335,23 @@ importers:
         version: 6.10.0
 
   packages/model:
+    dependencies:
+      websri:
+        specifier: ^1.0.1
+        version: 1.0.1
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
     devDependencies:
       '@originator-profile/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
-      ajv:
-        specifier: ^8.17.1
-        version: 8.18.0
       eslint:
         specifier: ^9.25.1
         version: 9.29.0(jiti@2.6.1)
       eslint-config-originator-profile:
         specifier: workspace:*
         version: link:../eslint-config
-      json-schema-to-ts:
-        specifier: ^3.1.1
-        version: 3.1.1
       pkgroll:
         specifier: ^2.12.2
         version: 2.13.1(typescript@5.8.3)
@@ -461,15 +462,12 @@ importers:
       '@originator-profile/model':
         specifier: workspace:*
         version: link:../model
-      ajv:
-        specifier: ^8.17.1
-        version: 8.18.0
-      ajv-formats:
-        specifier: ^3.0.1
-        version: 3.0.1(ajv@8.18.0)
       jose:
         specifier: ^6.0.10
         version: 6.0.11
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
     devDependencies:
       '@originator-profile/tsconfig':
         specifier: workspace:*
@@ -632,18 +630,15 @@ importers:
       '@types/jsonld':
         specifier: ^1.5.15
         version: 1.5.15
-      ajv:
-        specifier: ^8.17.1
-        version: 8.18.0
-      ajv-formats:
-        specifier: ^3.0.1
-        version: 3.0.1(ajv@8.18.0)
       jose:
         specifier: ^6.0.10
         version: 6.0.11
       jsonld:
         specifier: ^9.0.0
         version: 9.0.0
+      zod:
+        specifier: ^4.3.6
+        version: 4.3.6
     devDependencies:
       '@originator-profile/tsconfig':
         specifier: workspace:*
@@ -4311,14 +4306,6 @@ packages:
       ajv:
         optional: true
 
-  ajv-formats@3.0.1:
-    resolution: {integrity: sha512-8iUql50EUR+uUcdRQ3HDqa6EVyo3docL8g5WJ3FNcWmu62IbkGUue/pEyLBW8VGKKucTPgqeks4fIU1DA4yowQ==}
-    peerDependencies:
-      ajv: ^8.0.0
-    peerDependenciesMeta:
-      ajv:
-        optional: true
-
   ajv@6.12.6:
     resolution: {integrity: sha512-j3fVLgvTo527anyYyJOGTYJbG+vnnQYvE0m5mmkc1TK+nxAppkCLMIL0aZ4dblVCNoGShhm+kzE4ZUykBoMg4g==}
 
@@ -6685,10 +6672,6 @@ packages:
   json-parse-even-better-errors@4.0.0:
     resolution: {integrity: sha512-lR4MXjGNgkJc7tkQ97kb2nuEMnNCyU//XYVH0MKTGcXEiSudQ5MKGKen3C5QubYy0vmq+JGitUg92uuywGEwIA==}
     engines: {node: ^18.17.0 || >=20.5.0}
-
-  json-schema-to-ts@3.1.1:
-    resolution: {integrity: sha512-+DWg8jCJG2TEnpy7kOm/7/AxaYoaRbjVB4LFZLySZlWn8exGs3A4OLJR966cVvU26N7X9TWxl+Jsw7dzAqKT6g==}
-    engines: {node: '>=16'}
 
   json-schema-traverse@0.4.1:
     resolution: {integrity: sha512-xbbCH5dCYU5T8LcEhhuh7HJ88HXuW3qsI3Y0zOZFKfZEHcpWiHU/Jxzk629Brsab/mMiHQti9wMP+845RPe3Vg==}
@@ -9207,9 +9190,6 @@ packages:
   trough@2.2.0:
     resolution: {integrity: sha512-tmMpK00BjZiUyVyvrBK7knerNgmgvcV/KLVyuma/SC+TQN167GrMRciANTz09+k3zW8L8t60jWO1GpfkZdjTaw==}
 
-  ts-algebra@2.0.0:
-    resolution: {integrity: sha512-FPAhNPFMrkwz76P7cdjdmiShwMynZYN6SgOujD1urY4oNm80Ou9oMdmbR45LotcKOXoy7wSmHkRFE6Mxbrhefw==}
-
   ts-api-utils@2.1.0:
     resolution: {integrity: sha512-CUgTZL1irw8u29bzrOD/nH85jqyc74D6SshFgujOIA7osm2Rz7dYH77agkx7H4FBNxDq7Cjf+IjaX/8zwFW+ZQ==}
     engines: {node: '>=18.12'}
@@ -10466,6 +10446,9 @@ packages:
 
   zod@3.25.76:
     resolution: {integrity: sha512-gzUt/qt81nXsFGKIFcC3YnfEAx5NkunCfnDlvuBSSFS02bcXu4Lmea0AFIUwbLWxWPx3d9p8S5QoaujKcNQxcQ==}
+
+  zod@4.3.6:
+    resolution: {integrity: sha512-rftlrkhHZOcjDwkGlnUtZZkvaPHCsDATp4pGpuOOMDaTdDDXF91wuVDJoWoPsKX/3YPQ5fHuF3STjcYyKr+Qhg==}
 
   zwitch@2.0.4:
     resolution: {integrity: sha512-bXE4cR/kVZhKZX/RjPEflHaKVhUVl85noU3v6b8apfQEc1x4A+zBxjZ4lN8LqGd6WZ3dl98pY4o717VFmoPp+A==}
@@ -14670,10 +14653,6 @@ snapshots:
     optionalDependencies:
       ajv: 8.18.0
 
-  ajv-formats@3.0.1(ajv@8.18.0):
-    optionalDependencies:
-      ajv: 8.18.0
-
   ajv@6.12.6:
     dependencies:
       fast-deep-equal: 3.1.3
@@ -17492,11 +17471,6 @@ snapshots:
   json-parse-even-better-errors@2.3.1: {}
 
   json-parse-even-better-errors@4.0.0: {}
-
-  json-schema-to-ts@3.1.1:
-    dependencies:
-      '@babel/runtime': 7.28.4
-      ts-algebra: 2.0.0
 
   json-schema-traverse@0.4.1: {}
 
@@ -20737,8 +20711,6 @@ snapshots:
 
   trough@2.2.0: {}
 
-  ts-algebra@2.0.0: {}
-
   ts-api-utils@2.1.0(typescript@5.8.3):
     dependencies:
       typescript: 5.8.3
@@ -21948,5 +21920,7 @@ snapshots:
       zod: 3.25.76
 
   zod@3.25.76: {}
+
+  zod@4.3.6: {}
 
   zwitch@2.0.4: {}

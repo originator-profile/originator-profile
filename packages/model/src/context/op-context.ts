@@ -1,27 +1,11 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 
-export const OpContext = {
-  type: "array",
-  additionalItems: false,
-  minItems: 3,
-  items: [
-    {
-      const: "https://www.w3.org/ns/credentials/v2",
-    },
-    {
-      const: "https://originator-profile.org/ns/credentials/v1",
-    },
-    {
-      type: "object",
-      properties: {
-        "@language": {
-          type: "string",
-          title: "言語コード",
-        },
-      },
-      required: ["@language"],
-    },
-  ],
-} as const satisfies JSONSchema;
+export const OpContext = z.tuple([
+  z.literal("https://www.w3.org/ns/credentials/v2"),
+  z.literal("https://originator-profile.org/ns/credentials/v1"),
+  z.object({
+    "@language": z.string().describe("Language code"),
+  }),
+]);
 
-export type OpContext = FromSchema<typeof OpContext>;
+export type OpContext = z.infer<typeof OpContext>;

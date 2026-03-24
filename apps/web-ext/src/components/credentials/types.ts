@@ -1,4 +1,5 @@
-import {
+import type { Serialized } from "@originator-profile/core";
+import type {
   AdvertisementCA,
   AdvertorialCA,
   ArticleCA,
@@ -8,9 +9,13 @@ import {
   SiteProfile,
   WebMediaProfile,
 } from "@originator-profile/model";
-import { VerifiedCas, VerifiedOps } from "@originator-profile/verify";
-import { FetchSiteProfileMessageResult } from "../siteProfile/types";
-export { type FetchSiteProfileMessageResult } from "../siteProfile/types";
+import type { FetchCredentialSetResult } from "@originator-profile/presentation";
+import type {
+  IntegrityVerifyResult,
+  VerifiedCas,
+  VerifiedOps,
+} from "@originator-profile/verify";
+import { SerializedSiteProfileResult } from "../siteProfile/types";
 
 /** 表示に対応している CA */
 export type SupportedCa = ArticleCA | AdvertisementCA | AdvertorialCA;
@@ -25,16 +30,15 @@ export type CredentialsProps = {
   framesCas: FramesVerifiedCas;
 };
 export type FrameLocation = { origin: string; url: string };
-export type FetchCredentialsMessageResult<T, E> = T | E;
-
-export type VerifyFailed = string;
 
 export type FetchCredentialsMessageResponse = FrameLocation & {
-  ops: FetchCredentialsMessageResult<OriginatorProfileSet, VerifyFailed>;
-  cas: FetchCredentialsMessageResult<ContentAttestationSet, VerifyFailed>;
-  sp: FetchSiteProfileMessageResult;
+  ops: Serialized<FetchCredentialSetResult<OriginatorProfileSet>>;
+  cas: Serialized<FetchCredentialSetResult<ContentAttestationSet>>;
+  sp: SerializedSiteProfileResult;
   opMeta?: OpMeta;
 };
+
+export type SerializedIntegrityVerifyResult = Serialized<IntegrityVerifyResult>;
 
 export type FrameResponse = {
   frameId: number;
