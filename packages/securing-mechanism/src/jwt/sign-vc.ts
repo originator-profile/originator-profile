@@ -1,5 +1,5 @@
 import { createThumbprint } from "@originator-profile/cryptography";
-import { Jwk, OpVc } from "@originator-profile/model";
+import { Jwk } from "@originator-profile/model";
 import { getUnixTime } from "date-fns";
 import { importJWK, SignJWT } from "jose";
 
@@ -23,7 +23,7 @@ export async function signJwtVc<T extends SignableVc>(
     expiredAt: Date;
   },
 ): Promise<string> {
-  const payload = vc as unknown as OpVc;
+  const payload = vc;
   const { alg = "ES256", issuedAt, expiredAt } = options;
   const header = {
     alg,
