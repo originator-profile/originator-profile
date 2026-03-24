@@ -56,12 +56,7 @@ const validateDecodedOp = (
     }
   | OpInvalid => {
   if (annotations && !isEveryDecodedPa(annotations)) {
-    const paths = failedPaths(
-      annotations,
-      opIndex,
-      "PA",
-      (a) => !("doc" in a),
-    );
+    const paths = failedPaths(annotations, opIndex, "PA", (a) => !("doc" in a));
     return new OpInvalid(
       `Profile Annotation decode failed (${paths.join(", ")})`,
       resultOp,
