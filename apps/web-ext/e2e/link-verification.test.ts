@@ -45,9 +45,7 @@ test.describe("リンク検証", () => {
   }) => {
     // 1. home → verify-link へ遷移（履歴を2ページ作る）
     await page.goto(HOME_PAGE);
-    await page.waitForLoadState("networkidle");
     await page.goto(VERIFY_LINK_PAGE);
-    await page.waitForLoadState("networkidle");
     await ensureServiceWorker(context, page);
 
     // 2. iframe[2]「外部サイトへのリンク (OPID不一致)」のリンクをクリック
@@ -77,7 +75,6 @@ test.describe("リンク検証", () => {
     page,
   }) => {
     await page.goto(VERIFY_LINK_PAGE);
-    await page.waitForLoadState("networkidle");
     await ensureServiceWorker(context, page);
 
     // iframe[3]「外部サイトへのリンク (OPID不一致) (window.open)」をクリック → 新規タブ
@@ -104,7 +101,6 @@ test.describe("リンク検証", () => {
     page,
   }) => {
     await page.goto(VERIFY_LINK_PAGE);
-    await page.waitForLoadState("networkidle");
     await ensureServiceWorker(context, page);
 
     // iframe[0]「正常なケース」のリンクをクリック（target="_top"で同タブ遷移）
@@ -124,7 +120,6 @@ test.describe("リンク検証", () => {
 
   test("Warning → Proceed anyway で遷移先に進む", async ({ context, page }) => {
     await page.goto(VERIFY_LINK_PAGE);
-    await page.waitForLoadState("networkidle");
     await ensureServiceWorker(context, page);
 
     // iframe[2]「外部サイトへのリンク (OPID不一致)」をクリック → Warning 表示
@@ -146,7 +141,6 @@ test.describe("リンク検証", () => {
 
   test("Warning ページに正しい情報が表示される", async ({ context, page }) => {
     await page.goto(VERIFY_LINK_PAGE);
-    await page.waitForLoadState("networkidle");
     await ensureServiceWorker(context, page);
 
     // iframe[2]「外部サイトへのリンク (OPID不一致)」をクリック → Warning 表示
@@ -177,7 +171,6 @@ test.describe("リンク検証", () => {
     page,
   }) => {
     await page.goto(VERIFY_LINK_PAGE);
-    await page.waitForLoadState("networkidle");
     await ensureServiceWorker(context, page);
 
     // iframe[4]「異常なケース」(dns:invalid.example.com) のリンクをクリック
