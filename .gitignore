@@ -17,6 +17,5 @@ vendor
 /apps/web-ext/\\\\wsl.localhost\\*
 /apps/web-ext/.e2e-temp
 /public/ts
-package-lock.json
 
 .claude/settings.local.json
