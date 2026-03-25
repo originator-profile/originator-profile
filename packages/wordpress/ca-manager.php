@@ -28,3 +28,4 @@ require_once __DIR__ . '/includes/post.php';
 
 require_once __DIR__ . '/includes/activator.php';
 register_activation_hook( __FILE__, 'Profile\\Activator\\ca_manager_activate' );
+register_deactivation_hook( __FILE__, 'Profile\\Activator\\ca_manager_deactivate' );

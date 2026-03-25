@@ -9,6 +9,10 @@ use const Profile\Config\PROFILE_DEFAULT_CA_LOG_DIR;
 require_once __DIR__ . '/debug.php';
 use function Profile\Debug\debug;
 
+require_once __DIR__ . '/oidc-callback.php';
+use function Profile\CasApiOidcCallback\activation as oidc_callback_activation;
+use function Profile\CasApiOidcCallback\deactivation as oidc_callback_deactivation;
+
 /**
  * プラグイン有効化時にログファイル配置の環境準備を行う関数
  */
@@ -40,4 +44,14 @@ function ca_manager_activate() {
 		$rules = "<FilesMatch \"\.(log|txt)$\">\n  Require all denied\n</FilesMatch>\n";
 		$wp_filesystem->put_contents( $htaccess_file, $rules );
 	}
+
+	// OIDC callback page
+	oidc_callback_activation();
+}
+
+/**
+ * プラグイン無効化時の処理を行う関数
+ */
+function ca_manager_deactivate() {
+	oidc_callback_deactivation();
 }
