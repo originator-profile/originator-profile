@@ -9,7 +9,7 @@ function isValidUrlPattern(val: string): boolean {
   }
 }
 
-const Item = z.string().refine(isValidUrlPattern, {
+const Item = z.stringFormat("url-pattern", isValidUrlPattern, {
   error:
     "Invalid URL Pattern string (* alone is not allowed. Specify a URL Pattern string such as https://example.com/*)",
 });

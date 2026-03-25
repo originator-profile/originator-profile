@@ -8,7 +8,7 @@ function isValidOrigin(val: string): boolean {
   }
 }
 
-const Item = z.string().refine(isValidOrigin, {
+const Item = z.stringFormat("origin", isValidOrigin, {
   error:
     "Origin MUST be in the format scheme://host[:port] (do not include a trailing slash or path. e.g. https://example.com)",
 });
