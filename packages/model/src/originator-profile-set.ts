@@ -1,6 +1,6 @@
 import { z } from "zod";
 
-export const OriginatorProfileSetItem = z.looseObject({
+export const OriginatorProfile = z.looseObject({
   core: z.string().describe("Core Profile"),
   annotations: z
     .array(z.string().describe("Profile Annotation"))
@@ -12,9 +12,9 @@ export const OriginatorProfileSetItem = z.looseObject({
     .describe("Web Media Profile or an array of Web Media Profile"),
 });
 
-export const OriginatorProfileSet = z.array(OriginatorProfileSetItem);
+export const OriginatorProfileSet = z.array(OriginatorProfile);
 
-export type OriginatorProfileSetItem = z.infer<typeof OriginatorProfileSetItem>;
+export type OriginatorProfile = z.infer<typeof OriginatorProfile>;
 export type OriginatorProfileSet = z.infer<typeof OriginatorProfileSet>;
 
 export default OriginatorProfileSet;

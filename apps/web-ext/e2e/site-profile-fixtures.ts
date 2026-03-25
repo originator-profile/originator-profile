@@ -3,7 +3,7 @@ import {
   Certificate,
   CoreProfile,
   Jwk,
-  OriginatorProfileSetItem,
+  OriginatorProfile,
   SiteProfile,
   WebMediaProfile,
   WebsiteProfile,
@@ -60,7 +60,7 @@ async function createSiteProfile(
     issuedAt,
     expiredAt,
   });
-  const op: OriginatorProfileSetItem = {
+  const op: OriginatorProfile = {
     core: signedCoreProfile,
     annotations: [annotations],
   };
@@ -222,7 +222,7 @@ export const test = base.extend<TestFixtures>({
           },
         );
 
-        const op: OriginatorProfileSetItem = {
+        const op: OriginatorProfile = {
           core: signedCoreProfile,
           annotations: [annotations],
           media: [signedMediaProfileJa, signedMediaProfileEn],

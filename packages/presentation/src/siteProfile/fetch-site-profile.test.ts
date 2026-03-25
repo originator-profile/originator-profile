@@ -1,5 +1,5 @@
 import {
-  OriginatorProfileSetItem,
+  OriginatorProfile,
   SiteProfile,
 } from "@originator-profile/model";
 import { Window } from "happy-dom";
@@ -11,7 +11,7 @@ import { fetchSiteProfile } from "./fetch-site-profile";
 
 const server = setupServer();
 
-const ops: OriginatorProfileSetItem = {
+const ops: OriginatorProfile = {
   core: "eyJ...",
   annotations: ["eyJ..."],
   media: ["eyJ..."],
