@@ -1,8 +1,8 @@
 import { z } from "zod";
-import { OriginatorProfileSetItem } from "./originator-profile-set";
+import { OriginatorProfile } from "./originator-profile-set";
 
 export const SiteProfile = z.looseObject({
-  originators: z.array(OriginatorProfileSetItem).min(1),
+  originators: z.array(OriginatorProfile).min(1),
   sites: z
     .array(z.string().describe("Website Profile"))
     .optional()
