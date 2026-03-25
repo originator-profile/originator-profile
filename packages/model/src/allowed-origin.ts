@@ -16,7 +16,6 @@ const Item = z.string().refine(isValidOrigin, {
 /**
  * 後方互換性のため 2026-09-01 まで許容
  * Content Attestation では allowedOrigin は非推奨です。代わりに allowedUrl を使用してください。
- * @deprecated
  */
 export const AllowedOrigin = z
   .union([Item, z.array(Item).min(1)])
