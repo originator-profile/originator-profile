@@ -1,5 +1,6 @@
 import { _ } from "@originator-profile/ui";
 import { useSearchParams } from "react-router";
+import { parseWarningSearchParams } from "../utils/warning-params";
 
 const isValidUrl = (url: string) => {
   try {
@@ -64,15 +65,18 @@ function getBackButtonLabel(
 
 export default function Warning() {
   const [searchParams] = useSearchParams();
-  const target = searchParams.get("target");
-  const sourceOrg = searchParams.get("sourceOrg");
-  const destOrg = searchParams.get("destOrg");
-  const expectedOrg = searchParams.get("expectedOrg");
-  const original = searchParams.get("original");
+  const {
+    target,
+    sourceOrg,
+    destOrg,
+    expectedOrg,
+    original,
+    isNewTab: isNewTabParam,
+  } = parseWarningSearchParams(searchParams);
 
   const safeTarget = target && isValidUrl(target) ? target : null;
   const safeOriginal = original && isValidUrl(original) ? original : null;
-  const isNewTab = searchParams.get("isNewTab") === "true";
+  const isNewTab = isNewTabParam ?? false;
 
   const handleProceed = async () => {
     if (safeTarget) {

@@ -11,6 +11,10 @@ import "./utils/cors-basic-auth";
 import { PersistentMap } from "./utils/persistent-map";
 
 import { normalizeUrl } from "./utils/navigation-state";
+import {
+  type WarningSearchParams,
+  buildWarningSearchParams,
+} from "./utils/warning-params";
 
 const windowSize = {
   width: 520,
@@ -168,23 +172,9 @@ interface HandleAdClickedParams extends VerificationContext {
 }
 
 /** {@link executeWarningRedirect} の引数 */
-interface ExecuteWarningRedirectParams {
+interface ExecuteWarningRedirectParams extends WarningSearchParams {
   /** リダイレクト対象のタブID */
   tabId: number;
-  /** 警告対象のURL */
-  url: string;
-  /** 警告理由メッセージ */
-  reason: string;
-  /** 広告元の組織名 */
-  sourceOrg?: string;
-  /** 遷移先の組織名 */
-  destOrg?: string;
-  /** 期待される組織名 */
-  expectedOrg?: string;
-  /** 広告元のURL */
-  sourceUrl?: string;
-  /** 新規タブからの遷移か */
-  isNewTab?: boolean;
 }
 
 /** {@link handleVerification} の引数 */
@@ -383,23 +373,9 @@ credentialsMessenger.onMessage(
  */
 const executeWarningRedirect = ({
   tabId,
-  url,
-  reason,
-  sourceOrg,
-  destOrg,
-  expectedOrg,
-  sourceUrl,
-  isNewTab,
+  ...warningParams
 }: ExecuteWarningRedirectParams) => {
-  const params = new URLSearchParams({
-    target: url,
-    reason,
-  });
-  if (sourceOrg) params.append("sourceOrg", sourceOrg);
-  if (destOrg) params.append("destOrg", destOrg);
-  if (expectedOrg) params.append("expectedOrg", expectedOrg);
-  if (sourceUrl) params.append("original", sourceUrl);
-  if (isNewTab) params.append("isNewTab", "true");
+  const params = buildWarningSearchParams(warningParams);
 
   const warningUrl = `${chrome.runtime.getURL("index.html")}#/warning?${params.toString()}`;
   void chrome.scripting.executeScript({
@@ -627,12 +603,12 @@ const handleVerification = async ({
       const reason = result.reason ?? "Unknown Error";
       executeWarningRedirect({
         tabId,
-        url,
+        target: url,
         reason,
         sourceOrg: result.sourceOrgName,
         destOrg: result.destinationOrgName,
         expectedOrg: result.expectedOrgName,
-        sourceUrl,
+        original: sourceUrl,
         isNewTab,
       });
       // 警告を出したURLを記録し、ユーザーが手動で別のURLへ移動した際にpendingを解除できるようにする
