@@ -1,6 +1,6 @@
 {
   "name": "@originator-profile/verify",
-  "version": "0.5.0-beta.1",
+  "version": "0.5.0-beta.2",
   "license": "Apache-2.0",
   "homepage": "https://docs.originator-profile.org",
   "repository": {
@@ -44,8 +44,8 @@
     "@originator-profile/sign": "workspace:*",
     "@types/jsonld": "^1.5.15",
     "jose": "^6.0.10",
-    "zod": "^4.3.6",
-    "jsonld": "^9.0.0"
+    "jsonld": "^9.0.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",
