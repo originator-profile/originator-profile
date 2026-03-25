@@ -1,20 +1,19 @@
-import { SiteProfile, WebsiteProfile } from "@originator-profile/model";
-import { JwtVcDecoder } from "@originator-profile/securing-mechanism";
-import { DecodedOp, decodeOps } from "@originator-profile/verify";
-import { fetchTabCredentials } from "./components/credentials";
 import { credentialsMessenger } from "./components/credentials/events";
-import { LinkVerificationResult } from "./components/credentials/types";
+import type { LinkVerificationResult } from "./components/credentials/types";
 import { frameCasExtensionMessenger } from "./components/frameCas";
+import {
+  stateReady,
+  pendingOpIdVerification,
+  verificationResults,
+  verificationCache,
+  recentlyOpenedTabs,
+  handleAdClicked,
+  handleVerification,
+  restoreVerificationFromCache,
+} from "./components/link-verification";
 import { updateBadge, verifyTabCredentials } from "./components/tabBadge";
 import "./utils/cors-basic-auth";
-
-import { PersistentMap } from "./utils/persistent-map";
-
 import { normalizeUrl } from "./utils/navigation-state";
-import {
-  type WarningSearchParams,
-  buildWarningSearchParams,
-} from "./utils/warning-params";
 
 const windowSize = {
   width: 520,
@@ -151,77 +150,7 @@ chrome.runtime.onInstalled.addListener(async ({ reason }) => {
   }
 });
 
-/** 広告リンク検証の共通コンテキスト情報 */
-interface VerificationContext {
-  /** 検証対象の Originator Profile ID */
-  targetOpId: string;
-  /** 広告元の組織名 */
-  sourceOrgName?: string;
-  /** 期待される組織名 */
-  expectedOrgName?: string;
-}
-
-/** {@link handleAdClicked} の引数 */
-interface HandleAdClickedParams extends VerificationContext {
-  /** 対象タブID */
-  tabId: number;
-  /** 新規タブで開かれたクリックか */
-  isNewTab?: boolean;
-  /** 広告元ページのURL */
-  sourceUrl?: string;
-}
-
-/** {@link executeWarningRedirect} の引数 */
-interface ExecuteWarningRedirectParams extends WarningSearchParams {
-  /** リダイレクト対象のタブID */
-  tabId: number;
-}
-
-/** {@link handleVerification} の引数 */
-interface HandleVerificationParams extends VerificationContext {
-  /** 検証対象のタブID */
-  tabId: number;
-  /** 検証対象のURL */
-  url: string;
-  /** 広告元のURL */
-  sourceUrl?: string;
-  /** 新規タブからの遷移か */
-  isNewTab?: boolean;
-}
-
-/** {@link createMismatchResult} の引数 */
-interface CreateMismatchResultParams extends VerificationContext {
-  /** 遷移先の組織名 */
-  destinationOrgName?: string;
-  /** OPID未設定か（不一致ではなく） */
-  isMissing: boolean;
-}
-
-const pendingOpIdVerification = new PersistentMap<{
-  targetOpId: string;
-  sourceOrgName?: string;
-  expectedOrgName?: string;
-  warnedUrl?: string;
-  sourceUrl?: string;
-  isNewTab?: boolean;
-}>("pendingOpIdVerification");
-
-const verificationResults = new PersistentMap<LinkVerificationResult>(
-  "verificationResults",
-);
-
-const verificationCache = new PersistentMap<{
-  [url: string]: LinkVerificationResult;
-}>("verificationCache");
-
-const stateReady = Promise.all([
-  pendingOpIdVerification.load(),
-  verificationResults.load(),
-  verificationCache.load(),
-]);
-
-// window.openや<a target="_blank">で開かれた新規タブを追跡（openerTabId → newTabId[]）
-const recentlyOpenedTabs = new Map<number, number[]>();
+// --- 広告リンク検証リスナー ---
 
 // タブが閉じられたとき、メモリリーク防止のために状態をクリーンアップ
 chrome.tabs.onRemoved.addListener(async (tabId) => {
@@ -268,80 +197,6 @@ chrome.tabs.onCreated.addListener(async (tab) => {
   }
 });
 
-/**
- * 広告クリックを処理し、検証情報をタブに紐付ける
- * @param params - 広告クリック情報
- */
-const handleAdClicked = ({
-  tabId,
-  targetOpId,
-  sourceOrgName,
-  expectedOrgName,
-  isNewTab,
-  sourceUrl,
-}: HandleAdClickedParams) => {
-  // 新規タブでのクリックでなければ、元タブの検証状態を更新
-  if (!isNewTab) {
-    pendingOpIdVerification.set(tabId, {
-      targetOpId,
-      sourceOrgName,
-      expectedOrgName,
-      sourceUrl,
-    });
-    return;
-  }
-
-  // 新規タブへの検証情報引き渡し（openerTabId ベース）
-  const openerTabs = recentlyOpenedTabs.get(tabId);
-  if (!openerTabs || openerTabs.length === 0) return;
-
-  // FIFOで消費（複数クリック時の順序を維持）
-  const newTabId = openerTabs.shift();
-  if (newTabId === undefined) return;
-  if (openerTabs.length === 0) {
-    recentlyOpenedTabs.delete(tabId);
-  }
-  pendingOpIdVerification.set(newTabId, {
-    targetOpId,
-    sourceOrgName,
-    expectedOrgName,
-    sourceUrl,
-    isNewTab: true,
-  });
-  // 新規タブが既に読み込み完了している場合、onCompleted は既に通過済みなので
-  // ここで即座に検証を実行する（レースコンディション対策）
-  void chrome.tabs
-    .get(newTabId)
-    .then(async (tab) => {
-      if (!pendingOpIdVerification.get(newTabId)) return;
-      if (
-        tab.status === "complete" &&
-        tab.url &&
-        !tab.url.startsWith(chrome.runtime.getURL(""))
-      ) {
-        // eslint-disable-next-line no-use-before-define
-        await handleVerification({
-          tabId: newTabId,
-          url: tab.url,
-          targetOpId,
-          sourceOrgName,
-          expectedOrgName,
-          sourceUrl,
-          isNewTab: true,
-        });
-      }
-    })
-    .catch(() => {
-      // タブが既に閉じられている場合は無視
-    });
-
-  // 元タブ側の検証情報をクリア
-  const currentMainPending = pendingOpIdVerification.get(tabId);
-  if (currentMainPending?.targetOpId === targetOpId) {
-    pendingOpIdVerification.delete(tabId);
-  }
-};
-
 credentialsMessenger.onMessage("adClicked", async ({ data, sender }) => {
   await stateReady;
   if (sender.tab?.id) {
@@ -366,275 +221,6 @@ credentialsMessenger.onMessage(
     );
   },
 );
-
-/**
- * 検証失敗時に警告ページへリダイレクトする
- * @param params - リダイレクト情報
- */
-const executeWarningRedirect = ({
-  tabId,
-  ...warningParams
-}: ExecuteWarningRedirectParams) => {
-  const params = buildWarningSearchParams(warningParams);
-
-  const warningUrl = `${chrome.runtime.getURL("index.html")}#/warning?${params.toString()}`;
-  void chrome.scripting.executeScript({
-    target: { tabId },
-    func: (destination) => {
-      window.location.replace(destination);
-    },
-    args: [warningUrl],
-  });
-};
-
-/**
- * OP検証エラー時の結果オブジェクトを生成する
- * @param context - 検証コンテキスト
- * @param error - 発生したエラー
- */
-const createErrorResult = (
-  { targetOpId, sourceOrgName, expectedOrgName }: VerificationContext,
-  error: Error,
-): LinkVerificationResult => {
-  return {
-    status: "error",
-    expectedOpId: targetOpId,
-    sourceOrgName,
-    expectedOrgName,
-    reason:
-      import.meta.env.MODE === "development"
-        ? chrome.i18n.getMessage("Verification_InvalidOpsDetail", error.message)
-        : chrome.i18n.getMessage("Verification_InvalidOps"),
-  };
-};
-
-const decodeWsps = (sp: SiteProfile | null) => {
-  if (!sp) return [];
-  const decodeWsp = JwtVcDecoder<WebsiteProfile>();
-  // 'sites'（新形式）と 'credential'（旧形式）の両方に対応
-  const sources = sp.sites ?? (sp.credential ? [sp.credential] : []);
-  return sources
-    .map((jwt) => {
-      const decoded = decodeWsp(jwt);
-      return decoded instanceof Error ? null : decoded;
-    })
-    .filter((wsp): wsp is NonNullable<typeof wsp> => wsp !== null);
-};
-
-const getOrgNameFromOp = (op: DecodedOp): string | undefined => {
-  if (!op.annotations) return undefined;
-  const annotationWithName = op.annotations.find(
-    (a) =>
-      "name" in a.doc.credentialSubject &&
-      typeof a.doc.credentialSubject.name === "string",
-  );
-  if (annotationWithName) {
-    return (annotationWithName.doc.credentialSubject as { name: string }).name;
-  }
-  return undefined;
-};
-
-const resolveName = (
-  wsp: NonNullable<ReturnType<typeof decodeWsps>[0]>,
-  decodedOps: DecodedOp[],
-): string | undefined => {
-  const op = decodedOps.find(
-    (o) => o.core.doc.credentialSubject.id === wsp.doc.issuer,
-  );
-  if (op) {
-    const orgName = getOrgNameFromOp(op);
-    if (orgName) return orgName;
-  }
-  // WSP名のフォールバック
-  if ("name" in wsp.doc.credentialSubject) {
-    return wsp.doc.credentialSubject.name;
-  }
-  return undefined;
-};
-
-const getDestinationOrgName = (
-  decodedOps: DecodedOp[],
-  decodedWsps: ReturnType<typeof decodeWsps>,
-  targetOpId: string,
-): string | undefined => {
-  // targetOpIdに一致するWSPを検索
-  const matchedWsp = decodedWsps.find((wsp) => wsp.doc.issuer === targetOpId);
-
-  if (matchedWsp) {
-    return resolveName(matchedWsp, decodedOps);
-  }
-
-  // フォールバック: 一致するものがなければ先頭のWSPから取得を試みる
-  if (decodedWsps.length > 0) {
-    const firstWsp = decodedWsps[0];
-    if (firstWsp) {
-      return resolveName(firstWsp, decodedOps);
-    }
-  }
-
-  return undefined;
-};
-
-const isMatched = (
-  decodedWsps: ReturnType<typeof decodeWsps>,
-  targetOpId: string,
-): boolean => {
-  return decodedWsps.some((wsp) => wsp.doc.issuer === targetOpId);
-};
-
-/**
- * OPID不一致または未設定時の結果オブジェクトを生成する
- * @param params - 不一致結果の生成に必要な情報
- */
-const createMismatchResult = ({
-  targetOpId,
-  sourceOrgName,
-  expectedOrgName,
-  destinationOrgName,
-  isMissing,
-}: CreateMismatchResultParams): LinkVerificationResult => {
-  const reason = isMissing
-    ? chrome.i18n.getMessage("Verification_OpidMissing")
-    : chrome.i18n.getMessage("Verification_OpidMismatch");
-  return {
-    status: isMissing ? "missing_opid" : "mismatched",
-    expectedOpId: targetOpId,
-    sourceOrgName,
-    expectedOrgName,
-    destinationOrgName,
-    reason,
-  };
-};
-
-/**
- * タブのクレデンシャルを取得し、OPID検証結果を返す
- * @param tabId - 検証対象のタブID
- * @param context - 検証コンテキスト
- */
-const getVerificationResult = async (
-  tabId: number,
-  context: VerificationContext,
-): Promise<LinkVerificationResult> => {
-  const { targetOpId, sourceOrgName, expectedOrgName } = context;
-  try {
-    const { ops, sp } = await fetchTabCredentials(tabId);
-    const decodedOps = decodeOps(ops);
-    const decodedWsps = decodeWsps(sp);
-
-    if (decodedOps instanceof Error) {
-      return createErrorResult(context, decodedOps);
-    }
-
-    // SPが不正な場合はエラーとせず、不一致/未設定として扱う
-
-    const matched = isMatched(decodedWsps, targetOpId);
-
-    const destinationOrgName = getDestinationOrgName(
-      decodedOps,
-      decodedWsps,
-      targetOpId,
-    );
-
-    if (matched) {
-      return {
-        status: "matched",
-        expectedOpId: targetOpId,
-        sourceOrgName,
-        expectedOrgName,
-        destinationOrgName,
-      };
-    }
-
-    const isMissing = decodedWsps.length === 0;
-    return createMismatchResult({
-      targetOpId,
-      sourceOrgName,
-      expectedOrgName,
-      destinationOrgName,
-      isMissing,
-    });
-  } catch (e: unknown) {
-    const reason = chrome.i18n.getMessage("Verification_FetchFailed");
-    return {
-      status: "error",
-      expectedOpId: targetOpId,
-      sourceOrgName,
-      expectedOrgName,
-      reason,
-    };
-  }
-};
-
-// handleVerification の二重実行を防止するガード
-const verificationInProgress = new Set<number>();
-
-/**
- * ページ読み込み完了時にOPID検証を実行し、不一致の場合は警告ページへリダイレクトする
- * @param params - 検証に必要な情報
- */
-const handleVerification = async ({
-  tabId,
-  url,
-  targetOpId,
-  sourceOrgName,
-  expectedOrgName,
-  sourceUrl,
-  isNewTab,
-}: HandleVerificationParams) => {
-  if (verificationInProgress.has(tabId)) return;
-  verificationInProgress.add(tabId);
-  try {
-    const context: VerificationContext = {
-      targetOpId,
-      sourceOrgName,
-      expectedOrgName,
-    };
-    const result = await getVerificationResult(tabId, context);
-    verificationResults.set(tabId, result);
-
-    // 履歴ナビゲーション用に結果をキャッシュ
-    verificationCache.update(tabId, (current) => {
-      const next = current || {};
-      next[url] = result;
-      return next;
-    });
-
-    if (result.status !== "matched") {
-      const reason = result.reason ?? "Unknown Error";
-      executeWarningRedirect({
-        tabId,
-        target: url,
-        reason,
-        sourceOrg: result.sourceOrgName,
-        destOrg: result.destinationOrgName,
-        expectedOrg: result.expectedOrgName,
-        original: sourceUrl,
-        isNewTab,
-      });
-      // 警告を出したURLを記録し、ユーザーが手動で別のURLへ移動した際にpendingを解除できるようにする
-      pendingOpIdVerification.set(tabId, {
-        targetOpId,
-        sourceOrgName,
-        expectedOrgName,
-        warnedUrl: url,
-        sourceUrl,
-        isNewTab,
-      });
-      return;
-    }
-
-    pendingOpIdVerification.delete(tabId);
-  } finally {
-    verificationInProgress.delete(tabId);
-  }
-};
-
-const restoreVerificationFromCache = (tabId: number, url: string) => {
-  const cached = verificationCache.get(tabId)?.[url];
-  if (cached) {
-    verificationResults.set(tabId, cached);
-  }
-};
 
 chrome.webNavigation.onCommitted.addListener(async (details) => {
   await stateReady;
@@ -706,6 +292,8 @@ chrome.webNavigation.onCompleted.addListener(async (details) => {
   }
 });
 
+// --- フレームCAS ---
+
 // iframeのCAS位置情報をコンテンツスクリプトに配信
 frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
   const { tabId, framesCas } = data;
@@ -726,6 +314,8 @@ frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
     );
   }
 });
+
+// --- Basic Auth ---
 
 if (import.meta.env.BASIC_AUTH) {
   for (const credential of import.meta.env.BASIC_AUTH_CREDENTIALS) {
