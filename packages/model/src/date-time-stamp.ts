@@ -5,10 +5,8 @@ import { z } from "zod";
  * タイムゾーン指定（Z または ±HH:MM）を必須とする。
  * @see https://www.w3.org/TR/xmlschema11-2/#dateTimeStamp
  */
-export const DateTimeStamp = z
-  .string()
-  .datetime({
-    offset: true,
-    error:
-      "Must be an xsd:dateTimeStamp string (e.g. 2024-01-01T00:00:00Z or 2024-01-01T00:00:00+09:00)",
-  });
+export const DateTimeStamp = z.string().datetime({
+  offset: true,
+  error:
+    "Must be an xsd:dateTimeStamp string (e.g. 2024-01-01T00:00:00Z or 2024-01-01T00:00:00+09:00)",
+});

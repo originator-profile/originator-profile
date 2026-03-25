@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { AllowedUrl } from "../allowed-url";
 import { OpCipContext } from "../context/op-cip-context";
-import { Image } from "../image";
 import { DateTimeStamp } from "../date-time-stamp";
+import { Image } from "../image";
 import { ContentAttestation } from "./content-attestation";
 
 const subject = z.object({
@@ -14,7 +14,9 @@ const subject = z.object({
     .describe("A description of the content (plain text)."),
   image: Image.optional(),
   datePublished: DateTimeStamp.optional().describe("Publication date and time"),
-  dateModified: DateTimeStamp.optional().describe("Last modified date and time"),
+  dateModified: DateTimeStamp.optional().describe(
+    "Last modified date and time",
+  ),
   author: z.array(z.string()).optional().describe("Author names"),
   editor: z.array(z.string()).optional().describe("Editor names"),
   genre: z.string().optional().describe("Genre"),

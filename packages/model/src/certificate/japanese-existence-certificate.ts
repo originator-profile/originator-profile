@@ -1,8 +1,8 @@
 import { z } from "zod";
 import { OpCipContext } from "../context/op-cip-context";
+import { DateTimeStamp } from "../date-time-stamp";
 import { Image } from "../image";
 import { OpId } from "../op-id";
-import { DateTimeStamp } from "../date-time-stamp";
 import { CertificationSystem } from "./cert-system";
 
 export const JapaneseExistenceCertificateProperties = z.object({

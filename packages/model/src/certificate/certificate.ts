@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { OpCipContext } from "../context/op-cip-context";
-import { OpId } from "../op-id";
 import { DateTimeStamp } from "../date-time-stamp";
+import { OpId } from "../op-id";
 import { CertificateProperties } from "./certificate-properties";
 
 export const Certificate = z.object({
