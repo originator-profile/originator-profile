@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { OpVc } from "../src/op-vc";
+import { OpVc } from "./op-vc";
 
 test("op vc schema is valid", () => {
   const sampleOpVc = {
