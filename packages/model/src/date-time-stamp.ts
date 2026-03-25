@@ -10,3 +10,5 @@ export const DateTimeStamp = z.iso.datetime({
   error:
     "Must be an xsd:dateTimeStamp string (e.g. 2024-01-01T00:00:00Z or 2024-01-01T00:00:00+09:00)",
 });
+
+export type DateTimeStamp = z.infer<typeof DateTimeStamp>;
