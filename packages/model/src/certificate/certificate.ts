@@ -8,8 +8,10 @@ export const Certificate = z.object({
   "@context": OpCipContext,
   type: z.tuple([z.literal("VerifiableCredential"), z.literal("Certificate")]),
   issuer: OpId,
-  validFrom: DateTimeStamp.optional().describe("Validity period start date"),
-  validUntil: DateTimeStamp.optional().describe("Validity period end date"),
+  validFrom: DateTimeStamp.optional().describe(
+    "Validity period start and time",
+  ),
+  validUntil: DateTimeStamp.optional().describe("Validity period end and time"),
   credentialSubject: CertificateProperties,
 });
 
