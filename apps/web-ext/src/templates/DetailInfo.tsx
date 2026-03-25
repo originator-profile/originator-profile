@@ -60,18 +60,16 @@ function DetailInfo({
               <h2 className="pl-4 mb-4 text-sm font-bold text-gray-700">
                 {_("DetailInfo_LinkVerification")}
               </h2>
-              <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
-                <Table>
-                  <TableRow
-                    header={_("DetailInfo_ExpectedLinkDestination")}
-                    data={linkVerification.expectedOrgName || "-"}
-                  />
-                  <TableRow
-                    header={_("DetailInfo_SourceAdOrganization")}
-                    data={linkVerification.sourceOrgName || "-"}
-                  />
-                </Table>
-              </div>
+              <Table className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200 px-3 py-2">
+                <TableRow
+                  header={_("DetailInfo_ExpectedLinkDestination")}
+                  data={linkVerification.expectedOrgName || "-"}
+                />
+                <TableRow
+                  header={_("DetailInfo_SourceAdOrganization")}
+                  data={linkVerification.sourceOrgName || "-"}
+                />
+              </Table>
             </div>
           )}
 
