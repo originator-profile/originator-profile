@@ -8,10 +8,14 @@ function isValidOrigin(val: string): boolean {
   }
 }
 
-const Item = z.string().refine(isValidOrigin, {
-  error:
-    "Origin MUST be in the format scheme://host[:port] (do not include a trailing slash or path. e.g. https://example.com)",
-});
+const Item = z.stringFormat(
+  "origin",
+  isValidOrigin,
+  {
+    error:
+      "Origin MUST be in the format scheme://host[:port] (do not include a trailing slash or path. e.g. https://example.com)",
+  },
+);
 
 export const AllowedOrigin = z
   .union([Item, z.array(Item).min(1)])

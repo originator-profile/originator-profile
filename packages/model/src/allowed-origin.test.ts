@@ -27,6 +27,12 @@ describe("AllowedOrigin バリデーション", () => {
       expect(result.error?.issues[0].message).toMatch(/scheme:\/\/host/);
     });
 
+    test('"https://example.com/" → エラーコードが invalid_format', () => {
+      const result = AllowedOrigin.safeParse("https://example.com/");
+      expect(result.success).toBe(false);
+      expect(result.error?.issues[0].code).toBe("invalid_format");
+    });
+
     test('"https://example.com/path" → エラー', () => {
       const result = AllowedOrigin.safeParse("https://example.com/path");
       expect(result.success).toBe(false);

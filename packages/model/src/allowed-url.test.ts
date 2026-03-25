@@ -42,6 +42,12 @@ describe("AllowedUrl バリデーション", () => {
       expect(result.error?.issues[0].message).toMatch(/URL Pattern/);
     });
 
+    test('"*" → エラーコードが invalid_format', () => {
+      const result = AllowedUrl.safeParse("*");
+      expect(result.success).toBe(false);
+      expect(result.error?.issues[0].code).toBe("invalid_format");
+    });
+
     test('"*" の配列 → エラー', () => {
       const result = AllowedUrl.safeParse(["*"]);
       expect(result.success).toBe(false);
