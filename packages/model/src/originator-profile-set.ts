@@ -6,6 +6,10 @@ export const OriginatorProfileSetItem = z.looseObject({
     .array(z.string().describe("Profile Annotation"))
     .optional()
     .describe("An array of Profile Annotation"),
+  /**
+   * 後方互換性のため 2026-11-01 まで非配列 WMP の OP を許容
+   * @deprecated z.string() の受け入れは非推奨。代わりに z.array(z.string()) を使用してください。
+   */
   media: z
     .union([z.string(), z.array(z.string())])
     .optional()
