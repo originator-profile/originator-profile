@@ -35,10 +35,8 @@ describe("datetime validation rejects non-xsd:dateTimeStamp formats", () => {
   });
 
   test("error message references xsd:dateTimeStamp", () => {
-    const result = DateTimeStamp.safeParse("not-a-date");
-    expect(result.success).toBe(false);
-    if (!result.success) {
-      expect(result.error.issues[0].message).toContain("xsd:dateTimeStamp");
-    }
+    expect(() => DateTimeStamp.parse("not-a-date")).toThrow(
+      "xsd:dateTimeStamp",
+    );
   });
 });
