@@ -7,21 +7,21 @@ describe("datetime validation accepts xsd:dateTimeStamp formats", () => {
   });
 
   test("positive timezone offset (+09:00)", () => {
-    expect(
-      DateTimeStamp.safeParse("2024-01-01T09:00:00+09:00").success,
-    ).toBe(true);
+    expect(DateTimeStamp.safeParse("2024-01-01T09:00:00+09:00").success).toBe(
+      true,
+    );
   });
 
   test("negative timezone offset (-05:00)", () => {
-    expect(
-      DateTimeStamp.safeParse("2024-01-01T00:00:00-05:00").success,
-    ).toBe(true);
+    expect(DateTimeStamp.safeParse("2024-01-01T00:00:00-05:00").success).toBe(
+      true,
+    );
   });
 
   test("UTC with milliseconds", () => {
-    expect(
-      DateTimeStamp.safeParse("2024-01-01T00:00:00.000Z").success,
-    ).toBe(true);
+    expect(DateTimeStamp.safeParse("2024-01-01T00:00:00.000Z").success).toBe(
+      true,
+    );
   });
 });
 
