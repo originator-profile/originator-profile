@@ -1,6 +1,5 @@
 import {
   ContentAttestationSet,
-  OpMeta,
   OriginatorProfileSet,
 } from "@originator-profile/model";
 import { CredentialsFetchFailed } from "./errors";
@@ -20,7 +19,7 @@ function getEndpoints(doc: Document, mediaType: string): string[] {
  * @param mediaType メディアタイプ
  */
 function getEmbeddedCredentials<
-  T extends OriginatorProfileSet | ContentAttestationSet | OpMeta[],
+  T extends OriginatorProfileSet | ContentAttestationSet,
 >(doc: Document = document, mediaType: string): T {
   const elements = [...doc.querySelectorAll(`script[type="${mediaType}"]`)];
   const credentialsArray = elements
@@ -85,33 +84,6 @@ export const fetchContentAttestationSet = (doc: Document) =>
 export const fetchOriginatorProfileSet = (doc: Document) =>
   fetchCredentialSet<OriginatorProfileSet>(doc, "application/ops+json");
 
-function isValidOpMeta(value: unknown): value is OpMeta {
-  if (typeof value !== "object" || value === null) {
-    return false;
-  }
-  const opMeta = value as { targetopid?: unknown };
-  return typeof opMeta.targetopid === "string" && opMeta.targetopid.length > 0;
-}
-
-export const fetchOpMeta = (doc: Document): OpMeta | undefined => {
-  const opMetas = getEmbeddedCredentials<OpMeta[]>(
-    doc,
-    "application/opmeta+json",
-  );
-
-  if (opMetas.length > 1) {
-    console.warn(
-      "Multiple OpMeta elements found. Only the first one will be used.",
-    );
-  }
-
-  const firstOpMeta = opMetas[0];
-  if (!isValidOpMeta(firstOpMeta)) {
-    return undefined;
-  }
-  return firstOpMeta;
-};
-
 export const fetchCredentials = async (
   doc: Document,
 ): Promise<FetchCredentialsResult> => {
@@ -119,10 +91,8 @@ export const fetchCredentials = async (
     fetchOriginatorProfileSet(doc),
     fetchContentAttestationSet(doc),
   ]);
-  const opMeta = fetchOpMeta(doc);
   return {
     ops,
     cas,
-    opMeta,
   };
 };

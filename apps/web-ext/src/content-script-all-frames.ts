@@ -27,7 +27,8 @@ import { frameCasExtensionMessenger } from "./components/frameCas/extension-even
 import "./utils/cors-basic-auth";
 
 credentialsMessenger.onMessage("fetchCredentials", async () => {
-  const { ops, cas, opMeta } = await fetchCredentials(document);
+  const { ops, cas } = await fetchCredentials(document);
+  const opMeta = fetchOpMeta(document);
   const sp = await fetchSiteProfile(document);
   const frameLocation: FrameLocation = {
     origin: window.origin,
