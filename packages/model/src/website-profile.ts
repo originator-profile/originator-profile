@@ -4,6 +4,7 @@ import { OpCipContext } from "./context/op-cip-context";
 import { Image } from "./image";
 import { OpId } from "./op-id";
 
+/** @deprecated 後方互換性のため 2026-10-01 まで url プロパティを許容 */
 const deprecatedSubject = z.looseObject({
   id: z.url().describe("Web site origin (format: https://<hostname>)"),
   type: z.literal("WebSite"),

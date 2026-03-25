@@ -13,6 +13,10 @@ const Item = z.stringFormat("origin", isValidOrigin, {
     "Origin MUST be in the format scheme://host[:port] (do not include a trailing slash or path. e.g. https://example.com)",
 });
 
+/**
+ * 後方互換性のため 2026-09-01 まで許容
+ * Content Attestation では allowedOrigin は非推奨です。代わりに allowedUrl を使用してください。
+ */
 export const AllowedOrigin = z
   .union([Item, z.array(Item).min(1)])
   .describe(
