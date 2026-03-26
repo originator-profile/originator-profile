@@ -1,11 +1,14 @@
 import type {
   Image,
+  Jwk,
   UnsignedContentAttestation,
 } from "@originator-profile/model";
 import assert from "assert";
 import { describe, test } from "node:test";
 import { createIntegrityMetadata } from "websri";
-import { unsignedCa } from "./content-attestation.ts";
+import { sign, unsignedCa } from "./content-attestation.ts";
+// @ts-expect-error 型定義にないため。なお Node.js v24+ であれば Error.isError が利用可能になるため、将来的には不要になるはず。
+import isError from "error.iserror";
 
 await describe("unsignedCa()", async () => {
   await test("単一文字列 content の target に対して integrity が計算される", async () => {
@@ -137,6 +140,131 @@ await describe("unsignedCa()", async () => {
     assert.strictEqual(
       result.target[0].integrity,
       `${meta1.toString()} ${meta2.toString()}`,
+    );
+  });
+
+  await test("type に ContentAttestation を含まない場合 Error", async () => {
+    const uca = {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+      ],
+      type: ["VerifiableCredential"],
+      issuer: "dns:example.com",
+      credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      target: [{ type: "TextTargetIntegrity", content: "data:text/html,test" }],
+    };
+
+    await assert.rejects(
+      unsignedCa(uca as unknown as UnsignedContentAttestation, {}),
+      isError,
+    );
+  });
+
+  await test("issuer が不正な OP ID の場合 Error", async () => {
+    const uca = {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+      ],
+      type: ["VerifiableCredential", "ContentAttestation"],
+      issuer: "invalid-issuer",
+      credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      target: [{ type: "TextTargetIntegrity", content: "data:text/html,test" }],
+    };
+
+    await assert.rejects(
+      unsignedCa(uca as unknown as UnsignedContentAttestation, {}),
+      isError,
+    );
+  });
+
+  await test("target が空配列の場合 Error", async () => {
+    const uca = {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+      ],
+      type: ["VerifiableCredential", "ContentAttestation"],
+      issuer: "dns:example.com",
+      credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      target: [],
+    };
+
+    await assert.rejects(
+      unsignedCa(uca as unknown as UnsignedContentAttestation, {}),
+      isError,
+    );
+  });
+
+  await test("@context に必須コンテキストが不足している場合 Error", async () => {
+    const uca = {
+      "@context": ["https://www.w3.org/ns/credentials/v2"],
+      type: ["VerifiableCredential", "ContentAttestation"],
+      issuer: "dns:example.com",
+      credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      target: [{ type: "TextTargetIntegrity", content: "data:text/html,test" }],
+    };
+
+    await assert.rejects(
+      unsignedCa(uca as unknown as UnsignedContentAttestation, {}),
+      isError,
+    );
+  });
+});
+
+await describe("sign()", async () => {
+  await test("type に ContentAttestation を含まない場合 Error", async () => {
+    const uca = {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+      ],
+      type: ["VerifiableCredential"],
+      issuer: "dns:example.com",
+      credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      target: [{ type: "TextTargetIntegrity", content: "data:text/html,test" }],
+    };
+
+    await assert.rejects(
+      sign(uca as unknown as UnsignedContentAttestation, {} as Jwk, {}),
+      isError,
+    );
+  });
+
+  await test("issuer が不正な OP ID の場合 Error", async () => {
+    const uca = {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+      ],
+      type: ["VerifiableCredential", "ContentAttestation"],
+      issuer: "not-a-dns-id",
+      credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      target: [{ type: "TextTargetIntegrity", content: "data:text/html,test" }],
+    };
+
+    await assert.rejects(
+      sign(uca as unknown as UnsignedContentAttestation, {} as Jwk, {}),
+      isError,
+    );
+  });
+
+  await test("target が空配列の場合 Error", async () => {
+    const uca = {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+      ],
+      type: ["VerifiableCredential", "ContentAttestation"],
+      issuer: "dns:example.com",
+      credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      target: [],
+    };
+
+    await assert.rejects(
+      sign(uca as unknown as UnsignedContentAttestation, {} as Jwk, {}),
+      isError,
     );
   });
 });

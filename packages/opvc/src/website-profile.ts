@@ -1,11 +1,12 @@
 import { parseExpirationDate } from "@originator-profile/core";
-import type { UnsignedWebsiteProfile } from "@originator-profile/model";
+import { UnsignedWebsiteProfile } from "@originator-profile/model";
 import { fetchAndSetDigestSri } from "@originator-profile/sign";
 import { addYears, getUnixTime } from "date-fns";
 
 /**
  * 未署名 Website Profile の取得
  * @param uwsp 未署名 Website Profile オブジェクト
+ * @throws {Error} 入力が UnsignedWebsiteProfile スキーマに適合しない場合
  * @return 未署名 Website Profile オブジェクト
  */
 export async function unsignedWsp(
@@ -18,6 +19,8 @@ export async function unsignedWsp(
     expiredAt?: Date | string;
   },
 ): Promise<UnsignedWebsiteProfile> {
+  UnsignedWebsiteProfile.parse(uwsp);
+
   const issuedAt: Date = new Date(issuedAtDateOrString);
 
   const expiredAt: Date =

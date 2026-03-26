@@ -1,7 +1,7 @@
 import { parseExpirationDate } from "@originator-profile/core";
-import type {
-  Jwk,
+import {
   UnsignedContentAttestation,
+  type Jwk,
 } from "@originator-profile/model";
 import {
   fetchAndSetDigestSri,
@@ -16,6 +16,7 @@ import { documentProvider } from "./document-provider.ts";
  * Content Attestation への署名
  * @param uca 未署名 Content Attestation オブジェクト
  * @param privateKey プライベート鍵
+ * @throws {Error} 入力が UnsignedContentAttestation スキーマに適合しない場合
  * @return Content Attestation
  */
 export async function sign(
@@ -29,6 +30,8 @@ export async function sign(
     expiredAt?: Date | string;
   },
 ): Promise<string> {
+  UnsignedContentAttestation.parse(uca);
+
   const issuedAt: Date = new Date(issuedAtDateOrString);
 
   const expiredAt: Date =
@@ -48,6 +51,7 @@ export async function sign(
 /**
  * 未署名 Content Attestation の取得
  * @param uca 未署名 Content Attestation オブジェクト
+ * @throws {Error} 入力が UnsignedContentAttestation スキーマに適合しない場合
  * @throws {BadRequestError} 検証対象のコンテンツが存在しない/コンテンツにアクセスできない/Integrityの計算に失敗
  * @return 未署名 Content Attestation オブジェクト
  */
@@ -61,6 +65,8 @@ export async function unsignedCa(
     expiredAt?: Date | string;
   },
 ): Promise<UnsignedContentAttestation> {
+  UnsignedContentAttestation.parse(uca);
+
   const issuedAt: Date = new Date(issuedAtDateOrString);
 
   const expiredAt: Date =
