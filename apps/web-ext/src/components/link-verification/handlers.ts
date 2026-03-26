@@ -132,11 +132,10 @@ export const handleVerification = async ({
     verificationResults.set(tabId, result);
 
     // 履歴ナビゲーション用に結果をキャッシュ
-    verificationCache.update(tabId, (current) => {
-      const next = current || {};
-      next[url] = result;
-      return next;
-    });
+    verificationCache.update(tabId, (current) => ({
+      ...(current ?? {}),
+      [url]: result,
+    }));
 
     if (result.status !== "matched") {
       const reason = result.reason ?? "Unknown Error";

@@ -37,6 +37,14 @@ export function buildWarningSearchParams(
   return sp;
 }
 
+/** {@link URLSearchParams.get} の null を undefined に変換する（オプショナルフィールド用） */
+function getOptionalParam(
+  sp: URLSearchParams,
+  key: string,
+): string | undefined {
+  return sp.get(key) ?? undefined;
+}
+
 /**
  * {@link URLSearchParams} を {@link WarningSearchParams} に変換する
  *
@@ -48,10 +56,10 @@ export function parseWarningSearchParams(
   return {
     target: sp.get("target") ?? "",
     reason: sp.get("reason") ?? "",
-    sourceOrg: sp.get("sourceOrg") ?? undefined,
-    destOrg: sp.get("destOrg") ?? undefined,
-    expectedOrg: sp.get("expectedOrg") ?? undefined,
-    original: sp.get("original") ?? undefined,
+    sourceOrg: getOptionalParam(sp, "sourceOrg"),
+    destOrg: getOptionalParam(sp, "destOrg"),
+    expectedOrg: getOptionalParam(sp, "expectedOrg"),
+    original: getOptionalParam(sp, "original"),
     isNewTab: sp.get("isNewTab") === "true" ? true : undefined,
   };
 }

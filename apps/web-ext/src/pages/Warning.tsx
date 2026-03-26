@@ -61,20 +61,22 @@ export default function Warning() {
   const safeOriginal = original && isValidUrl(original) ? original : null;
   const isNewTab = isNewTabParam ?? false;
 
-  const handleProceed = async () => {
-    if (safeTarget) {
-      try {
-        // 検証状態をクリアして、次の onCompleted で再検証されないようにする
-        await chrome.runtime.sendMessage({
-          type: "clearPendingVerification",
-        });
-      } catch (error) {
-        console.warn("Failed to notify background script:", error);
-      } finally {
-        // Navigate to the target URL regardless of message success
-        window.location.replace(safeTarget);
+  const handleProceed = () => {
+    void (async () => {
+      if (safeTarget) {
+        try {
+          // 検証状態をクリアして、次の onCompleted で再検証されないようにする
+          await chrome.runtime.sendMessage({
+            type: "clearPendingVerification",
+          });
+        } catch (error) {
+          console.warn("Failed to notify background script:", error);
+        } finally {
+          // Navigate to the target URL regardless of message success
+          window.location.replace(safeTarget);
+        }
       }
-    }
+    })();
   };
 
   return (
