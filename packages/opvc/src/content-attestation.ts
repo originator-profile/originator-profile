@@ -24,7 +24,10 @@ type UnsignedCaOptions = ContentAttestationTimingOptions & {
   documentProvider?: DocumentProvider;
 };
 
-function assertValidDate(value: Date, fieldName: "issuedAt" | "expiredAt"): void {
+function assertValidDate(
+  value: Date,
+  fieldName: "issuedAt" | "expiredAt",
+): void {
   if (Number.isNaN(value.getTime())) {
     throw new BadRequestError(`${fieldName} must be a valid date.`);
   }
