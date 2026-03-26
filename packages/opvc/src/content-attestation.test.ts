@@ -292,6 +292,23 @@ await describe("signByServer()", async () => {
     assert.strictEqual(jwt, "jwt-direct");
   });
 
+  await test("CA server が JSON 文字列の JWT を返した場合は展開して返す", async () => {
+    endpointResponse = async () =>
+      new Response(JSON.stringify("jwt-direct"), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+    const jwt = await signByServer(createUnsignedContentAttestation(), {
+      endpoint,
+      accessToken: "test-access-token",
+    });
+
+    assert.strictEqual(jwt, "jwt-direct");
+  });
+
   await test("非 2xx 応答はエラーになる", async () => {
     endpointResponse = async () =>
       new Response("forbidden", {

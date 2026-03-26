@@ -45,7 +45,7 @@ function parseDates({
   const expiredAt: Date =
     typeof expiredAtDateOrString === "string"
       ? parseExpirationDate(expiredAtDateOrString)
-      : expiredAtDateOrString;
+      : new Date(expiredAtDateOrString);
 
   assertValidDate(issuedAt, "issuedAt");
   assertValidDate(expiredAt, "expiredAt");
