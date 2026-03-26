@@ -358,8 +358,13 @@ function create_uca_list( \WP_Post $post, string $issuer_id, ?string $uuid = nul
  * @return string HTML
  */
 function content_to_html( string $content, string $template, string $title = '' ): string {
-	$html = \str_replace( '%TITLE%', $title, $template );
-	return \str_replace( '%CONTENT%', $content, $html );
+	return \strtr(
+		$template,
+		array(
+			'%TITLE%'   => $title,
+			'%CONTENT%' => $content,
+		)
+	);
 }
 
 /**
