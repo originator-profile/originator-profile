@@ -22,6 +22,7 @@ import {
 } from "@originator-profile/verify";
 import JsonView from "@uiw/react-json-view";
 import React from "react";
+import { twMerge } from "tailwind-merge";
 import { SupportedVerifiedCas } from "./credentials";
 
 interface CodedError extends Error {
@@ -152,7 +153,7 @@ function MultipleValidity({
   className?: string;
 }) {
   return (
-    <div className={`text-gray-700 mb-1 ${className ?? ""}`}>
+    <div className={twMerge("text-gray-700 mb-1", className)}>
       <p className="font-bold mb-1">
         {isExpiredSoon(period.expiredAt) ? (
           <span className="flex" title="The certificate is about to expire">
@@ -234,7 +235,7 @@ function DisplayStatus({
         icon="solar:alt-arrow-right-bold"
         className="size-5 transition-transform icon"
       />
-      <Icon icon={iconName} className={`size-5 ml-1 ${color}`} />
+      <Icon icon={iconName} className={twMerge("size-5 ml-1", color)} />
       <span className="ml-1">{label}</span>
     </summary>
   );
@@ -336,7 +337,7 @@ function DetailItem({
   return (
     <details
       open={isOpen}
-      className={`[&[open]>summary>.icon]:rotate-90 ${className ?? ""}`}
+      className={twMerge("[&[open]>summary>.icon]:rotate-90", className)}
     >
       <DisplayStatus label={label} icon={icon} />
       {children}
