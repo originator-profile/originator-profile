@@ -15,79 +15,6 @@ import type {
 import { getVerificationResult } from "./verification";
 
 /**
- * 広告クリックを処理し、検証情報をタブに紐付ける
- * @param params - 広告クリック情報
- */
-export const handleAdClicked = ({
-  tabId,
-  targetOpId,
-  sourceOrgName,
-  expectedOrgName,
-  isNewTab,
-  sourceUrl,
-}: HandleAdClickedParams) => {
-  // 新規タブでのクリックでなければ、元タブの検証状態を更新
-  if (!isNewTab) {
-    pendingOpIdVerification.set(tabId, {
-      targetOpId,
-      sourceOrgName,
-      expectedOrgName,
-      sourceUrl,
-    });
-    return;
-  }
-
-  // 新規タブへの検証情報引き渡し（openerTabId ベース）
-  const openerTabs = recentlyOpenedTabs.get(tabId);
-  if (!openerTabs || openerTabs.length === 0) return;
-
-  // FIFOで消費（複数クリック時の順序を維持）
-  const newTabId = openerTabs.shift();
-  if (newTabId === undefined) return;
-  if (openerTabs.length === 0) {
-    recentlyOpenedTabs.delete(tabId);
-  }
-  pendingOpIdVerification.set(newTabId, {
-    targetOpId,
-    sourceOrgName,
-    expectedOrgName,
-    sourceUrl,
-    isNewTab: true,
-  });
-  // 新規タブが既に読み込み完了している場合、onCompleted は既に通過済みなので
-  // ここで即座に検証を実行する（レースコンディション対策）
-  void chrome.tabs
-    .get(newTabId)
-    .then(async (tab) => {
-      if (!pendingOpIdVerification.get(newTabId)) return;
-      if (
-        tab.status === "complete" &&
-        tab.url &&
-        !tab.url.startsWith(chrome.runtime.getURL(""))
-      ) {
-        await handleVerification({
-          tabId: newTabId,
-          url: tab.url,
-          targetOpId,
-          sourceOrgName,
-          expectedOrgName,
-          sourceUrl,
-          isNewTab: true,
-        });
-      }
-    })
-    .catch(() => {
-      // タブが既に閉じられている場合は無視
-    });
-
-  // 元タブ側の検証情報をクリア
-  const currentMainPending = pendingOpIdVerification.get(tabId);
-  if (currentMainPending?.targetOpId === targetOpId) {
-    pendingOpIdVerification.delete(tabId);
-  }
-};
-
-/**
  * 検証失敗時に警告ページへリダイレクトする
  * @param params - リダイレクト情報
  */
@@ -164,6 +91,79 @@ export const handleVerification = async ({
     pendingOpIdVerification.delete(tabId);
   } finally {
     verificationInProgress.delete(tabId);
+  }
+};
+
+/**
+ * 広告クリックを処理し、検証情報をタブに紐付ける
+ * @param params - 広告クリック情報
+ */
+export const handleAdClicked = ({
+  tabId,
+  targetOpId,
+  sourceOrgName,
+  expectedOrgName,
+  isNewTab,
+  sourceUrl,
+}: HandleAdClickedParams) => {
+  // 新規タブでのクリックでなければ、元タブの検証状態を更新
+  if (!isNewTab) {
+    pendingOpIdVerification.set(tabId, {
+      targetOpId,
+      sourceOrgName,
+      expectedOrgName,
+      sourceUrl,
+    });
+    return;
+  }
+
+  // 新規タブへの検証情報引き渡し（openerTabId ベース）
+  const openerTabs = recentlyOpenedTabs.get(tabId);
+  if (!openerTabs || openerTabs.length === 0) return;
+
+  // FIFOで消費（複数クリック時の順序を維持）
+  const newTabId = openerTabs.shift();
+  if (newTabId === undefined) return;
+  if (openerTabs.length === 0) {
+    recentlyOpenedTabs.delete(tabId);
+  }
+  pendingOpIdVerification.set(newTabId, {
+    targetOpId,
+    sourceOrgName,
+    expectedOrgName,
+    sourceUrl,
+    isNewTab: true,
+  });
+  // 新規タブが既に読み込み完了している場合、onCompleted は既に通過済みなので
+  // ここで即座に検証を実行する（レースコンディション対策）
+  void chrome.tabs
+    .get(newTabId)
+    .then(async (tab) => {
+      if (!pendingOpIdVerification.get(newTabId)) return;
+      if (
+        tab.status === "complete" &&
+        tab.url &&
+        !tab.url.startsWith(chrome.runtime.getURL(""))
+      ) {
+        await handleVerification({
+          tabId: newTabId,
+          url: tab.url,
+          targetOpId,
+          sourceOrgName,
+          expectedOrgName,
+          sourceUrl,
+          isNewTab: true,
+        });
+      }
+    })
+    .catch(() => {
+      // タブが既に閉じられている場合は無視
+    });
+
+  // 元タブ側の検証情報をクリア
+  const currentMainPending = pendingOpIdVerification.get(tabId);
+  if (currentMainPending?.targetOpId === targetOpId) {
+    pendingOpIdVerification.delete(tabId);
   }
 };
 
