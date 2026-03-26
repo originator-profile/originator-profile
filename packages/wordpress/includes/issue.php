@@ -16,9 +16,6 @@ use const Profile\Config\PROFILE_DEFAULT_CA_TARGET_HTML;
 require_once __DIR__ . '/class-casapiauthclient.php';
 use Profile\CasApiAuthClient\CasApiAuthClient;
 
-require_once __DIR__ . '/oidc-callback.php';
-use function Profile\CasApiOidcCallback\init as init_oidc_callback;
-
 require_once __DIR__ . '/class-casapiauthccsp.php';
 use Profile\CasApiAuthClient\CasApiAuthCCSP;
 
@@ -38,9 +35,6 @@ function init() {
 	\add_action( 'transition_post_status', '\Profile\Issue\private_post', 20, 3 );
 	\add_action( 'before_delete_post', '\Profile\Issue\delete_post', 10, 1 );
 	\add_filter( 'wp_generate_attachment_metadata', '\Profile\Issue\update_attachment_integrity_metadata', 10, 2 );
-
-	// Initialize OIDC callback page.
-	init_oidc_callback();
 }
 
 /**
