@@ -78,7 +78,7 @@ TextTargetIntegrity
 例:
 
 ```
-.wp-block-post-content>*:not(.post-nav-links)
+.wp-block-post-title, .wp-block-post-content>*:not(.post-nav-links)
 ```
 
 **検証対象要素の存在するHTML**
@@ -91,13 +91,14 @@ TextTargetIntegrity
   <head>
     <meta charset="UTF-8" />
   </head>
-  <body class="wp-block-post-content">
-    %CONTENT%
+  <body>
+    <h1 class="wp-block-post-title">%TITLE%</h1>
+    <div class="wp-block-post-content">%CONTENT%</div>
   </body>
 </html>
 ```
 
-`%CONTENT%` は `apply_filters()` 適用後の WordPress 投稿内容に置換され、リクエストコンテンツ `target[0].content` プロパティとしてCAサーバーに送信されます。
+`%TITLE%` は投稿タイトルに、`%CONTENT%` は `apply_filters()` 適用後の WordPress 投稿内容に置換され、リクエストコンテンツ `target[0].content` プロパティとしてCAサーバーに送信されます。
 
 **[CA Presentation Type]: CASを埋め込み形式かリンク形式か指定**
 
