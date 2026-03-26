@@ -56,7 +56,11 @@ const decodeJwtPayload = <T = unknown>(jwt: string): T | undefined => {
     const payload = jwt.split(".")[1];
     if (payload) {
       const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-      const binaryString = atob(base64);
+      const padded = base64.padEnd(
+        base64.length + ((4 - (base64.length % 4)) % 4),
+        "=",
+      );
+      const binaryString = atob(padded);
       const bytes = Uint8Array.from(binaryString, (c) => c.codePointAt(0) ?? 0);
       return JSON.parse(new TextDecoder().decode(bytes)) as T;
     }
