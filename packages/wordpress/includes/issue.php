@@ -291,12 +291,12 @@ function create_uca_list( \WP_Post $post, string $issuer_id, ?string $uuid = nul
 	}
 
 	$pages = $postdata['pages'];
+	$title = \esc_html( \get_the_title( $post ) );
 
 	foreach ( $pages as $page => $content ) {
 		++$page;
 
 		$content            = \apply_filters( 'the_content', $content );
-		$title              = \esc_html( \get_the_title( $post ) );
 		$html               = content_to_html( $content, \get_option( 'profile_ca_target_html', PROFILE_DEFAULT_CA_TARGET_HTML ), $title );
 		$external_resources = external_resources_from_html( $html, '//*[contains(@class, "wp-block-image")]//img[@integrity]' );
 
