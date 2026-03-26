@@ -481,6 +481,52 @@ _See code: [src/commands/wsp/unsigned.ts](https://github.com/originator-profile/
 <!-- commandsstop -->
 <!-- prettier-ignore-end -->
 
+## Node.js から利用する
+
+`@originator-profile/opvc` は TypeScript/JavaScript からも利用できます。
+
+### 秘密鍵を利用したContent Attestation の作成
+
+ローカルの秘密鍵で署名する場合は `ContentAttestation.sign()` を使います。
+
+```ts
+import { ContentAttestation } from "@originator-profile/opvc";
+
+const jwt = await ContentAttestation.sign(input, privateKey, {
+  issuedAt: new Date(),
+  expiredAt: "2027-03-31",
+});
+```
+
+### 未署名 Content Attestation の取得
+
+未署名の Content Attestation が必要な場合は `ContentAttestation.unsignedCa()` を使えます。
+
+```ts
+import { ContentAttestation } from "@originator-profile/opvc";
+
+const uca = await ContentAttestation.unsignedCa(input, {
+  issuedAt: new Date(),
+  expiredAt: "2027-03-31",
+});
+```
+
+### CA Server経由での署名
+
+CA server で署名する場合は `ContentAttestation.signByServer()` を使います。
+内部では未署名 Content Attestation を組み立てて CA server に送信し、返却された JWT を受け取ります。
+
+```ts
+import { ContentAttestation } from "@originator-profile/opvc";
+
+const jwt = await ContentAttestation.signByServer(input, {
+  endpoint: "https://example.com/ca",
+  accessToken: process.env.CA_SERVER_ACCESS_TOKEN!,
+  issuedAt: new Date(),
+  expiredAt: "2027-03-31",
+});
+```
+
 ## Development
 
 ```sh
