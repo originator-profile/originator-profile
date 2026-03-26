@@ -24,6 +24,12 @@ type UnsignedCaOptions = ContentAttestationTimingOptions & {
   documentProvider?: DocumentProvider;
 };
 
+function assertValidDate(value: Date, fieldName: "issuedAt" | "expiredAt"): void {
+  if (Number.isNaN(value.getTime())) {
+    throw new BadRequestError(`${fieldName} must be a valid date.`);
+  }
+}
+
 function parseDates({
   issuedAt: issuedAtDateOrString = new Date(),
   expiredAt: expiredAtDateOrString = addYears(new Date(), 1),
@@ -37,6 +43,9 @@ function parseDates({
     typeof expiredAtDateOrString === "string"
       ? parseExpirationDate(expiredAtDateOrString)
       : expiredAtDateOrString;
+
+  assertValidDate(issuedAt, "issuedAt");
+  assertValidDate(expiredAt, "expiredAt");
 
   return { issuedAt, expiredAt };
 }
@@ -61,11 +70,11 @@ async function prepareUnsignedCa(
   }
 
   return {
+    ...uca,
     iss: uca.issuer,
     sub: uca.credentialSubject.id,
     iat: getUnixTime(issuedAt),
     exp: getUnixTime(expiredAt),
-    ...uca,
   };
 }
 
@@ -78,20 +87,9 @@ async function prepareUnsignedCa(
 export async function sign(
   uca: UnsignedContentAttestation,
   privateKey: Jwk,
-  {
-    issuedAt: issuedAtDateOrString = new Date(),
-    expiredAt: expiredAtDateOrString = addYears(new Date(), 1),
-  }: {
-    issuedAt?: Date | string;
-    expiredAt?: Date | string;
-  },
+  options: ContentAttestationTimingOptions = {},
 ): Promise<string> {
-  const issuedAt: Date = new Date(issuedAtDateOrString);
-
-  const expiredAt: Date =
-    typeof expiredAtDateOrString === "string"
-      ? parseExpirationDate(expiredAtDateOrString)
-      : expiredAtDateOrString;
+  const { issuedAt, expiredAt } = parseDates(options);
 
   uca.credentialSubject.id ??= `urn:uuid:${crypto.randomUUID()}`;
 
@@ -118,6 +116,9 @@ export async function unsignedCa(
 /**
  * CA server 経由で Content Attestation を作成
  * @param uca 未署名 Content Attestation オブジェクト
+ * @param options Content Attestation の生成オプション
+ * @param options.endpoint CA server のエンドポイント URL
+ * @param options.accessToken CA server 呼び出しに利用する Bearer トークン
  * @return JWT でエンコードされた Content Attestation
  */
 export async function signByServer(
@@ -143,10 +144,24 @@ export async function signByServer(
   });
 
   if (!response.ok) {
-    throw new Error(`CA API error: ${response.status} ${response.statusText}`);
+    const responseBody = await response.text();
+    throw new Error(
+      `CA API error: ${response.status} ${response.statusText}: ${responseBody}`,
+    );
   }
 
-  const result = (await response.json()) as unknown;
+  const responseBody = (await response.text()).trim();
+  if (responseBody === "") {
+    throw new Error("CA API returned no JWT.");
+  }
+
+  let result: unknown;
+  try {
+    result = JSON.parse(responseBody) as unknown;
+  } catch {
+    return responseBody;
+  }
+
   if (typeof result === "string") {
     return result;
   }

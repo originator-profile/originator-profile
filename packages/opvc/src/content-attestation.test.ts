@@ -3,6 +3,7 @@ import type {
   UnsignedContentAttestation,
 } from "@originator-profile/model";
 import assert from "assert";
+import { BadRequestError } from "http-errors-enhanced";
 import { afterEach, beforeEach, describe, mock, test } from "node:test";
 import { createIntegrityMetadata } from "websri";
 import { signByServer, unsignedCa } from "./content-attestation.ts";
@@ -167,6 +168,28 @@ await describe("unsignedCa()", async () => {
       `${meta1.toString()} ${meta2.toString()}`,
     );
   });
+
+  await test("無効な issuedAt は BadRequestError になる", async () => {
+    await assert.rejects(
+      unsignedCa(createUnsignedContentAttestation(), {
+        issuedAt: "not-a-date",
+      }),
+      (error: unknown) =>
+        error instanceof BadRequestError &&
+        error.message === "issuedAt must be a valid date.",
+    );
+  });
+
+  await test("無効な expiredAt は BadRequestError になる", async () => {
+    await assert.rejects(
+      unsignedCa(createUnsignedContentAttestation(), {
+        expiredAt: "not-a-date",
+      }),
+      (error: unknown) =>
+        error instanceof BadRequestError &&
+        error.message === "expiredAt must be a valid date.",
+    );
+  });
 });
 
 await describe("signByServer()", async () => {
@@ -252,6 +275,23 @@ await describe("signByServer()", async () => {
     assert.strictEqual(body.target[0].content, undefined);
   });
 
+  await test("CA server が文字列 JWT を直接返した場合はそのまま返す", async () => {
+    endpointResponse = async () =>
+      new Response("jwt-direct", {
+        status: 200,
+        headers: {
+          "Content-Type": "text/plain",
+        },
+      });
+
+    const jwt = await signByServer(createUnsignedContentAttestation(), {
+      endpoint,
+      accessToken: "test-access-token",
+    });
+
+    assert.strictEqual(jwt, "jwt-direct");
+  });
+
   await test("非 2xx 応答はエラーになる", async () => {
     endpointResponse = async () =>
       new Response("forbidden", {
@@ -264,7 +304,7 @@ await describe("signByServer()", async () => {
         endpoint,
         accessToken: "test-access-token",
       }),
-      /CA API error: 403 Forbidden/,
+      /CA API error: 403 Forbidden: forbidden/,
     );
   });
 
@@ -283,6 +323,20 @@ await describe("signByServer()", async () => {
         accessToken: "test-access-token",
       }),
       /CA API returned no JWT\./,
+    );
+  });
+
+  await test("fetch が例外を投げた場合はそのまま reject される", async () => {
+    endpointResponse = async () => {
+      throw new TypeError("network down");
+    };
+
+    await assert.rejects(
+      signByServer(createUnsignedContentAttestation(), {
+        endpoint,
+        accessToken: "test-access-token",
+      }),
+      /network down/,
     );
   });
 });
