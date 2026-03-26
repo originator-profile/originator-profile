@@ -2,6 +2,7 @@ import {
   ContentAttestationSet,
   OriginatorProfileSet,
 } from "@originator-profile/model";
+import { getEmbeddedData } from "../get-embedded-data";
 import { CredentialsFetchFailed } from "./errors";
 import { FetchCredentialSetResult, FetchCredentialsResult } from "./types";
 
@@ -14,40 +15,13 @@ function getEndpoints(doc: Document, mediaType: string): string[] {
 }
 
 /**
- * 文書内の {mediaType} のデータの取得
- * @param doc Document オブジェクト
- * @param mediaType メディアタイプ
- */
-function getEmbeddedCredentials<
-  T extends OriginatorProfileSet | ContentAttestationSet,
->(doc: Document = document, mediaType: string): T {
-  const elements = [...doc.querySelectorAll(`script[type="${mediaType}"]`)];
-  const credentialsArray = elements
-    .map((elem) => {
-      const text = elem.textContent;
-      if (typeof text !== "string") {
-        return undefined;
-      }
-      try {
-        const json = JSON.parse(text);
-        return json;
-      } catch (e: unknown) {
-        return undefined;
-      }
-    })
-    .filter((e) => typeof e !== "undefined");
-
-  return credentialsArray.flat() as T;
-}
-
-/**
  * {mediaType} のデータの取得
  * @param doc Document オブジェクト
  */
 async function fetchCredentialSet<
   T extends OriginatorProfileSet | ContentAttestationSet,
 >(doc: Document, mediaType: string): Promise<FetchCredentialSetResult<T>> {
-  let profiles = getEmbeddedCredentials<T>(doc, mediaType);
+  let profiles = getEmbeddedData<T>(doc, mediaType);
   try {
     const profileEndpoints = getEndpoints(doc, mediaType);
 
