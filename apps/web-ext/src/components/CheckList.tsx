@@ -607,11 +607,14 @@ function ContentAttestationSetCheck({
 }) {
   const isError = cas instanceof Error;
   const isVerifyFailed = cas instanceof CasVerifyFailed;
-  const { shouldOpen } = isVerifyFailed
-    ? analyzeValidity(cas.result, casToSources)
-    : !isError && cas.length
-      ? analyzeValidity(cas, casToSources)
-      : { shouldOpen: undefined };
+  const canAnalyzeCas = !isError && cas.length > 0;
+  let shouldOpen;
+
+  if (isVerifyFailed) {
+    shouldOpen = analyzeValidity(cas.result, casToSources)?.shouldOpen;
+  } else if (canAnalyzeCas) {
+    shouldOpen = analyzeValidity(cas, casToSources)?.shouldOpen;
+  }
 
   return (
     <ResultItem
@@ -622,7 +625,7 @@ function ContentAttestationSetCheck({
       className="pl-4 mb-2"
     >
       {isVerifyFailed && <ContentAttestationCheck cas={cas.result} />}
-      {!isError && cas.length > 0 && <ContentAttestationCheck cas={cas} />}
+      {canAnalyzeCas && <ContentAttestationCheck cas={cas} />}
     </ResultItem>
   );
 }
