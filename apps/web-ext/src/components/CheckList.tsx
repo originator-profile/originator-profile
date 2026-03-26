@@ -21,7 +21,9 @@ import {
   VerifiedSp,
 } from "@originator-profile/verify";
 import JsonView from "@uiw/react-json-view";
+import get from "just-safe-get";
 import React from "react";
+import { twMerge } from "tailwind-merge";
 import { SupportedVerifiedCas } from "./credentials";
 
 interface CodedError extends Error {
@@ -29,10 +31,16 @@ interface CodedError extends Error {
 }
 
 type DetailItemProps = {
-  label: string;
+  label: React.ReactNode;
   icon: "check" | "cancel" | "null";
+  isOpen?: boolean;
   children: React.ReactNode;
   className?: string;
+};
+
+type Period = {
+  issuedAt: Date;
+  expiredAt: Date;
 };
 
 function isCodedError(error: unknown): error is CodedError {
@@ -45,11 +53,161 @@ function findError(codedErrors: CodedError[], codes: string[]) {
   return codedErrors.find((error) => codes.includes(error.code));
 }
 
+function isObj(v: unknown): v is Record<string, unknown> {
+  return typeof v === "object" && v !== null;
+}
+
+function toStringDate(v: unknown): string | undefined {
+  if (v instanceof Date) return v.toISOString();
+  if (typeof v === "string") return v;
+  return undefined;
+}
+
+function getByPaths<T = unknown>(
+  value: unknown,
+  paths: (string | string[])[],
+): T | undefined {
+  if (!isObj(value)) return undefined;
+
+  for (const path of paths) {
+    const result = get(value, path);
+    if (result !== undefined) return result as T;
+  }
+
+  return undefined;
+}
+
+function findIssuer(value: unknown): string | undefined {
+  const raw = getByPaths(value, [
+    ["doc", "issuer"],
+    ["result", "doc", "issuer"],
+  ]);
+  return typeof raw === "string" ? raw : undefined;
+}
+
+function findMediaName(value: unknown): string | undefined {
+  const raw = getByPaths(value, [["doc", "credentialSubject", "name"]]);
+  return typeof raw === "string" ? raw : undefined;
+}
+
+function findIssuedAt(value: unknown): Date | undefined {
+  const raw = getByPaths(value, [["issuedAt"], ["result", "issuedAt"]]);
+  return raw instanceof Date ? raw : undefined;
+}
+
+function findExpiredAt(value: unknown): Date | undefined {
+  const raw = getByPaths(value, [["expiredAt"], ["result", "expiredAt"]]);
+  return raw instanceof Date ? raw : undefined;
+}
+
+function isExpiredSoon(expiredAt: Date | undefined, months = 1): boolean {
+  if (!expiredAt) return false;
+
+  const now = new Date();
+  const threshold = new Date();
+  threshold.setMonth(threshold.getMonth() + months);
+
+  return expiredAt <= threshold && expiredAt >= now;
+}
+
+function getCommonPeriod(periods: Period[]): Period | undefined {
+  if (periods.length === 0) return undefined;
+
+  const start = new Date(
+    Math.max(...periods.map((period) => period.issuedAt.getTime())),
+  );
+
+  const end = new Date(
+    Math.min(...periods.map((period) => period.expiredAt.getTime())),
+  );
+
+  return start.getTime() <= end.getTime()
+    ? { issuedAt: start, expiredAt: end }
+    : undefined;
+}
+
+function extractPeriods(sources: unknown[]): Period[] {
+  return sources.flatMap((source) => {
+    const issuedAt = findIssuedAt(source);
+    const expiredAt = findExpiredAt(source);
+    return issuedAt && expiredAt ? [{ issuedAt, expiredAt }] : [];
+  });
+}
+
+function MultipleValidity({
+  period,
+  className,
+}: {
+  period: Period;
+  className?: string;
+}) {
+  return (
+    <div className={twMerge("text-gray-700 mb-1", className)}>
+      <p className="font-bold mb-1">
+        {isExpiredSoon(period.expiredAt) ? (
+          <span className="flex" title="The certificate is about to expire">
+            Common Validity Period
+            <Icon
+              icon="ic:round-warning"
+              className="size-4 ml-1 text-caution"
+            />
+          </span>
+        ) : (
+          "Common Validity Period"
+        )}
+      </p>
+      <p>
+        {toStringDate(period.issuedAt)} ～ {toStringDate(period.expiredAt)}
+      </p>
+    </div>
+  );
+}
+
+function opToSources(
+  op: OpVerificationFailure | OpDecodingFailure | VerifiedOp | DecodedOp,
+): unknown[] {
+  return [op.core, ...(op.annotations ?? []), ...(op.media ?? [])];
+}
+
+function opsToSources(
+  originators: OpsVerificationFailure | OpsDecodingFailure | VerifiedOps,
+): unknown[] {
+  const list = originators.map((op) => (op instanceof Error ? op.result : op));
+  return list.flatMap(opToSources);
+}
+
+function spToSources(sp: SpVerificationResult): unknown[] {
+  const originators =
+    sp instanceof Error ? sp.result.originators : sp.originators;
+  const wsp = sp instanceof Error ? sp.result.sites : sp.sites;
+
+  const opSources =
+    originators instanceof Error
+      ? opsToSources(originators.result)
+      : opsToSources(originators);
+
+  return [...opSources, ...wsp];
+}
+
+function casToSources(cas: CasVerificationFailure | VerifiedCas): unknown[] {
+  return cas.map((ca) => ca.attestation);
+}
+
+function analyzeValidity<T>(value: T, toSources: (value: T) => unknown[]) {
+  const sources = toSources(value);
+  const periods = extractPeriods(sources);
+
+  return {
+    commonPeriod: getCommonPeriod(periods),
+    shouldOpen: periods.some((p) => isExpiredSoon(p.expiredAt)),
+  };
+}
+
 function DisplayStatus({
   label,
   icon,
 }: {
-  label: string;
+  label: React.ReactNode;
   icon: "check" | "cancel" | "null";
 }) {
   const iconMap = {
@@ -66,7 +224,7 @@ function DisplayStatus({
         icon="solar:alt-arrow-right-bold"
         className="size-5 transition-transform icon"
       />
-      <Icon icon={iconName} className={`size-5 ml-1 ${color}`} />
+      <Icon icon={iconName} className={twMerge("size-5 ml-1", color)} />
       <span className="ml-1">{label}</span>
     </summary>
   );
@@ -92,6 +250,11 @@ function DisplayResults({
       return { error: "Failed to serialize payload" };
     }
   })();
+  const issuer = findIssuer(payload);
+  const issuedAt = findIssuedAt(payload);
+  const expiredAt = findExpiredAt(payload);
+  const issuedAtStr = toStringDate(issuedAt);
+  const expiredAtStr = toStringDate(expiredAt);
 
   return (
     <div className={className}>
@@ -113,6 +276,32 @@ function DisplayResults({
           <p>{message}</p>
         </div>
       )}
+      {issuer && (
+        <div className="text-gray-700 mb-1">
+          <p className="font-bold mb-1">Issuer</p>
+          <p>{issuer}</p>
+        </div>
+      )}
+      {issuedAtStr && expiredAtStr && (
+        <div className="text-gray-700 mb-1">
+          <p className="font-bold mb-1">
+            {isExpiredSoon(expiredAt) ? (
+              <span className="flex" title="The certificate is about to expire">
+                Validity Period
+                <Icon
+                  icon="ic:round-warning"
+                  className="size-4 ml-1 text-caution"
+                />
+              </span>
+            ) : (
+              "Validity Period"
+            )}
+          </p>
+          <p>
+            {issuedAtStr} ～ {expiredAtStr}
+          </p>
+        </div>
+      )}
       {showPayload ? (
         <div className="text-gray-700 mb-1">
           <p className="font-bold mb-1">payload</p>
@@ -127,9 +316,18 @@ function DisplayResults({
   );
 }
 
-function DetailItem({ label, icon, children, className }: DetailItemProps) {
+function DetailItem({
+  label,
+  icon,
+  isOpen = false,
+  children,
+  className,
+}: DetailItemProps) {
   return (
-    <details className={`[&[open]>summary>.icon]:rotate-90 ${className ?? ""}`}>
+    <details
+      open={isOpen}
+      className={twMerge("[&[open]>summary>.icon]:rotate-90", className)}
+    >
       <DisplayStatus label={label} icon={icon} />
       {children}
     </details>
@@ -143,13 +341,15 @@ function ResultItem({
   value,
   showPayload = true,
   isVerified = true,
+  isOpen = false,
   children,
   className,
 }: {
-  label: string;
+  label: React.ReactNode;
   value: unknown;
   showPayload?: boolean;
   isVerified?: boolean;
+  isOpen?: boolean;
   children?: React.ReactNode;
   className?: string;
 }) {
@@ -160,6 +360,7 @@ function ResultItem({
     <DetailItem
       label={label}
       icon={isError ? "cancel" : isVerified ? "check" : "null"}
+      isOpen={isOpen || isError || isExpiredSoon(findExpiredAt(value))}
       className={className}
     >
       {isCodeError ? (
@@ -216,8 +417,10 @@ function DisplayOriginators({
 }: {
   op: OpVerificationFailure | OpDecodingFailure | VerifiedOp | DecodedOp;
 }) {
+  const { commonPeriod } = analyzeValidity(op, opToSources);
   return (
     <div className="ml-7">
+      {commonPeriod && <MultipleValidity period={commonPeriod} />}
       <ResultItem
         label={"Core Profile"}
         value={op.core}
@@ -257,16 +460,32 @@ function OriginatorsCheckList({
 }: {
   originators: OpsVerificationFailure | OpsDecodingFailure | VerifiedOps;
 }) {
+  const { commonPeriod } = analyzeValidity(originators, opsToSources);
   return (
     <div className="ml-7">
+      {commonPeriod && <MultipleValidity period={commonPeriod} />}
       {originators.map((op, index) => {
         const isError = op instanceof Error;
+        const name = (isError ? op.result.media : op.media)?.flatMap(
+          (media) => {
+            const n = findMediaName(media);
+            return n ? [n] : [];
+          },
+        );
+        const { shouldOpen } = isError
+          ? analyzeValidity(op.result, opToSources)
+          : analyzeValidity(op, opToSources);
         return (
           <ResultItem
             key={index}
-            label={`Originator Profile #${index}`}
+            label={
+              <span title={name?.join(",")}>
+                {`Originator Profile #${index}`}
+              </span>
+            }
             value={op}
             showPayload={false}
+            isOpen={shouldOpen}
             className="mb-2"
           >
             <DisplayOriginators op={isError ? op.result : op} />
@@ -290,12 +509,16 @@ function OriginatorProfileSetCheck({
     : !isError
       ? originators
       : undefined;
+  const { shouldOpen } = listValue
+    ? analyzeValidity(listValue, opsToSources)
+    : { shouldOpen: undefined };
 
   return (
     <ResultItem
       label="Originator Profile Set"
       value={originators}
       showPayload={false}
+      isOpen={shouldOpen}
       className="pl-4 mb-2"
     >
       {listValue && <OriginatorsCheckList originators={listValue} />}
@@ -318,14 +541,21 @@ function SiteProfileCheck({
     : !isError
       ? siteProfile.originators
       : undefined;
+  const { commonPeriod, shouldOpen } = !isFetchError
+    ? analyzeValidity(siteProfile, spToSources)
+    : { commonPeriod: undefined, shouldOpen: undefined };
 
   return (
     <ResultItem
       label="Site Profile"
       value={siteProfile}
       showPayload={isFetchError}
+      isOpen={shouldOpen}
       className="pl-4 mb-2"
     >
+      {commonPeriod && (
+        <MultipleValidity period={commonPeriod} className="ml-7" />
+      )}
       {originatorValue && (
         <OriginatorProfileSetCheck originators={originatorValue} />
       )}
@@ -339,8 +569,12 @@ function ContentAttestationCheck({
 }: {
   cas: CasVerificationFailure | VerifiedCas;
 }) {
+  const { commonPeriod } = analyzeValidity(cas, casToSources);
   return (
     <>
+      {commonPeriod && (
+        <MultipleValidity period={commonPeriod} className="ml-7" />
+      )}
       {cas.map((ca, index) => {
         return (
           <ResultItem
@@ -362,16 +596,25 @@ function ContentAttestationSetCheck({
 }) {
   const isError = cas instanceof Error;
   const isVerifyFailed = cas instanceof CasVerifyFailed;
+  const canAnalyzeCas = !isError && cas.length > 0;
+  let shouldOpen;
+
+  if (isVerifyFailed) {
+    shouldOpen = analyzeValidity(cas.result, casToSources)?.shouldOpen;
+  } else if (canAnalyzeCas) {
+    shouldOpen = analyzeValidity(cas, casToSources)?.shouldOpen;
+  }
 
   return (
     <ResultItem
       label="Content Attestation Set"
       value={cas}
       showPayload={false}
+      isOpen={shouldOpen}
       className="pl-4 mb-2"
     >
       {isVerifyFailed && <ContentAttestationCheck cas={cas.result} />}
-      {!isError && cas.length > 0 && <ContentAttestationCheck cas={cas} />}
+      {canAnalyzeCas && <ContentAttestationCheck cas={cas} />}
     </ResultItem>
   );
 }
