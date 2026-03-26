@@ -186,17 +186,21 @@ await describe("signByServer()", async () => {
     request = undefined;
     endpointResponse = undefined;
 
-    mock.method(globalThis, "fetch", async (input: RequestInfo | URL, init?: RequestInit) => {
-      if (input === endpoint) {
-        request = { input, init };
+    mock.method(
+      globalThis,
+      "fetch",
+      async (input: RequestInfo | URL, init?: RequestInit) => {
+        if (input === endpoint) {
+          request = { input, init };
 
-        if (endpointResponse) {
-          return await endpointResponse(input, init);
+          if (endpointResponse) {
+            return await endpointResponse(input, init);
+          }
         }
-      }
 
-      return await originalFetch(input, init);
-    });
+        return await originalFetch(input, init);
+      },
+    );
   });
 
   afterEach(() => {
