@@ -21,6 +21,7 @@ import {
   VerifiedSp,
 } from "@originator-profile/verify";
 import JsonView from "@uiw/react-json-view";
+import get from "just-safe-get";
 import React from "react";
 import { twMerge } from "tailwind-merge";
 import { SupportedVerifiedCas } from "./credentials";
@@ -62,17 +63,6 @@ function toStringDate(v: unknown): string | undefined {
   return undefined;
 }
 
-function resolvePath(value: unknown, keys: string[]): unknown {
-  let current = value;
-
-  for (const key of keys) {
-    if (!isObj(current) || !(key in current)) return undefined;
-    current = current[key];
-  }
-
-  return current;
-}
-
 function getByPaths<T = unknown>(
   value: unknown,
   paths: (string | string[])[],
@@ -80,8 +70,7 @@ function getByPaths<T = unknown>(
   if (!isObj(value)) return undefined;
 
   for (const path of paths) {
-    const keys = Array.isArray(path) ? path : [path];
-    const result = resolvePath(value, keys);
+    const result = get(value, path);
     if (result !== undefined) return result as T;
   }
 

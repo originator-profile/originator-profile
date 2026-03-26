@@ -132,6 +132,9 @@ importers:
       just-flush:
         specifier: ^2.3.0
         version: 2.3.0
+      just-safe-get:
+        specifier: ^4.2.0
+        version: 4.2.0
       npm-run-all2:
         specifier: 8.0.4
         version: 8.0.4
@@ -6732,6 +6735,9 @@ packages:
 
   just-flush@2.3.0:
     resolution: {integrity: sha512-fBuxQ1gJ61BurmhwKS5LYTzhkbrT5j/2U7ax+UbLm9aRvCTh2h6AfzLteOckE4KKomqOf0Y3zIG3Xu57sRsKUg==}
+
+  just-safe-get@4.2.0:
+    resolution: {integrity: sha512-+tS4Bvgr/FnmYxOGbwziJ8I2BFk+cP1gQHm6rm7zo61w1SbxBwWGEq/Ryy9Gb6bvnloPq6pz7Bmm4a0rjTNlXA==}
 
   just-typeof@3.2.0:
     resolution: {integrity: sha512-nOKazfzrQDEGNwXPfWEB64QD+ATZUnpOTJn0xMnCk41p297P9Emt3BlsRyWbu+CErMjopnFTGcYHJnvFX97ZIQ==}
@@ -17544,6 +17550,8 @@ snapshots:
   just-diff-apply@5.5.0: {}
 
   just-flush@2.3.0: {}
+
+  just-safe-get@4.2.0: {}
 
   just-typeof@3.2.0: {}
 
