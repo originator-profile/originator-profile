@@ -45,6 +45,9 @@ function getBackButtonLabel(
 
 export default function Warning() {
   const [searchParams] = useSearchParams();
+  // NOTE: parseWarningSearchParams は reason も返すが、テンプレート側では
+  // sourceOrg / destOrg / expectedOrg を組み合わせて詳細なメッセージを構築するため、
+  // reason は表示に使用していない。
   const {
     target,
     sourceOrg,

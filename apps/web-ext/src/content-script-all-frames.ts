@@ -1,5 +1,5 @@
 import { serializeIfError } from "@originator-profile/core";
-import { OpVc } from "@originator-profile/model";
+import { OpMeta, OpVc } from "@originator-profile/model";
 import {
   fetchCredentials,
   fetchOpMeta,
@@ -102,7 +102,7 @@ const decodeOpJwt = (jwt: string | undefined): DecodedOpPayload | undefined => {
 
 // opMetaオブジェクトからプロパティを文字列として取得
 const getOpMetaProperty = (
-  opMeta: Record<string, unknown>,
+  opMeta: OpMeta,
   key: string,
 ): string | undefined => {
   const value = opMeta[key];
@@ -143,7 +143,6 @@ let cachedNames:
 const tryCacheNames = () => {
   const opMeta = fetchOpMeta(document);
   if (!opMeta) return;
-  const meta = opMeta as Record<string, unknown>;
 
   void fetchCredentials(document)
     .then(({ ops, cas }) => {
@@ -176,8 +175,8 @@ const tryCacheNames = () => {
         sourceOrgName: names.sourceOrgName,
         expectedOrgName:
           names.expectedOrgName ??
-          getOpMetaProperty(meta, "targetOrgName") ??
-          getOpMetaProperty(meta, "targetname"),
+          getOpMetaProperty(opMeta, "targetOrgName") ??
+          getOpMetaProperty(opMeta, "targetname"),
       };
     })
     .catch((e) => {
@@ -193,7 +192,7 @@ if (document.readyState === "loading") {
 }
 
 const sendAdClicked = (
-  opMeta: Record<string, unknown>,
+  opMeta: OpMeta,
   isNewTab: boolean = false,
 ) => {
   const names = cachedNames ?? {
@@ -221,7 +220,7 @@ const handleLinkClick = (e: MouseEvent) => {
     const isJavascriptHref = anchor.href.startsWith("javascript:");
     const isNewTab =
       anchor.target === "_blank" || isModifierKey || isJavascriptHref;
-    void sendAdClicked(opMeta as Record<string, unknown>, isNewTab);
+    void sendAdClicked(opMeta, isNewTab);
   }
 };
 
@@ -241,7 +240,7 @@ const handleEnterKey = (e: KeyboardEvent) => {
   if (anchor && opMeta) {
     const isModifierKey = e.ctrlKey || e.metaKey || e.shiftKey;
     const isNewTab = anchor.target === "_blank" || isModifierKey;
-    void sendAdClicked(opMeta as Record<string, unknown>, isNewTab);
+    void sendAdClicked(opMeta, isNewTab);
   }
 };
 
@@ -259,7 +258,7 @@ const handleSpaceKey = (e: KeyboardEvent) => {
   if (isButtonOrInput) {
     const opMeta = fetchOpMeta(document);
     if (opMeta) {
-      void sendAdClicked(opMeta as Record<string, unknown>, false);
+      void sendAdClicked(opMeta, false);
     }
   }
 };
