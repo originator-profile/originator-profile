@@ -9,6 +9,7 @@ describe("OpId バリデーション", () => {
       "dns:my-site.example.org",
       "dns:sub.domain.example.com",
       "dns:xn--wgv71a309e.jp",
+      "dns:localhost",
     ];
     for (const value of valid) {
       test(`"${value}" を受け付ける`, () => {
