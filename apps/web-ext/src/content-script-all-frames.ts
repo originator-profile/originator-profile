@@ -101,10 +101,7 @@ const decodeOpJwt = (jwt: string | undefined): DecodedOpPayload | undefined => {
 };
 
 // opMetaオブジェクトからプロパティを文字列として取得
-const getOpMetaProperty = (
-  opMeta: OpMeta,
-  key: string,
-): string | undefined => {
+const getOpMetaProperty = (opMeta: OpMeta, key: string): string | undefined => {
   const value = opMeta[key];
   return typeof value === "string" ? value : undefined;
 };
@@ -191,10 +188,7 @@ if (document.readyState === "loading") {
   tryCacheNames();
 }
 
-const sendAdClicked = (
-  opMeta: OpMeta,
-  isNewTab: boolean = false,
-) => {
+const sendAdClicked = (opMeta: OpMeta, isNewTab: boolean = false) => {
   const names = cachedNames ?? {
     expectedOrgName:
       getOpMetaProperty(opMeta, "targetOrgName") ??
