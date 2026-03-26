@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { AllowedUrl } from "../allowed-url";
 import { OpCipContext } from "../context/op-cip-context";
+import { DateTimeStamp } from "../date-time-stamp";
 import { Image } from "../image";
 import { ContentAttestation } from "./content-attestation";
 
@@ -12,16 +13,10 @@ const subject = z.object({
     .string()
     .describe("A description of the advertorial (string)."),
   image: Image.optional(),
-  datePublished: z
-    .string()
-    .datetime()
-    .optional()
-    .describe("Publication date and time"),
-  dateModified: z
-    .string()
-    .datetime()
-    .optional()
-    .describe("Last modified date and time"),
+  datePublished: DateTimeStamp.optional().describe("Publication date and time"),
+  dateModified: DateTimeStamp.optional().describe(
+    "Last modified date and time",
+  ),
   author: z.array(z.string()).optional().describe("Author names"),
   editor: z.array(z.string()).optional().describe("Editor names"),
   sponsor: z.array(z.string()).optional().describe("Sponsor names"),

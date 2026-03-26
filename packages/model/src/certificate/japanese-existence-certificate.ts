@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { OpCipContext } from "../context/op-cip-context";
+import { DateTimeStamp } from "../date-time-stamp";
 import { Image } from "../image";
 import { OpId } from "../op-id";
 import { CertificationSystem } from "./cert-system";
@@ -25,16 +26,10 @@ export const JapaneseExistenceCertificate = z.looseObject({
   type: z.tuple([z.literal("VerifiableCredential"), z.literal("Certificate")]),
   issuer: OpId,
   credentialSubject: JapaneseExistenceCertificateProperties,
-  validFrom: z
-    .string()
-    .datetime()
-    .optional()
-    .describe("Validity period start date"),
-  validUntil: z
-    .string()
-    .datetime()
-    .optional()
-    .describe("Validity period end date"),
+  validFrom: DateTimeStamp.optional().describe(
+    "Validity period start and time",
+  ),
+  validUntil: DateTimeStamp.optional().describe("Validity period end and time"),
 });
 
 export type JapaneseExistenceCertificate = z.infer<

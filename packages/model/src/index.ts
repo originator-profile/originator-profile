@@ -4,6 +4,7 @@ export * from "./certificate";
 export * from "./content-attestation";
 export * from "./content-attestation-set";
 export * from "./core-profile";
+export * from "./date-time-stamp";
 export * from "./description";
 export * from "./image";
 export * from "./jwk";
