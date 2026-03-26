@@ -3,7 +3,10 @@
  * @param doc Document オブジェクト
  * @param mediaType メディアタイプ
  */
-export function getEmbeddedData<T extends unknown[]>(doc: Document, mediaType: string): T {
+export function getEmbeddedData<T extends unknown[]>(
+  doc: Document,
+  mediaType: string,
+): T {
   const elements = [...doc.querySelectorAll(`script[type="${mediaType}"]`)];
   const dataArray = elements
     .map((elem) => {
