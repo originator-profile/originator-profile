@@ -48,8 +48,10 @@ export class PersistentMap<T> {
   }
 
   #persist() {
-    chrome.storage.session.set({ [this.#storageKey]: this.#cache }).catch((e) => {
-      console.error(`Failed to persist ${this.#storageKey}:`, e);
-    });
+    chrome.storage.session
+      .set({ [this.#storageKey]: this.#cache })
+      .catch((e) => {
+        console.error(`Failed to persist ${this.#storageKey}:`, e);
+      });
   }
 }

@@ -1,15 +1,17 @@
-import type { LinkVerificationResult } from "../credentials/types";
 import { PersistentMap } from "../../utils/persistent-map";
+import type { LinkVerificationResult } from "../credentials/types";
 import type { PendingVerificationData, VerificationCacheData } from "./types";
 
 export const pendingOpIdVerification =
   new PersistentMap<PendingVerificationData>("pendingOpIdVerification");
 
-export const verificationResults =
-  new PersistentMap<LinkVerificationResult>("verificationResults");
+export const verificationResults = new PersistentMap<LinkVerificationResult>(
+  "verificationResults",
+);
 
-export const verificationCache =
-  new PersistentMap<VerificationCacheData>("verificationCache");
+export const verificationCache = new PersistentMap<VerificationCacheData>(
+  "verificationCache",
+);
 
 export const stateReady = Promise.all([
   pendingOpIdVerification.load(),

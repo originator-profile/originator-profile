@@ -1,10 +1,10 @@
 import { buildWarningSearchParams } from "../../utils/warning-params";
 import {
   pendingOpIdVerification,
-  verificationResults,
-  verificationCache,
   recentlyOpenedTabs,
+  verificationCache,
   verificationInProgress,
+  verificationResults,
 } from "./state";
 import type {
   ExecuteWarningRedirectParams,
