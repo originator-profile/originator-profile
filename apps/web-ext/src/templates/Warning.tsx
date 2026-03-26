@@ -63,7 +63,7 @@ function Warning({
         <div className="space-y-3">
           <button
             onClick={onBack}
-            className="w-full bg-blue-600 text-white py-2 px-4 rounded hover:bg-blue-700 transition duration-200"
+            className="w-full bg-primary-700 text-white py-2 px-4 rounded hover:bg-primary-800 transition duration-200"
           >
             {backButtonLabel}
           </button>
