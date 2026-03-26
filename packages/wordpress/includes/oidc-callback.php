@@ -9,7 +9,10 @@ const OIDC_CALLBACK_ENDPOINT = 'oidc-callback';
 // OIDC callback page.
 const OIDC_CALLBACK_PAGE = 'page-oidc-callback.php';
 
-// Add rewrite endpoint for the OIDC callback page.
+/**
+ * Add rewrite endpoint for the OIDC callback page.
+ * @return void
+ */
 function add_callback_page() {
     \add_rewrite_endpoint( OIDC_CALLBACK_ENDPOINT, EP_ROOT );
 }
@@ -49,14 +52,7 @@ function deactivation() {
  */
 function init() {
     \add_action( 'init', '\Profile\CasApiOidcCallback\add_callback_page' );
-    \add_filter( 'query_vars', '\Profile\CasApiOidcCallback\oidc_query_vars' );
     \add_action( 'template_redirect', '\Profile\CasApiOidcCallback\oidc_callback_page' );
-}
-
-// Add OIDC callback endpoint to query vars.
-function oidc_query_vars( $vars ) {
-    $vars[] = OIDC_CALLBACK_ENDPOINT;
-    return $vars;
 }
 
 /**

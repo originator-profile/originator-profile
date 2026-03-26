@@ -29,7 +29,7 @@ if ( ! \current_user_can( 'manage_options' ) ) {
 
 // OIDC Authentication.
 $admin_secret = \get_option( 'profile_ca_server_admin_secret', null );
-$auth = new CasApiAuthClient( $admin_secret );
+$auth = new CasApiAuthClient();
 // Initialize the OIDC client.
 if ( ! $auth->init_oidc( $admin_secret ) ) {
 	\wp_die( 'Failed to initialize. Please check the CA Manager plugin settings.', 'Authentication Failed', array( 'response' => 403 ) );
