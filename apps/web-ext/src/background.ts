@@ -2,14 +2,14 @@ import { credentialsMessenger } from "./components/credentials/events";
 import type { LinkVerificationResult } from "./components/credentials/types";
 import { frameCasExtensionMessenger } from "./components/frameCas";
 import {
-  stateReady,
-  pendingOpIdVerification,
-  verificationResults,
-  verificationCache,
-  recentlyOpenedTabs,
   handleAdClicked,
   handleVerification,
+  pendingOpIdVerification,
+  recentlyOpenedTabs,
   restoreVerificationFromCache,
+  stateReady,
+  verificationCache,
+  verificationResults,
 } from "./components/link-verification";
 import { updateBadge, verifyTabCredentials } from "./components/tabBadge";
 import "./utils/cors-basic-auth";

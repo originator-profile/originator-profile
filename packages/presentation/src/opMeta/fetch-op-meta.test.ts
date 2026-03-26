@@ -6,8 +6,7 @@ function createDocument(scriptContents: string[]): Document {
   const window = new Window({ url: "https://example.com" });
   const scripts = scriptContents
     .map(
-      (content) =>
-        `<script type="application/opmeta+json">${content}</script>`,
+      (content) => `<script type="application/opmeta+json">${content}</script>`,
     )
     .join("\n");
   window.document.body.innerHTML = scripts;

@@ -1,24 +1,24 @@
 export type {
-  VerificationContext,
-  HandleAdClickedParams,
   ExecuteWarningRedirectParams,
+  HandleAdClickedParams,
   HandleVerificationParams,
   PendingVerificationData,
   VerificationCacheData,
+  VerificationContext,
 } from "./types";
 
 export {
   pendingOpIdVerification,
-  verificationResults,
-  verificationCache,
-  stateReady,
   recentlyOpenedTabs,
+  stateReady,
+  verificationCache,
   verificationInProgress,
+  verificationResults,
 } from "./state";
 
 export {
+  executeWarningRedirect,
   handleAdClicked,
   handleVerification,
-  executeWarningRedirect,
   restoreVerificationFromCache,
 } from "./handlers";

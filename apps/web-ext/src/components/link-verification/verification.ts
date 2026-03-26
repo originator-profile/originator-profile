@@ -3,10 +3,7 @@ import { JwtVcDecoder } from "@originator-profile/securing-mechanism";
 import { DecodedOp, decodeOps } from "@originator-profile/verify";
 import { fetchTabCredentials } from "../credentials";
 import type { LinkVerificationResult } from "../credentials/types";
-import type {
-  CreateMismatchResultParams,
-  VerificationContext,
-} from "./types";
+import type { CreateMismatchResultParams, VerificationContext } from "./types";
 
 export const decodeWsps = (sp: SiteProfile | null) => {
   if (!sp) return [];

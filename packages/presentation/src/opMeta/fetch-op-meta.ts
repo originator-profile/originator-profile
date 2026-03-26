@@ -39,10 +39,7 @@ function isValidOpMeta(value: unknown): value is OpMeta {
  * @param doc Document オブジェクト
  */
 export const fetchOpMeta = (doc: Document): FetchOpMetaResult => {
-  const opMetas = getEmbeddedData<OpMeta[]>(
-    doc,
-    "application/opmeta+json",
-  );
+  const opMetas = getEmbeddedData<OpMeta[]>(doc, "application/opmeta+json");
 
   if (opMetas.length > 1) {
     console.warn(
