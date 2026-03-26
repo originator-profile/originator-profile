@@ -56,4 +56,14 @@ EOD
 			$text
 		);
 	}
+
+	public function test_content_to_html_TITLEプレースホルダーを含まないテンプレートではh1タグが出力されない() {
+		$content  = '<p>本文</p>';
+		$template = '<body class="wp-block-post-content">%CONTENT%</body>';
+
+		$text = content_to_html( $content, $template, 'タイトル' );
+		$this->assertStringNotContainsString( '<h1', $text );
+		$this->assertStringNotContainsString( 'タイトル', $text );
+		$this->assertSame( '<body class="wp-block-post-content"><p>本文</p></body>', $text );
+	}
 }
