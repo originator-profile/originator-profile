@@ -485,9 +485,9 @@ _See code: [src/commands/wsp/unsigned.ts](https://github.com/originator-profile/
 
 `@originator-profile/opvc` は TypeScript/JavaScript からも利用できます。
 
-### 秘密鍵を利用したContent Attestation の作成
+### ローカル環境でのContent Attestationの署名
 
-ローカルの秘密鍵で署名する場合は `ContentAttestation.sign()` を使います。
+ローカルのプライベート鍵で署名する場合は `ContentAttestation.sign()` を使います。
 
 ```ts
 import { ContentAttestation } from "@originator-profile/opvc";
@@ -513,7 +513,7 @@ const uca = await ContentAttestation.unsignedCa(input, {
 
 ### CA Server経由での署名
 
-CA server で署名する場合は `ContentAttestation.signByServer()` を使います。
+CA Server で署名する場合は `ContentAttestation.signByServer()` を使います。
 内部では未署名 Content Attestation を組み立てて CA server に送信し、返却された JWT を受け取ります。
 
 ```ts
