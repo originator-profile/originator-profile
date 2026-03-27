@@ -56,11 +56,11 @@ function DetailInfo({
           </div>
 
           {hasLinkVerification && (
-            <div className="mb-8">
-              <h2 className="pl-4 mb-4 text-sm font-bold text-gray-700">
+            <div className="pl-4 mb-8">
+              <h2 className="mb-4 text-sm font-bold text-gray-700">
                 {_("DetailInfo_LinkVerification")}
               </h2>
-              <Table className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200 px-3 py-2">
+              <Table>
                 <TableRow
                   header={_("DetailInfo_ExpectedLinkDestination")}
                   data={linkVerification.expectedOrgName || "-"}
