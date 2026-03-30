@@ -26,18 +26,18 @@ function Prohibition() {
             {_("Prohibition_Warning")}
           </h1>
           {hasLinkVerification && (
-            <h1 className="flex items-center flex-col gap-4 mt-2 mb-2">
+            <p className="flex items-center flex-col gap-4 mt-2 mb-2">
               <span className="whitespace-pre-line text-red-700 text-sm tracking-normal text-center w-auto inline-block align-middle">
                 {_(titleKey)}
               </span>
-            </h1>
+            </p>
           )}
         </div>
-        <h1 className="flex items-center flex-col gap-4 mb-2">
+        <p className="flex items-center flex-col gap-4 mb-2">
           <span className="whitespace-pre-line text-red-700 text-sm tracking-normal text-center w-auto inline-block align-middle">
             {_("Prohibition_Site")}
           </span>
-        </h1>
+        </p>
         <p className="text-sm text-center underline">
           <a
             href="https://originator-profile.org/"

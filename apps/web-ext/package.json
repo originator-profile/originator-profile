@@ -46,6 +46,7 @@
     "globals": "^16.0.0",
     "happy-dom": "^20.0.0",
     "just-flush": "^2.3.0",
+    "just-safe-get": "^4.2.0",
     "npm-run-all2": "8.0.4",
     "playwright": "^1.57.0",
     "postcss": "^8.5.3",
