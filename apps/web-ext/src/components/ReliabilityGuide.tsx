@@ -21,7 +21,7 @@ export default function ReliabilityGuide(props: Props) {
               ? _("ReliabilityGuide_SiteOperator")
               : _("ReliabilityGuide_Publisher", _(props.contentType))}
           </p>
-          {props.showLinkVerification && <LinkVerification inline={true} />}
+          {props.showLinkVerification && <LinkVerification />}
         </div>
       </div>
       <button
