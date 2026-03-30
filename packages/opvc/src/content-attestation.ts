@@ -4,10 +4,10 @@ import {
   type Jwk,
 } from "@originator-profile/model";
 import {
-  type DocumentProvider,
   fetchAndSetDigestSri,
   fetchAndSetTargetIntegrity,
   signCa,
+  type DocumentProvider,
 } from "@originator-profile/sign";
 import { addYears, getUnixTime } from "date-fns";
 import { BadRequestError } from "http-errors-enhanced";
