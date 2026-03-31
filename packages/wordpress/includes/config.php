@@ -13,14 +13,14 @@ const PROFILE_DEFAULT_CA_SERVER_REQUEST_TIMEOUT = 30;
 const PROFILE_DEFAULT_CA_TARGET_TYPE = 'TextTargetIntegrity';
 
 /** 検証対象要素 CSS セレクターの初期値 */
-const PROFILE_DEFAULT_CA_TARGET_CSS_SELECTOR = '.wp-block-post-content>*:not(.post-nav-links)';
+const PROFILE_DEFAULT_CA_TARGET_CSS_SELECTOR = 'h1.wp-block-post-title, .wp-block-post-content>*:not(.post-nav-links)';
 
-/** 検証対象要素の存在する HTML の初期値 (%CONTENT% → WordPress post content after applying apply_filters()) */
+/** 検証対象要素の存在する HTML の初期値 (%TITLE% → post title, %CONTENT% → WordPress post content after applying apply_filters()) */
 const PROFILE_DEFAULT_CA_TARGET_HTML = <<<'EOD'
 <!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"></head>
-<body class="wp-block-post-content">%CONTENT%</body>
+<body><h1 class="wp-block-post-title">%TITLE%</h1><div class="wp-block-post-content">%CONTENT%</div></body>
 </html>
 EOD;
 
