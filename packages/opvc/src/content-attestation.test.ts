@@ -395,6 +395,45 @@ await describe("signByServer()", async () => {
     assert.strictEqual(typeof body.exp, "number");
     assert.ok(body.target[0].integrity);
     assert.strictEqual(body.target[0].content, undefined);
+    assert.strictEqual(typeof body.issuedAt, "string");
+    assert.strictEqual(typeof body.expiredAt, "string");
+    assert.ok(
+      !Number.isNaN(Date.parse(body.issuedAt)),
+      "issuedAt should be a valid ISO date string",
+    );
+    assert.ok(
+      !Number.isNaN(Date.parse(body.expiredAt)),
+      "expiredAt should be a valid ISO date string",
+    );
+  });
+
+  await test("指定した issuedAt / expiredAt が ISO 文字列として POST ボディに含まれる", async () => {
+    const issuedAt = new Date("2025-01-01T00:00:00Z");
+    const expiredAt = new Date("2026-01-01T00:00:00Z");
+
+    endpointResponse = async () =>
+      new Response(JSON.stringify(["jwt-1"]), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+
+    await signByServer(createUnsignedContentAttestation(), {
+      endpoint,
+      accessToken: "test-access-token",
+      issuedAt,
+      expiredAt,
+    });
+
+    const requestBody = request?.init?.body;
+    if (typeof requestBody !== "string") {
+      throw new TypeError("Expected request body to be a JSON string.");
+    }
+    const body = JSON.parse(requestBody) as {
+      issuedAt: string;
+      expiredAt: string;
+    };
+    assert.strictEqual(body.issuedAt, issuedAt.toISOString());
+    assert.strictEqual(body.expiredAt, expiredAt.toISOString());
   });
 
   await test("CA server が文字列 JWT を直接返した場合はそのまま返す", async () => {
