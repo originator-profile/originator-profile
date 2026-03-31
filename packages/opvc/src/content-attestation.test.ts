@@ -170,7 +170,7 @@ await describe("unsignedCa()", async () => {
     );
   });
 
-  await test("type に ContentAttestation を含まない場合 Error", async () => {
+  await test("type に ContentAttestation を含まない場合 BadRequestError", async () => {
     const uca = {
       "@context": [
         "https://www.w3.org/ns/credentials/v2",
@@ -184,11 +184,11 @@ await describe("unsignedCa()", async () => {
 
     await assert.rejects(
       unsignedCa(uca as unknown as UnsignedContentAttestation, {}),
-      Error,
+      BadRequestError,
     );
   });
 
-  await test("issuer が不正な OP ID の場合 Error", async () => {
+  await test("issuer が不正な OP ID の場合 BadRequestError", async () => {
     const uca = {
       "@context": [
         "https://www.w3.org/ns/credentials/v2",
@@ -202,11 +202,11 @@ await describe("unsignedCa()", async () => {
 
     await assert.rejects(
       unsignedCa(uca as unknown as UnsignedContentAttestation, {}),
-      Error,
+      BadRequestError,
     );
   });
 
-  await test("target が空配列の場合 Error", async () => {
+  await test("target が空配列の場合 BadRequestError", async () => {
     const uca = {
       "@context": [
         "https://www.w3.org/ns/credentials/v2",
@@ -220,11 +220,11 @@ await describe("unsignedCa()", async () => {
 
     await assert.rejects(
       unsignedCa(uca as unknown as UnsignedContentAttestation, {}),
-      Error,
+      BadRequestError,
     );
   });
 
-  await test("@context に必須コンテキストが不足している場合 Error", async () => {
+  await test("@context に必須コンテキストが不足している場合 BadRequestError", async () => {
     const uca = {
       "@context": ["https://www.w3.org/ns/credentials/v2"],
       type: ["VerifiableCredential", "ContentAttestation"],
@@ -235,7 +235,7 @@ await describe("unsignedCa()", async () => {
 
     await assert.rejects(
       unsignedCa(uca as unknown as UnsignedContentAttestation, {}),
-      Error,
+      BadRequestError,
     );
   });
 
@@ -259,7 +259,7 @@ await describe("unsignedCa()", async () => {
 });
 
 await describe("sign()", async () => {
-  await test("type に ContentAttestation を含まない場合 Error", async () => {
+  await test("type に ContentAttestation を含まない場合 BadRequestError", async () => {
     const uca = {
       "@context": [
         "https://www.w3.org/ns/credentials/v2",
@@ -273,11 +273,11 @@ await describe("sign()", async () => {
 
     await assert.rejects(
       sign(uca as unknown as UnsignedContentAttestation, {} as Jwk, {}),
-      Error,
+      BadRequestError,
     );
   });
 
-  await test("issuer が不正な OP ID の場合 Error", async () => {
+  await test("issuer が不正な OP ID の場合 BadRequestError", async () => {
     const uca = {
       "@context": [
         "https://www.w3.org/ns/credentials/v2",
@@ -291,11 +291,11 @@ await describe("sign()", async () => {
 
     await assert.rejects(
       sign(uca as unknown as UnsignedContentAttestation, {} as Jwk, {}),
-      Error,
+      BadRequestError,
     );
   });
 
-  await test("target が空配列の場合 Error", async () => {
+  await test("target が空配列の場合 BadRequestError", async () => {
     const uca = {
       "@context": [
         "https://www.w3.org/ns/credentials/v2",
@@ -309,7 +309,7 @@ await describe("sign()", async () => {
 
     await assert.rejects(
       sign(uca as unknown as UnsignedContentAttestation, {} as Jwk, {}),
-      Error,
+      BadRequestError,
     );
   });
 });

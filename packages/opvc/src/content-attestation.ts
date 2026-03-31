@@ -56,8 +56,7 @@ function parseDates({
 /**
  * 未署名 Content Attestation の取得
  * @param uca 未署名 Content Attestation オブジェクト
- * @throws {Error} 入力が UnsignedContentAttestation スキーマに適合しない場合
- * @throws {BadRequestError} 検証対象のコンテンツが存在しない/コンテンツにアクセスできない/Integrityの計算に失敗
+ * @throws {BadRequestError} 入力が UnsignedContentAttestation スキーマに適合しない場合/検証対象のコンテンツが存在しない/コンテンツにアクセスできない/Integrityの計算に失敗
  * @return 未署名 Content Attestation オブジェクト
  */
 export async function unsignedCa(
@@ -70,9 +69,10 @@ export async function unsignedCa(
 ): Promise<UnsignedContentAttestation> {
   const { issuedAt, expiredAt } = parseDates(timingOptions);
   uca.credentialSubject.id ??= `urn:uuid:${crypto.randomUUID()}`;
-  UnsignedContentAttestation.parse(uca);
 
   try {
+    UnsignedContentAttestation.parse(uca);
+
     await Promise.all([
       fetchAndSetDigestSri(integrityAlg, uca.credentialSubject.image),
       fetchAndSetTargetIntegrity(integrityAlg, uca, documentProvider),
@@ -94,7 +94,7 @@ export async function unsignedCa(
  * Content Attestation への署名
  * @param uca 未署名 Content Attestation オブジェクト
  * @param privateKey プライベート鍵
- * @throws {Error} 入力が UnsignedContentAttestation スキーマに適合しない場合
+ * @throws {BadRequestError} 入力が UnsignedContentAttestation スキーマに適合しない場合/検証対象のコンテンツが存在しない/コンテンツにアクセスできない/Integrityの計算に失敗
  * @return Content Attestation
  */
 export async function sign(
@@ -132,7 +132,7 @@ export async function signByServer(
   },
 ): Promise<string> {
   const { issuedAt, expiredAt } = parseDates(options);
-  const payload = await unsignedCa(uca, options);
+  const payload = await unsignedCa(uca, { ...options, issuedAt, expiredAt });
 
   const response = await fetch(endpoint, {
     method: "POST",
@@ -140,12 +140,11 @@ export async function signByServer(
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify(
-      Object.assign(payload, {
-        issuedAt: issuedAt.toISOString(),
-        expiredAt: expiredAt.toISOString(),
-      }),
-    ),
+    body: JSON.stringify({
+      ...payload,
+      issuedAt: issuedAt.toISOString(),
+      expiredAt: expiredAt.toISOString(),
+    }),
   });
 
   if (!response.ok) {
