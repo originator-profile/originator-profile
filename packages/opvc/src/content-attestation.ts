@@ -63,8 +63,6 @@ async function prepareUnsignedCa(
 ): Promise<UnsignedContentAttestation> {
   const { issuedAt, expiredAt } = parseDates(timingOptions);
 
-  uca.credentialSubject.id ??= `urn:uuid:${crypto.randomUUID()}`;
-
   try {
     await fetchAndSetDigestSri(integrityAlg, uca.credentialSubject.image);
     await fetchAndSetTargetIntegrity(integrityAlg, uca, documentProvider);
@@ -93,11 +91,11 @@ export async function sign(
   privateKey: Jwk,
   options: ContentAttestationTimingOptions = {},
 ): Promise<string> {
+  uca.credentialSubject.id ??= `urn:uuid:${crypto.randomUUID()}`;
+
   UnsignedContentAttestation.parse(uca);
 
   const { issuedAt, expiredAt } = parseDates(options);
-
-  uca.credentialSubject.id ??= `urn:uuid:${crypto.randomUUID()}`;
 
   return await signCa(uca, privateKey, {
     issuedAt,
@@ -117,6 +115,8 @@ export async function unsignedCa(
   uca: UnsignedContentAttestation,
   options: UnsignedCaOptions,
 ): Promise<UnsignedContentAttestation> {
+  uca.credentialSubject.id ??= `urn:uuid:${crypto.randomUUID()}`;
+
   UnsignedContentAttestation.parse(uca);
 
   return await prepareUnsignedCa(uca, options);
@@ -141,6 +141,10 @@ export async function signByServer(
     accessToken: string;
   },
 ): Promise<string> {
+  uca.credentialSubject.id ??= `urn:uuid:${crypto.randomUUID()}`;
+
+  UnsignedContentAttestation.parse(uca);
+
   const payload = await prepareUnsignedCa(uca, options);
 
   const response = await fetch(endpoint, {
