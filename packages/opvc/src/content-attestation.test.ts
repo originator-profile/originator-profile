@@ -382,17 +382,15 @@ await describe("signByServer()", async () => {
     const body = JSON.parse(requestBody) as {
       iss: string;
       sub: string;
-      iat: number;
-      exp: number;
       target: Array<{ integrity?: string; content?: unknown }>;
+      issuedAt: string;
+      expiredAt: string;
     };
     assert.strictEqual(body.iss, "dns:localhost");
     assert.strictEqual(
       body.sub,
       "urn:uuid:4e4abf74-08da-41aa-9063-e84b9c125bc6",
     );
-    assert.strictEqual(typeof body.iat, "number");
-    assert.strictEqual(typeof body.exp, "number");
     assert.ok(body.target[0].integrity);
     assert.strictEqual(body.target[0].content, undefined);
     assert.strictEqual(typeof body.issuedAt, "string");
