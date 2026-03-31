@@ -45,7 +45,6 @@ function deactivation() {
 /**
  * Initialize OIDC callback page handling.
  *   add_callback_page() - Add rewrite endpoint for the OIDC callback page.
- *   oidc_query_vars() - Add OIDC callback endpoint to query vars.
  *   oidc_callback_page() - Handle OIDC callback page requests.
  *
  * @return void
