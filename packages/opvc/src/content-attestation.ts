@@ -53,32 +53,6 @@ function parseDates({
   return { issuedAt, expiredAt };
 }
 
-async function prepareUnsignedCa(
-  uca: UnsignedContentAttestation,
-  {
-    integrityAlg = "sha256",
-    documentProvider = defaultDocumentProvider,
-    ...timingOptions
-  }: UnsignedCaOptions,
-): Promise<UnsignedContentAttestation> {
-  const { issuedAt, expiredAt } = parseDates(timingOptions);
-
-  try {
-    await fetchAndSetDigestSri(integrityAlg, uca.credentialSubject.image);
-    await fetchAndSetTargetIntegrity(integrityAlg, uca, documentProvider);
-  } catch (e) {
-    throw new BadRequestError((e as Error).message);
-  }
-
-  return {
-    ...uca,
-    iss: uca.issuer,
-    sub: uca.credentialSubject.id,
-    iat: getUnixTime(issuedAt),
-    exp: getUnixTime(expiredAt),
-  };
-}
-
 /**
  * Content Attestation への署名
  * @param uca 未署名 Content Attestation オブジェクト
@@ -91,11 +65,10 @@ export async function sign(
   privateKey: Jwk,
   options: ContentAttestationTimingOptions = {},
 ): Promise<string> {
+  const { issuedAt, expiredAt } = parseDates(options);
   uca.credentialSubject.id ??= `urn:uuid:${crypto.randomUUID()}`;
 
   UnsignedContentAttestation.parse(uca);
-
-  const { issuedAt, expiredAt } = parseDates(options);
 
   return await signCa(uca, privateKey, {
     issuedAt,
@@ -113,13 +86,32 @@ export async function sign(
  */
 export async function unsignedCa(
   uca: UnsignedContentAttestation,
-  options: UnsignedCaOptions,
+  {
+    integrityAlg = "sha256",
+    documentProvider = defaultDocumentProvider,
+    ...timingOptions
+  }: UnsignedCaOptions,
 ): Promise<UnsignedContentAttestation> {
+  const { issuedAt, expiredAt } = parseDates(timingOptions);
   uca.credentialSubject.id ??= `urn:uuid:${crypto.randomUUID()}`;
-
   UnsignedContentAttestation.parse(uca);
 
-  return await prepareUnsignedCa(uca, options);
+  try {
+    await Promise.all([
+      fetchAndSetDigestSri(integrityAlg, uca.credentialSubject.image),
+      fetchAndSetTargetIntegrity(integrityAlg, uca, documentProvider),
+    ]);
+  } catch (e) {
+    throw new BadRequestError((e as Error).message);
+  }
+
+  return {
+    ...uca,
+    iss: uca.issuer,
+    sub: uca.credentialSubject.id,
+    iat: getUnixTime(issuedAt),
+    exp: getUnixTime(expiredAt),
+  };
 }
 
 /**
@@ -141,11 +133,7 @@ export async function signByServer(
     accessToken: string;
   },
 ): Promise<string> {
-  uca.credentialSubject.id ??= `urn:uuid:${crypto.randomUUID()}`;
-
-  UnsignedContentAttestation.parse(uca);
-
-  const payload = await prepareUnsignedCa(uca, options);
+  const payload = await unsignedCa(uca, options);
 
   const response = await fetch(endpoint, {
     method: "POST",
