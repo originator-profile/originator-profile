@@ -29,7 +29,7 @@ if ( ! \current_user_can( 'manage_options' ) ) {
 
 // OIDC Authentication.
 $admin_secret = \get_option( 'profile_ca_server_admin_secret', null );
-$auth = new CasApiAuthClient();
+$auth         = new CasApiAuthClient();
 // Initialize the OIDC client.
 if ( ! $auth->init_oidc( $admin_secret ) ) {
 	\wp_die( 'Failed to initialize. Please check the CA Manager plugin settings.', 'Authentication Failed', array( 'response' => 403 ) );
@@ -44,15 +44,15 @@ if ( ! ( $auth->authenticate() && isset( $_REQUEST['code'] ) ) ) {
 <html>
 	<head>
 		<title>OIDC API Authentication</title>
-    </head>
+	</head>
 	<body>
-	    <br>
-	    <hr>
+		<br>
+		<hr>
 		<center>
-    	    <h1>OIDC API Authentication</h1>
-	        <h2>Successfully authenticated.</h2>
+			<h1>OIDC API Authentication</h1>
+			<h2>Successfully authenticated.</h2>
 		</center>
-	    <hr>
+		<hr>
 		<button onclick="window.close();">close</button>
 	</body>
 </html>

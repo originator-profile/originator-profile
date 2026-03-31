@@ -11,15 +11,20 @@ const OIDC_CALLBACK_PAGE = 'page-oidc-callback.php';
 
 /**
  * Add rewrite endpoint for the OIDC callback page.
+ *
  * @return void
  */
 function add_callback_page() {
-    \add_rewrite_endpoint( OIDC_CALLBACK_ENDPOINT, EP_ROOT );
+	\add_rewrite_endpoint( OIDC_CALLBACK_ENDPOINT, EP_ROOT );
 }
 
-// Remove rewrite endpoint for the OIDC callback page.
+/**
+ * Remove rewrite endpoint for the OIDC callback page.
+ *
+ * @return void
+ */
 function remove_callback_page() {
-    \add_rewrite_endpoint( OIDC_CALLBACK_ENDPOINT, EP_NONE );
+	\add_rewrite_endpoint( OIDC_CALLBACK_ENDPOINT, EP_NONE );
 }
 
 /**
@@ -28,8 +33,8 @@ function remove_callback_page() {
  * flush_rewrite_rules() - Flush rewrite rules to apply the new endpoint.
  */
 function activation() {
-    add_callback_page();
-    \flush_rewrite_rules();
+	add_callback_page();
+	\flush_rewrite_rules();
 }
 
 /**
@@ -38,8 +43,8 @@ function activation() {
  *   flush_rewrite_rules() - Flush rewrite rules to remove the endpoint.
  */
 function deactivation() {
-    remove_callback_page();
-    \flush_rewrite_rules();
+	remove_callback_page();
+	\flush_rewrite_rules();
 }
 
 /**
@@ -50,8 +55,8 @@ function deactivation() {
  * @return void
  */
 function init() {
-    \add_action( 'init', '\Profile\CasApiOidcCallback\add_callback_page' );
-    \add_action( 'template_redirect', '\Profile\CasApiOidcCallback\oidc_callback_page' );
+	\add_action( 'init', '\Profile\CasApiOidcCallback\add_callback_page' );
+	\add_action( 'template_redirect', '\Profile\CasApiOidcCallback\oidc_callback_page' );
 }
 
 /**
@@ -61,35 +66,35 @@ function init() {
  *   Otherwise, display a 404 error page.
  */
 function oidc_callback_page() {
-    global $wp_query;
+	global $wp_query;
 
-    // Check if the current request is for the OIDC callback endpoint.
-    if ( isset( $wp_query->query_vars[OIDC_CALLBACK_ENDPOINT] ) ) {
+	// Check if the current request is for the OIDC callback endpoint.
+	if ( isset( $wp_query->query_vars[ OIDC_CALLBACK_ENDPOINT ] ) ) {
 
-        // Check if the user is logged in.
-        if ( ! \is_user_logged_in() ) {
-            \wp_die( 'Page not found.', '404 Not Found', array( 'response' => 404 ) );
-        }
+		// Check if the user is logged in.
+		if ( ! \is_user_logged_in() ) {
+			\wp_die( 'Page not found.', '404 Not Found', array( 'response' => 404 ) );
+		}
 
-        // Check if the user is an administrator.
-        if ( ! \current_user_can( 'manage_options' ) ) {
-            \wp_die( 'Page not found.', '404 Not Found', array( 'response' => 404 ) );
-        }
+		// Check if the user is an administrator.
+		if ( ! \current_user_can( 'manage_options' ) ) {
+			\wp_die( 'Page not found.', '404 Not Found', array( 'response' => 404 ) );
+		}
 
-        // Check if the admin secret is set.
-        $admin_secret = \get_option( 'profile_ca_server_admin_secret', null );
-        if ( ! $admin_secret ) {
-            \wp_die( 'Page not found.', '404 Not Found', array( 'response' => 404 ) );
-        }
-        // Check if the authentication type is OIDC.
-        $secret_arr = explode( ':', $admin_secret );
-        $auth_type  = $secret_arr[0] ?? '';
-        if ( $auth_type !== 'OIDC' ) {
-            \wp_die( 'Page not found.', '404 Not Found', array( 'response' => 404 ) );
-        }
+		// Check if the admin secret is set.
+		$admin_secret = \get_option( 'profile_ca_server_admin_secret', null );
+		if ( ! $admin_secret ) {
+			\wp_die( 'Page not found.', '404 Not Found', array( 'response' => 404 ) );
+		}
+		// Check if the authentication type is OIDC.
+		$secret_arr = explode( ':', $admin_secret );
+		$auth_type  = $secret_arr[0] ?? '';
+		if ( 'OIDC' !== $auth_type ) {
+			\wp_die( 'Page not found.', '404 Not Found', array( 'response' => 404 ) );
+		}
 
-        // OIDC Authentication page.
-        include __DIR__ . '/' . OIDC_CALLBACK_PAGE;
-        exit;
-    }
+		// OIDC Authentication page.
+		include __DIR__ . '/' . OIDC_CALLBACK_PAGE;
+		exit;
+	}
 }
