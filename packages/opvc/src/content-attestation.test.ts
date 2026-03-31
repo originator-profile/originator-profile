@@ -4,6 +4,7 @@ import type {
   UnsignedContentAttestation,
 } from "@originator-profile/model";
 import assert from "assert";
+import { BadRequestError } from "http-errors-enhanced";
 import { afterEach, beforeEach, describe, mock, test } from "node:test";
 import { createIntegrityMetadata } from "websri";
 import { sign, signByServer, unsignedCa } from "./content-attestation.ts";
@@ -243,7 +244,7 @@ await describe("unsignedCa()", async () => {
       unsignedCa(createUnsignedContentAttestation(), {
         issuedAt: "not-a-date",
       }),
-      Error,
+      BadRequestError,
     );
   });
 
@@ -252,7 +253,7 @@ await describe("unsignedCa()", async () => {
       unsignedCa(createUnsignedContentAttestation(), {
         expiredAt: "not-a-date",
       }),
-      Error,
+      BadRequestError,
     );
   });
 });
