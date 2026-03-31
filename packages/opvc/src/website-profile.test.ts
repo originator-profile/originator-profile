@@ -2,8 +2,6 @@ import type { UnsignedWebsiteProfile } from "@originator-profile/model";
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { unsignedWsp } from "./website-profile.ts";
-// @ts-expect-error 型定義にないため。なお Node.js v24+ であれば isError が利用可能になるため、将来的には不要になるはず。
-import isError from "error.iserror";
 
 await describe("unsignedWsp()", async () => {
   await test("有効な UnsignedWebsiteProfile を受け付ける", async () => {
@@ -62,7 +60,7 @@ await describe("unsignedWsp()", async () => {
 
     await assert.rejects(
       unsignedWsp(uwsp as unknown as UnsignedWebsiteProfile, {}),
-      isError,
+      Error,
     );
   });
 
@@ -90,7 +88,7 @@ await describe("unsignedWsp()", async () => {
 
     await assert.rejects(
       unsignedWsp(uwsp as unknown as UnsignedWebsiteProfile, {}),
-      isError,
+      Error,
     );
   });
 
@@ -114,7 +112,7 @@ await describe("unsignedWsp()", async () => {
 
     await assert.rejects(
       unsignedWsp(uwsp as unknown as UnsignedWebsiteProfile, {}),
-      isError,
+      Error,
     );
   });
 
@@ -140,7 +138,7 @@ await describe("unsignedWsp()", async () => {
 
     await assert.rejects(
       unsignedWsp(uwsp as unknown as UnsignedWebsiteProfile, {}),
-      isError,
+      Error,
     );
   });
 
@@ -168,7 +166,7 @@ await describe("unsignedWsp()", async () => {
 
     await assert.rejects(
       unsignedWsp(uwsp as unknown as UnsignedWebsiteProfile, {}),
-      isError,
+      Error,
     );
   });
 });
