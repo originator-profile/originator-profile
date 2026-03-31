@@ -306,7 +306,7 @@ function profile_ca_log_option_field() {
  */
 function add_action_links( array $actions ) {
 	$menu_settings_url = '<a href="' . \get_admin_url( null, '/options-general.php?page=ca-manager' ) . '">設定</a>';
-	$menu_auth_url     = '<a href="' . \get_home_url( null, '/cas-auth/' ) . '" target="_blank">API認証(OIDC)</a>';
+	$menu_auth_url     = '<a href="' . \get_home_url( null, '/oidc-callback/' ) . '" target="_blank">API認証(OIDC)</a>';
 
 	array_unshift( $actions, $menu_auth_url );
 	array_unshift( $actions, $menu_settings_url );
