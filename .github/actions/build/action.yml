@@ -33,7 +33,7 @@ runs:
         BASIC_AUTH_CREDENTIALS: ${{ inputs.BASIC_AUTH_CREDENTIALS }}
         REGISTRY_OPS: ${{ inputs.REGISTRY_OPS }}
     - id: upload
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: web-ext
         path: apps/web-ext/web-ext-artifacts*

@@ -75,7 +75,7 @@ jobs:
 
       - name: Upload updated baselines as artifact
         if: steps.check_changes.outputs.has_changes == 'true'
-        uses: actions/upload-artifact@v5
+        uses: actions/upload-artifact@v7
         with:
           name: vrt-baselines
           path: |
