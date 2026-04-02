@@ -1,7 +1,9 @@
 import { mergeTests } from "@playwright/test";
 import privateKey from "./account-key.example.priv.json" with { type: "json" };
 import publicKey from "./account-key.example.pub.json" with { type: "json" };
+import { expectStatus } from "./expect-status";
 import { test as base, expect, popup } from "./fixtures";
+import { gotoDetailPage } from "./goto-detail-page";
 import { test as siteProfileTest } from "./site-profile-fixtures";
 import { test as staticHtmlTest } from "./static-html-fixtures";
 
@@ -23,6 +25,11 @@ test("Site Profile を取得検証できる", async ({
   expect(await ext?.getByTestId("site-profile-wsp-name").innerText()).toBe(
     "SiteProfileの取得検証",
   );
+
+  await gotoDetailPage(ext);
+  await expectStatus(ext, "site-profile", "check");
+  await expect(ext.getByTestId("issuer").first()).toHaveCount(1);
+  await expect(ext.getByTestId("validity-period").first()).toHaveCount(1);
 });
 
 test("Site Profile のビジュアルリグレッションテスト", async ({
@@ -59,4 +66,31 @@ test("Site Profile を取得検証できるが、WMP が存在しない", async 
   expect(await ext?.getByTestId("web-media-profile-missing").innerText()).toBe(
     "このサイト運営者に対応する組織情報を正しく読み取れませんでした",
   );
+
+  await gotoDetailPage(ext);
+  await expectStatus(ext, "site-profile", "check");
+  await expect(ext?.getByTestId("web-media-profile")).toHaveCount(0);
+});
+test("Site Profile を取得検証できるが、有効期限が近く、詳細情報画面にて警告マークが表示される", async ({
+  context,
+  page,
+  aboutToExpireSiteProfile,
+  credentialsMissingPage,
+}) => {
+  await aboutToExpireSiteProfile(
+    { privateKey, publicKey },
+    credentialsMissingPage.issuer,
+  );
+  await page.goto(credentialsMissingPage.endpoint);
+  const ext = await popup(context);
+  await expect(ext?.getByTestId("site-profile")).toBeVisible();
+
+  await gotoDetailPage(ext);
+  await expectStatus(ext, "site-profile", "check");
+  await expect(
+    ext
+      .getByTestId("validity-period")
+      .getByTestId("caution-validity-period")
+      .first(),
+  ).toBeVisible();
 });

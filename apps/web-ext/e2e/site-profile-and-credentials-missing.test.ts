@@ -1,6 +1,8 @@
 import { mergeTests } from "@playwright/test";
 import { test as crednetialsTest } from "./credentials-fixtures";
+import { expectStatus } from "./expect-status";
 import { test as base, expect, popup } from "./fixtures";
+import { gotoDetailPage } from "./goto-detail-page";
 import { test as siteProfileTest } from "./site-profile-fixtures";
 import { test as staticHtmlTest } from "./static-html-fixtures";
 
@@ -20,4 +22,9 @@ test("Site Profile と OPS/CAS が取得できない場合非サポートが表�
       "このWebページの発信者は\nサイト運営者にお問い合わせください",
     ),
   ).toHaveCount(1);
+
+  await gotoDetailPage(ext);
+  await expectStatus(ext, "site-profile", "cancel");
+  await expectStatus(ext, "originator-profile-set", "check");
+  await expectStatus(ext, "content-attestation-set", "null");
 });
