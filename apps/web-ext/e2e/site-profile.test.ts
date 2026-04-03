@@ -1,7 +1,7 @@
 import { mergeTests } from "@playwright/test";
 import privateKey from "./account-key.example.priv.json" with { type: "json" };
 import publicKey from "./account-key.example.pub.json" with { type: "json" };
-import { test as base, expect, popup } from "./fixtures";
+import { test as base, expect, sidepanel } from "./fixtures";
 import { test as siteProfileTest } from "./site-profile-fixtures";
 import { test as staticHtmlTest } from "./static-html-fixtures";
 
@@ -18,7 +18,7 @@ test("Site Profile を取得検証できる", async ({
     credentialsMissingPage.issuer,
   );
   await page.goto(credentialsMissingPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
   await expect(ext?.getByTestId("site-profile")).toBeVisible();
   expect(await ext?.getByTestId("site-profile-wsp-name").innerText()).toBe(
     "SiteProfileの取得検証",
@@ -38,10 +38,10 @@ test("Site Profile のビジュアルリグレッションテスト", async ({
     credentialsMissingPage.issuer,
   );
   await page.goto(credentialsMissingPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
 
   // Visual Regression Test: ポップアップUIのスクリーンショット比較
-  await expect(ext).toHaveScreenshot("site-profile-popup.png");
+  await expect(ext).toHaveScreenshot("site-profile-sidepanel.png");
 });
 test("Site Profile を取得検証できるが、WMP が存在しない", async ({
   context,
@@ -54,7 +54,7 @@ test("Site Profile を取得検証できるが、WMP が存在しない", async 
     credentialsMissingPage.issuer,
   );
   await page.goto(credentialsMissingPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
   await expect(ext?.getByTestId("site-profile")).toBeVisible();
   expect(await ext?.getByTestId("web-media-profile-missing").innerText()).toBe(
     "このサイト運営者に対応する組織情報を正しく読み取れませんでした",

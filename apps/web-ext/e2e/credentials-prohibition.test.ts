@@ -2,7 +2,7 @@ import { mergeTests } from "@playwright/test";
 import privateKey from "./account-key.example.priv.json" with { type: "json" };
 import publicKey from "./account-key.example.pub.json" with { type: "json" };
 import { test as credentialsTest } from "./credentials-fixtures";
-import { test as base, expect, popup } from "./fixtures";
+import { test as base, expect, sidepanel } from "./fixtures";
 import { test as siteProfileTest } from "./site-profile-fixtures";
 import { test as staticHtmlTest } from "./static-html-fixtures";
 
@@ -23,7 +23,7 @@ test("CASの検証に失敗した場合に閲覧禁止が表示されるか", as
 }) => {
   await validOps({ publicKey, privateKey }, credentialsPage.issuer);
   await page.goto(credentialsPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
   await expect(ext?.getByTestId("p-elm-prohibition-message")).toBeVisible();
 });
 
@@ -38,7 +38,7 @@ test("CAの署名がその発行者のOPで配布される検証鍵を使って�
   await evilCas(credentialsPage.contents, credentialsPage.issuer);
   await validOps({ publicKey, privateKey }, credentialsPage.issuer);
   await page.goto(credentialsPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
   await expect(ext?.getByTestId("p-elm-prohibition-message")).toBeVisible();
 });
 
@@ -57,7 +57,7 @@ test("OPの署名がその発行者のOPで配布される検証鍵を使って�
   );
   await evilOps({ publicKey: publicKey }, credentialsPage.issuer);
   await page.goto(credentialsPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
   await expect(ext?.getByTestId("p-elm-prohibition-message")).toBeVisible();
 });
 test("OPとCAの署名がその発行者のOPで配布される検証鍵を使って検証できない場合閲覧禁止", async ({
@@ -71,7 +71,7 @@ test("OPとCAの署名がその発行者のOPで配布される検証鍵を使�
   await evilCas(credentialsPage.contents, credentialsPage.issuer);
   await evilOps({ publicKey: publicKey }, credentialsPage.issuer);
   await page.goto(credentialsPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
   await expect(ext?.getByTestId("p-elm-prohibition-message")).toBeVisible();
 });
 test("CAのissuerが適切でない場合閲覧禁止", async ({
@@ -89,6 +89,6 @@ test("CAのissuerが適切でない場合閲覧禁止", async ({
   );
   await validOps({ publicKey, privateKey }, credentialsPage.issuer);
   await page.goto(credentialsPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
   await expect(ext?.getByTestId("p-elm-prohibition-message")).toBeVisible();
 });

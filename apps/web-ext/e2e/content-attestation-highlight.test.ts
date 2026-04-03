@@ -2,7 +2,7 @@ import { mergeTests } from "@playwright/test";
 import privateKey from "./account-key.example.priv.json" with { type: "json" };
 import publicKey from "./account-key.example.pub.json" with { type: "json" };
 import { test as credentialsTest } from "./credentials-fixtures";
-import { test as base, expect, popup } from "./fixtures";
+import { test as base, expect, sidepanel } from "./fixtures";
 import { test as siteProfileTest } from "./site-profile-fixtures";
 import { test as staticHtmlTest } from "./static-html-fixtures";
 
@@ -24,7 +24,7 @@ test("拡張機能画面での認証および対象ページのオーバーレ�
   await validSiteProfile(key, credentialsPage.issuer);
   await validCredentials(key, credentialsPage.contents, credentialsPage.issuer);
   await page.goto(credentialsPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
 
   await expect(ext.getByTestId("site-profile")).toBeVisible();
   expect(

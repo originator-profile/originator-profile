@@ -15,19 +15,15 @@ import { updateBadge, verifyTabCredentials } from "./components/tabBadge";
 import "./utils/cors-basic-auth";
 import { normalizeUrl } from "./utils/navigation-state";
 
-const windowSize = {
-  width: 520,
-  height: 640,
-} as const;
-
 /** バッジ更新のデバウンス時間（ミリ秒） */
 const BADGE_UPDATE_DEBOUNCE_MS = 300;
 
-chrome.action.onClicked.addListener(async (tab) => {
-  if (tab.id === undefined) return;
-  const url = `${chrome.runtime.getURL("index.html")}#/tab/${tab.id}`;
-  await chrome.windows.create({ url, type: "popup", ...windowSize });
-});
+// Chromium: アクションクリック時にサイドパネルを開く
+if (chrome.sidePanel) {
+  chrome.sidePanel
+    .setPanelBehavior({ openPanelOnActionClick: true })
+    .catch(console.error);
+}
 
 /**
  * タブのバッジを更新する

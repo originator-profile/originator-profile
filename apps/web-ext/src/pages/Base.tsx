@@ -14,7 +14,7 @@ import {
   VerifiedSp,
 } from "@originator-profile/verify";
 import flush from "just-flush";
-import { useCallback } from "react";
+import { useEffect, useRef } from "react";
 import { Navigate } from "react-router";
 import { useMount, useTitle } from "react-use";
 import Loading from "../components/Loading";
@@ -116,13 +116,29 @@ function Base() {
   const { ops, cas, framesCas, error: credentials_error } = useCredentials();
   useFrameCasLocationProvider(tabId, framesCas ?? []);
 
-  window.addEventListener(
-    "pagehide",
-    useCallback(
-      () => void overlayExtensionMessenger.sendMessage("leave", null, tabId),
-      [tabId],
-    ),
-  );
+  const prevTabIdRef = useRef(tabId);
+
+  useEffect(() => {
+    const prevTabId = prevTabIdRef.current;
+    if (prevTabId !== tabId) {
+      // 旧タブのオーバーレイを閉じる
+      void overlayExtensionMessenger.sendMessage("leave", null, prevTabId);
+    }
+    prevTabIdRef.current = tabId;
+
+    // サイドパネルが非表示になった時に leave を送信
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "hidden") {
+        void overlayExtensionMessenger.sendMessage("leave", null, tabId);
+      }
+    };
+    document.addEventListener("visibilitychange", handleVisibilityChange);
+
+    return () => {
+      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      void overlayExtensionMessenger.sendMessage("leave", null, tabId);
+    };
+  }, [tabId]);
 
   const title = [_("Base_ContentsInformation"), origin]
     .filter(Boolean)

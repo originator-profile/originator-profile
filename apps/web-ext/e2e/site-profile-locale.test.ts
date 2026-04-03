@@ -1,7 +1,7 @@
 import { mergeTests } from "@playwright/test";
 import privateKey from "./account-key.example.priv.json" with { type: "json" };
 import publicKey from "./account-key.example.pub.json" with { type: "json" };
-import { test as base, expect, popup } from "./fixtures";
+import { test as base, expect, sidepanel } from "./fixtures";
 import { test as siteProfileTest } from "./site-profile-fixtures";
 import { test as staticHtmlTest } from "./static-html-fixtures";
 
@@ -25,7 +25,7 @@ test("複数ロケールのSite Profile - 日本語ロケールで日本語コ�
     credentialsMissingPage.issuer,
   );
   await page.goto(credentialsMissingPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
 
   await expect(ext?.getByTestId("site-profile")).toBeVisible();
 
@@ -58,7 +58,7 @@ test("複数ロケールのSite Profile - 英語ロケールで英語コンテ�
     credentialsMissingPage.issuer,
   );
   await page.goto(credentialsMissingPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
 
   await expect(ext?.getByTestId("site-profile")).toBeVisible();
 
@@ -93,7 +93,7 @@ test("複数ロケールのSite Profile - 未対応ロケールで英語フォ�
     credentialsMissingPage.issuer,
   );
   await page.goto(credentialsMissingPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
 
   await expect(ext?.getByTestId("site-profile")).toBeVisible();
 

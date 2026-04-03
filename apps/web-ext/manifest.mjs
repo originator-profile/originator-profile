@@ -61,10 +61,12 @@ const base = {
 
 const chromium = {
   ...base,
+  permissions: [...base.permissions, "sidePanel"],
   version_name: pkg.version,
   background: {
     service_worker: "background.js",
   },
+  side_panel: { default_path: "index.html" },
 };
 
 const firefox = {
@@ -81,6 +83,12 @@ const firefox = {
   },
   background: {
     page: "background.html",
+  },
+  sidebar_action: {
+    default_panel: "index.html",
+    default_title: pkg.description,
+    default_icon: { 48: "icons/48x48.png", 128: "icons/128x128.png" },
+    open_at_install: false,
   },
 };
 
