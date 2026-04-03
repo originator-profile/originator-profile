@@ -40,7 +40,7 @@ test("Site Profile のビジュアルリグレッションテスト", async ({
   await page.goto(credentialsMissingPage.endpoint);
   const ext = await sidepanel(context);
 
-  // Visual Regression Test: ポップアップUIのスクリーンショット比較
+  // Visual Regression Test: サイドパネルUIのスクリーンショット比較
   await expect(ext).toHaveScreenshot("site-profile-sidepanel.png");
 });
 test("Site Profile を取得検証できるが、WMP が存在しない", async ({

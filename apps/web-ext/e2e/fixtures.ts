@@ -71,6 +71,9 @@ export async function sidepanel(ctx: BrowserContext): Promise<Page> {
     const [tab] = await chrome.tabs.query({ active: true });
     return tab?.id;
   });
+  if (tabId === undefined) {
+    throw new Error("No active tab found");
+  }
 
   // サイドパネルの HTML を直接タブで開く（E2E テスト用）
   const url = `chrome-extension://${extensionId}/index.html#/tab/${tabId}`;

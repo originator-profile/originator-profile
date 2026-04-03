@@ -14,7 +14,7 @@ import {
   VerifiedSp,
 } from "@originator-profile/verify";
 import flush from "just-flush";
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { Navigate } from "react-router";
 import { useMount, useTitle } from "react-use";
 import Loading from "../components/Loading";
@@ -116,16 +116,7 @@ function Base() {
   const { ops, cas, framesCas, error: credentials_error } = useCredentials();
   useFrameCasLocationProvider(tabId, framesCas ?? []);
 
-  const prevTabIdRef = useRef(tabId);
-
   useEffect(() => {
-    const prevTabId = prevTabIdRef.current;
-    if (prevTabId !== tabId) {
-      // 旧タブのオーバーレイを閉じる
-      void overlayExtensionMessenger.sendMessage("leave", null, prevTabId);
-    }
-    prevTabIdRef.current = tabId;
-
     // サイドパネルが非表示になった時に leave を送信
     const handleVisibilityChange = () => {
       if (document.visibilityState === "hidden") {
@@ -136,6 +127,7 @@ function Base() {
 
     return () => {
       document.removeEventListener("visibilitychange", handleVisibilityChange);
+      // タブ切替時・アンマウント時に旧タブのオーバーレイを閉じる
       void overlayExtensionMessenger.sendMessage("leave", null, tabId);
     };
   }, [tabId]);

@@ -16,13 +16,6 @@ function useTabTracking() {
       window.location.hash = `/tab/${tabId}`;
     };
 
-    // 初期タブIDを取得
-    void chrome.tabs
-      .query({ active: true, currentWindow: true })
-      .then(([tab]) => {
-        if (tab?.id !== undefined) navigateToTab(tab.id);
-      });
-
     // タブ切り替え時にURLを更新
     const listener = ({ tabId }: chrome.tabs.OnActivatedInfo) => {
       navigateToTab(tabId);
@@ -40,6 +33,13 @@ function useTabTracking() {
       }
     };
     chrome.tabs.onUpdated.addListener(updatedListener);
+
+    // 初期タブIDを取得（リスナー登録後に実行し、競合を防ぐ）
+    void chrome.tabs
+      .query({ active: true, currentWindow: true })
+      .then(([tab]) => {
+        if (tab?.id !== undefined) navigateToTab(tab.id);
+      });
 
     return () => {
       chrome.tabs.onActivated.removeListener(listener);
