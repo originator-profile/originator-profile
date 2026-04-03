@@ -14,7 +14,7 @@ import {
   VerifiedSp,
 } from "@originator-profile/verify";
 import flush from "just-flush";
-import { useEffect } from "react";
+import { useCallback } from "react";
 import { Navigate } from "react-router";
 import { useMount, useTitle } from "react-use";
 import Loading from "../components/Loading";
@@ -116,21 +116,14 @@ function Base() {
   const { ops, cas, framesCas, error: credentials_error } = useCredentials();
   useFrameCasLocationProvider(tabId, framesCas ?? []);
 
-  useEffect(() => {
-    // サイドパネルが非表示になった時に leave を送信
-    const handleVisibilityChange = () => {
+  window.addEventListener(
+    "visibilitychange",
+    useCallback(() => {
       if (document.visibilityState === "hidden") {
         void overlayExtensionMessenger.sendMessage("leave", null, tabId);
       }
-    };
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-
-    return () => {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
-      // タブ切替時・アンマウント時に旧タブのオーバーレイを閉じる
-      void overlayExtensionMessenger.sendMessage("leave", null, tabId);
-    };
-  }, [tabId]);
+    }, [tabId]),
+  );
 
   const title = [_("Base_ContentsInformation"), origin]
     .filter(Boolean)
