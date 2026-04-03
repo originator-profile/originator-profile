@@ -4,5 +4,5 @@ export async function gotoDetailPage(ext: Page) {
   await ext.getByTestId("global-header-menu-button").click();
   await ext.getByTestId("detail-info-menu-item").click();
   await expect(ext).toHaveURL(/detail/);
-  await expect(ext.getByText("検証結果")).toBeVisible();
+  await expect(ext.getByTestId("verification-results")).toBeVisible();
 }
