@@ -17,9 +17,11 @@ function useTabTracking() {
     };
 
     // 初期タブIDを取得
-    void chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
-      if (tab?.id !== undefined) navigateToTab(tab.id);
-    });
+    void chrome.tabs
+      .query({ active: true, currentWindow: true })
+      .then(([tab]) => {
+        if (tab?.id !== undefined) navigateToTab(tab.id);
+      });
 
     // タブ切り替え時にURLを更新
     const listener = ({ tabId }: chrome.tabs.OnActivatedInfo) => {
