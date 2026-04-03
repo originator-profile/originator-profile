@@ -33,7 +33,7 @@ test("異なる鍵ペアによる署名のとき検証失敗", async ({
 
   await gotoDetailPage(ext);
   await expectStatus(ext, "site-profile", "check");
-  await expectStatus(ext, "originator-profile-set", "cancel");
+  await expectStatus(ext, "originator-profile-set-top", "cancel");
   await expectStatus(ext, "content-attestation-set", "null");
   await expectStatus(ext, "core-profile", "cancel");
 });

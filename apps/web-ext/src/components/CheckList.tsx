@@ -498,6 +498,7 @@ function OriginatorsCheckList({
         return (
           <ResultItem
             key={index}
+            testId={`originator-profile-${index}`}
             label={
               <span title={name?.join(",")}>
                 {`Originator Profile #${index}`}
@@ -581,7 +582,10 @@ function SiteProfileCheck({
         <MultipleValidity period={commonPeriod} className="ml-7" />
       )}
       {originatorValue && (
-        <OriginatorProfileSetCheck originators={originatorValue} />
+        <OriginatorProfileSetCheck
+          originators={originatorValue}
+          testId="originator-profile-set"
+        />
       )}
       {!isFetchError && <SitesCheck siteProfile={siteProfile} />}
     </ResultItem>
@@ -716,12 +720,12 @@ function CheckList({
       {originatorProfileSet ? (
         <OriginatorProfileSetCheck
           originators={originatorProfileSet}
-          testId="originator-profile-set"
+          testId="originator-profile-set-top"
         />
       ) : (
         <DetailItem
           label="Originator Profile Set"
-          testId="originator-profile-set"
+          testId="originator-profile-set-top"
           icon="null"
           className="pl-4 mb-2"
         >

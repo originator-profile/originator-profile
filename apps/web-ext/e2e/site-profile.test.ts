@@ -28,8 +28,12 @@ test("Site Profile を取得検証できる", async ({
 
   await gotoDetailPage(ext);
   await expectStatus(ext, "site-profile", "check");
-  await expect(ext.getByTestId("issuer").first()).toHaveCount(1);
-  await expect(ext.getByTestId("validity-period").first()).toHaveCount(1);
+  await ext?.getByTestId("result-site-profile").click();
+  await ext?.getByTestId("result-originator-profile-set").click();
+  await ext?.getByTestId("result-originator-profile-0").first().click();
+  await ext?.getByTestId("result-core-profile").first().click();
+  await expect(ext.getByTestId("issuer").first()).toBeVisible();
+  await expect(ext.getByTestId("validity-period").first()).toBeVisible();
 });
 
 test("Site Profile のビジュアルリグレッションテスト", async ({

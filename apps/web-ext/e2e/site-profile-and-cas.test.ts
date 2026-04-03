@@ -40,7 +40,7 @@ test("SiteProfile/CASの検証に成功するが、htmlに記載されたOPSの�
 
   await gotoDetailPage(ext);
   await expectStatus(ext, "site-profile", "check");
-  await expectStatus(ext, "originator-profile-set", "check");
+  await expectStatus(ext, "originator-profile-set-top", "check");
   await expectStatus(ext, "content-attestation-set", "check");
 });
 

@@ -24,6 +24,6 @@ test("OPS / CAS 未設置かつSiteProfileの取得の失敗した場合非サ�
 
   await gotoDetailPage(ext);
   await expectStatus(ext, "site-profile", "cancel");
-  await expectStatus(ext, "originator-profile-set", "check");
+  await expectStatus(ext, "originator-profile-set-top", "check");
   await expectStatus(ext, "content-attestation-set", "null");
 });
