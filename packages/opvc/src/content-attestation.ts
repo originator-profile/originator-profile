@@ -1,13 +1,13 @@
 import { parseExpirationDate } from "@originator-profile/core";
-import type {
-  Jwk,
+import {
   UnsignedContentAttestation,
+  type Jwk,
 } from "@originator-profile/model";
 import {
-  type DocumentProvider,
   fetchAndSetDigestSri,
   fetchAndSetTargetIntegrity,
   signCa,
+  type DocumentProvider,
 } from "@originator-profile/sign";
 import { addYears, getUnixTime } from "date-fns";
 import { BadRequestError } from "http-errors-enhanced";
@@ -53,7 +53,13 @@ function parseDates({
   return { issuedAt, expiredAt };
 }
 
-async function prepareUnsignedCa(
+/**
+ * 未署名 Content Attestation の取得
+ * @param uca 未署名 Content Attestation オブジェクト
+ * @throws {BadRequestError} 入力が UnsignedContentAttestation スキーマに適合しない場合/検証対象のコンテンツが存在しない/コンテンツにアクセスできない/Integrityの計算に失敗
+ * @return 未署名 Content Attestation オブジェクト
+ */
+export async function unsignedCa(
   uca: UnsignedContentAttestation,
   {
     integrityAlg = "sha256",
@@ -62,12 +68,15 @@ async function prepareUnsignedCa(
   }: UnsignedCaOptions,
 ): Promise<UnsignedContentAttestation> {
   const { issuedAt, expiredAt } = parseDates(timingOptions);
-
   uca.credentialSubject.id ??= `urn:uuid:${crypto.randomUUID()}`;
 
   try {
-    await fetchAndSetDigestSri(integrityAlg, uca.credentialSubject.image);
-    await fetchAndSetTargetIntegrity(integrityAlg, uca, documentProvider);
+    UnsignedContentAttestation.parse(uca);
+
+    await Promise.all([
+      fetchAndSetDigestSri(integrityAlg, uca.credentialSubject.image),
+      fetchAndSetTargetIntegrity(integrityAlg, uca, documentProvider),
+    ]);
   } catch (e) {
     throw new BadRequestError((e as Error).message);
   }
@@ -85,6 +94,7 @@ async function prepareUnsignedCa(
  * Content Attestation への署名
  * @param uca 未署名 Content Attestation オブジェクト
  * @param privateKey プライベート鍵
+ * @throws {BadRequestError} 入力が UnsignedContentAttestation スキーマに適合しない場合/検証対象のコンテンツが存在しない/コンテンツにアクセスできない/Integrityの計算に失敗
  * @return Content Attestation
  */
 export async function sign(
@@ -93,27 +103,13 @@ export async function sign(
   options: ContentAttestationTimingOptions = {},
 ): Promise<string> {
   const { issuedAt, expiredAt } = parseDates(options);
+  const payload = await unsignedCa(uca, { issuedAt, expiredAt });
 
-  uca.credentialSubject.id ??= `urn:uuid:${crypto.randomUUID()}`;
-
-  return await signCa(uca, privateKey, {
+  return await signCa(payload, privateKey, {
     issuedAt,
     expiredAt,
     documentProvider: defaultDocumentProvider,
   });
-}
-
-/**
- * 未署名 Content Attestation の取得
- * @param uca 未署名 Content Attestation オブジェクト
- * @throws {BadRequestError} 検証対象のコンテンツが存在しない/コンテンツにアクセスできない/Integrityの計算に失敗
- * @return 未署名 Content Attestation オブジェクト
- */
-export async function unsignedCa(
-  uca: UnsignedContentAttestation,
-  options: UnsignedCaOptions,
-): Promise<UnsignedContentAttestation> {
-  return await prepareUnsignedCa(uca, options);
 }
 
 /**
@@ -135,7 +131,8 @@ export async function signByServer(
     accessToken: string;
   },
 ): Promise<string> {
-  const payload = await prepareUnsignedCa(uca, options);
+  const { issuedAt, expiredAt } = parseDates(options);
+  const payload = await unsignedCa(uca, { ...options, issuedAt, expiredAt });
 
   const response = await fetch(endpoint, {
     method: "POST",
@@ -143,7 +140,11 @@ export async function signByServer(
       "Content-Type": "application/json",
       Authorization: `Bearer ${accessToken}`,
     },
-    body: JSON.stringify(payload),
+    body: JSON.stringify({
+      ...payload,
+      issuedAt: issuedAt.toISOString(),
+      expiredAt: expiredAt.toISOString(),
+    }),
   });
 
   if (!response.ok) {

@@ -9,6 +9,7 @@ describe("OpId バリデーション", () => {
       "dns:my-site.example.org",
       "dns:sub.domain.example.com",
       "dns:xn--wgv71a309e.jp",
+      "dns:localhost",
     ];
     for (const value of valid) {
       test(`"${value}" を受け付ける`, () => {
@@ -50,6 +51,14 @@ describe("OpId バリデーション", () => {
 
     test("空ラベル (先頭ドット) → エラー", () => {
       expect(OpId.safeParse("dns:.example.com").success).toBe(false);
+    });
+
+    test("数字のみの TLD → エラー", () => {
+      expect(OpId.safeParse("dns:test.123").success).toBe(false);
+    });
+
+    test("数字のみの単一ラベル → エラー", () => {
+      expect(OpId.safeParse("dns:123").success).toBe(false);
     });
   });
 });

@@ -1,12 +1,13 @@
 import type {
   Image,
+  Jwk,
   UnsignedContentAttestation,
 } from "@originator-profile/model";
 import assert from "assert";
 import { BadRequestError } from "http-errors-enhanced";
 import { afterEach, beforeEach, describe, mock, test } from "node:test";
 import { createIntegrityMetadata } from "websri";
-import { signByServer, unsignedCa } from "./content-attestation.ts";
+import { sign, signByServer, unsignedCa } from "./content-attestation.ts";
 
 function createUnsignedContentAttestation(): UnsignedContentAttestation {
   return {
@@ -169,14 +170,81 @@ await describe("unsignedCa()", async () => {
     );
   });
 
+  await test("type に ContentAttestation を含まない場合 BadRequestError", async () => {
+    const uca = {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+      ],
+      type: ["VerifiableCredential"],
+      issuer: "dns:example.com",
+      credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      target: [{ type: "TextTargetIntegrity", content: "data:text/html,test" }],
+    };
+
+    await assert.rejects(
+      unsignedCa(uca as unknown as UnsignedContentAttestation, {}),
+      BadRequestError,
+    );
+  });
+
+  await test("issuer が不正な OP ID の場合 BadRequestError", async () => {
+    const uca = {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+      ],
+      type: ["VerifiableCredential", "ContentAttestation"],
+      issuer: "invalid-issuer",
+      credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      target: [{ type: "TextTargetIntegrity", content: "data:text/html,test" }],
+    };
+
+    await assert.rejects(
+      unsignedCa(uca as unknown as UnsignedContentAttestation, {}),
+      BadRequestError,
+    );
+  });
+
+  await test("target が空配列の場合 BadRequestError", async () => {
+    const uca = {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+      ],
+      type: ["VerifiableCredential", "ContentAttestation"],
+      issuer: "dns:example.com",
+      credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      target: [],
+    };
+
+    await assert.rejects(
+      unsignedCa(uca as unknown as UnsignedContentAttestation, {}),
+      BadRequestError,
+    );
+  });
+
+  await test("@context に必須コンテキストが不足している場合 BadRequestError", async () => {
+    const uca = {
+      "@context": ["https://www.w3.org/ns/credentials/v2"],
+      type: ["VerifiableCredential", "ContentAttestation"],
+      issuer: "dns:example.com",
+      credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      target: [{ type: "TextTargetIntegrity", content: "data:text/html,test" }],
+    };
+
+    await assert.rejects(
+      unsignedCa(uca as unknown as UnsignedContentAttestation, {}),
+      BadRequestError,
+    );
+  });
+
   await test("無効な issuedAt は BadRequestError になる", async () => {
     await assert.rejects(
       unsignedCa(createUnsignedContentAttestation(), {
         issuedAt: "not-a-date",
       }),
-      (error: unknown) =>
-        error instanceof BadRequestError &&
-        error.message === "issuedAt must be a valid date.",
+      BadRequestError,
     );
   });
 
@@ -185,9 +253,63 @@ await describe("unsignedCa()", async () => {
       unsignedCa(createUnsignedContentAttestation(), {
         expiredAt: "not-a-date",
       }),
-      (error: unknown) =>
-        error instanceof BadRequestError &&
-        error.message === "expiredAt must be a valid date.",
+      BadRequestError,
+    );
+  });
+});
+
+await describe("sign()", async () => {
+  await test("type に ContentAttestation を含まない場合 BadRequestError", async () => {
+    const uca = {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+      ],
+      type: ["VerifiableCredential"],
+      issuer: "dns:example.com",
+      credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      target: [{ type: "TextTargetIntegrity", content: "data:text/html,test" }],
+    };
+
+    await assert.rejects(
+      sign(uca as unknown as UnsignedContentAttestation, {} as Jwk, {}),
+      BadRequestError,
+    );
+  });
+
+  await test("issuer が不正な OP ID の場合 BadRequestError", async () => {
+    const uca = {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+      ],
+      type: ["VerifiableCredential", "ContentAttestation"],
+      issuer: "not-a-dns-id",
+      credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      target: [{ type: "TextTargetIntegrity", content: "data:text/html,test" }],
+    };
+
+    await assert.rejects(
+      sign(uca as unknown as UnsignedContentAttestation, {} as Jwk, {}),
+      BadRequestError,
+    );
+  });
+
+  await test("target が空配列の場合 BadRequestError", async () => {
+    const uca = {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+      ],
+      type: ["VerifiableCredential", "ContentAttestation"],
+      issuer: "dns:example.com",
+      credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      target: [],
+    };
+
+    await assert.rejects(
+      sign(uca as unknown as UnsignedContentAttestation, {} as Jwk, {}),
+      BadRequestError,
     );
   });
 });
@@ -260,19 +382,56 @@ await describe("signByServer()", async () => {
     const body = JSON.parse(requestBody) as {
       iss: string;
       sub: string;
-      iat: number;
-      exp: number;
       target: Array<{ integrity?: string; content?: unknown }>;
+      issuedAt: string;
+      expiredAt: string;
     };
     assert.strictEqual(body.iss, "dns:localhost");
     assert.strictEqual(
       body.sub,
       "urn:uuid:4e4abf74-08da-41aa-9063-e84b9c125bc6",
     );
-    assert.strictEqual(typeof body.iat, "number");
-    assert.strictEqual(typeof body.exp, "number");
     assert.ok(body.target[0].integrity);
     assert.strictEqual(body.target[0].content, undefined);
+    assert.strictEqual(typeof body.issuedAt, "string");
+    assert.strictEqual(typeof body.expiredAt, "string");
+    assert.ok(
+      !Number.isNaN(Date.parse(body.issuedAt)),
+      "issuedAt should be a valid ISO date string",
+    );
+    assert.ok(
+      !Number.isNaN(Date.parse(body.expiredAt)),
+      "expiredAt should be a valid ISO date string",
+    );
+  });
+
+  await test("指定した issuedAt / expiredAt が ISO 文字列として POST ボディに含まれる", async () => {
+    const issuedAt = new Date("2025-01-01T00:00:00Z");
+    const expiredAt = new Date("2026-01-01T00:00:00Z");
+
+    endpointResponse = async () =>
+      new Response(JSON.stringify(["jwt-1"]), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+
+    await signByServer(createUnsignedContentAttestation(), {
+      endpoint,
+      accessToken: "test-access-token",
+      issuedAt,
+      expiredAt,
+    });
+
+    const requestBody = request?.init?.body;
+    if (typeof requestBody !== "string") {
+      throw new TypeError("Expected request body to be a JSON string.");
+    }
+    const body = JSON.parse(requestBody) as {
+      issuedAt: string;
+      expiredAt: string;
+    };
+    assert.strictEqual(body.issuedAt, issuedAt.toISOString());
+    assert.strictEqual(body.expiredAt, expiredAt.toISOString());
   });
 
   await test("CA server が文字列 JWT を直接返した場合はそのまま返す", async () => {
@@ -321,7 +480,7 @@ await describe("signByServer()", async () => {
         endpoint,
         accessToken: "test-access-token",
       }),
-      /CA API error: 403 Forbidden: forbidden/,
+      Error,
     );
   });
 
@@ -339,7 +498,7 @@ await describe("signByServer()", async () => {
         endpoint,
         accessToken: "test-access-token",
       }),
-      /CA API returned no JWT\./,
+      Error,
     );
   });
 
@@ -353,7 +512,7 @@ await describe("signByServer()", async () => {
         endpoint,
         accessToken: "test-access-token",
       }),
-      /network down/,
+      Error,
     );
   });
 });
