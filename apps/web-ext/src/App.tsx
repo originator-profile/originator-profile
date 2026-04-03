@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router";
+import { useTabTracking } from "./components/activeTab";
 import { EnvironmentBanner } from "./components/environment";
 import { overlayExtensionMessenger } from "./components/overlay/extension-events";
 import Base from "./pages/Base";
@@ -12,6 +13,8 @@ import Warning from "./pages/Warning";
 import { buildPublUrl, paths } from "./utils/routes";
 
 function App() {
+  useTabTracking();
+
   useEffect(() => {
     const cleanup = overlayExtensionMessenger.onMessage(
       "select",
