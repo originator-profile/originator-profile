@@ -55,6 +55,7 @@ function GlobalHeader({ className, children }: Props) {
         {isOpen && (
           <Menu
             ref={menuRef}
+            data-testid="detail-info-menu-item"
             isOpen={isOpen}
             hasKeyboardFocus={isKeyboardNavigation && activeIndex !== -1}
             className="absolute right-0 mt-2 min-w-40"
