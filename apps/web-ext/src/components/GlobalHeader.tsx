@@ -55,7 +55,6 @@ function GlobalHeader({ className, children }: Props) {
         {isOpen && (
           <Menu
             ref={menuRef}
-            data-testid="detail-info-menu-item"
             isOpen={isOpen}
             hasKeyboardFocus={isKeyboardNavigation && activeIndex !== -1}
             className="absolute right-0 mt-2 min-w-40"
@@ -70,6 +69,7 @@ function GlobalHeader({ className, children }: Props) {
               variant="link"
               to={buildDetailUrl(tabId ?? "")}
               className="px-4 py-2 hover:bg-gray-100 font-light"
+              testId="detail-info-menu-item"
             >
               {_("DetailInfo")}
             </MenuItem>
