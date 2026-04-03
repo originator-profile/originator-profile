@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router";
+import { useSWRConfig } from "swr";
 import { paths, routes } from "../../utils/routes";
 
 /**
@@ -9,10 +10,11 @@ import { paths, routes } from "../../utils/routes";
 export function useTabTracking() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
+  const { mutate } = useSWRConfig();
 
   useEffect(() => {
     const navigateToTab = (tabId: number) => {
-      const base = routes.base.build({tabId: String(tabId)});
+      const base = routes.base.build({ tabId: String(tabId) });
       // 既に同じタブを表示中なら何もしない
       if (pathname.startsWith(base)) return;
       // タブに紐付かないページ（warning 等）表示中はスキップ
@@ -33,7 +35,15 @@ export function useTabTracking() {
       tab: chrome.tabs.Tab,
     ) => {
       if (updatedInfo.status === "complete" && tab.active) {
-        navigateToTab(tabId);
+        const base = routes.base.build({ tabId: String(tabId) });
+        if (pathname.startsWith(base)) {
+          // 同一タブ内のページ遷移 → SWR キャッシュを再検証
+          void mutate(
+            (key) => Array.isArray(key) && key[1] === tabId,
+          );
+        } else {
+          navigateToTab(tabId);
+        }
       }
     };
     chrome.tabs.onUpdated.addListener(updatedListener);
@@ -49,5 +59,5 @@ export function useTabTracking() {
       chrome.tabs.onActivated.removeListener(activatedListener);
       chrome.tabs.onUpdated.removeListener(updatedListener);
     };
-  }, [navigate, pathname]);
+  }, [mutate, navigate, pathname]);
 }
