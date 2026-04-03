@@ -36,6 +36,29 @@ await describe("unsignedWsp()", async () => {
     assert.ok(result.exp);
   });
 
+  await test("credentialSubject.image が欠落していても受け付ける", async () => {
+    const uwsp = {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+        "https://originator-profile.org/ns/cip/v1",
+        { "@language": "ja" },
+      ],
+      type: ["VerifiableCredential", "WebsiteProfile"],
+      issuer: "dns:example.com",
+      credentialSubject: {
+        id: "https://example.com",
+        type: "WebSite",
+        name: "Example",
+        allowedOrigin: ["https://example.com"],
+      },
+    } satisfies UnsignedWebsiteProfile;
+
+    const result = await unsignedWsp(uwsp, {});
+
+    assert.equal(result.credentialSubject.id, "https://example.com");
+  });
+
   await test("type に WebsiteProfile を含まない場合 Error", async () => {
     const uwsp = {
       "@context": [
@@ -82,30 +105,6 @@ await describe("unsignedWsp()", async () => {
           id: "https://example.com/image.png",
           content: ["data:image/svg+xml;base64,dGVzdA=="],
         },
-        allowedOrigin: ["https://example.com"],
-      },
-    };
-
-    await assert.rejects(
-      unsignedWsp(uwsp as unknown as UnsignedWebsiteProfile, {}),
-      Error,
-    );
-  });
-
-  await test("credentialSubject.image が欠落している場合 Error", async () => {
-    const uwsp = {
-      "@context": [
-        "https://www.w3.org/ns/credentials/v2",
-        "https://originator-profile.org/ns/credentials/v1",
-        "https://originator-profile.org/ns/cip/v1",
-        { "@language": "ja" },
-      ],
-      type: ["VerifiableCredential", "WebsiteProfile"],
-      issuer: "dns:example.com",
-      credentialSubject: {
-        id: "https://example.com",
-        type: "WebSite",
-        name: "Example",
         allowedOrigin: ["https://example.com"],
       },
     };
