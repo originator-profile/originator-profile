@@ -17,7 +17,7 @@ function useTabTracking() {
     };
 
     // 初期タブIDを取得
-    chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
+    void chrome.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
       if (tab?.id !== undefined) navigateToTab(tab.id);
     });
 
