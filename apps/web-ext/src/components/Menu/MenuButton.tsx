@@ -1,7 +1,6 @@
 import { twMerge } from "tailwind-merge";
 
-interface MenuButtonProps
-  extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+interface MenuButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   "aria-haspopup"?: "menu" | "true";
   "aria-expanded"?: boolean;
   "aria-controls"?: string;

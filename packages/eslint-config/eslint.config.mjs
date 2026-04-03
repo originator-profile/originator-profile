@@ -1,5 +1,5 @@
 // @ts-check
-import { fixupPluginRules } from "@eslint/compat";
+import { fixupConfigRules, fixupPluginRules } from "@eslint/compat";
 import eslint from "@eslint/js";
 import vitest from "@vitest/eslint-plugin";
 import canonicalPlugin from "eslint-plugin-canonical";
@@ -18,7 +18,7 @@ export default [
   ...tseslint.configs.recommendedTypeChecked,
   jsxA11y.flatConfigs.recommended,
   reactHooks.configs.flat.recommended,
-  reactConfig,
+  ...fixupConfigRules([reactConfig]),
   {
     files: ["**/*.{js,mjs,cjs,jsx,ts,tsx}"],
     languageOptions: {

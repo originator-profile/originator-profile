@@ -18,15 +18,15 @@
     "postinstall": "nuxt prepare"
   },
   "devDependencies": {
-    "@jumpu-ui/tailwindcss": "2.0.0",
-    "@nuxt/icon": "2.1.0",
-    "@tailwindcss/vite": "^4.1.7",
-    "@vueuse/core": "^14.0.0",
+    "@jumpu-ui/tailwindcss": "2.0.1",
+    "@nuxt/icon": "2.2.1",
+    "@tailwindcss/vite": "^4.2.2",
+    "@vueuse/core": "^14.2.1",
     "fast-glob": "^3.3.3",
-    "jose": "^5.9.6",
-    "jsdom": "^27.0.0",
-    "nuxt": "^4.0.0",
-    "openid-client": "^6.6.2",
-    "tailwindcss": "^4.1.7"
+    "jose": "^6.2.2",
+    "jsdom": "^29.0.1",
+    "nuxt": "^4.4.2",
+    "openid-client": "^6.8.2",
+    "tailwindcss": "^4.2.2"
   }
 }

@@ -40,10 +40,10 @@
   },
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",
-    "eslint": "^9.25.1",
+    "eslint": "^10.1.0",
     "eslint-config-originator-profile": "workspace:*",
-    "pkgroll": "^2.12.2",
-    "typescript": "^5.8.3",
-    "vitest": "^4.0.0"
+    "pkgroll": "^2.27.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
   }
 }

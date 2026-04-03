@@ -73,7 +73,7 @@ await describe("unsignedCa()", async () => {
     const textContent = "Hello, world!";
     const meta = await createIntegrityMetadata(
       "sha256",
-      new TextEncoder().encode(textContent).buffer as ArrayBuffer,
+      new TextEncoder().encode(textContent).buffer,
     );
     assert.strictEqual(result.target[0].integrity, meta.toString());
   });

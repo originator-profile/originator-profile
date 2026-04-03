@@ -12,7 +12,7 @@ export class PersistentMap<T> {
     try {
       const result = await chrome.storage.session.get(this.#storageKey);
       if (result[this.#storageKey]) {
-        this.#cache = result[this.#storageKey];
+        this.#cache = result[this.#storageKey] as Record<number, T>;
       }
       this.#isLoaded = true;
     } catch (e) {

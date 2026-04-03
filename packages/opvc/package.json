@@ -39,26 +39,26 @@
     "test": "node --experimental-strip-types --no-warnings=ExperimentalWarning --test"
   },
   "dependencies": {
-    "@oclif/core": "^4.4.0",
-    "@oclif/plugin-help": "^6.2.29",
+    "@oclif/core": "^4.10.3",
+    "@oclif/plugin-help": "^6.2.41",
     "@originator-profile/core": "workspace:*",
     "@originator-profile/cryptography": "workspace:*",
     "@originator-profile/model": "workspace:*",
     "@originator-profile/securing-mechanism": "workspace:*",
     "@originator-profile/sign": "workspace:*",
     "date-fns": "^4.1.0",
-    "http-errors-enhanced": "^4.0.0",
-    "jose": "^6.0.11",
-    "jsdom": "^27.0.0"
+    "http-errors-enhanced": "^4.0.2",
+    "jose": "^6.2.2",
+    "jsdom": "^29.0.1"
   },
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",
-    "@types/node": "^24.3.1",
-    "eslint": "^9.25.1",
+    "@types/node": "^25.5.0",
+    "eslint": "^10.1.0",
     "eslint-config-originator-profile": "workspace:*",
-    "oclif": "^4.20.1",
-    "tsdown": "^0.16.7",
-    "typescript": "^5.8.3",
+    "oclif": "^4.22.96",
+    "tsdown": "^0.21.7",
+    "typescript": "^6.0.2",
     "websri": "^1.0.1"
   }
 }
