@@ -227,7 +227,7 @@ DESCRIPTION
   Display help for opvc.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/6.2.41/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/6.2.42/src/commands/help.ts)_
 
 ## `opvc key-gen`
 
