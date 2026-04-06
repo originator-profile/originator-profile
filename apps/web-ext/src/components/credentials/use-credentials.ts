@@ -6,7 +6,7 @@ import {
   VerifiedSp,
 } from "@originator-profile/verify";
 import { useParams } from "react-router";
-import useSWRImmutable from "swr/immutable";
+import useSWR from "swr";
 import { useSiteProfile } from "../siteProfile";
 import { deduplicateCas } from "./deduplicate-cas";
 import { fetchTabCredentials, fetchVerificationResult } from "./messaging";
@@ -114,7 +114,7 @@ export function useCredentials() {
     data: credentials,
     error,
     isLoading,
-  } = useSWRImmutable<
+  } = useSWR<
     FetchVerifiedCredentialsResult,
     Error,
     [typeof CREDENTIALS_KEY, number, VerifiedSp?]

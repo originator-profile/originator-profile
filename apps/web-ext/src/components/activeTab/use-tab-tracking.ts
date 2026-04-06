@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { useLocation, useNavigate } from "react-router";
-import { useSWRConfig } from "swr";
 import { paths, routes } from "../../utils/routes";
 
 /**
@@ -10,7 +9,6 @@ import { paths, routes } from "../../utils/routes";
 export function useTabTracking() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const { mutate } = useSWRConfig();
 
   useEffect(() => {
     const navigateToTab = (tabId: number) => {
@@ -28,26 +26,6 @@ export function useTabTracking() {
     };
     chrome.tabs.onActivated.addListener(activatedListener);
 
-    // 同一タブ内でのページ遷移時もURLをリセット
-    const updatedListener = (
-      tabId: number,
-      updatedInfo: chrome.tabs.OnUpdatedInfo,
-      tab: chrome.tabs.Tab,
-    ) => {
-      if (updatedInfo.status === "complete" && tab.active) {
-        const base = routes.base.build({ tabId: String(tabId) });
-        if (pathname.startsWith(base)) {
-          // 同一タブ内のページ遷移 → SWR キャッシュを再検証
-          void mutate(
-            (key) => Array.isArray(key) && key[1] === tabId,
-          );
-        } else {
-          navigateToTab(tabId);
-        }
-      }
-    };
-    chrome.tabs.onUpdated.addListener(updatedListener);
-
     // 初期タブIDを取得（リスナー登録後に実行し、取りこぼしを防ぐ）
     void chrome.tabs
       .query({ active: true, currentWindow: true })
@@ -57,7 +35,6 @@ export function useTabTracking() {
 
     return () => {
       chrome.tabs.onActivated.removeListener(activatedListener);
-      chrome.tabs.onUpdated.removeListener(updatedListener);
     };
-  }, [mutate, navigate, pathname]);
+  }, [navigate, pathname]);
 }
