@@ -3,7 +3,6 @@ import { OpMeta, OpVc } from "@originator-profile/model";
 import {
   fetchCredentials,
   fetchOpMeta,
-  fetchSiteProfile,
 } from "@originator-profile/presentation";
 import {
   normalizeCasItem,
@@ -29,7 +28,6 @@ import "./utils/cors-basic-auth";
 credentialsMessenger.onMessage("fetchCredentials", async () => {
   const { ops, cas } = await fetchCredentials(document);
   const opMeta = fetchOpMeta(document);
-  const sp = await fetchSiteProfile(document);
   const frameLocation: FrameLocation = {
     origin: window.origin,
     url: window.location.href,
@@ -37,7 +35,6 @@ credentialsMessenger.onMessage("fetchCredentials", async () => {
   return {
     ops: serializeIfError(ops),
     cas: serializeIfError(cas),
-    sp: serializeIfError(sp),
     opMeta,
     ...frameLocation,
   };

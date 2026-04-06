@@ -3,6 +3,7 @@ import { JwtVcDecoder } from "@originator-profile/securing-mechanism";
 import { DecodedOp, decodeOps } from "@originator-profile/verify";
 import { fetchTabCredentials } from "../credentials";
 import type { LinkVerificationResult } from "../credentials/types";
+import { fetchTabSiteProfile } from "../siteProfile";
 import type { CreateMismatchResultParams, VerificationContext } from "./types";
 
 export const decodeWsps = (sp: SiteProfile | null) => {
@@ -135,7 +136,8 @@ export const getVerificationResult = async (
 ): Promise<LinkVerificationResult> => {
   const { targetOpId, sourceOrgName, expectedOrgName } = context;
   try {
-    const { ops, sp } = await fetchTabCredentials(tabId);
+    const { ops } = await fetchTabCredentials(tabId);
+    const { result: sp } = await fetchTabSiteProfile(tabId);
     const decodedOps = decodeOps(ops);
     const decodedWsps = decodeWsps(sp);
 
