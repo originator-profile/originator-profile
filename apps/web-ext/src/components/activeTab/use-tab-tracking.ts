@@ -26,14 +26,17 @@ export function useTabTracking() {
   });
 
   useEffect(() => {
-    let currentWindowId: number | undefined;
+    const windowIdReady = chrome.windows
+      .getCurrent()
+      .then((win) => win.id);
 
     // タブ切り替え時にURLを更新（自ウィンドウのみ）
     const activatedListener = async ({
       tabId,
       windowId,
     }: chrome.tabs.OnActivatedInfo) => {
-      if (currentWindowId !== undefined && windowId !== currentWindowId) return;
+      const currentWindowId = await windowIdReady;
+      if (windowId !== currentWindowId) return;
       try {
         const tab = await chrome.tabs.get(tabId);
         if (isTrackableUrl(tab.url)) {
@@ -49,13 +52,13 @@ export function useTabTracking() {
     // （例: chrome:// タブでアドレスバーに URL を入力して遷移）
     // 同一タブ内の Web ページ間遷移による再取得は useNavigationRefetch が担う。
     // 同一タブの場合 navigateToTab は pathname 一致で no-op になる。
-    const updatedListener = (
+    const updatedListener = async (
       tabId: number,
       updatedInfo: chrome.tabs.OnUpdatedInfo,
       tab: chrome.tabs.Tab,
     ) => {
-      if (currentWindowId !== undefined && tab.windowId !== currentWindowId)
-        return;
+      const currentWindowId = await windowIdReady;
+      if (tab.windowId !== currentWindowId) return;
       if (
         updatedInfo.status === "complete" &&
         tab.active &&
@@ -66,17 +69,16 @@ export function useTabTracking() {
     };
     chrome.tabs.onUpdated.addListener(updatedListener);
 
-    // 自ウィンドウの ID を取得し、初期タブを設定
-    void chrome.windows.getCurrent().then((win) => {
-      currentWindowId = win.id;
-      void chrome.tabs
+    // 初期タブIDを取得（リスナー登録後に実行し、取りこぼしを防ぐ）
+    void windowIdReady.then((currentWindowId) =>
+      chrome.tabs
         .query({ active: true, windowId: currentWindowId })
         .then(([tab]) => {
           if (tab?.id !== undefined && isTrackableUrl(tab.url)) {
             navigateToTab(tab.id);
           }
-        });
-    });
+        }),
+    );
 
     return () => {
       chrome.tabs.onActivated.removeListener(activatedListener);
