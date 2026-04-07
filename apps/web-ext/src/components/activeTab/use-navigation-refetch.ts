@@ -45,6 +45,8 @@ export function useNavigationRefetch() {
   const navigate = useNavigate();
   const { pathname } = useLocation();
   const pendingRef = useRef<Map<number, PendingFrames>>(new Map());
+  /** 初回 contentReady を受信済みのタブ。初回はページの初期ロードなのでスキップする */
+  const knownTabsRef = useRef<Set<number>>(new Set());
 
   const triggerRefetch = useEffectEvent((tabId: number) => {
     clearPending(pendingRef.current, tabId);
@@ -109,6 +111,13 @@ export function useNavigationRefetch() {
         const frameId = sender.frameId;
         if (tabId === undefined || frameId === undefined) return;
         if (!isCurrentTab(tabId)) return;
+
+        // メインフレームの初回 contentReady はページの初期ロードに対応する。
+        // IPC 遅延によりリスナー登録後に到達し得るため、スキップする。
+        if (frameId === 0 && !knownTabsRef.current.has(tabId)) {
+          knownTabsRef.current.add(tabId);
+          return;
+        }
 
         if (frameId === 0) {
           void handleMainFrame(tabId);
