@@ -4,6 +4,7 @@ import { useSWRConfig } from "swr";
 import { routes } from "../../utils/routes";
 import { activeTabMessenger } from "./events";
 import { createFrameReadinessTracker } from "./frame-readiness-tracker";
+import { matchTabCacheKey } from "./match-tab-cache-key";
 
 async function getExpectedFrameIds(tabId: number): Promise<Set<number>> {
   try {
@@ -33,7 +34,7 @@ export function useNavigationRefetch() {
 
   const onRefetch = useEffectEvent((tabId: number) => {
     const base = routes.base.build({ tabId: String(tabId) });
-    void mutate((key) => Array.isArray(key) && key[1] === tabId, undefined);
+    void mutate(matchTabCacheKey(tabId), undefined);
     void navigate(base, { replace: true });
   });
 

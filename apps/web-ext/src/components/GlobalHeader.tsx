@@ -4,6 +4,7 @@ import { useNavigate, useParams } from "react-router";
 import { useSWRConfig } from "swr";
 import { twMerge } from "tailwind-merge";
 import { buildDetailUrl, routes } from "../utils/routes";
+import { matchTabCacheKey } from "./activeTab/match-tab-cache-key";
 import { Menu, MenuButton, MenuItem, useMenuButton } from "./Menu";
 
 type Props = {
@@ -41,10 +42,7 @@ function GlobalHeader({ className, children }: Props) {
     if (!tabId) return;
     const numericTabId = Number(tabId);
     const base = routes.base.build({ tabId });
-    void mutate(
-      (key) => Array.isArray(key) && key[1] === numericTabId,
-      undefined,
-    );
+    void mutate(matchTabCacheKey(numericTabId), undefined);
     void navigate(base, { replace: true });
   };
 
