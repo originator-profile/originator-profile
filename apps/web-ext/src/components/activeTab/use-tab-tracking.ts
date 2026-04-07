@@ -26,10 +26,11 @@ export function useTabTracking() {
   });
 
   useEffect(() => {
-    const windowIdReady = chrome.windows.getCurrent().then((win) => {
-      if (win.id === undefined) throw new Error("window id is undefined");
-      return win.id;
-    });
+    // window ID が取得できない場合は undefined → 全ウィンドウのタブを追跡する（退行動作）
+    const windowIdReady: Promise<number | undefined> = chrome.windows
+      .getCurrent()
+      .then((win) => win.id)
+      .catch(() => undefined);
 
     // タブ切り替え時にURLを更新（自ウィンドウのみ）
     const activatedListener = async ({
@@ -37,7 +38,7 @@ export function useTabTracking() {
       windowId,
     }: chrome.tabs.OnActivatedInfo) => {
       const currentWindowId = await windowIdReady;
-      if (windowId !== currentWindowId) return;
+      if (currentWindowId !== undefined && windowId !== currentWindowId) return;
       try {
         const tab = await chrome.tabs.get(tabId);
         if (isTrackableUrl(tab.url)) {
@@ -59,7 +60,8 @@ export function useTabTracking() {
       tab: chrome.tabs.Tab,
     ) => {
       const currentWindowId = await windowIdReady;
-      if (tab.windowId !== currentWindowId) return;
+      if (currentWindowId !== undefined && tab.windowId !== currentWindowId)
+        return;
       if (
         updatedInfo.status === "complete" &&
         tab.active &&
