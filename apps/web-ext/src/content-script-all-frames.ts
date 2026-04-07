@@ -385,3 +385,12 @@ if (document.readyState === "loading") {
 } else {
   notifyReady();
 }
+
+// bfcache から復元された場合、Content Script は再注入されないため
+// pageshow イベントで contentReady を再送信する
+// see: https://developer.chrome.com/blog/bfcache-extension-messaging-changes
+window.addEventListener("pageshow", (event) => {
+  if (event.persisted) {
+    notifyReady();
+  }
+});
