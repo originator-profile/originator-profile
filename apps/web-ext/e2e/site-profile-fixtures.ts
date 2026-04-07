@@ -10,7 +10,7 @@ import {
 } from "@originator-profile/model";
 import { signJwtVc } from "@originator-profile/securing-mechanism";
 import { test as base, Page } from "@playwright/test";
-import { addYears } from "date-fns";
+import { addDays, addYears } from "date-fns";
 import {
   generateCertificateData,
   generateCoreProfileData,
@@ -30,6 +30,10 @@ type TestFixtures = {
     key: { publicKey: Jwk; privateKey: Jwk },
     issuer: string,
   ) => Promise<void>;
+  expiringSoonSiteProfile: (
+    key: { publicKey: Jwk; privateKey: Jwk },
+    issuer: string,
+  ) => Promise<void>;
   multiLocaleSiteProfile: (
     key: { publicKey: Jwk; privateKey: Jwk },
     issuer: string,
@@ -44,10 +48,10 @@ async function createSiteProfile(
   key: KeyPair,
   issuer: string,
   includeMedia: boolean = true,
+  expiredAt: Date = addYears(new Date(), 1),
 ): Promise<SiteProfile> {
   const { publicKey, privateKey } = key;
   const issuedAt: Date = new Date(Date.now());
-  const expiredAt: Date = addYears(new Date(), 1);
 
   const coreProfile: CoreProfile = generateCoreProfileData(publicKey, issuer);
   const certificate: Certificate = generateCertificateData(issuer);
@@ -158,6 +162,22 @@ export const test = base.extend<TestFixtures>({
     await use(
       async (key: { publicKey: Jwk; privateKey: Jwk }, issuer: string) => {
         const sp: SiteProfile = await createSiteProfile(key, issuer, false);
+
+        await setupRoute(page, sp, 200);
+      },
+    );
+
+    await cleanupRoute(page);
+  },
+  expiringSoonSiteProfile: async ({ page }: { page: Page }, use) => {
+    await use(
+      async (key: { publicKey: Jwk; privateKey: Jwk }, issuer: string) => {
+        const sp: SiteProfile = await createSiteProfile(
+          key,
+          issuer,
+          true,
+          addDays(new Date(), 1),
+        );
 
         await setupRoute(page, sp, 200);
       },

@@ -59,6 +59,7 @@ function GlobalHeader({ className, children }: Props) {
           <Icon icon="mdi:refresh" className="w-5 h-5 text-gray-700" />
         </button>
         <MenuButton
+          data-testid="global-header-menu-button"
           ref={buttonRef}
           className="p-2 hover:bg-gray-100 rounded"
           onClick={toggleMenu}
@@ -88,6 +89,7 @@ function GlobalHeader({ className, children }: Props) {
               variant="link"
               to={buildDetailUrl(tabId ?? "")}
               className="px-4 py-2 hover:bg-gray-100 font-light"
+              testId="detail-info-menu-item"
             >
               {_("DetailInfo")}
             </MenuItem>
