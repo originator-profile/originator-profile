@@ -45,8 +45,10 @@ export function useTabTracking() {
     };
     chrome.tabs.onActivated.addListener(activatedListener);
 
-    // アクティブタブの URL が非 Web ページ→ Web ページに変わった場合を検知する
+    // アクティブタブの URL が非 Web ページ→ Web ページに変わった場合を検知する。
     // （例: chrome:// タブでアドレスバーに URL を入力して遷移）
+    // 同一タブ内の Web ページ間遷移による再取得は useNavigationRefetch が担う。
+    // 同一タブの場合 navigateToTab は pathname 一致で no-op になる。
     const updatedListener = (
       tabId: number,
       updatedInfo: chrome.tabs.OnUpdatedInfo,
