@@ -153,6 +153,26 @@ describe("createFrameReadinessTracker", () => {
     });
   });
 
+  describe("removeTab", () => {
+    test("閉じたタブの knownTabs がクリアされ次回は初回スキップになる", () => {
+      tracker.handleContentReady(1, 0, true); // 初回 skip → knownTabs に追加
+      tracker.removeTab(1); // クリーンアップ
+
+      // 再度初回スキップになる
+      expect(tracker.handleContentReady(1, 0, true)).toBe("skip");
+    });
+
+    test("閉じたタブの pending タイマーがクリアされる", () => {
+      tracker.handleContentReady(1, 0, true); // skip
+      tracker.handleContentReady(1, 0, true); // pending (timer set)
+
+      tracker.removeTab(1);
+
+      vi.advanceTimersByTime(ALL_FRAMES_TIMEOUT_MS);
+      expect(onRefetch).not.toHaveBeenCalled();
+    });
+  });
+
   describe("dispose", () => {
     test("全タイマーがクリアされ onRefetch が呼ばれない", () => {
       tracker.handleContentReady(1, 0, true); // skip

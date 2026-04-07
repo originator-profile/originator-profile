@@ -20,6 +20,8 @@ export type FrameReadinessTracker = {
     tabId: number,
     frameIds: Set<number>,
   ) => ReadinessResult;
+  /** タブが閉じられたときに状態をクリーンアップする */
+  removeTab: (tabId: number) => void;
   dispose: () => void;
 };
 
@@ -106,6 +108,11 @@ export function createFrameReadinessTracker(
     return "pending";
   };
 
+  const removeTab = (tabId: number): void => {
+    clearPending(tabId);
+    knownTabs.delete(tabId);
+  };
+
   const dispose = (): void => {
     for (const pending of pendings.values()) {
       clearTimeout(pending.timer);
@@ -114,5 +121,5 @@ export function createFrameReadinessTracker(
     knownTabs.clear();
   };
 
-  return { handleContentReady, resolveExpectedFrames, dispose };
+  return { handleContentReady, resolveExpectedFrames, removeTab, dispose };
 }

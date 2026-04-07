@@ -39,6 +39,12 @@ export function useNavigationRefetch() {
   useEffect(() => {
     const tracker = createFrameReadinessTracker(onRefetch);
 
+    // タブが閉じられたときに knownTabs / pendings をクリーンアップ
+    const removedListener = (tabId: number) => {
+      tracker.removeTab(tabId);
+    };
+    chrome.tabs.onRemoved.addListener(removedListener);
+
     const cleanup = activeTabMessenger.onMessage(
       "contentReady",
       ({ sender }) => {
@@ -62,6 +68,7 @@ export function useNavigationRefetch() {
 
     return () => {
       cleanup();
+      chrome.tabs.onRemoved.removeListener(removedListener);
       tracker.dispose();
     };
   }, []);
