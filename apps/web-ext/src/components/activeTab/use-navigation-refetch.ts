@@ -5,7 +5,7 @@ import { routes } from "../../utils/routes";
 import { activeTabMessenger } from "./events";
 
 /** タイムアウト（ミリ秒）: 全サブフレームの readiness を待つ上限 */
-const ALL_FRAMES_TIMEOUT_MS = 3000;
+const ALL_FRAMES_TIMEOUT_MS = 3_000;
 
 type PendingFrames = {
   /** 期待フレーム一覧。null は getAllFrames 完了前（未確定）を示す */
