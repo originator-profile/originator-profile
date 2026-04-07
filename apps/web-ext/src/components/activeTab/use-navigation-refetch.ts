@@ -1,4 +1,4 @@
-import { useEffect, useRef } from "react";
+import { useEffect, useEffectEvent, useRef } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useSWRConfig } from "swr";
 import { routes } from "../../utils/routes";
@@ -45,15 +45,20 @@ export function useNavigationRefetch() {
   const { pathname } = useLocation();
   const pendingRef = useRef<Map<number, PendingFrames>>(new Map());
 
+  const triggerRefetch = useEffectEvent((tabId: number) => {
+    clearPending(pendingRef.current, tabId);
+    const base = routes.base.build({ tabId: String(tabId) });
+    void mutate((key) => Array.isArray(key) && key[1] === tabId, undefined);
+    void navigate(base, { replace: true });
+  });
+
+  const isCurrentTab = useEffectEvent((tabId: number) => {
+    const currentBase = routes.base.build({ tabId: String(tabId) });
+    return pathname.startsWith(currentBase);
+  });
+
   useEffect(() => {
     const pendings = pendingRef.current;
-
-    const triggerRefetch = (tabId: number) => {
-      clearPending(pendings, tabId);
-      const base = routes.base.build({ tabId: String(tabId) });
-      void mutate((key) => Array.isArray(key) && key[1] === tabId, undefined);
-      void navigate(base, { replace: true });
-    };
 
     const handleMainFrame = async (tabId: number) => {
       clearPending(pendings, tabId);
@@ -91,9 +96,7 @@ export function useNavigationRefetch() {
         const tabId = sender.tab?.id;
         const frameId = sender.frameId;
         if (tabId === undefined || frameId === undefined) return;
-
-        const currentBase = routes.base.build({ tabId: String(tabId) });
-        if (!pathname.startsWith(currentBase)) return;
+        if (!isCurrentTab(tabId)) return;
 
         if (frameId === 0) {
           void handleMainFrame(tabId);
@@ -110,5 +113,5 @@ export function useNavigationRefetch() {
       }
       pendings.clear();
     };
-  }, [mutate, navigate, pathname]);
+  }, []);
 }
