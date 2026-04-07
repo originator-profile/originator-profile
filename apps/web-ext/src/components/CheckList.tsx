@@ -32,6 +32,7 @@ interface CodedError extends Error {
 
 type DetailItemProps = {
   label: React.ReactNode;
+  testId?: string;
   icon: "check" | "cancel" | "null";
   isOpen?: boolean;
   children: React.ReactNode;
@@ -205,9 +206,11 @@ function analyzeValidity<T>(value: T, toSources: (value: T) => unknown[]) {
 
 function DisplayStatus({
   label,
+  testId,
   icon,
 }: {
   label: React.ReactNode;
+  testId?: string;
   icon: "check" | "cancel" | "null";
 }) {
   const iconMap = {
@@ -219,12 +222,19 @@ function DisplayStatus({
   const { icon: iconName, color } = iconMap[icon];
 
   return (
-    <summary className="flex items-center text-base cursor-pointer">
+    <summary
+      {...(testId ? { "data-testid": `result-${testId}` } : {})}
+      className="flex items-center text-base cursor-pointer"
+    >
       <Icon
         icon="solar:alt-arrow-right-bold"
         className="size-5 transition-transform icon"
       />
-      <Icon icon={iconName} className={twMerge("size-5 ml-1", color)} />
+      <Icon
+        data-testid={`status-${icon}`}
+        icon={iconName}
+        className={twMerge("size-5 ml-1", color)}
+      />
       <span className="ml-1">{label}</span>
     </summary>
   );
@@ -278,19 +288,22 @@ function DisplayResults({
       )}
       {issuer && (
         <div className="text-gray-700 mb-1">
-          <p className="font-bold mb-1">Issuer</p>
+          <p className="font-bold mb-1" data-testid="issuer">
+            Issuer
+          </p>
           <p>{issuer}</p>
         </div>
       )}
       {issuedAtStr && expiredAtStr && (
         <div className="text-gray-700 mb-1">
-          <p className="font-bold mb-1">
+          <p className="font-bold mb-1" data-testid="validity-period">
             {isExpiredSoon(expiredAt) ? (
               <span className="flex" title="The certificate is about to expire">
                 Validity Period
                 <Icon
                   icon="ic:round-warning"
                   className="size-4 ml-1 text-caution"
+                  data-testid="caution-validity-period"
                 />
               </span>
             ) : (
@@ -318,6 +331,7 @@ function DisplayResults({
 
 function DetailItem({
   label,
+  testId,
   icon,
   isOpen = false,
   children,
@@ -328,7 +342,7 @@ function DetailItem({
       open={isOpen}
       className={twMerge("[&[open]>summary>.icon]:rotate-90", className)}
     >
-      <DisplayStatus label={label} icon={icon} />
+      <DisplayStatus label={label} testId={testId} icon={icon} />
       {children}
     </details>
   );
@@ -338,6 +352,7 @@ function DetailItem({
 // デコード済みではあるが、未検証のものに対しては警告マークを表示します。
 function ResultItem({
   label,
+  testId,
   value,
   showPayload = true,
   isVerified = true,
@@ -346,6 +361,7 @@ function ResultItem({
   className,
 }: {
   label: React.ReactNode;
+  testId?: string;
   value: unknown;
   showPayload?: boolean;
   isVerified?: boolean;
@@ -359,6 +375,7 @@ function ResultItem({
   return (
     <DetailItem
       label={label}
+      testId={testId}
       icon={isError ? "cancel" : isVerified ? "check" : "null"}
       isOpen={isOpen || isError || isExpiredSoon(findExpiredAt(value))}
       className={className}
@@ -423,6 +440,7 @@ function DisplayOriginators({
       {commonPeriod && <MultipleValidity period={commonPeriod} />}
       <ResultItem
         label={"Core Profile"}
+        testId="core-profile"
         value={op.core}
         isVerified={"verificationKey" in op.core}
         className="mb-2"
@@ -432,6 +450,7 @@ function DisplayOriginators({
         (annotation, index) => (
           <ResultItem
             key={index}
+            testId="profile-annotation"
             label={`Profile Annotation #${index}`}
             value={annotation}
             isVerified={"verificationKey" in annotation}
@@ -444,6 +463,7 @@ function DisplayOriginators({
         (media, index) => (
           <ResultItem
             key={index}
+            testId="web-media-profile"
             label={`Web Media Profile #${index}`}
             value={media}
             isVerified={"verificationKey" in media}
@@ -478,6 +498,7 @@ function OriginatorsCheckList({
         return (
           <ResultItem
             key={index}
+            testId={`originator-profile-${index}`}
             label={
               <span title={name?.join(",")}>
                 {`Originator Profile #${index}`}
@@ -498,8 +519,10 @@ function OriginatorsCheckList({
 
 function OriginatorProfileSetCheck({
   originators,
+  testId,
 }: {
   originators: OpsVerificationResult | CodedError;
+  testId?: string;
 }) {
   const isError = originators instanceof Error;
   const isOpsError =
@@ -516,6 +539,7 @@ function OriginatorProfileSetCheck({
   return (
     <ResultItem
       label="Originator Profile Set"
+      testId={testId}
       value={originators}
       showPayload={false}
       isOpen={shouldOpen}
@@ -548,6 +572,7 @@ function SiteProfileCheck({
   return (
     <ResultItem
       label="Site Profile"
+      testId="site-profile"
       value={siteProfile}
       showPayload={isFetchError}
       isOpen={shouldOpen}
@@ -557,7 +582,10 @@ function SiteProfileCheck({
         <MultipleValidity period={commonPeriod} className="ml-7" />
       )}
       {originatorValue && (
-        <OriginatorProfileSetCheck originators={originatorValue} />
+        <OriginatorProfileSetCheck
+          originators={originatorValue}
+          testId="originator-profile-set"
+        />
       )}
       {!isFetchError && <SitesCheck siteProfile={siteProfile} />}
     </ResultItem>
@@ -608,6 +636,7 @@ function ContentAttestationSetCheck({
   return (
     <ResultItem
       label="Content Attestation Set"
+      testId="content-attestation-set"
       value={cas}
       showPayload={false}
       isOpen={shouldOpen}
@@ -679,15 +708,24 @@ function CheckList({
       {siteProfile ? (
         <SiteProfileCheck siteProfile={siteProfile} />
       ) : (
-        <DetailItem label="Site Profile" icon="null" className="pl-4 mb-2">
+        <DetailItem
+          label="Site Profile"
+          testId="site-profile"
+          icon="null"
+          className="pl-4 mb-2"
+        >
           <DisplayResults payload={sp} className="ml-7" />
         </DetailItem>
       )}
       {originatorProfileSet ? (
-        <OriginatorProfileSetCheck originators={originatorProfileSet} />
+        <OriginatorProfileSetCheck
+          originators={originatorProfileSet}
+          testId="originator-profile-set-top"
+        />
       ) : (
         <DetailItem
           label="Originator Profile Set"
+          testId="originator-profile-set-top"
           icon="null"
           className="pl-4 mb-2"
         >
@@ -699,6 +737,7 @@ function CheckList({
       ) : (
         <DetailItem
           label="Content Attestation Set"
+          testId="content-attestation-set"
           icon="null"
           className="pl-4 mb-2"
         >

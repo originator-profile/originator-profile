@@ -10,6 +10,7 @@ interface MenuItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   ref?: React.Ref<HTMLButtonElement>;
   variant?: "button" | "link";
   to?: string;
+  testId?: string;
 }
 
 export const MenuItem = ({
@@ -21,6 +22,7 @@ export const MenuItem = ({
   ref,
   variant = "button",
   to,
+  testId,
   ...props
 }: MenuItemProps) => {
   const internalRef = useRef<HTMLButtonElement>(null);
@@ -47,6 +49,7 @@ export const MenuItem = ({
         <Link
           to={to}
           role="menuitem"
+          data-testid={testId}
           className={twMerge(
             "w-full py-2 text-left text-sm",
             "flex items-center",
