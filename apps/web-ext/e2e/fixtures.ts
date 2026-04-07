@@ -68,7 +68,10 @@ export async function sidepanel(ctx: BrowserContext): Promise<Page> {
 
   // アクティブタブのIDを取得
   const tabId = await backgroundWorker.evaluate(async () => {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
     return tab?.id;
   });
   if (tabId === undefined) {
