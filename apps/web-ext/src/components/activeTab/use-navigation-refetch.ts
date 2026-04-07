@@ -1,4 +1,4 @@
-import { useEffect, useEffectEvent, useRef } from "react";
+import { useEffect, useEffectEvent } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useSWRConfig } from "swr";
 import { routes } from "../../utils/routes";
@@ -24,11 +24,6 @@ export function useNavigationRefetch() {
   const { mutate } = useSWRConfig();
   const navigate = useNavigate();
   const { pathname } = useLocation();
-  const trackerRef = useRef(
-    createFrameReadinessTracker(() => {
-      // placeholder — useEffect 内で再生成される
-    }),
-  );
 
   const onRefetch = useEffectEvent((tabId: number) => {
     const base = routes.base.build({ tabId: String(tabId) });
@@ -43,7 +38,6 @@ export function useNavigationRefetch() {
 
   useEffect(() => {
     const tracker = createFrameReadinessTracker(onRefetch);
-    trackerRef.current = tracker;
 
     const cleanup = activeTabMessenger.onMessage(
       "contentReady",
