@@ -8,7 +8,8 @@ import { activeTabMessenger } from "./events";
 const ALL_FRAMES_TIMEOUT_MS = 3000;
 
 type PendingFrames = {
-  expected: Set<number>;
+  /** 期待フレーム一覧。null は getAllFrames 完了前（未確定）を示す */
+  expected: Set<number> | null;
   received: Set<number>;
   timer: ReturnType<typeof setTimeout>;
 };
@@ -60,8 +61,21 @@ export function useNavigationRefetch() {
   useEffect(() => {
     const pendings = pendingRef.current;
 
+    const checkAllReady = (pending: PendingFrames) =>
+      pending.expected !== null &&
+      [...pending.expected].every((id) => pending.received.has(id));
+
     const handleMainFrame = async (tabId: number) => {
       clearPending(pendings, tabId);
+
+      // await 中に到着するサブフレームの contentReady を received に蓄積するため
+      // expected: null（未確定）で仮の pending エントリを先に設定する
+      const pending: PendingFrames = {
+        expected: null,
+        received: new Set([0]),
+        timer: setTimeout(() => triggerRefetch(tabId), ALL_FRAMES_TIMEOUT_MS),
+      };
+      pendings.set(tabId, pending);
 
       const expectedFrameIds = await getExpectedFrameIds(tabId);
       if (expectedFrameIds.size <= 1) {
@@ -69,12 +83,12 @@ export function useNavigationRefetch() {
         return;
       }
 
-      const pending: PendingFrames = {
-        expected: expectedFrameIds,
-        received: new Set([0]),
-        timer: setTimeout(() => triggerRefetch(tabId), ALL_FRAMES_TIMEOUT_MS),
-      };
-      pendings.set(tabId, pending);
+      pending.expected = expectedFrameIds;
+
+      // await 中に全フレームが ready になっていた場合
+      if (checkAllReady(pending)) {
+        triggerRefetch(tabId);
+      }
     };
 
     const handleSubFrame = (tabId: number, frameId: number) => {
@@ -82,10 +96,8 @@ export function useNavigationRefetch() {
       if (!pending) return;
       pending.received.add(frameId);
 
-      const allReady = [...pending.expected].every((id) =>
-        pending.received.has(id),
-      );
-      if (allReady) {
+      // expected が未確定（getAllFrames 完了前）なら蓄積のみ
+      if (checkAllReady(pending)) {
         triggerRefetch(tabId);
       }
     };
