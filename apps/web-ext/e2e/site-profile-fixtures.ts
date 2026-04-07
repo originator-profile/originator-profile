@@ -30,7 +30,7 @@ type TestFixtures = {
     key: { publicKey: Jwk; privateKey: Jwk },
     issuer: string,
   ) => Promise<void>;
-  aboutToExpireSiteProfile: (
+  expiringSoonSiteProfile: (
     key: { publicKey: Jwk; privateKey: Jwk },
     issuer: string,
   ) => Promise<void>;
@@ -169,7 +169,7 @@ export const test = base.extend<TestFixtures>({
 
     await cleanupRoute(page);
   },
-  aboutToExpireSiteProfile: async ({ page }: { page: Page }, use) => {
+  expiringSoonSiteProfile: async ({ page }: { page: Page }, use) => {
     await use(
       async (key: { publicKey: Jwk; privateKey: Jwk }, issuer: string) => {
         const sp: SiteProfile = await createSiteProfile(

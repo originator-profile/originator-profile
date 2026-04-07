@@ -73,15 +73,15 @@ test("Site Profile を取得検証できるが、WMP が存在しない", async 
 
   await gotoDetailPage(ext);
   await expectStatus(ext, "site-profile", "check");
-  await expect(ext?.getByTestId("web-media-profile")).toHaveCount(0);
+  await expect(ext?.getByTestId("result-web-media-profile")).toHaveCount(0);
 });
 test("Site Profile を取得検証できるが、有効期限が近く、詳細情報画面にて警告マークが表示される", async ({
   context,
   page,
-  aboutToExpireSiteProfile,
+  expiringSoonSiteProfile,
   credentialsMissingPage,
 }) => {
-  await aboutToExpireSiteProfile(
+  await expiringSoonSiteProfile(
     { privateKey, publicKey },
     credentialsMissingPage.issuer,
   );

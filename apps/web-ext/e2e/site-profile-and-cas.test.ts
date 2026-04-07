@@ -86,5 +86,5 @@ test("CASの検証に成功するが、SiteProfileのWMPの取得に失敗した
   await gotoDetailPage(ext);
   await expectStatus(ext, "site-profile", "check");
   await expectStatus(ext, "content-attestation-set", "check");
-  await expect(ext?.getByTestId("web-media-profile")).toHaveCount(0);
+  await expect(ext?.getByTestId("result-web-media-profile")).toHaveCount(0);
 });
