@@ -10,12 +10,16 @@ import "./utils/cors-basic-auth";
 // React のライフサイクルに依存せず、サイドパネルが存在する限り有効。
 document.addEventListener("visibilitychange", async () => {
   if (document.visibilityState !== "hidden") return;
-  const [tab] = await chrome.tabs.query({
-    active: true,
-    currentWindow: true,
-  });
-  if (tab?.id !== undefined) {
-    void overlayExtensionMessenger.sendMessage("leave", null, tab.id);
+  try {
+    const [tab] = await chrome.tabs.query({
+      active: true,
+      currentWindow: true,
+    });
+    if (tab?.id !== undefined) {
+      void overlayExtensionMessenger.sendMessage("leave", null, tab.id);
+    }
+  } catch {
+    // サイドパネル非表示時にタブ情報を取得できない場合は無視する
   }
 });
 
