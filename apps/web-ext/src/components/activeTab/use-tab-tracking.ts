@@ -39,6 +39,19 @@ export function useTabTracking() {
     };
     chrome.tabs.onActivated.addListener(activatedListener);
 
+    // アクティブタブの URL が非 Web ページ→ Web ページに変わった場合を検知する
+    // （例: chrome:// タブでアドレスバーに URL を入力して遷移）
+    const updatedListener = (
+      tabId: number,
+      updatedInfo: chrome.tabs.OnUpdatedInfo,
+      tab: chrome.tabs.Tab,
+    ) => {
+      if (updatedInfo.status === "complete" && tab.active && isTrackableUrl(tab.url)) {
+        navigateToTab(tabId);
+      }
+    };
+    chrome.tabs.onUpdated.addListener(updatedListener);
+
     // 初期タブIDを取得（リスナー登録後に実行し、取りこぼしを防ぐ）
     void chrome.tabs
       .query({ active: true, currentWindow: true })
@@ -50,6 +63,7 @@ export function useTabTracking() {
 
     return () => {
       chrome.tabs.onActivated.removeListener(activatedListener);
+      chrome.tabs.onUpdated.removeListener(updatedListener);
     };
   }, []);
 }
