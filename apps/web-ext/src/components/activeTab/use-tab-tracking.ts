@@ -9,6 +9,7 @@ const isTrackableUrl = (url?: string) =>
 /**
  * アクティブタブを追跡し、タブ切替時に HashRouter の URL を更新するフック。
  * chrome-extension:// や chrome:// など Web ページ以外のタブは無視する。
+ * 自ウィンドウのタブのみを追跡し、別ウィンドウのタブ変更には反応しない。
  * Router コンテキスト内（HashRouter の子孫）で呼び出す必要がある。
  */
 export function useTabTracking() {
@@ -25,10 +26,14 @@ export function useTabTracking() {
   });
 
   useEffect(() => {
-    // タブ切り替え時にURLを更新
+    let currentWindowId: number | undefined;
+
+    // タブ切り替え時にURLを更新（自ウィンドウのみ）
     const activatedListener = async ({
       tabId,
+      windowId,
     }: chrome.tabs.OnActivatedInfo) => {
+      if (currentWindowId !== undefined && windowId !== currentWindowId) return;
       try {
         const tab = await chrome.tabs.get(tabId);
         if (isTrackableUrl(tab.url)) {
@@ -47,6 +52,8 @@ export function useTabTracking() {
       updatedInfo: chrome.tabs.OnUpdatedInfo,
       tab: chrome.tabs.Tab,
     ) => {
+      if (currentWindowId !== undefined && tab.windowId !== currentWindowId)
+        return;
       if (
         updatedInfo.status === "complete" &&
         tab.active &&
@@ -57,14 +64,17 @@ export function useTabTracking() {
     };
     chrome.tabs.onUpdated.addListener(updatedListener);
 
-    // 初期タブIDを取得（リスナー登録後に実行し、取りこぼしを防ぐ）
-    void chrome.tabs
-      .query({ active: true, currentWindow: true })
-      .then(([tab]) => {
-        if (tab?.id !== undefined && isTrackableUrl(tab.url)) {
-          navigateToTab(tab.id);
-        }
-      });
+    // 自ウィンドウの ID を取得し、初期タブを設定
+    void chrome.windows.getCurrent().then((win) => {
+      currentWindowId = win.id;
+      void chrome.tabs
+        .query({ active: true, windowId: currentWindowId })
+        .then(([tab]) => {
+          if (tab?.id !== undefined && isTrackableUrl(tab.url)) {
+            navigateToTab(tab.id);
+          }
+        });
+    });
 
     return () => {
       chrome.tabs.onActivated.removeListener(activatedListener);
