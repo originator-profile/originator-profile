@@ -6,10 +6,16 @@ import { activeTabMessenger } from "./events";
 import { createFrameReadinessTracker } from "./frame-readiness-tracker";
 
 async function getExpectedFrameIds(tabId: number): Promise<Set<number>> {
-  const allFrames = (await chrome.webNavigation.getAllFrames({ tabId })) ?? [];
-  return new Set(
-    allFrames.filter((f) => /^https?:/.test(f.url)).map((f) => f.frameId),
-  );
+  try {
+    const allFrames =
+      (await chrome.webNavigation.getAllFrames({ tabId })) ?? [];
+    return new Set(
+      allFrames.filter((f) => /^https?:/.test(f.url)).map((f) => f.frameId),
+    );
+  } catch {
+    // タブが閉じられた場合などはメインフレームのみとして扱う
+    return new Set([0]);
+  }
 }
 
 /**
