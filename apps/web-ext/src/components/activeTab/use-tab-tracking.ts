@@ -3,7 +3,8 @@ import { useLocation, useNavigate } from "react-router";
 import { paths, routes } from "../../utils/routes";
 
 /** サイドパネルが追跡対象とする URL パターン */
-const isTrackableUrl = (url?: string) => url !== undefined && /^https?:/.test(url);
+const isTrackableUrl = (url?: string) =>
+  url !== undefined && /^https?:/.test(url);
 
 /**
  * アクティブタブを追跡し、タブ切替時に HashRouter の URL を更新するフック。
@@ -46,7 +47,11 @@ export function useTabTracking() {
       updatedInfo: chrome.tabs.OnUpdatedInfo,
       tab: chrome.tabs.Tab,
     ) => {
-      if (updatedInfo.status === "complete" && tab.active && isTrackableUrl(tab.url)) {
+      if (
+        updatedInfo.status === "complete" &&
+        tab.active &&
+        isTrackableUrl(tab.url)
+      ) {
         navigateToTab(tabId);
       }
     };
