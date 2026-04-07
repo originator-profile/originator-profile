@@ -6,7 +6,7 @@ import {
   VerifiedSp,
 } from "@originator-profile/verify";
 import { useParams } from "react-router";
-import useSWR from "swr";
+import useSWRImmutable from "swr/immutable";
 import { useSiteProfile } from "../siteProfile";
 import { deduplicateCas } from "./deduplicate-cas";
 import { fetchTabCredentials, fetchVerificationResult } from "./messaging";
@@ -109,12 +109,11 @@ export function useCredentials() {
   const params = useParams<{ tabId: string }>();
   const tabId = Number(params.tabId);
   const { siteProfile } = useSiteProfile();
-  // TODO: 自動再検証する場合は取得エンドポイントが変わりうることをUIの振る舞いで考慮して
   const {
     data: credentials,
     error,
     isLoading,
-  } = useSWR<
+  } = useSWRImmutable<
     FetchVerifiedCredentialsResult,
     Error,
     [typeof CREDENTIALS_KEY, number, VerifiedSp?]

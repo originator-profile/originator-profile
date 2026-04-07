@@ -39,7 +39,10 @@ function GlobalHeader({ className, children }: Props) {
 
   const handleReload = () => {
     const base = routes.base.build({ tabId: tabId ?? "" });
-    void mutate((key) => Array.isArray(key) && key[1] === Number(tabId));
+    void mutate(
+      (key) => Array.isArray(key) && key[1] === Number(tabId),
+      undefined,
+    );
     void navigate(base, { replace: true });
   };
 
