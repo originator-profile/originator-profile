@@ -10,6 +10,7 @@ import {
   verifyIntegrity,
 } from "@originator-profile/verify";
 
+import { activeTabMessenger } from "./components/activeTab/events";
 import {
   credentialsMessenger,
   FrameLocation,
@@ -373,3 +374,14 @@ frameCasWindowMessenger.onMessage(
     sendFrameCasMessage(frame, ancestor, coordinate, frames);
   },
 );
+
+// Side Panel にコンテンツスクリプトの準備完了を通知する
+const notifyReady = () => {
+  void activeTabMessenger.sendMessage("contentReady", null);
+};
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", notifyReady, { once: true });
+} else {
+  notifyReady();
+}
