@@ -10,14 +10,25 @@ runs:
         cache: pnpm
         registry-url: "https://registry.npmjs.org"
         scope: "@originator-profile"
+    - name: Get Playwright version
+      id: playwright-version
+      run: echo "version=$(grep -oP \"@playwright/test@\\K[0-9.]+\" pnpm-lock.yaml | head -1)" >> "$GITHUB_OUTPUT"
+      shell: bash
     - name: Restore Playwright cache
+      id: playwright-cache
       uses: actions/cache@v5
       with:
         path: ~/.cache/ms-playwright
-        key: "${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}"
+        key: "${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}"
+        restore-keys: |
+          ${{ runner.os }}-playwright-
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
       shell: bash
-    - name: Install browsers and system dependencies
-      run: pnpm --filter @originator-profile/web-ext exec playwright install --with-deps
+    - name: Install Playwright browsers
+      run: pnpm --filter @originator-profile/web-ext exec playwright install
+      shell: bash
+    - name: Install Playwright system dependencies
+      if: steps.playwright-cache.outputs.cache-hit != 'true'
+      run: pnpm --filter @originator-profile/web-ext exec playwright install-deps
       shell: bash
