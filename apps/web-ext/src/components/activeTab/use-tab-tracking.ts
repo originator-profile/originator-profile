@@ -26,9 +26,7 @@ export function useTabTracking() {
   });
 
   useEffect(() => {
-    const windowIdReady = chrome.windows
-      .getCurrent()
-      .then((win) => win.id);
+    const windowIdReady = chrome.windows.getCurrent().then((win) => win.id);
 
     // タブ切り替え時にURLを更新（自ウィンドウのみ）
     const activatedListener = async ({
