@@ -80,6 +80,9 @@ export async function sidepanel(ctx: BrowserContext): Promise<Page> {
   const panelPage = await ctx.newPage();
   await panelPage.goto(url);
 
-  await sleep(1_000);
+  // Loading 完了を待つ（全ページで GlobalHeader が表示される）
+  await panelPage
+    .getByTestId("global-header-menu-button")
+    .waitFor({ state: "visible" });
   return panelPage;
 }
