@@ -86,7 +86,7 @@ test("Site Profile を取得検証できるが、有効期限が近く、詳細�
     credentialsMissingPage.issuer,
   );
   await page.goto(credentialsMissingPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
   await expect(ext?.getByTestId("site-profile")).toBeVisible();
 
   await gotoDetailPage(ext);

@@ -2,8 +2,12 @@ import { useEffect, useEffectEvent } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { paths, routes } from "../../utils/routes";
 
+/** サイドパネルが追跡対象とする URL パターン */
+const isTrackableUrl = (url?: string) => url !== undefined && /^https?:/.test(url);
+
 /**
  * アクティブタブを追跡し、タブ切替時に HashRouter の URL を更新するフック。
+ * chrome-extension:// や chrome:// など Web ページ以外のタブは無視する。
  * Router コンテキスト内（HashRouter の子孫）で呼び出す必要がある。
  */
 export function useTabTracking() {
@@ -21,8 +25,17 @@ export function useTabTracking() {
 
   useEffect(() => {
     // タブ切り替え時にURLを更新
-    const activatedListener = ({ tabId }: chrome.tabs.OnActivatedInfo) => {
-      navigateToTab(tabId);
+    const activatedListener = async ({
+      tabId,
+    }: chrome.tabs.OnActivatedInfo) => {
+      try {
+        const tab = await chrome.tabs.get(tabId);
+        if (isTrackableUrl(tab.url)) {
+          navigateToTab(tabId);
+        }
+      } catch {
+        // タブが既に閉じられている場合
+      }
     };
     chrome.tabs.onActivated.addListener(activatedListener);
 
@@ -30,7 +43,9 @@ export function useTabTracking() {
     void chrome.tabs
       .query({ active: true, currentWindow: true })
       .then(([tab]) => {
-        if (tab?.id !== undefined) navigateToTab(tab.id);
+        if (tab?.id !== undefined && isTrackableUrl(tab.url)) {
+          navigateToTab(tab.id);
+        }
       });
 
     return () => {
