@@ -54,7 +54,7 @@ function GlobalHeader({ className, children }: Props) {
           type="button"
           className="p-2 hover:bg-gray-100 rounded"
           onClick={handleReload}
-          aria-label={_("Reload")}
+          title={_("GlobalHeader_Reload")}
         >
           <Icon icon="mdi:refresh" className="w-5 h-5 text-gray-700" />
         </button>

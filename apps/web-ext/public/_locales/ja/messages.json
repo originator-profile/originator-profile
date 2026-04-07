@@ -499,5 +499,8 @@
   },
   "Verification_FetchFailed": {
     "message": "クレデンシャルが見つかりません (取得失敗)"
+  },
+  "GlobalHeader_Reload": {
+    "message": "再読み込み"
   }
 }
