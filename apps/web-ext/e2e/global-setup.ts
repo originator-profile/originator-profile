@@ -3,13 +3,7 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { platform } from "node:os";
 import { join } from "node:path";
 
-const BROWSER_DOMAINS = [
-  "org.chromium.Chromium",
-  "com.google.Chrome",
-  "com.google.chrome.for.testing",
-] as const;
-
-type BrowserDomain = (typeof BROWSER_DOMAINS)[number];
+import { type BrowserDomain, BROWSER_DOMAINS } from "./browser-domains";
 
 // 現在のブラウザ言語設定を取得
 function getCurrentLanguage(domain: BrowserDomain): string | undefined {

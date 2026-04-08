@@ -3,13 +3,7 @@ import { existsSync, readFileSync, rmSync } from "node:fs";
 import { platform } from "node:os";
 import { join } from "node:path";
 
-const BROWSER_DOMAINS = [
-  "org.chromium.Chromium",
-  "com.google.Chrome",
-  "com.google.chrome.for.testing",
-] as const;
-
-type BrowserDomain = (typeof BROWSER_DOMAINS)[number];
+import { type BrowserDomain, BROWSER_DOMAINS } from "./browser-domains";
 
 interface LanguageBackup {
   originalLanguages?: string;
@@ -73,8 +67,8 @@ async function globalTeardown() {
     console.error(`\
 言語設定の復元に失敗しました: ${errorMessage}
 手動で設定を確認してください。
-確認コマンド: 
-  defaults read org.chromium.Chromium AppleLanguages
+確認コマンド:
+${BROWSER_DOMAINS.map((d) => `  defaults read ${d} AppleLanguages`).join("\n")}
 `);
   }
 }
