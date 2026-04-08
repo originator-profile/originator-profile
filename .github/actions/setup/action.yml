@@ -12,7 +12,13 @@ runs:
         scope: "@originator-profile"
     - name: Get Playwright version
       id: playwright-version
-      run: pnpm why --filter @originator-profile/web-ext --json playwright | jq -r '.[].version' | xargs -I{} echo "version={}" >> "$GITHUB_OUTPUT"
+      run: |
+        PLAYWRIGHT_VERSION=$(pnpm why --filter @originator-profile/web-ext --json playwright | jq -r '.[].version')
+        if [ -z "$PLAYWRIGHT_VERSION" ]; then
+          echo "Error: Failed to detect Playwright version" >&2
+          exit 1
+        fi
+        echo "version=$PLAYWRIGHT_VERSION" >> "$GITHUB_OUTPUT"
       shell: bash
     - name: Restore Playwright cache
       uses: actions/cache@v5
