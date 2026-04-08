@@ -25,10 +25,7 @@ function restoreLanguageSetting(
 }
 
 // バックアップファイルから設定を復元
-function restoreBrowserLanguage(
-  domain: BrowserDomain,
-  tempDir: string,
-): void {
+function restoreBrowserLanguage(domain: BrowserDomain, tempDir: string): void {
   const backupFile = join(tempDir, `${domain}-language-backup.json`);
 
   if (!existsSync(backupFile)) {
