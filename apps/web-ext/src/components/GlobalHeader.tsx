@@ -39,6 +39,7 @@ function GlobalHeader({ className, children }: Props) {
       {children}
       <div className="ml-auto relative">
         <MenuButton
+          data-testid="global-header-menu-button"
           ref={buttonRef}
           className="p-2 hover:bg-gray-100 rounded"
           onClick={toggleMenu}
@@ -68,6 +69,7 @@ function GlobalHeader({ className, children }: Props) {
               variant="link"
               to={buildDetailUrl(tabId ?? "")}
               className="px-4 py-2 hover:bg-gray-100 font-light"
+              testId="detail-info-menu-item"
             >
               {_("DetailInfo")}
             </MenuItem>

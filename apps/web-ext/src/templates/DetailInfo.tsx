@@ -49,29 +49,30 @@ function DetailInfo({
         <ProjectTitle className="mb-12" as="header" />
         <article className="mb-12 max-w-6xl mx-auto">
           <div className="mb-8">
-            <h2 className="pl-4 mb-4 text-sm font-bold text-gray-700">
+            <h2
+              data-testid="verification-results"
+              className="pl-4 mb-4 text-sm font-bold text-gray-700"
+            >
               {_("DetailInfo_VerificationResults")}
             </h2>
             <CheckList sp={sp} ops={ops} cas={cas} errors={errors} />
           </div>
 
           {hasLinkVerification && (
-            <div className="mb-8">
-              <h2 className="pl-4 mb-4 text-sm font-bold text-gray-700">
+            <div className="pl-4 mb-8">
+              <h2 className="mb-4 text-sm font-bold text-gray-700">
                 {_("DetailInfo_LinkVerification")}
               </h2>
-              <div className="bg-white overflow-hidden shadow-sm rounded-lg border border-gray-200">
-                <Table>
-                  <TableRow
-                    header={_("DetailInfo_ExpectedLinkDestination")}
-                    data={linkVerification.expectedOrgName || "-"}
-                  />
-                  <TableRow
-                    header={_("DetailInfo_SourceAdOrganization")}
-                    data={linkVerification.sourceOrgName || "-"}
-                  />
-                </Table>
-              </div>
+              <Table>
+                <TableRow
+                  header={_("DetailInfo_ExpectedLinkDestination")}
+                  data={linkVerification.expectedOrgName || "-"}
+                />
+                <TableRow
+                  header={_("DetailInfo_SourceAdOrganization")}
+                  data={linkVerification.sourceOrgName || "-"}
+                />
+              </Table>
             </div>
           )}
 

@@ -1,22 +1,27 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 
-const Item = {
-  type: "string",
-  format: "uri",
-} as const;
+function isValidOrigin(val: string): boolean {
+  try {
+    return new URL(val).origin === val;
+  } catch {
+    return false;
+  }
+}
 
-export const AllowedOrigin = {
-  title: "Allowed Origin",
-  anyOf: [
-    Item,
-    {
-      type: "array",
-      items: Item,
-    },
-  ],
-  description:
-    "@deprecated Content Attestation では allowedOrigin は非推奨です。代わりに allowedUrl を使用してください。2026年9月までサポートされます。\n\n" +
-    "表明される情報の対象となる [origin](https://www.rfc-editor.org/rfc/rfc6454#section-7)",
-} as const satisfies JSONSchema;
+const Item = z.stringFormat("origin", isValidOrigin, {
+  error:
+    "Origin MUST be in the format scheme://host[:port] (do not include a trailing slash or path. e.g. https://example.com)",
+});
 
-export type AllowedOrigin = FromSchema<typeof AllowedOrigin>;
+/**
+ * 後方互換性のため 2026-09-01 まで許容
+ * Content Attestation では allowedOrigin は非推奨です。代わりに allowedUrl を使用してください。
+ */
+export const AllowedOrigin = z
+  .union([Item, z.array(Item).min(1)])
+  .describe(
+    "@deprecated allowedOrigin is deprecated in Content Attestation. Use allowedUrl instead. Supported until September 2026.\n\n" +
+      "The [origin](https://www.rfc-editor.org/rfc/rfc6454#section-7) of the information being asserted.",
+  );
+
+export type AllowedOrigin = z.infer<typeof AllowedOrigin>;

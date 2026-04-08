@@ -3,14 +3,14 @@ import {
   Certificate,
   CoreProfile,
   Jwk,
-  OriginatorProfileSetItem,
+  OriginatorProfile,
   SiteProfile,
   WebMediaProfile,
   WebsiteProfile,
 } from "@originator-profile/model";
 import { signJwtVc } from "@originator-profile/securing-mechanism";
 import { test as base, Page } from "@playwright/test";
-import { addYears } from "date-fns";
+import { addDays, addYears } from "date-fns";
 import {
   generateCertificateData,
   generateCoreProfileData,
@@ -30,6 +30,10 @@ type TestFixtures = {
     key: { publicKey: Jwk; privateKey: Jwk },
     issuer: string,
   ) => Promise<void>;
+  expiringSoonSiteProfile: (
+    key: { publicKey: Jwk; privateKey: Jwk },
+    issuer: string,
+  ) => Promise<void>;
   multiLocaleSiteProfile: (
     key: { publicKey: Jwk; privateKey: Jwk },
     issuer: string,
@@ -44,10 +48,10 @@ async function createSiteProfile(
   key: KeyPair,
   issuer: string,
   includeMedia: boolean = true,
+  expiredAt: Date = addYears(new Date(), 1),
 ): Promise<SiteProfile> {
   const { publicKey, privateKey } = key;
   const issuedAt: Date = new Date(Date.now());
-  const expiredAt: Date = addYears(new Date(), 1);
 
   const coreProfile: CoreProfile = generateCoreProfileData(publicKey, issuer);
   const certificate: Certificate = generateCertificateData(issuer);
@@ -60,7 +64,7 @@ async function createSiteProfile(
     issuedAt,
     expiredAt,
   });
-  const op: OriginatorProfileSetItem = {
+  const op: OriginatorProfile = {
     core: signedCoreProfile,
     annotations: [annotations],
   };
@@ -165,6 +169,22 @@ export const test = base.extend<TestFixtures>({
 
     await cleanupRoute(page);
   },
+  expiringSoonSiteProfile: async ({ page }: { page: Page }, use) => {
+    await use(
+      async (key: { publicKey: Jwk; privateKey: Jwk }, issuer: string) => {
+        const sp: SiteProfile = await createSiteProfile(
+          key,
+          issuer,
+          true,
+          addDays(new Date(), 1),
+        );
+
+        await setupRoute(page, sp, 200);
+      },
+    );
+
+    await cleanupRoute(page);
+  },
   multiLocaleSiteProfile: async ({ page }: { page: Page }, use) => {
     await use(
       async (key: { publicKey: Jwk; privateKey: Jwk }, issuer: string) => {
@@ -222,7 +242,7 @@ export const test = base.extend<TestFixtures>({
           },
         );
 
-        const op: OriginatorProfileSetItem = {
+        const op: OriginatorProfile = {
           core: signedCoreProfile,
           annotations: [annotations],
           media: [signedMediaProfileJa, signedMediaProfileEn],

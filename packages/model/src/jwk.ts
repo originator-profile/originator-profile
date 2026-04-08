@@ -1,43 +1,15 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 
-export const Jwk = {
-  title: "JSON Web Key",
-  type: "object",
-  properties: {
-    kty: {
-      type: "string",
-    },
-    use: {
-      type: "string",
-    },
-    key_ops: {
-      type: "array",
-      items: { type: "string" },
-    },
-    alg: {
-      type: "string",
-    },
-    kid: {
-      type: "string",
-    },
-    x5u: {
-      type: "string",
-    },
-    x5c: {
-      type: "array",
-      items: {
-        type: "string",
-      },
-    },
-    x5t: {
-      type: "string",
-    },
-    "x5t#S256": {
-      type: "string",
-    },
-  },
-  required: ["kty", "kid"],
-  additionalProperties: true,
-} as const satisfies JSONSchema;
+export const Jwk = z.looseObject({
+  kty: z.string(),
+  use: z.string().optional(),
+  key_ops: z.array(z.string()).optional(),
+  alg: z.string().optional(),
+  kid: z.string(),
+  x5u: z.string().optional(),
+  x5c: z.array(z.string()).optional(),
+  x5t: z.string().optional(),
+  "x5t#S256": z.string().optional(),
+});
 
-export type Jwk = FromSchema<typeof Jwk>;
+export type Jwk = z.infer<typeof Jwk>;

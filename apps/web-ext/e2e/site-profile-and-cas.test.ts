@@ -2,7 +2,9 @@ import { mergeTests } from "@playwright/test";
 import privateKey from "./account-key.example.priv.json" with { type: "json" };
 import publicKey from "./account-key.example.pub.json" with { type: "json" };
 import { test as credentialsTest } from "./credentials-fixtures";
+import { expectStatus } from "./expect-status";
 import { test as base, expect, popup } from "./fixtures";
+import { gotoDetailPage } from "./goto-detail-page";
 import { test as siteProfileTest } from "./site-profile-fixtures";
 import { test as staticHtmlTest } from "./static-html-fixtures";
 
@@ -35,6 +37,11 @@ test("SiteProfile/CASの検証に成功するが、htmlに記載されたOPSの�
   );
 
   await expect(ext?.getByTestId("cas")).toBeVisible();
+
+  await gotoDetailPage(ext);
+  await expectStatus(ext, "site-profile", "check");
+  await expectStatus(ext, "originator-profile-set-top", "check");
+  await expectStatus(ext, "content-attestation-set", "check");
 });
 
 test("CASの検証に成功するが、SiteProfileのWMPの取得に失敗した時にMissingの表示がされているか", async ({
@@ -75,4 +82,9 @@ test("CASの検証に成功するが、SiteProfileのWMPの取得に失敗した
   expect(await credentialsMissing.innerText()).toBe(
     "このサイト運営者に対応する組織情報を正しく読み取れませんでした",
   );
+
+  await gotoDetailPage(ext);
+  await expectStatus(ext, "site-profile", "check");
+  await expectStatus(ext, "content-attestation-set", "check");
+  await expect(ext?.getByTestId("result-web-media-profile")).toHaveCount(0);
 });

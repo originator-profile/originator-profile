@@ -121,7 +121,7 @@ export const FrameIntegrityVerifier =
   async (content) => {
     const messageResult = await credentialsMessenger.sendMessage(
       "verifyIntegrity",
-      [content],
+      content,
       {
         tabId,
         frameId,

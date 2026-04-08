@@ -1,22 +1,23 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 
-const Item = {
-  type: "string",
-  format: "uri",
-} as const;
+function isValidUrlPattern(val: string): boolean {
+  try {
+    new URLPattern(val);
+    return true;
+  } catch {
+    return false;
+  }
+}
 
-export const AllowedUrl = {
-  title: "Allowed URLs",
-  anyOf: [
-    Item,
-    {
-      type: "array",
-      items: Item,
-      minItems: 1,
-    },
-  ],
-  description:
-    "Content Attestation によって表明される情報の対象となる URL です。 文字列は必ず URL Pattern string でなければなりません (MUST)。空配列にしてはなりません (MUST NOT)。",
-} as const satisfies JSONSchema;
+const Item = z.stringFormat("url-pattern", isValidUrlPattern, {
+  error:
+    "Invalid URL Pattern string (* alone is not allowed. Specify a URL Pattern string such as https://example.com/*)",
+});
 
-export type AllowedUrl = FromSchema<typeof AllowedUrl>;
+export const AllowedUrl = z
+  .union([Item, z.array(Item).min(1)])
+  .describe(
+    "The URL for which information is asserted by this Content Attestation. The string MUST be a URL Pattern string. It MUST NOT be an empty array.",
+  );
+
+export type AllowedUrl = z.infer<typeof AllowedUrl>;

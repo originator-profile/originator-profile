@@ -12,7 +12,6 @@ import {
 } from "./components/overlay";
 import { overlayExtensionMessenger } from "./components/overlay/extension-events";
 import { siteProfileMessenger } from "./components/siteProfile";
-import { FetchSiteProfileMessageResult } from "./components/siteProfile/types";
 
 const overlay = new Overlay();
 let enter: Parameters<OverlayProtocolMap["enter"]>[0] = {
@@ -45,7 +44,7 @@ overlayWindowMessenger.onMessage("select", ({ data }) => {
 
 siteProfileMessenger.onMessage("fetchSiteProfile", async () => {
   const data = await fetchSiteProfile(document);
-  return serializeIfError(data) as FetchSiteProfileMessageResult;
+  return serializeIfError(data);
 });
 
 let tabId: number;

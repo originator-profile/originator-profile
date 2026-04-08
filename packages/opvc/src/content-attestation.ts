@@ -1,89 +1,178 @@
 import { parseExpirationDate } from "@originator-profile/core";
-import type {
-  Jwk,
+import {
   UnsignedContentAttestation,
+  type Jwk,
 } from "@originator-profile/model";
 import {
   fetchAndSetDigestSri,
   fetchAndSetTargetIntegrity,
   signCa,
+  type DocumentProvider,
 } from "@originator-profile/sign";
 import { addYears, getUnixTime } from "date-fns";
 import { BadRequestError } from "http-errors-enhanced";
-import { documentProvider } from "./document-provider.ts";
+import type { HashAlgorithm } from "websri";
+import { documentProvider as defaultDocumentProvider } from "./document-provider.ts";
 
-/**
- * Content Attestation への署名
- * @param uca 未署名 Content Attestation オブジェクト
- * @param privateKey プライベート鍵
- * @return Content Attestation
- */
-export async function sign(
-  uca: UnsignedContentAttestation,
-  privateKey: Jwk,
-  {
-    issuedAt: issuedAtDateOrString = new Date(),
-    expiredAt: expiredAtDateOrString = addYears(new Date(), 1),
-  }: {
-    issuedAt?: Date | string;
-    expiredAt?: Date | string;
-  },
-): Promise<string> {
+type ContentAttestationTimingOptions = {
+  issuedAt?: Date | string;
+  expiredAt?: Date | string;
+};
+
+type UnsignedCaOptions = ContentAttestationTimingOptions & {
+  integrityAlg?: HashAlgorithm;
+  documentProvider?: DocumentProvider;
+};
+
+function assertValidDate(
+  value: Date,
+  fieldName: "issuedAt" | "expiredAt",
+): void {
+  if (Number.isNaN(value.getTime())) {
+    throw new BadRequestError(`${fieldName} must be a valid date.`);
+  }
+}
+
+function parseDates({
+  issuedAt: issuedAtDateOrString = new Date(),
+  expiredAt: expiredAtDateOrString = addYears(new Date(), 1),
+}: ContentAttestationTimingOptions): {
+  issuedAt: Date;
+  expiredAt: Date;
+} {
   const issuedAt: Date = new Date(issuedAtDateOrString);
 
   const expiredAt: Date =
     typeof expiredAtDateOrString === "string"
       ? parseExpirationDate(expiredAtDateOrString)
-      : expiredAtDateOrString;
+      : new Date(expiredAtDateOrString);
 
-  uca.credentialSubject.id ??= `urn:uuid:${crypto.randomUUID()}`;
+  assertValidDate(issuedAt, "issuedAt");
+  assertValidDate(expiredAt, "expiredAt");
 
-  return await signCa(uca, privateKey, {
-    issuedAt,
-    expiredAt,
-    documentProvider,
-  });
+  return { issuedAt, expiredAt };
 }
 
 /**
  * 未署名 Content Attestation の取得
  * @param uca 未署名 Content Attestation オブジェクト
- * @throws {BadRequestError} 検証対象のコンテンツが存在しない/コンテンツにアクセスできない/Integrityの計算に失敗
+ * @throws {BadRequestError} 入力が UnsignedContentAttestation スキーマに適合しない場合/検証対象のコンテンツが存在しない/コンテンツにアクセスできない/Integrityの計算に失敗
  * @return 未署名 Content Attestation オブジェクト
  */
 export async function unsignedCa(
   uca: UnsignedContentAttestation,
   {
-    issuedAt: issuedAtDateOrString = new Date(),
-    expiredAt: expiredAtDateOrString = addYears(new Date(), 1),
-  }: {
-    issuedAt?: Date | string;
-    expiredAt?: Date | string;
-  },
+    integrityAlg = "sha256",
+    documentProvider = defaultDocumentProvider,
+    ...timingOptions
+  }: UnsignedCaOptions,
 ): Promise<UnsignedContentAttestation> {
-  const issuedAt: Date = new Date(issuedAtDateOrString);
-
-  const expiredAt: Date =
-    typeof expiredAtDateOrString === "string"
-      ? parseExpirationDate(expiredAtDateOrString)
-      : expiredAtDateOrString;
-
+  const { issuedAt, expiredAt } = parseDates(timingOptions);
   uca.credentialSubject.id ??= `urn:uuid:${crypto.randomUUID()}`;
 
   try {
-    await fetchAndSetDigestSri("sha256", uca.credentialSubject.image);
-    await fetchAndSetTargetIntegrity("sha256", uca, documentProvider);
+    UnsignedContentAttestation.parse(uca);
+
+    await Promise.all([
+      fetchAndSetDigestSri(integrityAlg, uca.credentialSubject.image),
+      fetchAndSetTargetIntegrity(integrityAlg, uca, documentProvider),
+    ]);
   } catch (e) {
     throw new BadRequestError((e as Error).message);
   }
 
-  const payload = {
+  return {
+    ...uca,
     iss: uca.issuer,
     sub: uca.credentialSubject.id,
     iat: getUnixTime(issuedAt),
     exp: getUnixTime(expiredAt),
-    ...uca,
   };
+}
 
-  return payload;
+/**
+ * Content Attestation への署名
+ * @param uca 未署名 Content Attestation オブジェクト
+ * @param privateKey プライベート鍵
+ * @throws {BadRequestError} 入力が UnsignedContentAttestation スキーマに適合しない場合/検証対象のコンテンツが存在しない/コンテンツにアクセスできない/Integrityの計算に失敗
+ * @return Content Attestation
+ */
+export async function sign(
+  uca: UnsignedContentAttestation,
+  privateKey: Jwk,
+  options: ContentAttestationTimingOptions = {},
+): Promise<string> {
+  const { issuedAt, expiredAt } = parseDates(options);
+  const payload = await unsignedCa(uca, { issuedAt, expiredAt });
+
+  return await signCa(payload, privateKey, {
+    issuedAt,
+    expiredAt,
+    documentProvider: defaultDocumentProvider,
+  });
+}
+
+/**
+ * CA server 経由で Content Attestation を作成
+ * @param uca 未署名 Content Attestation オブジェクト
+ * @param options Content Attestation の生成オプション
+ * @param options.endpoint CA server のエンドポイント URL
+ * @param options.accessToken CA server 呼び出しに利用する Bearer トークン
+ * @return JWT でエンコードされた Content Attestation
+ */
+export async function signByServer(
+  uca: UnsignedContentAttestation,
+  {
+    endpoint,
+    accessToken,
+    ...options
+  }: UnsignedCaOptions & {
+    endpoint: string;
+    accessToken: string;
+  },
+): Promise<string> {
+  const { issuedAt, expiredAt } = parseDates(options);
+  const payload = await unsignedCa(uca, { ...options, issuedAt, expiredAt });
+
+  const response = await fetch(endpoint, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      Authorization: `Bearer ${accessToken}`,
+    },
+    body: JSON.stringify({
+      ...payload,
+      issuedAt: issuedAt.toISOString(),
+      expiredAt: expiredAt.toISOString(),
+    }),
+  });
+
+  if (!response.ok) {
+    const responseBody = await response.text();
+    throw new Error(
+      `CA API error: ${response.status} ${response.statusText}: ${responseBody}`,
+    );
+  }
+
+  const responseBody = (await response.text()).trim();
+  if (responseBody === "") {
+    throw new Error("CA API returned no JWT.");
+  }
+
+  let result: unknown;
+  try {
+    result = JSON.parse(responseBody) as unknown;
+  } catch {
+    return responseBody;
+  }
+
+  if (typeof result === "string") {
+    return result;
+  }
+
+  if (Array.isArray(result) && typeof result[0] === "string") {
+    return result[0];
+  }
+
+  throw new Error("CA API returned no JWT.");
 }

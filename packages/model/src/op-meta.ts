@@ -1,15 +1,9 @@
-import { FromSchema } from "json-schema-to-ts";
+import { z } from "zod";
 
-export const OpMeta = {
-  title: "Op Meta",
-  type: "object",
-  properties: {
-    targetopid: {
-      type: "string",
-    },
-  },
-  required: ["targetopid"],
-  additionalProperties: true,
-} as const;
+export const OpMeta = z
+  .object({
+    targetopid: z.string(),
+  })
+  .passthrough();
 
-export type OpMeta = FromSchema<typeof OpMeta>;
+export type OpMeta = z.infer<typeof OpMeta>;

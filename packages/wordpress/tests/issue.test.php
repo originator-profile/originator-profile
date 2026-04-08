@@ -19,20 +19,51 @@ final class Issue extends TestCase {
 <p>本文2</p>
 EOD;
 
-		$text = content_to_html( $content, PROFILE_DEFAULT_CA_TARGET_HTML );
+		$text = content_to_html( $content, PROFILE_DEFAULT_CA_TARGET_HTML, 'テストタイトル' );
 		$this->assertSame(
 			<<<'EOD'
 <!DOCTYPE html>
 <html>
 <head><meta charset="UTF-8"></head>
-<body class="wp-block-post-content"><p>本文1</p>
+<body><h1 class="wp-block-post-title">テストタイトル</h1><div class="wp-block-post-content"><p>本文1</p>
 
 
-<p>本文2</p></body>
+<p>本文2</p></div></body>
 </html>
 EOD
 			,
 			$text
 		);
+	}
+
+	public function test_content_to_html_タイトルが正しく埋め込まれる() {
+		$content = '<p>本文</p>';
+		$title   = 'タイトルテキスト';
+
+		$text = content_to_html( $content, PROFILE_DEFAULT_CA_TARGET_HTML, $title );
+		$this->assertStringContainsString(
+			'<h1 class="wp-block-post-title">タイトルテキスト</h1>',
+			$text
+		);
+	}
+
+	public function test_content_to_html_タイトルを省略した場合は空文字で埋め込まれる() {
+		$content = '<p>本文</p>';
+
+		$text = content_to_html( $content, PROFILE_DEFAULT_CA_TARGET_HTML );
+		$this->assertStringContainsString(
+			'<h1 class="wp-block-post-title"></h1>',
+			$text
+		);
+	}
+
+	public function test_content_to_html_TITLEプレースホルダーを含まないテンプレートではh1タグが出力されない() {
+		$content  = '<p>本文</p>';
+		$template = '<body class="wp-block-post-content">%CONTENT%</body>';
+
+		$text = content_to_html( $content, $template, 'タイトル' );
+		$this->assertStringNotContainsString( '<h1', $text );
+		$this->assertStringNotContainsString( 'タイトル', $text );
+		$this->assertSame( '<body class="wp-block-post-content"><p>本文</p></body>', $text );
 	}
 }

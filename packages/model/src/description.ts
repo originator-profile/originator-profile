@@ -1,28 +1,15 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 
-export const Description = {
-  title: "Description",
-  anyOf: [
-    { type: "string" },
-    {
-      type: "object",
-      additionalProperties: true,
-      properties: {
-        text: {
-          type: "string",
-          description: "Text value.",
-        },
-        encodingFormat: {
-          type: "string",
-          title: "Encoding format",
-          description:
-            "MIME type. Allowed values: 'text/plain' and 'text/html' (only br, p, ol, ul, li allowed).",
-          enum: ["text/plain", "text/html"],
-        },
-      },
-      required: ["text", "encodingFormat"],
-    },
-  ],
-} as const satisfies JSONSchema;
+export const Description = z.union([
+  z.string(),
+  z.looseObject({
+    text: z.string().describe("Text value."),
+    encodingFormat: z
+      .enum(["text/plain", "text/html"])
+      .describe(
+        "MIME type. Allowed values: 'text/plain' and 'text/html' (only br, p, ol, ul, li allowed).",
+      ),
+  }),
+]);
 
-export type Description = FromSchema<typeof Description>;
+export type Description = z.infer<typeof Description>;

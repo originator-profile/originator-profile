@@ -1,38 +1,16 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 
-export const ContentAttestationSetItem = {
-  title: "Content Attestation Set Item",
-  oneOf: [
-    {
-      type: "object",
-      additionalProperties: true,
-      properties: {
-        main: {
-          type: "boolean",
-          const: true,
-          title: "メインコンテンツ",
-        },
-        attestation: {
-          title: "Content Attestation",
-          type: "string",
-        },
-      },
-      required: ["attestation", "main"],
-    },
-    {
-      type: "string",
-      title: "Content Attestation",
-    },
-  ],
-} as const satisfies JSONSchema;
+export const ContentAttestationSetItem = z.union([
+  z.looseObject({
+    main: z.literal(true).describe("Main content"),
+    attestation: z.string().describe("Content Attestation"),
+  }),
+  z.string().describe("Content Attestation"),
+]);
 
-export const ContentAttestationSet = {
-  title: "Content Attestation Set",
-  type: "array",
-  items: ContentAttestationSetItem,
-} as const satisfies JSONSchema;
+export const ContentAttestationSet = z.array(ContentAttestationSetItem);
 
-export type ContentAttestationSetItem = FromSchema<
+export type ContentAttestationSetItem = z.infer<
   typeof ContentAttestationSetItem
 >;
-export type ContentAttestationSet = FromSchema<typeof ContentAttestationSet>;
+export type ContentAttestationSet = z.infer<typeof ContentAttestationSet>;

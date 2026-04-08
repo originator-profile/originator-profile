@@ -1,7 +1,7 @@
 import type { Image } from "@originator-profile/model";
 import {
   createDigestSri,
-  type DigestSriContent,
+  type DigestSriResult,
 } from "@originator-profile/sign";
 import { IntegrityMetadataSet } from "websri";
 
@@ -12,7 +12,7 @@ const WARN_SUFFIX = `This will become an error after 2027. See: https://docs.ori
  * @see {@link https://www.w3.org/TR/SRI/#the-integrity-attribute}
  * @example
  * ```ts
- * const content: DigestSriContent = {
+ * const content = {
  *   id: "<URL>",
  *   digestSRI: "sha256-...",
  * };
@@ -21,7 +21,7 @@ const WARN_SUFFIX = `This will become an error after 2027. See: https://docs.ori
  * ```
  */
 export async function verifyDigestSri(
-  content: DigestSriContent,
+  content: DigestSriResult,
   fetcher = fetch,
 ): Promise<boolean> {
   const integrity = new IntegrityMetadataSet(content.digestSRI);
@@ -30,8 +30,8 @@ export async function verifyDigestSri(
   if (alg.length === 0) return false;
 
   try {
-    const { digestSRI } = await createDigestSri(alg[0], content, fetcher);
-    return integrity.match(digestSRI);
+    const result = await createDigestSri(alg[0], content, fetcher);
+    return "digestSRI" in result && integrity.match(result.digestSRI);
   } catch (error) {
     console.error(
       "Failed to access content for digestSRI verification:",
@@ -56,7 +56,10 @@ export async function verifyImageDigestSri(
     return;
   }
 
-  const valid = await verifyDigestSri(value, fetcher);
+  const valid = await verifyDigestSri(
+    { id: value.id, digestSRI: value.digestSRI },
+    fetcher,
+  );
   if (!valid) {
     console.warn(`digestSRI verification failed. ${WARN_SUFFIX}`);
   }

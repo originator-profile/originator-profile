@@ -47,17 +47,11 @@ await describe("documentProvider()", async () => {
 
   await test("ExternalResourceTargetIntegrity は未対応", async () => {
     await assert.rejects(
-      async () => {
-        await documentProvider({
-          type: "ExternalResourceTargetIntegrity",
-          content: "data:text/text,content",
-        });
-      },
-      {
-        name: "Error",
-        message:
-          "ExternalResourceTargetIntegrity is not supported in this context.",
-      },
+      documentProvider({
+        type: "ExternalResourceTargetIntegrity",
+        content: "data:text/text,content",
+      }),
+      Error,
     );
   });
 });

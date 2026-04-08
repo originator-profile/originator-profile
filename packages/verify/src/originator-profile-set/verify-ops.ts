@@ -14,6 +14,7 @@ import {
   VcValidator,
   VerifiedJwtVc,
 } from "@originator-profile/securing-mechanism";
+import { z } from "zod";
 import { verifyImageDigestSri } from "../integrity";
 import { getMappedKeys, type MappedKeys } from "../keys";
 import { decodeOps } from "./decode-ops";
@@ -81,9 +82,7 @@ async function verifyAnnotations(
       const verify = OpVerifier<Certificate>(
         paIssuerKeys,
         annotation,
-        validator?.({
-          oneOf: [CertificateSchema, JapaneseExistenceCertificate],
-        }),
+        validator?.(z.union([CertificateSchema, JapaneseExistenceCertificate])),
       );
 
       const result = await verify(annotation.source);

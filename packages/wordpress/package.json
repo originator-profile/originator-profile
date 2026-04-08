@@ -1,6 +1,6 @@
 {
   "name": "@originator-profile/wordpress",
-  "version": "0.5.0-beta.1",
+  "version": "0.6.0-beta.0",
   "license": "Apache-2.0",
   "private": true,
   "homepage": "https://docs.originator-profile.org",
@@ -16,8 +16,8 @@
     "version": "shx sed -i 's/(?<= Version: *)[^ ]*$/'${npm_package_version}/ ca-manager.php && git add ca-manager.php"
   },
   "devDependencies": {
-    "@playwright/test": "^1.57.0",
-    "@wordpress/e2e-test-utils-playwright": "1.36.0",
+    "@playwright/test": "^1.59.1",
+    "@wordpress/e2e-test-utils-playwright": "1.43.0",
     "shx": "^0.4.0"
   }
 }

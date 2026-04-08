@@ -1,6 +1,6 @@
 {
   "name": "tailwind-config-originator-profile",
-  "version": "0.5.0-beta.1",
+  "version": "0.6.0-beta.0",
   "license": "Apache-2.0",
   "private": true,
   "homepage": "https://docs.originator-profile.org",
@@ -13,8 +13,8 @@
   "main": "./style.css",
   "exports": "./style.css",
   "devDependencies": {
-    "@jumpu-ui/tailwindcss": "2.0.0",
-    "@tailwindcss/typography": "^0.5.16",
-    "tailwindcss": "^4.1.7"
+    "@jumpu-ui/tailwindcss": "2.0.1",
+    "@tailwindcss/typography": "^0.5.19",
+    "tailwindcss": "^4.2.2"
   }
 }

@@ -27,7 +27,7 @@ const webMediaProfile = {
     name: "○○メディア (※開発用サンプル)",
     logo: {
       id: "https://www.wmp-holder.example.jp/logo.svg",
-      digestSRI: "sha256-...",
+      digestSRI: "sha256-uU0nuZNNPgilLlLX2n2r+sSE7+N6U4DukIj3rOLvzek=",
     },
     email: "contact@wmp-holder.example.jp",
     telephone: "0000000000",

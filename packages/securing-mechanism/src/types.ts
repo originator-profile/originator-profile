@@ -1,6 +1,9 @@
-import { Jwk, OpVc } from "@originator-profile/model";
-import { ValidationError } from "ajv";
-import { VcDecodeFailed, VcValidateFailed, VcVerifyFailed } from "./errors";
+import type { Jwk, OpVc } from "@originator-profile/model";
+import type {
+  VcDecodeFailed,
+  VcValidateFailed,
+  VcVerifyFailed,
+} from "./errors";
 
 /** 未復号 VC */
 export type UndecodedVc = {
@@ -32,6 +35,17 @@ export type VerifiedVc<T extends OpVc = OpVc> = UnverifiedVc<T> & {
 
 type WithError<V extends object, E extends Error = Error> = V & { error: E };
 
+/** スキーマ検証エラーの issue */
+export type SchemaIssue = { path: string; message: string };
+
+/** スキーマ検証エラー */
+export class SchemaValidationError extends Error {
+  constructor(public issues: SchemaIssue[]) {
+    super(issues.map((i) => `${i.path}: ${i.message}`).join("; "));
+    this.name = "SchemaValidationError";
+  }
+}
+
 /** VC 復号失敗 */
 export type VcDecodingFailure<
   V extends UndecodedVc = UndecodedVc,
@@ -40,7 +54,7 @@ export type VcDecodingFailure<
 
 /** VC 妥当性確認失敗 */
 export type VcValidationFailure<V extends UnverifiedVc = UnverifiedVc> =
-  WithError<V, ValidationError>;
+  WithError<V, SchemaValidationError>;
 
 /** VC 検証失敗 */
 export type VcVerificationFailure<

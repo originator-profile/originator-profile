@@ -1,7 +1,4 @@
-import {
-  OriginatorProfileSetItem,
-  SiteProfile,
-} from "@originator-profile/model";
+import { OriginatorProfile, SiteProfile } from "@originator-profile/model";
 import { Window } from "happy-dom";
 import { HttpResponse, http } from "msw";
 import { setupServer } from "msw/node";
@@ -11,7 +8,7 @@ import { fetchSiteProfile } from "./fetch-site-profile";
 
 const server = setupServer();
 
-const ops: OriginatorProfileSetItem = {
+const ops: OriginatorProfile = {
   core: "eyJ...",
   annotations: ["eyJ..."],
   media: ["eyJ..."],

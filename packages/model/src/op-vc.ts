@@ -1,28 +1,18 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 import { OpContextHead } from "./context/op-context-head";
+import { OpId } from "./op-id";
 
-export const OpVc = {
-  type: "object",
-  additionalProperties: true,
-  properties: {
-    "@context": OpContextHead,
-    type: {
-      type: "array",
-      contains: {
-        const: "VerifiableCredential",
-      },
-    },
-    issuer: { type: "string", format: "uri" },
-    credentialSubject: {
-      type: "object",
-      additionalProperties: true,
-      properties: {
-        id: { type: "string", format: "uri" },
-      },
-      required: ["id"],
-    },
-  },
-  required: ["@context", "type", "issuer", "credentialSubject"],
-} as const satisfies JSONSchema;
+export const OpVc = z.looseObject({
+  "@context": OpContextHead,
+  type: z
+    .array(z.unknown())
+    .refine((arr) => arr.includes("VerifiableCredential"), {
+      error: `type must include "VerifiableCredential"`,
+    }),
+  issuer: OpId,
+  credentialSubject: z.looseObject({
+    id: OpId,
+  }),
+});
 
-export type OpVc = FromSchema<typeof OpVc>;
+export type OpVc = z.infer<typeof OpVc>;

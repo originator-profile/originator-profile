@@ -314,9 +314,7 @@ describe("Site Profileの検証", async () => {
     const { result: resultOp } = resultSp.result.originators;
     expect(resultOp[2]).instanceOf(OpVerifyFailed);
     expect(resultOp[2].result.core).instanceOf(VcValidateFailed);
-    expect(resultOp[2].result.core.message).toEqual(
-      "data/type/1 must be equal to constant",
-    );
+    expect(resultOp[2].result.core.message).toContain("CoreProfile");
   });
 
   test("SiteProfileのうちOPS部分の署名の検証に失敗", async () => {

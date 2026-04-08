@@ -1,40 +1,18 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 import { OpCipContext } from "../context/op-cip-context";
-import { OpVc } from "../op-vc";
+import { DateTimeStamp } from "../date-time-stamp";
+import { OpId } from "../op-id";
 import { CertificateProperties } from "./certificate-properties";
 
-export const Certificate = {
-  type: "object",
-  allOf: [
-    OpVc,
-    {
-      type: "object",
-      properties: {
-        "@context": OpCipContext,
-        type: {
-          type: "array",
-          additionalItems: false,
-          minItems: 1,
-          items: [{ const: "VerifiableCredential" }, { const: "Certificate" }],
-        },
-        issuer: { type: "string", format: "uri" },
-        validFrom: {
-          type: "string",
-          title: "有効開始日時",
-          description:
-            "http://www.w3.org/2001/XMLSchema#dateTime 形式の有効開始日時",
-        },
-        validUntil: {
-          type: "string",
-          title: "有効終了日時",
-          description:
-            "http://www.w3.org/2001/XMLSchema#dateTime 形式の有効終了日時",
-        },
-        credentialSubject: CertificateProperties,
-      },
-      required: ["@context", "type", "issuer", "credentialSubject"],
-    },
-  ],
-} as const satisfies JSONSchema;
+export const Certificate = z.object({
+  "@context": OpCipContext,
+  type: z.tuple([z.literal("VerifiableCredential"), z.literal("Certificate")]),
+  issuer: OpId,
+  validFrom: DateTimeStamp.optional().describe(
+    "Validity period start and time",
+  ),
+  validUntil: DateTimeStamp.optional().describe("Validity period end and time"),
+  credentialSubject: CertificateProperties,
+});
 
-export type Certificate = FromSchema<typeof Certificate>;
+export type Certificate = z.infer<typeof Certificate>;

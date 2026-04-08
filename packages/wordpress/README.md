@@ -78,7 +78,7 @@ TextTargetIntegrity
 例:
 
 ```
-.wp-block-post-content>*:not(.post-nav-links)
+h1.wp-block-post-title, .wp-block-post-content>*:not(.post-nav-links)
 ```
 
 **検証対象要素の存在するHTML**
@@ -91,13 +91,14 @@ TextTargetIntegrity
   <head>
     <meta charset="UTF-8" />
   </head>
-  <body class="wp-block-post-content">
-    %CONTENT%
+  <body>
+    <h1 class="wp-block-post-title">%TITLE%</h1>
+    <div class="wp-block-post-content">%CONTENT%</div>
   </body>
 </html>
 ```
 
-`%CONTENT%` は `apply_filters()` 適用後の WordPress 投稿内容に置換され、リクエストコンテンツ `target[0].content` プロパティとしてCAサーバーに送信されます。
+`%TITLE%` は投稿タイトルに、`%CONTENT%` は `apply_filters()` 適用後の WordPress 投稿内容に置換され、リクエストコンテンツ `target[0].content` プロパティとしてCAサーバーに送信されます。
 
 **[CA Presentation Type]: CASを埋め込み形式かリンク形式か指定**
 
@@ -303,11 +304,11 @@ Content Attestation サーバーのリクエストアウト (秒) の初期値�
 
 #### PROFILE_DEFAULT_CA_TARGET_CSS_SELECTOR
 
-検証対象要素 CSS セレクターの初期値です。
+検証対象要素 CSS セレクターの初期値です。デフォルトでは記事タイトル (`h1.wp-block-post-title`) と記事本文の直下子要素 (`.wp-block-post-content>*:not(.post-nav-links)`) の両方を対象とします。
 
 #### PROFILE_DEFAULT_CA_TARGET_HTML
 
-検証対象要素の存在する HTML の初期値です。
+検証対象要素の存在する HTML の初期値です。`%TITLE%` は投稿タイトルに、`%CONTENT%` は `apply_filters()` 適用後の投稿本文に置換されます。
 
 ## 既知の問題
 

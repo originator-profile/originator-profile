@@ -1,8 +1,7 @@
 import { serializeIfError } from "@originator-profile/core";
-import { OpVc } from "@originator-profile/model";
+import { OpMeta, OpVc } from "@originator-profile/model";
 import {
   fetchCredentials,
-  FetchCredentialSetResult,
   fetchOpMeta,
   fetchSiteProfile,
 } from "@originator-profile/presentation";
@@ -14,11 +13,8 @@ import {
 
 import {
   credentialsMessenger,
-  FetchCredentialsMessageResult,
-  FetchSiteProfileMessageResult,
   FrameLocation,
   FrameResponse,
-  VerifyFailed,
 } from "./components/credentials";
 import {
   frameCasWindowMessenger,
@@ -28,35 +24,20 @@ import {
   type FrameCasCoordinate,
 } from "./components/frameCas";
 import { frameCasExtensionMessenger } from "./components/frameCas/extension-events";
-import { FetchIntegrityMessageResult } from "./components/integrity/type";
 import "./utils/cors-basic-auth";
 
-const toFetchCredentialsMessageResult = <T>(
-  result: FetchCredentialSetResult<T>,
-): FetchCredentialsMessageResult<T, VerifyFailed> => {
-  return serializeIfError(result) as FetchCredentialsMessageResult<
-    T,
-    VerifyFailed
-  >;
-};
-
-const toFetchSiteProfileMessageResult = (
-  result: Awaited<ReturnType<typeof fetchSiteProfile>>,
-): FetchSiteProfileMessageResult => {
-  return serializeIfError(result) as FetchSiteProfileMessageResult;
-};
-
 credentialsMessenger.onMessage("fetchCredentials", async () => {
-  const { ops, cas, opMeta } = await fetchCredentials(document);
+  const { ops, cas } = await fetchCredentials(document);
+  const opMeta = fetchOpMeta(document);
   const sp = await fetchSiteProfile(document);
   const frameLocation: FrameLocation = {
     origin: window.origin,
     url: window.location.href,
   };
   return {
-    ops: toFetchCredentialsMessageResult(ops),
-    cas: toFetchCredentialsMessageResult(cas),
-    sp: toFetchSiteProfileMessageResult(sp),
+    ops: serializeIfError(ops),
+    cas: serializeIfError(cas),
+    sp: serializeIfError(sp),
     opMeta,
     ...frameLocation,
   };
@@ -75,7 +56,11 @@ const decodeJwtPayload = <T = unknown>(jwt: string): T | undefined => {
     const payload = jwt.split(".")[1];
     if (payload) {
       const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-      const binaryString = atob(base64);
+      const padded = base64.padEnd(
+        base64.length + ((4 - (base64.length % 4)) % 4),
+        "=",
+      );
+      const binaryString = atob(padded);
       const bytes = Uint8Array.from(binaryString, (c) => c.codePointAt(0) ?? 0);
       return JSON.parse(new TextDecoder().decode(bytes)) as T;
     }
@@ -116,10 +101,7 @@ const decodeOpJwt = (jwt: string | undefined): DecodedOpPayload | undefined => {
 };
 
 // opMetaオブジェクトからプロパティを文字列として取得
-const getOpMetaProperty = (
-  opMeta: Record<string, unknown>,
-  key: string,
-): string | undefined => {
+const getOpMetaProperty = (opMeta: OpMeta, key: string): string | undefined => {
   const value = opMeta[key];
   return typeof value === "string" ? value : undefined;
 };
@@ -158,7 +140,6 @@ let cachedNames:
 const tryCacheNames = () => {
   const opMeta = fetchOpMeta(document);
   if (!opMeta) return;
-  const meta = opMeta as Record<string, unknown>;
 
   void fetchCredentials(document)
     .then(({ ops, cas }) => {
@@ -191,8 +172,8 @@ const tryCacheNames = () => {
         sourceOrgName: names.sourceOrgName,
         expectedOrgName:
           names.expectedOrgName ??
-          getOpMetaProperty(meta, "targetOrgName") ??
-          getOpMetaProperty(meta, "targetname"),
+          getOpMetaProperty(opMeta, "targetOrgName") ??
+          getOpMetaProperty(opMeta, "targetname"),
       };
     })
     .catch((e) => {
@@ -207,10 +188,7 @@ if (document.readyState === "loading") {
   tryCacheNames();
 }
 
-const sendAdClicked = (
-  opMeta: Record<string, unknown>,
-  isNewTab: boolean = false,
-) => {
+const sendAdClicked = (opMeta: OpMeta, isNewTab: boolean = false) => {
   const names = cachedNames ?? {
     expectedOrgName:
       getOpMetaProperty(opMeta, "targetOrgName") ??
@@ -236,7 +214,7 @@ const handleLinkClick = (e: MouseEvent) => {
     const isJavascriptHref = anchor.href.startsWith("javascript:");
     const isNewTab =
       anchor.target === "_blank" || isModifierKey || isJavascriptHref;
-    void sendAdClicked(opMeta as Record<string, unknown>, isNewTab);
+    void sendAdClicked(opMeta, isNewTab);
   }
 };
 
@@ -256,7 +234,7 @@ const handleEnterKey = (e: KeyboardEvent) => {
   if (anchor && opMeta) {
     const isModifierKey = e.ctrlKey || e.metaKey || e.shiftKey;
     const isNewTab = anchor.target === "_blank" || isModifierKey;
-    void sendAdClicked(opMeta as Record<string, unknown>, isNewTab);
+    void sendAdClicked(opMeta, isNewTab);
   }
 };
 
@@ -274,7 +252,7 @@ const handleSpaceKey = (e: KeyboardEvent) => {
   if (isButtonOrInput) {
     const opMeta = fetchOpMeta(document);
     if (opMeta) {
-      void sendAdClicked(opMeta as Record<string, unknown>, false);
+      void sendAdClicked(opMeta, false);
     }
   }
 };
@@ -289,10 +267,9 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-credentialsMessenger.onMessage("verifyIntegrity", async ({ data }) => {
-  const [content] = data;
+credentialsMessenger.onMessage("verifyIntegrity", async ({ data: content }) => {
   const result = await verifyIntegrity(content);
-  return serializeIfError(result) as FetchIntegrityMessageResult;
+  return serializeIfError(result);
 });
 
 frameCasExtensionMessenger.onMessage(
