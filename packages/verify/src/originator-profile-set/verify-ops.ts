@@ -130,6 +130,37 @@ async function verifyMedia(
   );
 }
 
+type VerificationSource = {
+  doc: {
+    issuer: string;
+    credentialSubject: {
+      id: string;
+    };
+  };
+};
+/** 詳細なエラーメッセージを生成する関数 */
+function generateErrorDetails<T extends VerificationSource>(
+  items: (T | Error)[] | undefined,
+  opIndex: number,
+  prefix: string,
+  sources: T[] | undefined,
+): string[] {
+  if (!items) return [];
+
+  return items
+    .map((item, index) => {
+      if (!(item instanceof Error)) return null;
+
+      const src = sources?.[index];
+      const info = src
+        ? ` issuer: ${src.doc.issuer}, subject: ${src.doc.credentialSubject.id}`
+        : "";
+
+      return `OP[${opIndex}].${prefix}[${index}]${info}`;
+    })
+    .filter((d): d is string => d !== null);
+}
+
 /** 検証済み OPS か否か */
 const isVerifiedOps = (ops: OpVerificationResult[]): ops is VerifiedOps =>
   ops.every((op) => !(op instanceof OpVerifyFailed));
@@ -185,32 +216,19 @@ export function OpsVerifier(
           annotations &&
           annotations.some((annotation) => annotation instanceof Error)
         ) {
-          const details = annotations
-            .map((annotation, index) => {
-              if (!(annotation instanceof Error)) return null;
-              const src = op.annotations?.[index];
-              const info = src
-                ? ` issuer: ${src.doc.issuer}, subject: ${src.doc.credentialSubject.id}`
-                : "";
-              return `OP[${opIndex}].PA[${index}]${info}`;
-            })
-            .filter((d): d is string => d !== null);
+          const details = generateErrorDetails(
+            annotations,
+            opIndex,
+            "PA",
+            op.annotations,
+          );
           return new OpVerifyFailed(
             `Profile Annotation verify failed (${details.join(", ")})`,
             resultOp,
           );
         }
         if (media && media.some((m) => m instanceof Error)) {
-          const details = media
-            .map((m, index) => {
-              if (!(m instanceof Error)) return null;
-              const src = op.media?.[index];
-              const info = src
-                ? ` issuer: ${src.doc.issuer}, subject: ${src.doc.credentialSubject.id}`
-                : "";
-              return `OP[${opIndex}].WMP[${index}]${info}`;
-            })
-            .filter((d): d is string => d !== null);
+          const details = generateErrorDetails(media, opIndex, "WMP", op.media);
           return new OpVerifyFailed(
             `Web Media Profile verify failed (${details.join(", ")})`,
             resultOp,
