@@ -69,6 +69,7 @@ const validateDecodedOp = (
       resultOp,
     );
   }
+  const subjectMismatchErrors: string[] = [];
   if (
     media &&
     media.some(
@@ -82,9 +83,8 @@ const validateDecodedOp = (
           : null,
       )
       .filter((d): d is string => d !== null);
-    return new OpInvalid(
+    subjectMismatchErrors.push(
       `Subject mismatch between Core Profile and Web Media Profile (${details.join(", ")})`,
-      resultOp,
     );
   }
   if (
@@ -101,10 +101,12 @@ const validateDecodedOp = (
           : null,
       )
       .filter((d): d is string => d !== null);
-    return new OpInvalid(
+    subjectMismatchErrors.push(
       `Subject mismatch between Core Profile and Profile Annotation (${details.join(", ")})`,
-      resultOp,
     );
+  }
+  if (subjectMismatchErrors.length > 0) {
+    return new OpInvalid(subjectMismatchErrors.join(", "), resultOp);
   }
   return { type: "valid", annotations, media };
 };
