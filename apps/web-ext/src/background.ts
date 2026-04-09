@@ -1,3 +1,4 @@
+import { activeTabMessenger } from "./components/activeTab/events";
 import { credentialsMessenger } from "./components/credentials/events";
 import type { LinkVerificationResult } from "./components/credentials/types";
 import { frameCasExtensionMessenger } from "./components/frameCas";
@@ -11,6 +12,7 @@ import {
   verificationCache,
   verificationResults,
 } from "./components/link-verification";
+import { overlayExtensionMessenger } from "./components/overlay/extension-events";
 import { updateBadge, verifyTabCredentials } from "./components/tabBadge";
 import "./utils/cors-basic-auth";
 import { normalizeUrl } from "./utils/navigation-state";
@@ -30,6 +32,47 @@ if (chrome.sidePanel) {
 if (chrome.sidebarAction) {
   chrome.action.onClicked.addListener(() => {
     void chrome.sidebarAction.open();
+  });
+
+  // Firefox: サイドバー閉じる検知。
+  // sidebarAction.isOpen() ポーリングで close を検知する。
+  // see: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/sidebarAction
+  const SIDEBAR_POLL_INTERVAL_MS = 500;
+  const sidebarPollers = new Map<number, ReturnType<typeof setInterval>>();
+
+  const stopPolling = (windowId: number) => {
+    const timer = sidebarPollers.get(windowId);
+    if (timer !== undefined) {
+      clearInterval(timer);
+      sidebarPollers.delete(windowId);
+    }
+  };
+
+  activeTabMessenger.onMessage("firefoxSidebarOpened", ({ data }) => {
+    const { windowId } = data;
+    if (sidebarPollers.has(windowId)) return;
+
+    const timer = setInterval(async () => {
+      try {
+        const isOpen = await chrome.sidebarAction.isOpen({ windowId });
+        if (isOpen) return;
+
+        stopPolling(windowId);
+        const [tab] = await chrome.tabs.query({ active: true, windowId });
+        if (tab?.id !== undefined) {
+          void overlayExtensionMessenger.sendMessage("leave", null, tab.id);
+        }
+      } catch {
+        // ウィンドウが既に閉じられている等の場合
+        stopPolling(windowId);
+      }
+    }, SIDEBAR_POLL_INTERVAL_MS);
+    sidebarPollers.set(windowId, timer);
+  });
+
+  // ウィンドウ自体が閉じられた場合のクリーンアップ
+  chrome.windows.onRemoved.addListener((windowId) => {
+    stopPolling(windowId);
   });
 }
 
