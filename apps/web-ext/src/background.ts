@@ -25,6 +25,14 @@ if (chrome.sidePanel) {
     .catch(console.error);
 }
 
+// Firefox: アクションクリック時にサイドバーを開く
+// （sidebarAction.open() はユーザージェスチャからのみ呼べる）
+if (chrome.sidebarAction) {
+  chrome.action.onClicked.addListener(() => {
+    void chrome.sidebarAction.open();
+  });
+}
+
 /**
  * タブのバッジを更新する
  * @param tabId タブID
