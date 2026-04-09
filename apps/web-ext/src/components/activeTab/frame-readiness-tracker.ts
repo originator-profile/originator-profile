@@ -49,9 +49,13 @@ export function createFrameReadinessTracker(
     onRefetch(tabId);
   };
 
-  const checkAllReady = (pending: PendingFrames): boolean =>
-    pending.expected !== null &&
-    [...pending.expected].every((id) => pending.received.has(id));
+  const checkAllReady = (pending: PendingFrames): boolean => {
+    if (pending.expected === null) return false;
+    for (const id of pending.expected) {
+      if (!pending.received.has(id)) return false;
+    }
+    return true;
+  };
 
   const handleContentReady = (
     tabId: number,
