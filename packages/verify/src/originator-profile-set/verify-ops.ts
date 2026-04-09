@@ -130,7 +130,7 @@ async function verifyMedia(
   );
 }
 
-type VerificationSource = {
+type CredentialMetadata = {
   doc: {
     issuer: string;
     credentialSubject: {
@@ -139,7 +139,7 @@ type VerificationSource = {
   };
 };
 /** 詳細なエラーメッセージを生成する関数 */
-function generateErrorDetails<T extends VerificationSource>(
+function generateErrorDetails<T extends CredentialMetadata>(
   items: (T | Error)[] | undefined,
   opIndex: number,
   prefix: string,
@@ -238,10 +238,16 @@ export function OpsVerifier(
       }),
     );
     if (!isVerifiedOps(resultOps)) {
-      return new OpsVerifyFailed(
-        "Originator Profile Set verify failed",
-        resultOps,
-      );
+      const verifyFailedIndexes = resultOps
+        .map((op, index) => (op instanceof OpVerifyFailed ? index : null))
+        .filter((i): i is number => i !== null);
+
+      const msg =
+        verifyFailedIndexes.length > 0
+          ? `Originator Profile Set verify failed (${verifyFailedIndexes.map((i) => `OP[${i}]`).join(", ")})`
+          : "Originator Profile Set verify failed";
+
+      return new OpsVerifyFailed(msg, resultOps);
     }
     return resultOps;
   }

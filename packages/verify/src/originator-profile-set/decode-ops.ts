@@ -106,7 +106,7 @@ const validateDecodedOp = (
     );
   }
   if (subjectMismatchErrors.length > 0) {
-    return new OpInvalid(subjectMismatchErrors.join(", "), resultOp);
+    return new OpInvalid(subjectMismatchErrors.join("\n"), resultOp);
   }
   return { type: "valid", annotations, media };
 };
@@ -163,7 +163,16 @@ export function decodeOps(ops: OriginatorProfileSet): OpsDecodingResult {
     } as DecodedOp;
   });
   if (!isDecodedOps(resultOps)) {
-    return new OpsInvalid("Invalid Originator Profile Set", resultOps);
+    const invalidIndexes = resultOps
+      .map((op, index) => (op instanceof OpInvalid ? index : null))
+      .filter((i): i is number => i !== null);
+
+    const msg =
+      invalidIndexes.length > 0
+        ? `Invalid Originator Profile Set (${invalidIndexes.map((i) => `OP[${i}]`).join(", ")})`
+        : "Invalid Originator Profile Set";
+
+    return new OpsInvalid(msg, resultOps);
   }
   return resultOps;
 }

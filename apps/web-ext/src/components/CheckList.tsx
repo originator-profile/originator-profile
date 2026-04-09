@@ -283,7 +283,7 @@ function DisplayResults({
       {message && (
         <div className="text-gray-700 mb-1">
           <p className="font-bold mb-1">Message</p>
-          <p>{message}</p>
+          <p className="whitespace-pre-wrap">{message}</p>
         </div>
       )}
       {issuer && (
