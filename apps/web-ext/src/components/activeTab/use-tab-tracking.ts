@@ -73,15 +73,20 @@ export function useTabTracking() {
     chrome.tabs.onUpdated.addListener(updatedListener);
 
     // 初期タブIDを取得（リスナー登録後に実行し、取りこぼしを防ぐ）
-    void windowIdReady.then((currentWindowId) =>
-      chrome.tabs
-        .query({ active: true, windowId: currentWindowId })
-        .then(([tab]) => {
-          if (tab?.id !== undefined && isTrackableUrl(tab.url)) {
-            navigateToTab(tab.id);
-          }
-        }),
-    );
+    const queryInitialTab = async () => {
+      try {
+        const [tab] = await chrome.tabs.query({
+          active: true,
+          currentWindow: true,
+        });
+        if (tab?.id !== undefined && isTrackableUrl(tab.url)) {
+          navigateToTab(tab.id);
+        }
+      } catch (error) {
+        console.error("Failed to query initial active tab:", error);
+      }
+    };
+    void queryInitialTab();
 
     return () => {
       chrome.tabs.onActivated.removeListener(activatedListener);
