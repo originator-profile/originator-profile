@@ -494,6 +494,7 @@ describe("OPSの検証", async () => {
       media: undefined,
     });
     expect(resultOp[2]).instanceOf(OpVerifyFailed);
+    expect(resultOp[2].message).toBe("Core Profile verify failed (OP[2])");
     expect(resultOp[2].result.core).instanceOf(VcVerifyFailed);
     expect(resultOp[2].result.annotations[0]).toStrictEqual(
       verifyResult.create(
@@ -547,6 +548,9 @@ describe("OPSの検証", async () => {
       media: undefined,
     });
     expect(resultOp[2]).instanceOf(OpVerifyFailed);
+    expect(resultOp[2].message).toBe(
+      `Profile Annotation verify failed (OP[2].PA[1] issuer: ${opId.certifier}, subject: ${opId.originator})`,
+    );
     expect(resultOp[2].result.core).toStrictEqual(
       verifyResult.create(cp, originatorOp.core, authority.publicKey),
     );
@@ -603,6 +607,9 @@ describe("OPSの検証", async () => {
       media: undefined,
     });
     expect(resultOp[2]).instanceOf(OpVerifyFailed);
+    expect(resultOp[2].message).toBe(
+      `Web Media Profile verify failed (OP[2].WMP[0] issuer: ${opId.authority}, subject: ${opId.originator})`,
+    );
     expect(resultOp[2].result.core).toStrictEqual(
       verifyResult.create(cp, originatorOp.core, authority.publicKey),
     );
@@ -659,6 +666,7 @@ describe("OPSの検証", async () => {
       media: undefined,
     });
     expect(resultOp[2]).instanceOf(OpVerifyFailed);
+    expect(resultOp[2].message).toBe("Core Profile verify failed (OP[2])");
     expect(resultOp[2].result.core).instanceOf(VcVerifyFailed);
     expect(resultOp[2].result.annotations[0]).toStrictEqual(
       verifyResult.create(

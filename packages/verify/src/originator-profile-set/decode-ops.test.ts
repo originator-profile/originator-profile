@@ -185,6 +185,7 @@ describe("OPSの復号", async () => {
       media: undefined,
     });
     expect(resultOp[2]).instanceOf(OpInvalid);
+    expect(resultOp[2].message).toBe("Core Profile decode failed (OP[2])");
     expect(resultOp[2].result.core).instanceOf(VcDecodeFailed);
     expect(resultOp[2].result.annotations[0]).toStrictEqual(
       toDecodeResult(certificate, holderOp.annotations[0]),
@@ -214,6 +215,9 @@ describe("OPSの復号", async () => {
       media: undefined,
     });
     expect(resultOp[2]).instanceOf(OpInvalid);
+    expect(resultOp[2].message).toBe(
+      "Profile Annotation decode failed (OP[2].PA[0])",
+    );
     expect(resultOp[2].result.core).toStrictEqual(
       toDecodeResult(cp, holderOp.core),
     );
@@ -243,6 +247,9 @@ describe("OPSの復号", async () => {
       media: undefined,
     });
     expect(resultOp[2]).instanceOf(OpInvalid);
+    expect(resultOp[2].message).toBe(
+      "Web Media Profile decode failed (OP[2].WMP[0])",
+    );
     expect(resultOp[2].result.core).toStrictEqual(
       toDecodeResult(cp, holderOp.core),
     );
@@ -250,5 +257,73 @@ describe("OPSの復号", async () => {
       toDecodeResult(certificate, holderOp.annotations[0]),
     );
     expect(resultOp[2].result.media[0]).instanceOf(VcDecodeFailed);
+  });
+
+  test("複数PAの復号に失敗", () => {
+    const invalidOps = patch(ops, [
+      { op: "replace", path: [2, "annotations", 0], value: "invalid" },
+      { op: "add", path: [2, "annotations", 1], value: "invalid2" },
+    ]);
+    const resultOps = decodeOps(invalidOps);
+
+    expect(resultOps).instanceOf(OpsInvalid);
+    // @ts-expect-error invalid Ops
+    const { result: resultOp } = resultOps;
+    expect(resultOp[2]).instanceOf(OpInvalid);
+    expect(resultOp[2].message).toBe(
+      "Profile Annotation decode failed (OP[2].PA[0], OP[2].PA[1])",
+    );
+  });
+
+  test("CPとPAのsubjectが不一致", async () => {
+    const mismatchPa = await signJwtVc(
+      patch(certificate, [
+        {
+          op: "replace",
+          path: ["credentialSubject", "id"],
+          value: "dns:mismatch.example.org",
+        },
+      ]),
+      certifier.privateKey,
+      signOptions,
+    );
+    const invalidOps: OriginatorProfileSet = patch(ops, [
+      { op: "replace", path: [2, "annotations", 0], value: mismatchPa },
+    ]);
+    const resultOps = decodeOps(invalidOps);
+
+    expect(resultOps).instanceOf(OpsInvalid);
+    // @ts-expect-error invalid Ops
+    const { result: resultOp } = resultOps;
+    expect(resultOp[2]).instanceOf(OpInvalid);
+    expect(resultOp[2].message).toBe(
+      `Subject mismatch between Core Profile and Profile Annotation (OP[2].PA[0] issuer: ${opId.certifier}, subject: dns:mismatch.example.org)`,
+    );
+  });
+
+  test("CPとWMPのsubjectが不一致", async () => {
+    const mismatchWmp = await signJwtVc(
+      patch(wmp, [
+        {
+          op: "replace",
+          path: ["credentialSubject", "id"],
+          value: "dns:mismatch.example.org",
+        },
+      ]),
+      authority.privateKey,
+      signOptions,
+    );
+    const invalidOps: OriginatorProfileSet = patch(ops, [
+      { op: "replace", path: [2, "media"], value: [mismatchWmp] },
+    ]);
+    const resultOps = decodeOps(invalidOps);
+
+    expect(resultOps).instanceOf(OpsInvalid);
+    // @ts-expect-error invalid Ops
+    const { result: resultOp } = resultOps;
+    expect(resultOp[2]).instanceOf(OpInvalid);
+    expect(resultOp[2].message).toBe(
+      `Subject mismatch between Core Profile and Web Media Profile (OP[2].WMP[0] issuer: ${opId.authority}, subject: dns:mismatch.example.org)`,
+    );
   });
 });
