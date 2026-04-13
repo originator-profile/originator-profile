@@ -1,15 +1,18 @@
+import type { Image } from "@originator-profile/model";
 import {
   createDigestSri,
-  type DigestSriContent,
+  type DigestSriResult,
 } from "@originator-profile/sign";
 import { IntegrityMetadataSet } from "websri";
+
+const WARN_SUFFIX = `This will become an error after 2027. See: https://docs.originator-profile.org/en/opb/context/#the-image-datatype`;
 
 /**
  * `digestSRI` の検証
  * @see {@link https://www.w3.org/TR/SRI/#the-integrity-attribute}
  * @example
  * ```ts
- * const content: DigestSriContent = {
+ * const content = {
  *   id: "<URL>",
  *   digestSRI: "sha256-...",
  * };
@@ -18,7 +21,7 @@ import { IntegrityMetadataSet } from "websri";
  * ```
  */
 export async function verifyDigestSri(
-  content: DigestSriContent,
+  content: DigestSriResult,
   fetcher = fetch,
 ): Promise<boolean> {
   const integrity = new IntegrityMetadataSet(content.digestSRI);
@@ -26,7 +29,38 @@ export async function verifyDigestSri(
 
   if (alg.length === 0) return false;
 
-  const { digestSRI } = await createDigestSri(alg[0], content, fetcher);
+  try {
+    const result = await createDigestSri(alg[0], content, fetcher);
+    return "digestSRI" in result && integrity.match(result.digestSRI);
+  } catch (error) {
+    console.error(
+      "Failed to access content for digestSRI verification:",
+      error,
+    );
+    return false;
+  }
+}
 
-  return integrity.match(digestSRI);
+/**
+ * Image の digestSRI を検証する。
+ * 後方互換性の観点で、2027年までは検証失敗時に console.warn のみで処理を中断しない。
+ */
+export async function verifyImageDigestSri(
+  value: Image | undefined,
+  fetcher = fetch,
+): Promise<void> {
+  if (!value) return;
+
+  if (!value.digestSRI) {
+    console.warn(`digestSRI is missing. ${WARN_SUFFIX}`);
+    return;
+  }
+
+  const valid = await verifyDigestSri(
+    { id: value.id, digestSRI: value.digestSRI },
+    fetcher,
+  );
+  if (!valid) {
+    console.warn(`digestSRI verification failed. ${WARN_SUFFIX}`);
+  }
 }

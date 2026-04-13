@@ -19,15 +19,6 @@ function urlParamsRoute<Path extends string, T>(
   const baseRoute = route(path);
   return {
     ...baseRoute,
-    build(params: ParseUrlParams<Path>) {
-      const encodedParams = Object.fromEntries(
-        Object.entries(params).map(([key, value]) => [
-          key,
-          encodeURIComponent(String(value)),
-        ]),
-      ) as ParseUrlParams<Path>;
-      return baseRoute.build(encodedParams);
-    },
     getParams,
   };
 }
@@ -56,6 +47,7 @@ export const paths = {
   publ: "publ/:issuer/:subject",
   site: "site",
   prohibition: "prohibition",
+  warning: "warning",
   detail: "detail",
 } as const;
 
@@ -65,6 +57,7 @@ export const routes = {
   publ: urlParamsRoute(paths.publ, getPublParams),
   site: route(paths.site),
   prohibition: route(paths.prohibition),
+  warning: route(paths.warning),
   detail: route(paths.detail),
 } as const;
 

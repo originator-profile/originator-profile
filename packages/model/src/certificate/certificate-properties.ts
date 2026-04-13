@@ -1,26 +1,22 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 import { Image } from "../image";
+import { OpId } from "../op-id";
 import { CertificationSystem } from "./cert-system";
 
-export const CertificateProperties = {
-  type: "object",
-  additionalProperties: false,
-  properties: {
-    id: { type: "string", title: "subject の OP ID", format: "uri" },
-    type: { type: "string", const: "CertificateProperties" },
-    description: { type: "string", title: "説明" },
-    image: Image,
-    certifier: {
-      type: "string",
-      title: "認証機関名",
-    },
-    verifier: {
-      type: "string",
-      title: "検証機関名",
-    },
-    certificationSystem: CertificationSystem,
-  },
-  required: ["id", "type", "certificationSystem"],
-} as const satisfies JSONSchema;
+export const CertificateProperties = z.object({
+  id: OpId.describe("OP ID of the subject"),
+  type: z.literal("CertificateProperties"),
+  description: z.string().optional().describe("Description"),
+  image: Image.optional(),
+  certifier: z
+    .string()
+    .optional()
+    .describe("Name of the certification authority"),
+  verifier: z
+    .string()
+    .optional()
+    .describe("Name of the verification authority"),
+  certificationSystem: CertificationSystem,
+});
 
-export type CertificateProperties = FromSchema<typeof CertificateProperties>;
+export type CertificateProperties = z.infer<typeof CertificateProperties>;

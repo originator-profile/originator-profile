@@ -1,5 +1,5 @@
 import { Command, Flags } from "@oclif/core";
-import type { WebsiteProfile } from "@originator-profile/model";
+import type { UnsignedWebsiteProfile } from "@originator-profile/model";
 import fs from "node:fs/promises";
 import { expirationDate } from "../../flags.ts";
 import { unsignedWsp } from "../../website-profile.ts";
@@ -26,7 +26,7 @@ const exampleWebsiteProfile = {
     },
     allowedOrigin: ["<Web サイトのオリジン (形式: https://<ホスト名>)>"],
   },
-} satisfies WebsiteProfile;
+} satisfies UnsignedWebsiteProfile;
 
 export class WspUnsigned extends Command {
   static summary = "未署名 Website Profile の取得";
@@ -56,7 +56,7 @@ $ <%= config.bin %> <%= command.id %> \\
     const { flags } = await this.parse(WspUnsigned);
     const inputBuffer = await fs.readFile(flags.input);
 
-    const input: WebsiteProfile = JSON.parse(inputBuffer.toString());
+    const input: UnsignedWebsiteProfile = JSON.parse(inputBuffer.toString());
 
     const uwsp = await unsignedWsp(input, {
       issuedAt: flags["issued-at"],

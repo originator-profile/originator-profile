@@ -6,6 +6,7 @@ import {
   OpVc,
   OriginatorProfileSet,
   WebMediaProfile,
+  type Image,
 } from "@originator-profile/model";
 import {
   JwtVcVerifier,
@@ -13,6 +14,8 @@ import {
   VcValidator,
   VerifiedJwtVc,
 } from "@originator-profile/securing-mechanism";
+import { z } from "zod";
+import { verifyImageDigestSri } from "../integrity";
 import { getMappedKeys, type MappedKeys } from "../keys";
 import { decodeOps } from "./decode-ops";
 import {
@@ -79,9 +82,7 @@ async function verifyAnnotations(
       const verify = OpVerifier<Certificate>(
         paIssuerKeys,
         annotation,
-        validator?.({
-          oneOf: [CertificateSchema, JapaneseExistenceCertificate],
-        }),
+        validator?.(z.union([CertificateSchema, JapaneseExistenceCertificate])),
       );
 
       const result = await verify(annotation.source);
@@ -89,8 +90,16 @@ async function verifyAnnotations(
         return result;
       }
 
-      // 有効期限の検証
-      return validateCertificateExpiry(result);
+      const valid = validateCertificateExpiry(result);
+      if (valid instanceof CertificateExpired) {
+        return valid;
+      }
+
+      await verifyImageDigestSri(
+        valid.doc.credentialSubject.image as Image | undefined,
+      );
+
+      return valid;
     }),
   );
 }
@@ -98,16 +107,58 @@ async function verifyAnnotations(
 /** media プロパティの署名検証 */
 async function verifyMedia(
   wmpIssuerKeys: MappedKeys,
-  media?: UnverifiedJwtVc<WebMediaProfile>,
+  media?: UnverifiedJwtVc<WebMediaProfile>[],
   validator?: typeof VcValidator,
 ) {
   if (!media) return;
-  const verify = OpVerifier<WebMediaProfile>(
-    wmpIssuerKeys,
-    media,
-    validator?.(WebMediaProfile),
+  return await Promise.all(
+    media.map(async (m) => {
+      const verify = OpVerifier<WebMediaProfile>(
+        wmpIssuerKeys,
+        m,
+        validator?.(WebMediaProfile),
+      );
+      const result = await verify(m.source);
+      if (result instanceof Error) {
+        return result;
+      }
+
+      await verifyImageDigestSri(result.doc.credentialSubject.logo);
+
+      return result;
+    }),
   );
-  return await verify(media.source);
+}
+
+type CredentialMetadata = {
+  doc: {
+    issuer: string;
+    credentialSubject: {
+      id: string;
+    };
+  };
+};
+/** 詳細なエラーメッセージを生成する関数 */
+function generateErrorDetails<T extends CredentialMetadata>(
+  items: (T | Error)[] | undefined,
+  opIndex: number,
+  prefix: string,
+  sources: T[] | undefined,
+): string[] {
+  if (!items) return [];
+
+  return items
+    .map((item, index) => {
+      if (!(item instanceof Error)) return null;
+
+      const src = sources?.[index];
+      const info = src
+        ? ` issuer: ${src.doc.issuer}, subject: ${src.doc.credentialSubject.id}`
+        : "";
+
+      return `OP[${opIndex}].${prefix}[${index}]${info}`;
+    })
+    .filter((d): d is string => d !== null);
 }
 
 /** 検証済み OPS か否か */
@@ -145,7 +196,7 @@ export function OpsVerifier(
     }
     const paOrWmpIssuerKeys = getMappedKeys(decoded);
     const resultOps = await Promise.all(
-      decoded.map(async (op): Promise<OpVerificationResult> => {
+      decoded.map(async (op, opIndex): Promise<OpVerificationResult> => {
         const core = await verifyCp(op.core.source);
         const annotations = await verifyAnnotations(
           paOrWmpIssuerKeys,
@@ -156,20 +207,30 @@ export function OpsVerifier(
         const resultOp = { core, annotations, media };
 
         if (core instanceof Error) {
-          return new OpVerifyFailed("Core Profile verify failed", resultOp);
+          return new OpVerifyFailed(
+            `Core Profile verify failed (OP[${opIndex}])`,
+            resultOp,
+          );
         }
         if (
           annotations &&
           annotations.some((annotation) => annotation instanceof Error)
         ) {
+          const details = generateErrorDetails(
+            annotations,
+            opIndex,
+            "PA",
+            op.annotations,
+          );
           return new OpVerifyFailed(
-            "Profile Annotation verify failed",
+            `Profile Annotation verify failed (${details.join(", ")})`,
             resultOp,
           );
         }
-        if (media instanceof Error) {
+        if (media && media.some((m) => m instanceof Error)) {
+          const details = generateErrorDetails(media, opIndex, "WMP", op.media);
           return new OpVerifyFailed(
-            "Web Media Profile verify failed",
+            `Web Media Profile verify failed (${details.join(", ")})`,
             resultOp,
           );
         }
@@ -177,10 +238,16 @@ export function OpsVerifier(
       }),
     );
     if (!isVerifiedOps(resultOps)) {
-      return new OpsVerifyFailed(
-        "Originator Profile Set verify failed",
-        resultOps,
-      );
+      const verifyFailedIndexes = resultOps
+        .map((op, index) => (op instanceof OpVerifyFailed ? index : null))
+        .filter((i): i is number => i !== null);
+
+      const msg =
+        verifyFailedIndexes.length > 0
+          ? `Originator Profile Set verify failed (${verifyFailedIndexes.map((i) => `OP[${i}]`).join(", ")})`
+          : "Originator Profile Set verify failed";
+
+      return new OpsVerifyFailed(msg, resultOps);
     }
     return resultOps;
   }

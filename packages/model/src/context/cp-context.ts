@@ -1,17 +1,8 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 
-export const CpContext = {
-  type: "array",
-  additionalItems: false,
-  minItems: 2,
-  items: [
-    {
-      const: "https://www.w3.org/ns/credentials/v2",
-    },
-    {
-      const: "https://originator-profile.org/ns/credentials/v1",
-    },
-  ],
-} as const satisfies JSONSchema;
+export const CpContext = z.tuple([
+  z.literal("https://www.w3.org/ns/credentials/v2"),
+  z.literal("https://originator-profile.org/ns/credentials/v1"),
+]);
 
-export type CpContext = FromSchema<typeof CpContext>;
+export type CpContext = z.infer<typeof CpContext>;

@@ -3,6 +3,7 @@ import {
   Certificate,
   CoreProfile,
   OriginatorProfileSet,
+  WebMediaProfile,
 } from "@originator-profile/model";
 import {
   signJwtVc,
@@ -10,7 +11,15 @@ import {
 } from "@originator-profile/securing-mechanism";
 import { signCp } from "@originator-profile/sign";
 import { addYears, fromUnixTime, getUnixTime } from "date-fns";
-import { describe, expect, test, vi } from "vitest";
+import {
+  type MockInstance,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 import {
   certificate,
   cp,
@@ -74,7 +83,7 @@ describe("OPSの検証", async () => {
     annotations: [
       await signJwtVc(certificate, certifier.privateKey, signOptions),
     ],
-    media: await signJwtVc(wmp, authority.privateKey, signOptions),
+    media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
   };
   const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
 
@@ -116,11 +125,9 @@ describe("OPSの検証", async () => {
             certifier.publicKey,
           ),
         ],
-        media: verifyResult.create(
-          wmp,
-          originatorOp.media,
-          authority.publicKey,
-        ),
+        media: [
+          verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+        ],
       },
     ]);
   });
@@ -143,7 +150,7 @@ describe("OPSの検証", async () => {
           signOptions,
         ),
       ],
-      media: await signJwtVc(wmp, authority.privateKey, signOptions),
+      media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
     };
 
     const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
@@ -184,11 +191,9 @@ describe("OPSの検証", async () => {
             certifier.publicKey,
           ),
         ],
-        media: verifyResult.create(
-          wmp,
-          originatorOp.media,
-          authority.publicKey,
-        ),
+        media: [
+          verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+        ],
       },
     ]);
   });
@@ -208,7 +213,7 @@ describe("OPSの検証", async () => {
           signOptions,
         ),
       ],
-      media: await signJwtVc(wmp, authority.privateKey, signOptions),
+      media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
     };
 
     const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
@@ -232,7 +237,9 @@ describe("OPSの検証", async () => {
           certifier.publicKey,
         ),
       ],
-      media: verifyResult.create(wmp, originatorOp.media, authority.publicKey),
+      media: [
+        verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+      ],
     });
   });
 
@@ -251,7 +258,7 @@ describe("OPSの検証", async () => {
           signOptions,
         ),
       ],
-      media: await signJwtVc(wmp, authority.privateKey, signOptions),
+      media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
     };
 
     const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
@@ -275,7 +282,9 @@ describe("OPSの検証", async () => {
           certifier.publicKey,
         ),
       ],
-      media: verifyResult.create(wmp, originatorOp.media, authority.publicKey),
+      media: [
+        verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+      ],
     });
   });
 
@@ -297,7 +306,7 @@ describe("OPSの検証", async () => {
             signOptions,
           ),
         ],
-        media: await signJwtVc(wmp, authority.privateKey, signOptions),
+        media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
       };
 
       const ops: OriginatorProfileSet = [
@@ -325,11 +334,9 @@ describe("OPSの検証", async () => {
             certifier.publicKey,
           ),
         ],
-        media: verifyResult.create(
-          wmp,
-          originatorOp.media,
-          authority.publicKey,
-        ),
+        media: [
+          verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+        ],
       });
     } finally {
       vi.useRealTimers();
@@ -354,7 +361,7 @@ describe("OPSの検証", async () => {
             signOptions,
           ),
         ],
-        media: await signJwtVc(wmp, authority.privateKey, signOptions),
+        media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
       };
 
       const ops: OriginatorProfileSet = [
@@ -382,11 +389,9 @@ describe("OPSの検証", async () => {
             certifier.publicKey,
           ),
         ],
-        media: verifyResult.create(
-          wmp,
-          originatorOp.media,
-          authority.publicKey,
-        ),
+        media: [
+          verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+        ],
       });
     } finally {
       vi.useRealTimers();
@@ -436,7 +441,7 @@ describe("OPSの検証", async () => {
           signOptions,
         ),
       ],
-      media: await signJwtVc(wmp, authority.privateKey, signOptions),
+      media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
     };
 
     const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
@@ -489,6 +494,7 @@ describe("OPSの検証", async () => {
       media: undefined,
     });
     expect(resultOp[2]).instanceOf(OpVerifyFailed);
+    expect(resultOp[2].message).toBe("Core Profile verify failed (OP[2])");
     expect(resultOp[2].result.core).instanceOf(VcVerifyFailed);
     expect(resultOp[2].result.annotations[0]).toStrictEqual(
       verifyResult.create(
@@ -497,9 +503,9 @@ describe("OPSの検証", async () => {
         certifier.publicKey,
       ),
     );
-    expect(resultOp[2].result.media).toStrictEqual(
-      verifyResult.create(wmp, originatorOp.media, authority.publicKey),
-    );
+    expect(resultOp[2].result.media).toStrictEqual([
+      verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+    ]);
   });
 
   test("PAの署名の検証に失敗", async () => {
@@ -542,6 +548,9 @@ describe("OPSの検証", async () => {
       media: undefined,
     });
     expect(resultOp[2]).instanceOf(OpVerifyFailed);
+    expect(resultOp[2].message).toBe(
+      `Profile Annotation verify failed (OP[2].PA[1] issuer: ${opId.certifier}, subject: ${opId.originator})`,
+    );
     expect(resultOp[2].result.core).toStrictEqual(
       verifyResult.create(cp, originatorOp.core, authority.publicKey),
     );
@@ -553,9 +562,9 @@ describe("OPSの検証", async () => {
       ),
     );
     expect(resultOp[2].result.annotations[1]).instanceOf(VcVerifyFailed);
-    expect(resultOp[2].result.media).toStrictEqual(
-      verifyResult.create(wmp, originatorOp.media, authority.publicKey),
-    );
+    expect(resultOp[2].result.media).toStrictEqual([
+      verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+    ]);
   });
 
   test("WMPの署名の検証に失敗", async () => {
@@ -565,7 +574,7 @@ describe("OPSの検証", async () => {
       {
         op: "replace",
         path: [2, "media"],
-        value: evilWmp,
+        value: [evilWmp],
       },
     ]);
     const verify = OpsVerifier(
@@ -598,6 +607,9 @@ describe("OPSの検証", async () => {
       media: undefined,
     });
     expect(resultOp[2]).instanceOf(OpVerifyFailed);
+    expect(resultOp[2].message).toBe(
+      `Web Media Profile verify failed (OP[2].WMP[0] issuer: ${opId.authority}, subject: ${opId.originator})`,
+    );
     expect(resultOp[2].result.core).toStrictEqual(
       verifyResult.create(cp, originatorOp.core, authority.publicKey),
     );
@@ -608,7 +620,7 @@ describe("OPSの検証", async () => {
         certifier.publicKey,
       ),
     );
-    expect(resultOp[2].result.media).instanceOf(VcVerifyFailed);
+    expect(resultOp[2].result.media[0]).instanceOf(VcVerifyFailed);
   });
 
   test("CPの発行者と署名者が不一致", async () => {
@@ -654,6 +666,7 @@ describe("OPSの検証", async () => {
       media: undefined,
     });
     expect(resultOp[2]).instanceOf(OpVerifyFailed);
+    expect(resultOp[2].message).toBe("Core Profile verify failed (OP[2])");
     expect(resultOp[2].result.core).instanceOf(VcVerifyFailed);
     expect(resultOp[2].result.annotations[0]).toStrictEqual(
       verifyResult.create(
@@ -662,9 +675,9 @@ describe("OPSの検証", async () => {
         certifier.publicKey,
       ),
     );
-    expect(resultOp[2].result.media).toStrictEqual(
-      verifyResult.create(wmp, originatorOp.media, authority.publicKey),
-    );
+    expect(resultOp[2].result.media).toStrictEqual([
+      verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+    ]);
   });
 
   test("CPとWMPの保有者が不一致", async () => {
@@ -683,7 +696,7 @@ describe("OPSの検証", async () => {
       {
         op: "replace",
         path: [2, "media"],
-        value: invalidWmp,
+        value: [invalidWmp],
       },
     ]);
     const verify = OpsVerifier(
@@ -801,9 +814,9 @@ describe("OPSの検証", async () => {
       verifyResult.create(cp, originatorOp.core, authority.publicKey),
     );
     expect(resultOp[1].result.annotations[0]).instanceOf(CoreProfileNotFound);
-    expect(resultOp[1].result.media).toStrictEqual(
-      verifyResult.create(wmp, originatorOp.media, authority.publicKey),
-    );
+    expect(resultOp[1].result.media).toStrictEqual([
+      verifyResult.create(wmp, originatorOp.media[0], authority.publicKey),
+    ]);
   });
 
   test("WMP発行者のOPがOPSに存在しない", async () => {
@@ -839,6 +852,337 @@ describe("OPSの検証", async () => {
         certifier.publicKey,
       ),
     );
-    expect(resultOp[1].result.media).instanceOf(CoreProfileNotFound);
+    expect(resultOp[1].result.media[0]).instanceOf(CoreProfileNotFound);
+  });
+
+  test("複数のWMP(media配列)の検証に成功", async () => {
+    const wmpEn = patch(wmp, [
+      {
+        op: "replace",
+        path: ["@context", 3, "@language"],
+        value: "en",
+      },
+      {
+        op: "replace",
+        path: ["credentialSubject", "name"],
+        value: "Example OP Holder EN",
+      },
+    ]);
+
+    const wmpFr = patch(wmp, [
+      {
+        op: "replace",
+        path: ["@context", 3, "@language"],
+        value: "fr",
+      },
+      {
+        op: "replace",
+        path: ["credentialSubject", "name"],
+        value: "Example OP Holder FR",
+      },
+    ]);
+
+    const multiMediaOp = {
+      core: await signCp(cp, authority.privateKey, signOptions),
+      annotations: [
+        await signJwtVc(certificate, certifier.privateKey, signOptions),
+      ],
+      media: [
+        await signJwtVc(wmp, authority.privateKey, signOptions),
+        await signJwtVc(wmpEn, authority.privateKey, signOptions),
+        await signJwtVc(wmpFr, authority.privateKey, signOptions),
+      ],
+    };
+
+    const multiMediaOps: OriginatorProfileSet = [
+      authorityOp,
+      certifierOp,
+      multiMediaOp,
+    ];
+
+    const verify = OpsVerifier(
+      multiMediaOps,
+      LocalKeys({ keys: [authority.publicKey] }),
+      opId.authority,
+    );
+    const resultOps = await verify();
+
+    expect(resultOps).not.instanceOf(OpsInvalid);
+    expect(resultOps).not.instanceOf(OpsVerifyFailed);
+    expect(resultOps).toMatchObject([
+      expect.any(Object),
+      expect.any(Object),
+      {
+        core: expect.any(Object),
+        annotations: expect.any(Array),
+        media: expect.any(Array),
+      },
+    ]);
+    // @ts-expect-error verified ops
+    expect(resultOps[2].media).toHaveLength(3);
+    // @ts-expect-error verified ops
+    expect(resultOps[2].media[0].doc.credentialSubject.name).toBe(
+      "Example OP Holder",
+    );
+    // @ts-expect-error verified ops
+    expect(resultOps[2].media[1].doc.credentialSubject.name).toBe(
+      "Example OP Holder EN",
+    );
+    // @ts-expect-error verified ops
+    expect(resultOps[2].media[2].doc.credentialSubject.name).toBe(
+      "Example OP Holder FR",
+    );
+  });
+
+  test("複数のWMPのうち一つだけ署名検証に失敗", async () => {
+    const evil = await generateKey();
+    const wmpEn = patch(wmp, [
+      {
+        op: "replace",
+        path: ["@context", 3, "@language"],
+        value: "en",
+      },
+    ]);
+
+    const multiMediaOp = {
+      core: await signCp(cp, authority.privateKey, signOptions),
+      annotations: [
+        await signJwtVc(certificate, certifier.privateKey, signOptions),
+      ],
+      media: [
+        await signJwtVc(wmp, authority.privateKey, signOptions),
+        await signJwtVc(wmpEn, evil.privateKey, signOptions), // 悪意のある署名
+      ],
+    };
+
+    const multiMediaOps: OriginatorProfileSet = [
+      authorityOp,
+      certifierOp,
+      multiMediaOp,
+    ];
+
+    const verify = OpsVerifier(
+      multiMediaOps,
+      LocalKeys({ keys: [authority.publicKey] }),
+      opId.authority,
+    );
+    const resultOps = await verify();
+
+    expect(resultOps).instanceOf(OpsVerifyFailed);
+    // @ts-expect-error verify failed Ops
+    const { result: resultOp } = resultOps;
+    expect(resultOp[2]).instanceOf(OpVerifyFailed);
+    expect(resultOp[2].result.media).toHaveLength(2);
+    expect(resultOp[2].result.media[0]).toMatchObject({ doc: wmp });
+    expect(resultOp[2].result.media[1]).instanceOf(VcVerifyFailed);
+  });
+
+  test("複数のWMPのうち一つだけ保有者が不一致", async () => {
+    const wmpInvalid = patch(wmp, [
+      {
+        op: "replace",
+        path: ["credentialSubject", "id"],
+        value: opId.invalid,
+      },
+    ]);
+
+    const multiMediaOp = {
+      core: await signCp(cp, authority.privateKey, signOptions),
+      annotations: [
+        await signJwtVc(certificate, certifier.privateKey, signOptions),
+      ],
+      media: [
+        await signJwtVc(wmp, authority.privateKey, signOptions),
+        await signJwtVc(wmpInvalid, authority.privateKey, signOptions),
+      ],
+    };
+
+    const multiMediaOps: OriginatorProfileSet = [
+      authorityOp,
+      certifierOp,
+      multiMediaOp,
+    ];
+
+    const verify = OpsVerifier(
+      multiMediaOps,
+      LocalKeys({ keys: [authority.publicKey] }),
+      opId.authority,
+    );
+    const resultOps = await verify();
+
+    expect(resultOps).instanceOf(OpsInvalid);
+    // @ts-expect-error invalid Ops
+    const { result: resultOp } = resultOps;
+    expect(resultOp[2]).instanceOf(OpInvalid);
+  });
+
+  describe("annotation image digestSRI検証 (2027年まではwarn扱い)", () => {
+    let warnSpy: MockInstance;
+
+    beforeEach(() => {
+      warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
+
+    test("digestSRIがない場合、warnが出るが検証は成功する", async () => {
+      const certWithImage: Certificate = patch(certificate, [
+        {
+          op: "add",
+          path: ["credentialSubject", "image"],
+          value: { id: "https://example.org/cert-image.png" },
+        },
+      ]);
+
+      const result = await OpsVerifier(
+        [
+          authorityOp,
+          certifierOp,
+          {
+            core: await signCp(cp, authority.privateKey, signOptions),
+            annotations: [
+              await signJwtVc(certWithImage, certifier.privateKey, signOptions),
+            ],
+            media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
+          },
+        ],
+        LocalKeys({ keys: [authority.publicKey] }),
+        opId.authority,
+      )();
+
+      expect(result).not.instanceOf(OpsInvalid);
+      expect(result).not.instanceOf(OpsVerifyFailed);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("digestSRI is missing"),
+      );
+    });
+
+    test("digestSRIが不正な場合、warnが出るが検証は成功する", async () => {
+      const certWithBadImage: Certificate = patch(certificate, [
+        {
+          op: "add",
+          path: ["credentialSubject", "image"],
+          value: {
+            id: "https://example.org/cert-image.png",
+            digestSRI: "sha256-invalid",
+          },
+        },
+      ]);
+
+      const result = await OpsVerifier(
+        [
+          authorityOp,
+          certifierOp,
+          {
+            core: await signCp(cp, authority.privateKey, signOptions),
+            annotations: [
+              await signJwtVc(
+                certWithBadImage,
+                certifier.privateKey,
+                signOptions,
+              ),
+            ],
+            media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
+          },
+        ],
+        LocalKeys({ keys: [authority.publicKey] }),
+        opId.authority,
+      )();
+
+      expect(result).not.instanceOf(OpsInvalid);
+      expect(result).not.instanceOf(OpsVerifyFailed);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("digestSRI verification failed"),
+      );
+    });
+  });
+
+  describe("media logo digestSRI検証 (2027年まではwarn扱い)", () => {
+    let warnSpy: MockInstance;
+
+    beforeEach(() => {
+      warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
+
+    test("digestSRIがない場合、warnが出るが検証は成功する", async () => {
+      const wmpWithLogo: WebMediaProfile = patch(wmp, [
+        {
+          op: "add",
+          path: ["credentialSubject", "logo"],
+          value: { id: "https://example.org/logo.svg" },
+        },
+      ]);
+
+      const result = await OpsVerifier(
+        [
+          authorityOp,
+          certifierOp,
+          {
+            core: await signCp(cp, authority.privateKey, signOptions),
+            annotations: [
+              await signJwtVc(certificate, certifier.privateKey, signOptions),
+            ],
+            media: [
+              await signJwtVc(wmpWithLogo, authority.privateKey, signOptions),
+            ],
+          },
+        ],
+        LocalKeys({ keys: [authority.publicKey] }),
+        opId.authority,
+      )();
+
+      expect(result).not.instanceOf(OpsInvalid);
+      expect(result).not.instanceOf(OpsVerifyFailed);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("digestSRI is missing"),
+      );
+    });
+
+    test("digestSRIが不正な場合、warnが出るが検証は成功する", async () => {
+      const wmpWithBadLogo: WebMediaProfile = patch(wmp, [
+        {
+          op: "add",
+          path: ["credentialSubject", "logo"],
+          value: {
+            id: "https://example.org/logo.svg",
+            digestSRI: "sha256-invalid",
+          },
+        },
+      ]);
+
+      const result = await OpsVerifier(
+        [
+          authorityOp,
+          certifierOp,
+          {
+            core: await signCp(cp, authority.privateKey, signOptions),
+            annotations: [
+              await signJwtVc(certificate, certifier.privateKey, signOptions),
+            ],
+            media: [
+              await signJwtVc(
+                wmpWithBadLogo,
+                authority.privateKey,
+                signOptions,
+              ),
+            ],
+          },
+        ],
+        LocalKeys({ keys: [authority.publicKey] }),
+        opId.authority,
+      )();
+
+      expect(result).not.instanceOf(OpsInvalid);
+      expect(result).not.instanceOf(OpsVerifyFailed);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("digestSRI verification failed"),
+      );
+    });
   });
 });

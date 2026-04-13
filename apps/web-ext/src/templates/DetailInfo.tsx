@@ -1,14 +1,25 @@
 import { stringifyWithError } from "@originator-profile/core";
-import { _, ProjectSummary, ProjectTitle } from "@originator-profile/ui";
+import {
+  _,
+  ProjectSummary,
+  ProjectTitle,
+  Table,
+  TableRow,
+} from "@originator-profile/ui";
 import type { VerifiedOps, VerifiedSp } from "@originator-profile/verify";
 import JsonView from "@uiw/react-json-view";
 import BackHeader from "../components/BackHeader";
-import type { FrameVerifiedCas } from "../components/credentials";
-import ErrorCheckList from "../components/ErrorCheckList";
+import CheckList from "../components/CheckList";
+import type {
+  FrameVerifiedCas,
+  SupportedVerifiedCas,
+} from "../components/credentials";
+import { useLinkVerification } from "../components/credentials/use-link-verification";
 
 type DetailInfoProps = {
   sp?: VerifiedSp;
   ops?: VerifiedOps;
+  cas?: SupportedVerifiedCas;
   framesCas?: FrameVerifiedCas[];
   errors: Error[];
   backPath: {
@@ -17,7 +28,18 @@ type DetailInfoProps = {
   };
 };
 
-function DetailInfo({ sp, ops, framesCas, errors, backPath }: DetailInfoProps) {
+function DetailInfo({
+  sp,
+  ops,
+  cas,
+  framesCas,
+  errors,
+  backPath,
+}: DetailInfoProps) {
+  const linkVerification = useLinkVerification();
+  const hasLinkVerification =
+    linkVerification && linkVerification.status !== "none";
+
   return (
     <>
       <BackHeader className="sticky top-0 z-10" to={backPath}>
@@ -27,11 +49,33 @@ function DetailInfo({ sp, ops, framesCas, errors, backPath }: DetailInfoProps) {
         <ProjectTitle className="mb-12" as="header" />
         <article className="mb-12 max-w-6xl mx-auto">
           <div className="mb-8">
-            <h2 className="pl-4 mb-4 text-sm font-bold text-gray-700">
+            <h2
+              data-testid="verification-results"
+              className="pl-4 mb-4 text-sm font-bold text-gray-700"
+            >
               {_("DetailInfo_VerificationResults")}
             </h2>
-            <ErrorCheckList errors={errors} />
+            <CheckList sp={sp} ops={ops} cas={cas} errors={errors} />
           </div>
+
+          {hasLinkVerification && (
+            <div className="pl-4 mb-8">
+              <h2 className="mb-4 text-sm font-bold text-gray-700">
+                {_("DetailInfo_LinkVerification")}
+              </h2>
+              <Table>
+                <TableRow
+                  header={_("DetailInfo_ExpectedLinkDestination")}
+                  data={linkVerification.expectedOrgName || "-"}
+                />
+                <TableRow
+                  header={_("DetailInfo_SourceAdOrganization")}
+                  data={linkVerification.sourceOrgName || "-"}
+                />
+              </Table>
+            </div>
+          )}
+
           <h2 className="pl-4 mb-4 text-sm font-bold text-gray-700">
             {_("DetailInfo")}
           </h2>
@@ -39,8 +83,6 @@ function DetailInfo({ sp, ops, framesCas, errors, backPath }: DetailInfoProps) {
             className="pl-4 mb-8 overflow-auto"
             value={JSON.parse(
               stringifyWithError({
-                "Site Profile": sp ?? null,
-                "Originator Profile Set": ops ?? null,
                 "Content Attestation Set (Per Frame)": framesCas ?? null,
               }),
             )}

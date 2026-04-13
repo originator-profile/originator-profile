@@ -38,7 +38,12 @@
     },
     "@originator-profile/web-ext#build": {
       "dependsOn": ["^build"],
-      "env": ["BASIC_AUTH", "BASIC_AUTH_CREDENTIALS", "REGISTRY_OPS"]
+      "env": [
+        "NODE_ENV",
+        "BASIC_AUTH",
+        "BASIC_AUTH_CREDENTIALS",
+        "REGISTRY_OPS"
+      ]
     }
   }
 }

@@ -1,0 +1,27 @@
+---
+import cas from "../../../public/examples/cas-mixed.json" with { type: "json" };
+import * as opsApi from "./ops.json";
+
+const casText = JSON.stringify(cas, null, 2);
+const opsText = await opsApi.GET().then((res) => res.text());
+---
+
+<!doctype html>
+<html lang="ja" dir="ltr">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width" />
+    <title>複数CAタイプのデモ</title>
+    <style>
+      body { padding: 0 20px 20px 80px; }
+      p { margin: 80px 0; }
+    </style>
+  </head>
+  <body>
+    <script type="application/ops+json" set:html={opsText} />
+    <script type="application/cas+json" set:html={casText} />
+    <p id="article-content">これは記事コンテンツです</p>
+    <p id="advertorial-content">これは記事広告コンテンツです</p>
+    <p id="ad-content">これは広告コンテンツです</p>
+  </body>
+</html>

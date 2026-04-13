@@ -1,15 +1,20 @@
 import { createThumbprint } from "@originator-profile/cryptography";
-import { Jwk, OpVc } from "@originator-profile/model";
+import { Jwk } from "@originator-profile/model";
 import { getUnixTime } from "date-fns";
 import { importJWK, SignJWT } from "jose";
 
+type SignableVc = {
+  issuer: string;
+  credentialSubject: { id: string };
+};
+
 /**
  * VC への署名
- * @param cp CoreProfile オブジェクト
- * @param privateKey プライベート鍵
+ * @param vc VC オブジェクト
+ * @param privateKey プライベートキー
  * @return JWT でエンコードされた VC
  */
-export async function signJwtVc<T extends OpVc>(
+export async function signJwtVc<T extends SignableVc>(
   vc: T,
   privateKey: Jwk,
   options: {

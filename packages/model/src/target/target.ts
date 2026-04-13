@@ -1,10 +1,7 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 import { BasicTarget } from "./basic-target";
 import { ExternalResourceTarget } from "./external-resource-target";
 
-export const Target = {
-  title: "Target",
-  oneOf: [BasicTarget, ExternalResourceTarget],
-} as const satisfies JSONSchema;
+export const Target = z.union([BasicTarget, ExternalResourceTarget]);
 
-export type Target = FromSchema<typeof Target>;
+export type Target = z.infer<typeof Target>;

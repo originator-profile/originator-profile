@@ -1,91 +1,37 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 import { OpCipContext } from "../context/op-cip-context";
-import { OpVc } from "../op-vc";
+import { DateTimeStamp } from "../date-time-stamp";
+import { Image } from "../image";
+import { OpId } from "../op-id";
 import { CertificationSystem } from "./cert-system";
 
-export const JapaneseExistenceCertificateProperties = {
-  type: "object",
-  properties: {
-    id: { type: "string", title: "subject の OP ID", format: "uri" },
-    type: { type: "string", const: "ECJPProperties" },
-    name: {
-      title: "法人名",
-      type: "string",
-    },
-    description: { type: "string", title: "説明" },
-    corporateNumber: {
-      title: "法人番号",
-      type: "string",
-    },
-    postalCode: {
-      title: "郵便番号",
-      type: "string",
-    },
-    addressCountry: {
-      title: "国",
-      type: "string",
-    },
-    addressRegion: {
-      title: "都道府県",
-      type: "string",
-    },
-    addressLocality: {
-      title: "市区町村",
-      type: "string",
-    },
-    streetAddress: {
-      title: "番地・ビル名",
-      type: "string",
-    },
-    certificationSystem: CertificationSystem,
-  },
-  required: [
-    "id",
-    "type",
-    "name",
-    "corporateNumber",
-    "postalCode",
-    "addressCountry",
-    "addressRegion",
-    "addressLocality",
-    "streetAddress",
-    "certificationSystem",
-  ],
-} as const satisfies JSONSchema;
+export const JapaneseExistenceCertificateProperties = z.object({
+  id: OpId.describe("OP ID of the subject"),
+  type: z.literal("JP-OrganizationExistenceCertificate"),
+  name: z.string().describe("PA name"),
+  description: z.string().optional().describe("Description"),
+  image: Image.optional(),
+  corporateName: z.string().describe("Corporate name"),
+  corporateNumber: z.string().describe("Corporate number"),
+  postalCode: z.string().describe("Postal code"),
+  addressCountry: z.string().describe("Country"),
+  addressRegion: z.string().describe("Prefecture / State"),
+  addressLocality: z.string().describe("City / Municipality"),
+  streetAddress: z.string().describe("Street address"),
+  certificationSystem: CertificationSystem,
+});
 
-export const JapaneseExistenceCertificate = {
-  allOf: [
-    OpVc,
-    {
-      type: "object",
-      properties: {
-        "@context": OpCipContext,
-        type: {
-          type: "array",
-          additionalItems: false,
-          minItems: 1,
-          items: [{ const: "VerifiableCredential" }, { const: "Certificate" }],
-        },
-        issuer: { type: "string", format: "uri" },
-        credentialSubject: JapaneseExistenceCertificateProperties,
-        validFrom: {
-          type: "string",
-          title: "有効開始日時",
-          description:
-            "http://www.w3.org/2001/XMLSchema#dateTime 形式の有効開始日時",
-        },
-        validUntil: {
-          type: "string",
-          title: "有効終了日時",
-          description:
-            "http://www.w3.org/2001/XMLSchema#dateTime 形式の有効終了日時",
-        },
-      },
-      required: ["@context", "type", "issuer", "credentialSubject"],
-    },
-  ],
-} as const satisfies JSONSchema;
+export const JapaneseExistenceCertificate = z.looseObject({
+  "@context": OpCipContext,
+  type: z.tuple([z.literal("VerifiableCredential"), z.literal("Certificate")]),
+  issuer: OpId,
+  credentialSubject: JapaneseExistenceCertificateProperties,
+  validFrom: DateTimeStamp.optional().describe(
+    "Validity period start and time",
+  ),
+  validUntil: DateTimeStamp.optional().describe("Validity period end and time"),
+});
 
-export type JapaneseExistenceCertificate = FromSchema<
+export type JapaneseExistenceCertificate = z.infer<
   typeof JapaneseExistenceCertificate
 >;

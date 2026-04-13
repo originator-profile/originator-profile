@@ -1,30 +1,16 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 
-export const CertificationSystem = {
-  type: "object",
-  title: "認証システム",
-  properties: {
-    id: {
-      type: "string",
-      title: "認証システムの ID",
-      format: "uri",
-    },
-    type: {
-      type: "string",
-      title: "認証システムの種類",
-      const: "CertificationSystem",
-    },
-    name: { type: "string", title: "認証システム名" },
-    description: { type: "string", title: "説明" },
-    ref: {
-      type: "string",
-      title: "認証制度の詳細ページ",
-      description:
-        "認証制度の詳細を知るための人が読むためのページの URL です。",
-      format: "uri",
-    },
-  },
-  required: ["id", "type", "name"],
-} as const satisfies JSONSchema;
+export const CertificationSystem = z.object({
+  id: z.url().describe("Certification system ID"),
+  type: z.literal("CertificationSystem"),
+  name: z.string().describe("Name of the certification system"),
+  description: z.string().optional().describe("Description"),
+  ref: z
+    .url()
+    .optional()
+    .describe(
+      "A URL for people to read to find out more about the certification system.",
+    ),
+});
 
-export type CertificationSystem = FromSchema<typeof CertificationSystem>;
+export type CertificationSystem = z.infer<typeof CertificationSystem>;

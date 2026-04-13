@@ -1,6 +1,6 @@
-import clsx from "clsx";
 import { useEffect, useRef } from "react";
 import { Link } from "react-router";
+import { twMerge } from "tailwind-merge";
 
 interface MenuItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   role?: "menuitem";
@@ -10,6 +10,7 @@ interface MenuItemProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   ref?: React.Ref<HTMLButtonElement>;
   variant?: "button" | "link";
   to?: string;
+  testId?: string;
 }
 
 export const MenuItem = ({
@@ -21,6 +22,7 @@ export const MenuItem = ({
   ref,
   variant = "button",
   to,
+  testId,
   ...props
 }: MenuItemProps) => {
   const internalRef = useRef<HTMLButtonElement>(null);
@@ -47,11 +49,12 @@ export const MenuItem = ({
         <Link
           to={to}
           role="menuitem"
-          className={clsx(
+          data-testid={testId}
+          className={twMerge(
             "w-full py-2 text-left text-sm",
             "flex items-center",
             "focus:outline-none",
-            { "font-bold": active },
+            active && "font-bold",
             className,
           )}
         >
@@ -62,13 +65,11 @@ export const MenuItem = ({
           ref={setRefs}
           type="button"
           role="menuitem"
-          className={clsx(
+          className={twMerge(
             "w-full py-2 text-left text-sm",
             "flex items-center",
             "focus:outline-none",
-            {
-              "font-bold": active, // Active state shows bold text like original
-            },
+            active && "font-bold", // Active state shows bold text like original
             className,
           )}
           {...props}

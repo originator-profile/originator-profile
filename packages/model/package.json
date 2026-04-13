@@ -1,6 +1,6 @@
 {
   "name": "@originator-profile/model",
-  "version": "0.5.0-beta.0",
+  "version": "0.6.0-beta.0",
   "license": "Apache-2.0",
   "homepage": "https://docs.originator-profile.org",
   "repository": {
@@ -34,14 +34,16 @@
     "lint": "eslint --fix .",
     "type-check": "tsc --noEmit"
   },
+  "dependencies": {
+    "websri": "^1.0.1",
+    "zod": "^4.3.6"
+  },
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",
-    "ajv": "^8.17.1",
-    "eslint": "^9.25.1",
+    "eslint": "^10.1.0",
     "eslint-config-originator-profile": "workspace:*",
-    "json-schema-to-ts": "^3.1.1",
-    "pkgroll": "^2.12.2",
-    "typescript": "^5.8.3",
-    "vitest": "^4.0.0"
+    "pkgroll": "^2.27.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
   }
 }

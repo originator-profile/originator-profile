@@ -122,7 +122,7 @@ FLAG DESCRIPTIONS
     }
 ```
 
-_See code: [src/commands/ca/sign.ts](https://github.com/originator-profile/originator-profile/blob/v0.5.0-beta.0/packages/opvc/src/commands/ca/sign.ts)_
+_See code: [src/commands/ca/sign.ts](https://github.com/originator-profile/originator-profile/blob/v0.6.0-beta.0/packages/opvc/src/commands/ca/sign.ts)_
 
 ## `opvc ca:unsigned`
 
@@ -207,7 +207,7 @@ FLAG DESCRIPTIONS
     }
 ```
 
-_See code: [src/commands/ca/unsigned.ts](https://github.com/originator-profile/originator-profile/blob/v0.5.0-beta.0/packages/opvc/src/commands/ca/unsigned.ts)_
+_See code: [src/commands/ca/unsigned.ts](https://github.com/originator-profile/originator-profile/blob/v0.6.0-beta.0/packages/opvc/src/commands/ca/unsigned.ts)_
 
 ## `opvc help [COMMAND]`
 
@@ -218,7 +218,7 @@ USAGE
   $ opvc help [COMMAND...] [-n]
 
 ARGUMENTS
-  COMMAND...  Command to show help for.
+  [COMMAND...]  Command to show help for.
 
 FLAGS
   -n, --nested-commands  Include all nested commands in the output.
@@ -227,7 +227,7 @@ DESCRIPTION
   Display help for opvc.
 ```
 
-_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/v6.2.29/src/commands/help.ts)_
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/6.2.42/src/commands/help.ts)_
 
 ## `opvc key-gen`
 
@@ -245,7 +245,7 @@ DESCRIPTION
   鍵ペアの生成
 ```
 
-_See code: [src/commands/key-gen/index.ts](https://github.com/originator-profile/originator-profile/blob/v0.5.0-beta.0/packages/opvc/src/commands/key-gen/index.ts)_
+_See code: [src/commands/key-gen/index.ts](https://github.com/originator-profile/originator-profile/blob/v0.6.0-beta.0/packages/opvc/src/commands/key-gen/index.ts)_
 
 ## `opvc sign`
 
@@ -412,7 +412,7 @@ FLAG DESCRIPTIONS
     }
 ```
 
-_See code: [src/commands/sign.ts](https://github.com/originator-profile/originator-profile/blob/v0.5.0-beta.0/packages/opvc/src/commands/sign.ts)_
+_See code: [src/commands/sign.ts](https://github.com/originator-profile/originator-profile/blob/v0.6.0-beta.0/packages/opvc/src/commands/sign.ts)_
 
 ## `opvc wsp:unsigned`
 
@@ -477,9 +477,55 @@ FLAG DESCRIPTIONS
     }
 ```
 
-_See code: [src/commands/wsp/unsigned.ts](https://github.com/originator-profile/originator-profile/blob/v0.5.0-beta.0/packages/opvc/src/commands/wsp/unsigned.ts)_
+_See code: [src/commands/wsp/unsigned.ts](https://github.com/originator-profile/originator-profile/blob/v0.6.0-beta.0/packages/opvc/src/commands/wsp/unsigned.ts)_
 <!-- commandsstop -->
 <!-- prettier-ignore-end -->
+
+## Node.js から利用する
+
+`@originator-profile/opvc` は TypeScript/JavaScript からも利用できます。
+
+### ローカル環境でのContent Attestationの署名
+
+ローカルのプライベート鍵で署名する場合は `ContentAttestation.sign()` を使います。
+
+```ts
+import { ContentAttestation } from "@originator-profile/opvc";
+
+const jwt = await ContentAttestation.sign(input, privateKey, {
+  issuedAt: new Date(),
+  expiredAt: "2027-03-31",
+});
+```
+
+### 未署名 Content Attestation の取得
+
+未署名の Content Attestation が必要な場合は `ContentAttestation.unsignedCa()` を使えます。
+
+```ts
+import { ContentAttestation } from "@originator-profile/opvc";
+
+const uca = await ContentAttestation.unsignedCa(input, {
+  issuedAt: new Date(),
+  expiredAt: "2027-03-31",
+});
+```
+
+### CA Server経由での署名
+
+CA Server で署名する場合は `ContentAttestation.signByServer()` を使います。
+内部では未署名 Content Attestation を組み立てて CA server に送信し、返却された JWT を受け取ります。
+
+```ts
+import { ContentAttestation } from "@originator-profile/opvc";
+
+const jwt = await ContentAttestation.signByServer(input, {
+  endpoint: "https://example.com/ca",
+  accessToken: process.env.CA_SERVER_ACCESS_TOKEN!,
+  issuedAt: new Date(),
+  expiredAt: "2027-03-31",
+});
+```
 
 ## Development
 

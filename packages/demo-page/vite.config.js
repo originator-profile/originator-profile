@@ -6,7 +6,7 @@ import { defineConfig } from "vite";
 export default defineConfig({
   base: "./",
   environments: {
-    client:{
+    client: {
       build: {
         rollupOptions: {
           input: {

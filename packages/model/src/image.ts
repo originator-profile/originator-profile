@@ -1,20 +1,18 @@
-import type { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
+import { SubresourceIntegrity } from "./sri";
 
-export const Image = {
-  title: "画像",
-  type: "object",
-  properties: {
-    id: {
-      type: "string",
-      format: "uri",
-    },
-    digestSRI: {
-      type: "string",
-      title: "Integrity Metadata",
-      description: "Subresource Integrity (SRI) digest",
-    },
-  },
-  required: ["id"],
-} as const satisfies JSONSchema;
+export const RawImage = z.object({
+  id: z.url(),
+  content: z
+    .union([z.string(), z.array(z.string())])
+    .describe("Transient content for digestSRI auto-calculation"),
+});
 
-export type Image = FromSchema<typeof Image>;
+export type RawImage = z.infer<typeof RawImage>;
+
+export const Image = z.object({
+  id: z.url(),
+  digestSRI: SubresourceIntegrity.optional(),
+});
+
+export type Image = z.infer<typeof Image>;

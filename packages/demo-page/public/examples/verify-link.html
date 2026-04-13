@@ -1,0 +1,210 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="UTF-8" />
+    <title>リンク先確認デモページ</title>
+    <style>
+      body {
+        font-family:
+          -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, "Noto Sans", sans-serif;
+        line-height: 1.6;
+        margin: 0;
+        background-color: #f4f4f4;
+        color: #333;
+      }
+
+      header {
+        background-color: #333;
+        color: #fff;
+        padding: 1rem 0;
+        text-align: center;
+      }
+
+      header h1 {
+        margin: 0;
+        font-size: 1.5rem;
+      }
+
+      .container {
+        max-width: 900px;
+        margin: 0 auto;
+        padding: 20px;
+      }
+
+      .test-case {
+        background: #fff;
+        border-radius: 8px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+        margin-bottom: 24px;
+        padding: 20px;
+      }
+
+      .test-case h2 {
+        margin-top: 0;
+        font-size: 1.1rem;
+      }
+
+      .test-case p {
+        color: #666;
+        margin-bottom: 12px;
+      }
+
+      .test-case.valid {
+        border-left: 4px solid #4caf50;
+      }
+
+      .test-case.invalid {
+        border-left: 4px solid #f44336;
+      }
+
+      .test-case.warning {
+        border-left: 4px solid #ff9800;
+      }
+
+      .test-case iframe {
+        width: 320px;
+        height: 180px;
+        border: 1px solid #ccc;
+        border-radius: 4px;
+        margin: 8px 12px 8px 0;
+        vertical-align: top;
+      }
+
+      .iframes {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0;
+      }
+
+      .iframe-label {
+        font-size: 0.85rem;
+        color: #888;
+        margin-bottom: 2px;
+      }
+
+      code {
+        background: #f0f0f0;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.9em;
+      }
+
+      footer {
+        text-align: center;
+        padding: 20px;
+        margin-top: 20px;
+        background-color: #333;
+        color: #fff;
+      }
+
+      .back-link {
+        display: inline-block;
+        margin-bottom: 16px;
+        color: #007bff;
+        text-decoration: none;
+      }
+
+      .back-link:hover {
+        text-decoration: underline;
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <h1>リンク先確認デモページ</h1>
+    </header>
+
+    <main class="container">
+      <a href="/ja/" class="back-link">← デモページに戻る</a>
+
+      <!-- ===== 正常なケース ===== -->
+      <div class="test-case valid">
+        <h2>✅ 正常なケース — TargetOPID一致</h2>
+        <p>
+          広告の <code>targetopid</code> が
+          <code>dns:demo.exp.originator-profile.org</code> で、 遷移先
+          (<code>/ja/</code>) のOPIDと一致するため、正常に遷移します。
+        </p>
+        <div class="iframes">
+          <div>
+            <div class="iframe-label">&lt;a&gt; クリック</div>
+            <iframe src="/ads/ad-opmeta-valid.html"></iframe>
+          </div>
+          <div>
+            <div class="iframe-label">window.open</div>
+            <iframe src="/ads/ad-opmeta-valid-open.html"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 正常なケース (外部サイト) ===== -->
+      <div class="test-case valid">
+        <h2>✅ 正常なケース — 外部サイト (originator-profile.org)</h2>
+        <p>
+          広告の <code>targetopid</code> が
+          <code>dns:techdev.originator-profile.org</code> で、 遷移先
+          (<code>https://originator-profile.org/</code>)
+          のOPIDと一致するため、正常に遷移します。
+        </p>
+        <div class="iframes">
+          <div>
+            <div class="iframe-label">&lt;a&gt; クリック</div>
+            <iframe src="/ads/ad-opmeta-valid-external.html"></iframe>
+          </div>
+          <div>
+            <div class="iframe-label">window.open</div>
+            <iframe src="/ads/ad-opmeta-valid-external-open.html"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== 異常なケース: OPID不一致 ===== -->
+      <div class="test-case invalid">
+        <h2>❌ 異常なケース — TargetOPID不一致</h2>
+        <p>
+          広告の <code>targetopid</code> が
+          <code>dns:invalid.example.com</code> で、 遷移先 (<code>/ja/</code>)
+          のOPID (<code>dns:demo.exp.originator-profile.org</code>)
+          と一致しないため、警告が表示されます。
+        </p>
+        <div class="iframes">
+          <div>
+            <div class="iframe-label">&lt;a&gt; クリック</div>
+            <iframe src="/ads/ad-opmeta-invalid.html"></iframe>
+          </div>
+          <div>
+            <div class="iframe-label">window.open</div>
+            <iframe src="/ads/ad-opmeta-invalid-open.html"></iframe>
+          </div>
+        </div>
+      </div>
+
+      <!-- ===== リンク先にOPSがないケース ===== -->
+      <div class="test-case warning">
+        <h2>⚠️ リンク先にOPSがないケース</h2>
+        <p>
+          広告の <code>targetopid</code> が
+          <code>dns:demo.exp.originator-profile.org</code> ですが、 遷移先
+          (<code>https://example.com</code>) にはOPSが存在しないため、
+          検証に失敗します。
+        </p>
+        <div class="iframes">
+          <div>
+            <div class="iframe-label">&lt;a&gt; クリック</div>
+            <iframe src="/ads/ad-opmeta-noops.html"></iframe>
+          </div>
+          <div>
+            <div class="iframe-label">window.open</div>
+            <iframe src="/ads/ad-opmeta-noops-open.html"></iframe>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <footer>
+      <p>© 2025 デモページ</p>
+    </footer>
+  </body>
+</html>

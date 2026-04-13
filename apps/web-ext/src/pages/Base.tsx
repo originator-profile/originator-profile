@@ -14,7 +14,6 @@ import {
   VerifiedSp,
 } from "@originator-profile/verify";
 import flush from "just-flush";
-import { useCallback } from "react";
 import { Navigate } from "react-router";
 import { useMount, useTitle } from "react-use";
 import Loading from "../components/Loading";
@@ -22,8 +21,10 @@ import Unsupported from "../components/Unsupported";
 import {
   FetchCredentialsMessagingFailed,
   FramesVerifiedCas,
+  SupportedVerifiedCas,
   useCredentials,
 } from "../components/credentials";
+import { formatBuildModeTitle } from "../components/environment";
 import { useFrameCasLocationProvider } from "../components/frameCas";
 import { overlayExtensionMessenger } from "../components/overlay/extension-events";
 import { useSiteProfile } from "../components/siteProfile";
@@ -38,17 +39,20 @@ function Redirect({
   ops?: VerifiedOps;
   framesCas?: FramesVerifiedCas;
 }) {
-  const pageCas =
-    framesCas?.find((frameCas) => frameCas.parentFrameId === -1)?.cas ?? [];
-  const [ca] = pageCas ?? [];
+  const cas: SupportedVerifiedCas | undefined = framesCas
+    ?.sort((a, b) => a.parentFrameId - b.parentFrameId)
+    ?.flatMap((frame) => frame.cas);
+  const ca = cas?.[0];
   useMount(() => {
-    if (pageCas) {
+    if (ca) {
       void overlayExtensionMessenger.sendMessage(
         "enter",
         {
           framesCas: framesCas ?? [],
           activeCa: ca ?? null,
-          wmps: flush(ops?.map((op) => op.media?.doc) ?? []),
+          wmps: flush(
+            ops?.flatMap((op) => op.media?.map((m) => m.doc) ?? []) ?? [],
+          ),
         },
         tabId,
       );
@@ -110,14 +114,11 @@ function Base() {
   const { tabId, siteProfile, error: sp_error } = useSiteProfile();
   const { ops, cas, framesCas, error: credentials_error } = useCredentials();
   useFrameCasLocationProvider(tabId, framesCas ?? []);
-  useTitle([_("Base_ContentsInformation"), origin].filter(Boolean).join(" ― "));
-  window.addEventListener(
-    "pagehide",
-    useCallback(
-      () => void overlayExtensionMessenger.sendMessage("leave", null, tabId),
-      [tabId],
-    ),
-  );
+
+  const title = [_("Base_ContentsInformation"), origin]
+    .filter(Boolean)
+    .join(" ― ");
+  useTitle(formatBuildModeTitle(import.meta.env.MODE, title));
 
   if (isLoading({ siteProfile, sp_error, ops, cas, credentials_error })) {
     return <Loading />;

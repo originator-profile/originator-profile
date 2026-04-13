@@ -1,19 +1,8 @@
-import { FromSchema, JSONSchema } from "json-schema-to-ts";
+import { z } from "zod";
 import { Jwk } from "./jwk";
 
-export const Jwks = {
-  title: "JSON Web Key Set",
-  description: "JSON Web Key Set (JWK Set)",
-  type: "object",
-  properties: {
-    keys: {
-      title: Jwk.title,
-      type: "array",
-      items: Jwk,
-    },
-  },
-  required: ["keys"],
-  additionalProperties: true,
-} as const satisfies JSONSchema;
+export const Jwks = z.looseObject({
+  keys: z.array(Jwk),
+});
 
-export type Jwks = FromSchema<typeof Jwks>;
+export type Jwks = z.infer<typeof Jwks>;

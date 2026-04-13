@@ -3,7 +3,15 @@ import { ContentAttestation, Jwk } from "@originator-profile/model";
 import { signJwtVc, VcValidator } from "@originator-profile/securing-mechanism";
 import { addYears, fromUnixTime, getUnixTime } from "date-fns";
 import { diffApply } from "just-diff-apply";
-import { describe, expect, test } from "vitest";
+import {
+  type MockInstance,
+  afterEach,
+  beforeEach,
+  describe,
+  expect,
+  test,
+  vi,
+} from "vitest";
 import { createIntegrityMetadata } from "websri";
 import { verifyIntegrity } from "../integrity";
 import { CaInvalid, CaVerifyFailed } from "./errors";
@@ -165,5 +173,78 @@ describe("Content Attestationの検証", async () => {
     );
     const result = await verifier();
     expect(result).instanceOf(CaInvalid);
+  });
+
+  describe("image digestSRI検証 (2027年まではwarn扱い)", () => {
+    let warnSpy: MockInstance;
+
+    beforeEach(() => {
+      warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
+    });
+
+    afterEach(() => {
+      warnSpy.mockRestore();
+    });
+
+    test("digestSRIがない場合、warnが出るが検証は成功する", async () => {
+      const signed = await signJwtVc(
+        patch(ca, [
+          {
+            op: "add",
+            path: ["credentialSubject", "image"],
+            value: { id: "https://example.org/image.png" },
+          },
+        ]),
+        issuer.privateKey,
+        signOptions,
+      );
+
+      const result = await CaVerifier(
+        signed,
+        LocalKeys({ keys: [issuer.publicKey] }),
+        caIssuer,
+        caUrl,
+        verifyIntegrity,
+        validator,
+      )();
+
+      expect(result).not.instanceOf(CaInvalid);
+      expect(result).not.instanceOf(CaVerifyFailed);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("digestSRI is missing"),
+      );
+    });
+
+    test("digestSRIが不正な場合、warnが出るが検証は成功する", async () => {
+      const signed = await signJwtVc(
+        patch(ca, [
+          {
+            op: "add",
+            path: ["credentialSubject", "image"],
+            value: {
+              id: "https://example.org/image.png",
+              digestSRI: "sha256-invalid",
+            },
+          },
+        ]),
+        issuer.privateKey,
+        signOptions,
+      );
+
+      const result = await CaVerifier(
+        signed,
+        LocalKeys({ keys: [issuer.publicKey] }),
+        caIssuer,
+        caUrl,
+        verifyIntegrity,
+        validator,
+      )();
+
+      expect(result).not.instanceOf(CaInvalid);
+      expect(result).not.instanceOf(CaVerifyFailed);
+      expect(warnSpy).toHaveBeenCalledWith(
+        expect.stringContaining("digestSRI verification failed"),
+      );
+    });
   });
 });

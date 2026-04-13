@@ -26,9 +26,10 @@ const existenceCertificate = {
   issuer: "dns:pa-issuer.example.org",
   credentialSubject: {
     id: "dns:pa-holder.example.jp",
-    type: "ECJPProperties",
+    type: "JP-OrganizationExistenceCertificate",
     addressCountry: "JP",
     name: "○○新聞社 (※開発用サンプル)",
+    corporateName: "○○新聞社 (※開発用サンプル)",
     corporateNumber: "0000000000000",
     postalCode: "000-0000",
     addressRegion: "東京都",
@@ -60,7 +61,7 @@ const jicdaqCertificate = {
       "この事業者は、広告主のブランド価値を毀損するような違法、不当なサイト、コンテンツ、アプリケーションへの広告掲載を防ぐ対策を実施しています。第三者機関（日本ABC協会）による検証を経て、本認証を取得しました。",
     image: {
       id: "https://example.com/certification-mark.svg",
-      digestSRI: "sha256-...",
+      digestSRI: "sha256-uU0nuZNNPgilLlLX2n2r+sSE7+N6U4DukIj3rOLvzek=",
     },
     certifier: "一般社団法人 デジタル広告品質認証機構",
     verifier: "日本ABC協会",

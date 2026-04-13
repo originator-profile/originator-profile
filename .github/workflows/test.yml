@@ -30,10 +30,11 @@ jobs:
         uses: "./.github/actions/type-check"
       - name: Test
         uses: "./.github/actions/test"
-      - name: Build
+      - name: Testing Build
         id: build
         uses: "./.github/actions/build"
         with:
+          NODE_ENV: testing
           BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
           REGISTRY_OPS: ${{ secrets.REGISTRY_OPS }}
       - name: End-to-End Test

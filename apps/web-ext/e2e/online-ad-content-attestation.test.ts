@@ -2,7 +2,7 @@ import { mergeTests } from "@playwright/test";
 import privateKey from "./account-key.example.priv.json" with { type: "json" };
 import publicKey from "./account-key.example.pub.json" with { type: "json" };
 import { test as credentialsTest } from "./credentials-fixtures";
-import { test as base, expect, popup } from "./fixtures";
+import { test as base, expect, sidepanel } from "./fixtures";
 import { test as siteProfileTest } from "./site-profile-fixtures";
 import { test as staticHtmlTest } from "./static-html-fixtures";
 
@@ -32,7 +32,7 @@ test("OnlineAd Content Attestation の表示が正しく行われていること
 
   // ページに遷移
   await page.goto(onlineAdPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
 
   // 拡張機能の表示が正しいことを確認
   await expect(ext.getByTestId("cas")).toBeVisible();

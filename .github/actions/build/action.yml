@@ -1,6 +1,10 @@
 name: build
 description: Build
 inputs:
+  NODE_ENV:
+    description: Build mode (e.g., "production" or "testing")
+    required: false
+    default: "production"
   BASIC_AUTH:
     description: レジストリ API の Basic 認証
     required: false
@@ -18,14 +22,18 @@ outputs:
 runs:
   using: composite
   steps:
+    - name: Clean up previous artifacts
+      run: rm -rf ./apps/web-ext/web-ext-artifacts*
+      shell: bash
     - run: pnpm build
       shell: bash
       env:
+        NODE_ENV: ${{ inputs.NODE_ENV }}
         BASIC_AUTH: ${{ inputs.BASIC_AUTH }}
         BASIC_AUTH_CREDENTIALS: ${{ inputs.BASIC_AUTH_CREDENTIALS }}
         REGISTRY_OPS: ${{ inputs.REGISTRY_OPS }}
     - id: upload
-      uses: actions/upload-artifact@v5
+      uses: actions/upload-artifact@v7
       with:
         name: web-ext
         path: apps/web-ext/web-ext-artifacts*

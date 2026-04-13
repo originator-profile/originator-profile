@@ -1,21 +1,29 @@
 import { Icon } from "@iconify/react";
 import { ModalDialog, _, useModalDialog } from "@originator-profile/ui";
-import clsx from "clsx";
+import { twMerge } from "tailwind-merge";
+import LinkVerification from "./LinkVerification";
 
 type Props = {
   className?: string;
   contentType: string;
+  showLinkVerification?: boolean;
 };
 
 export default function ReliabilityGuide(props: Props) {
   const dialog = useModalDialog();
+
   return (
-    <div className={clsx("text-center space-y-1", props.className)}>
-      <p className="whitespace-pre-line text-base font-bold text-primary-800">
-        {props.contentType === "ContentType_Site"
-          ? _("ReliabilityGuide_SiteOperator")
-          : _("ReliabilityGuide_Publisher", _(props.contentType))}
-      </p>
+    <div className={twMerge("text-center space-y-2", props.className)}>
+      <div className="flex flex-col items-center justify-center gap-2">
+        <div className="flex flex-row flex-wrap items-center justify-center gap-2">
+          <p className="whitespace-pre-line text-base font-bold text-primary-800">
+            {props.contentType === "ContentType_Site"
+              ? _("ReliabilityGuide_SiteOperator")
+              : _("ReliabilityGuide_Publisher", _(props.contentType))}
+          </p>
+          {props.showLinkVerification && <LinkVerification />}
+        </div>
+      </div>
       <button
         className="text-xs text-primary-700 px-3 py-2 inline-flex items-center gap-1 hover:bg-primary-100 rounded-full"
         onClick={dialog.open}

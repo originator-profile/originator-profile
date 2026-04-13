@@ -3,21 +3,31 @@ description: Setup
 runs:
   using: composite
   steps:
-    - uses: pnpm/action-setup@v4
+    - uses: pnpm/action-setup@v5
     - uses: actions/setup-node@v6
       with:
         node-version-file: .node-version
         cache: pnpm
         registry-url: "https://registry.npmjs.org"
         scope: "@originator-profile"
+    - name: Get Playwright version
+      id: playwright-version
+      run: |
+        PLAYWRIGHT_VERSION=$(pnpm why --filter @originator-profile/web-ext --json playwright | jq -r '.[].version')
+        if [ -z "$PLAYWRIGHT_VERSION" ]; then
+          echo "Error: Failed to detect Playwright version" >&2
+          exit 1
+        fi
+        echo "version=$PLAYWRIGHT_VERSION" >> "$GITHUB_OUTPUT"
+      shell: bash
     - name: Restore Playwright cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ~/.cache/ms-playwright
-        key: "${{ runner.os }}-playwright-${{ hashFiles('**/pnpm-lock.yaml') }}"
+        key: "${{ runner.os }}-playwright-${{ steps.playwright-version.outputs.version }}"
     - name: Install dependencies
       run: pnpm install --frozen-lockfile
       shell: bash
-    - name: Install browsers and system dependencies
+    - name: Install Playwright browsers and system dependencies
       run: pnpm --filter @originator-profile/web-ext exec playwright install --with-deps
       shell: bash

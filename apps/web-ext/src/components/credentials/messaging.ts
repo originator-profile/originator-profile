@@ -1,5 +1,8 @@
 import { deserializeIfError } from "@originator-profile/core";
-import { VerifyIntegrity } from "@originator-profile/verify";
+import {
+  FetchIntegrityResult,
+  VerifyIntegrity,
+} from "@originator-profile/verify";
 import { FetchCredentialsMessagingFailed } from "./errors";
 import { credentialsMessenger } from "./events";
 import { FrameCredentials, FrameResponse, TabCredentials } from "./types";
@@ -45,6 +48,7 @@ async function fetchAllFramesCredentials(
         return {
           ops: opsResult instanceof Error ? [] : opsResult,
           cas: casResult instanceof Error ? [] : casResult,
+          opMeta: result.opMeta,
           url: result.url,
           origin: result.origin,
           ...frameResponse,
@@ -112,8 +116,22 @@ export async function fetchTabCredentials(
  */
 export const FrameIntegrityVerifier =
   (tabId: number, frameId: number): VerifyIntegrity =>
-  (content) =>
-    credentialsMessenger.sendMessage("verifyIntegrity", [content], {
-      tabId,
-      frameId,
-    });
+  async (content) => {
+    const messageResult = await credentialsMessenger.sendMessage(
+      "verifyIntegrity",
+      content,
+      {
+        tabId,
+        frameId,
+      },
+    );
+
+    const parsed = deserializeIfError(messageResult);
+    return parsed as FetchIntegrityResult;
+  };
+
+/**
+ * リンク検証結果を取得する
+ */
+export const fetchVerificationResult = (tabId: number) =>
+  credentialsMessenger.sendMessage("getVerificationResult", tabId);

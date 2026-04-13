@@ -30,9 +30,13 @@ export function SiteProfile(props: SiteProfileProps) {
             className="w-fit text-base text-gray-700 mb-2"
             data-testid="site-profile-wsp-name"
           >
-            {props.siteProfile.credential.doc.credentialSubject.name}
+            {props.wsp.credentialSubject.name}
           </h1>
-          <ReliabilityGuide className="mb-3" contentType="ContentType_Site" />
+          <ReliabilityGuide
+            className="mb-3"
+            contentType="ContentType_Site"
+            showLinkVerification={true}
+          />
         </div>
         {props.orgPath && props.wmp ? (
           <div className="mb-3" data-testid="pp-json-holder">

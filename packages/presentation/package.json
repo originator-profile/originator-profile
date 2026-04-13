@@ -1,6 +1,6 @@
 {
   "name": "@originator-profile/presentation",
-  "version": "0.5.0-beta.0",
+  "version": "0.6.0-beta.0",
   "license": "Apache-2.0",
   "homepage": "https://docs.originator-profile.org",
   "repository": {
@@ -39,12 +39,12 @@
   },
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",
-    "eslint": "^9.25.1",
+    "eslint": "^10.1.0",
     "eslint-config-originator-profile": "workspace:*",
-    "happy-dom": "^20.0.0",
-    "msw": "^2.7.5",
-    "pkgroll": "^2.12.2",
-    "typescript": "^5.8.3",
-    "vitest": "^4.0.0"
+    "happy-dom": "^20.8.9",
+    "msw": "^2.12.14",
+    "pkgroll": "^2.27.0",
+    "typescript": "^6.0.2",
+    "vitest": "^4.1.2"
   }
 }

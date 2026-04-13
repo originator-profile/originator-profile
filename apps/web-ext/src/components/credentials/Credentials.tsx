@@ -35,10 +35,25 @@ export function Credentials(props: CredentialsProps) {
 
   const filteredCas = listCas(props.cas, caListType);
 
-  function onFilterUpdate(caListType: Parameters<typeof listCas>[1]) {
-    setCaListType(caListType);
-    const newlyFilteredCas = listCas(props.cas, caListType);
+  function onFilterUpdate(newFilterType: Parameters<typeof listCas>[1]) {
+    setCaListType(newFilterType);
+    const newlyFilteredCas = listCas(props.cas, newFilterType);
     const [ca] = newlyFilteredCas;
+
+    // フィルター結果が空でもオーバーレイを更新する
+    void overlayExtensionMessenger.sendMessage(
+      "enter",
+      {
+        framesCas: props.framesCas,
+        activeCa: ca ?? null,
+        wmps: flush(
+          props.ops.flatMap((op) => op.media?.map((m) => m.doc) ?? []),
+        ),
+        filterType: newFilterType,
+      },
+      Number(tabId),
+    );
+
     if (ca) {
       void navigate(buildPublUrl(tabId, ca.attestation.doc));
     }
@@ -50,7 +65,10 @@ export function Credentials(props: CredentialsProps) {
       {
         framesCas: props.framesCas,
         activeCa: ca,
-        wmps: flush(props.ops.map((op) => op.media?.doc)),
+        wmps: flush(
+          props.ops.flatMap((op) => op.media?.map((m) => m.doc) ?? []),
+        ),
+        filterType: caListType,
       },
       Number(tabId),
     );
@@ -59,10 +77,34 @@ export function Credentials(props: CredentialsProps) {
   const contentType = getContentType(props.ca);
   const ca = props.ca.attestation.doc;
 
+  const renderWebMediaProfileSummaryCard = () => {
+    return props.orgPath && props.wmp ? (
+      <div className="mb-3" data-testid="ps-json-holder">
+        <WebMediaProfileSummaryCard to={props.orgPath} wmp={props.wmp} />
+      </div>
+    ) : (
+      <div>
+        <h1
+          className="text-base text-center mb-6"
+          data-testid="web-media-profile-missing"
+        >
+          {_("WebMediaProfile_Missing")}
+        </h1>
+        <p className="whitespace-pre-line text-xs text-gray-700 text-center leading-5">
+          {_("WebMediaProfile_Missing_Reason")}
+        </p>
+      </div>
+    );
+  };
+
   return (
     <div data-testid="cas" className="flex">
       <div className="flex flex-col border-r border-gray-200">
-        <CaFilter caListType={caListType} setCaListType={onFilterUpdate} />
+        <CaFilter
+          caListType={caListType}
+          setCaListType={onFilterUpdate}
+          cas={props.cas}
+        />
         <nav className="shrink-0 w-16 overflow-y-auto bg-white sticky top-0 z-10 border-t border-gray-200">
           <CaSelector filteredCas={filteredCas} onClickCa={handleClickCa} />
         </nav>
@@ -71,9 +113,7 @@ export function Credentials(props: CredentialsProps) {
         <div className="bg-gray-100 min-h-screen p-4">
           <div className="pt-4">
             <ReliabilityGuide className="mb-3" contentType={contentType} />
-            <div className="mb-3" data-testid="ps-json-holder">
-              <WebMediaProfileSummaryCard to={props.orgPath} wmp={props.wmp} />
-            </div>
+            {renderWebMediaProfileSummaryCard()}
             <hr className="mb-3" />
             <div className="flex flex-row gap-3 mb-2">
               <Image

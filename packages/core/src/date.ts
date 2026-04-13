@@ -82,9 +82,8 @@ export function parseIssuanceDate(input: string): Date {
 
   try {
     return new Date(
-      Temporal.PlainDate.from(input).toZonedDateTime(
-        Temporal.Now.timeZoneId(),
-      ).epochMilliseconds,
+      Temporal.PlainDate.from(input).toZonedDateTime(Temporal.Now.timeZoneId())
+        .epochMilliseconds,
     );
   } catch {
     // nop

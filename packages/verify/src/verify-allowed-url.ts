@@ -36,7 +36,12 @@ export async function verifyAllowedUrl(
     if (!value) {
       return false;
     }
-    const pattern = new URLPattern(ReplaceEncode(value));
-    return pattern.test(ReplaceEncode(url));
+    try {
+      const pattern = new URLPattern(ReplaceEncode(value));
+      return pattern.test(ReplaceEncode(url));
+    } catch (e) {
+      console.error(`Invalid URLPattern: ${value} (url: ${url})`);
+    }
+    return false;
   });
 }

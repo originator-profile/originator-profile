@@ -17,7 +17,7 @@ export async function documentProvider({
 
   [content] = [content].flat();
   let url: string | undefined;
-  let html: string = "";
+  let html: string;
 
   if (URL.canParse(content)) {
     url = content;

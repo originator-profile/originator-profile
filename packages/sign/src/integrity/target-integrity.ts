@@ -4,6 +4,7 @@ import {
   supportedHashAlgorithms,
   type HashAlgorithm,
 } from "websri";
+import { FetchFailed } from "./error";
 import type { ContentFetcher, ElementSelector } from "./types";
 
 /** element.outerHTML and join("") */
@@ -53,7 +54,14 @@ export const fetchExternalResource: ContentFetcher = async (
       if (!src) {
         throw new Error("Element has no src or currentSrc property");
       }
-      return await fetcher(src);
+      try {
+        return await fetcher(src);
+      } catch (e) {
+        if (e instanceof Error || e instanceof window.Error) {
+          throw new FetchFailed(`Failed to fetch`, e);
+        }
+        throw e;
+      }
     }),
   );
 };

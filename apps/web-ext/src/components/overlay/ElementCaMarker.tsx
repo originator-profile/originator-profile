@@ -34,6 +34,7 @@ type Props = {
   wmp?: WebMediaProfile;
   active: boolean;
   onClickCa: (ca: SupportedVerifiedCa) => void;
+  filtered: boolean;
 };
 
 export function ElementCaMarker(props: Props) {
@@ -50,6 +51,7 @@ export function ElementCaMarker(props: Props) {
           active={props.active}
           onClick={handleClick}
           wmp={props.wmp}
+          filtered={props.filtered}
         />
       )}
     </Rect>

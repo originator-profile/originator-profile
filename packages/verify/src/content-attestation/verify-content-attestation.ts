@@ -1,5 +1,5 @@
 import { Keys } from "@originator-profile/cryptography";
-import { ContentAttestation } from "@originator-profile/model";
+import { ContentAttestation, type Image } from "@originator-profile/model";
 import {
   JwtVcVerifier,
   VcValidateFailed,
@@ -7,8 +7,12 @@ import {
   VcVerifyFailed,
 } from "@originator-profile/securing-mechanism";
 import {
+  FetchIntegrityResult,
+  IntegrityFetchFailed,
+  IntegrityVerificationFailed,
   IntegrityVerifyResult,
   verifyIntegrity as nativeVerifyIntegrity,
+  verifyImageDigestSri,
   VerifyIntegrity,
 } from "../integrity";
 import { verifyAllowedOrigin } from "../verify-allowed-origin";
@@ -18,7 +22,7 @@ import { CaVerificationResult, VerifiedCa } from "./types";
 
 type IntegrityResult = {
   index: number;
-  verifyResult: IntegrityVerifyResult;
+  verifyResult: FetchIntegrityResult;
   expectedIntegrity: string;
 };
 
@@ -59,6 +63,50 @@ async function checkUrlAndOrigin<T extends ContentAttestation>(
   return result;
 }
 
+function checkIntegrityResults<T extends ContentAttestation>(
+  integrityResults: IntegrityResult[],
+  urlResult: VerifiedCa<T>,
+): CaVerifyFailed | undefined {
+  // Integrity の取得に失敗した場合
+  const fetchFailedResults = integrityResults.filter(
+    (r) =>
+      r.verifyResult instanceof Error &&
+      r.verifyResult.code === IntegrityFetchFailed.code,
+  );
+
+  if (fetchFailedResults.length > 0) {
+    const failedIntegritiesMessage = fetchFailedResults
+      .map((result) => {
+        return `target[${result.index}] Expected: ${result.expectedIntegrity}`;
+      })
+      .join(", ");
+
+    return new CaVerifyFailed(
+      `Content Attestation Target integrity fetch failed for element(s): ${failedIntegritiesMessage}`,
+      urlResult,
+    );
+  }
+
+  // Integrityの検証に失敗した場合
+  const verificationFailedResults = integrityResults.filter(
+    (r) =>
+      r.verifyResult instanceof Error &&
+      r.verifyResult.code === IntegrityVerificationFailed.code,
+  );
+
+  if (verificationFailedResults.length > 0) {
+    const failedIntegritiesMessage = verificationFailedResults
+      .map((result) => {
+        return `target[${result.index}] Expected: ${result.expectedIntegrity}`;
+      })
+      .join(", ");
+
+    return new CaVerifyFailed(
+      `Content Attestation Target integrity verification failed for element(s): ${failedIntegritiesMessage}`,
+      urlResult,
+    );
+  }
+}
 /**
  * Content Attestation 検証機の作成
  * @param ca Content Attestation
@@ -90,10 +138,14 @@ export function CaVerifier<T extends ContentAttestation>(
     if (urlResult instanceof Error) {
       return urlResult;
     }
+    await verifyImageDigestSri(
+      urlResult.doc.credentialSubject.image as Image | undefined,
+    );
     if (urlResult.doc.target) {
       if (urlResult.doc.target.length === 0) {
         return new CaInvalid("Target is empty", urlResult);
       }
+
       const integrityResults: IntegrityResult[] = await Promise.all(
         urlResult.doc.target.map(async (t, index) => ({
           index,
@@ -102,8 +154,17 @@ export function CaVerifier<T extends ContentAttestation>(
         })),
       );
 
+      const error = checkIntegrityResults(integrityResults, urlResult);
+      if (error) {
+        return error;
+      }
+
       const failedIndices = integrityResults
-        .filter((result) => !result.verifyResult.valid)
+        .filter(
+          (result) =>
+            !(result.verifyResult instanceof Error) &&
+            !result.verifyResult.valid,
+        )
         .map((result) => result.index);
 
       if (failedIndices.length > 0) {
@@ -111,8 +172,10 @@ export function CaVerifier<T extends ContentAttestation>(
           .map((integrityResultIndex) => {
             const integrityResult = integrityResults[integrityResultIndex];
             if (integrityResult) {
+              const verifyResult =
+                integrityResult.verifyResult as IntegrityVerifyResult;
               const calculatedIntegrities =
-                integrityResult.verifyResult.failedIntegrities.join();
+                verifyResult.failedIntegrities.join();
               return `target[${integrityResultIndex}] Expected: ${integrityResult.expectedIntegrity}, Calculated: ${calculatedIntegrities}`;
             }
             return undefined;
