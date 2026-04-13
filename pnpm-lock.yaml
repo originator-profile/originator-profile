@@ -713,27 +713,18 @@ importers:
       '@originator-profile/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig
-      '@playwright/test':
-        specifier: ^1.59.1
-        version: 1.59.1
       eslint:
         specifier: ^10.1.0
         version: 10.2.0(jiti@2.6.1)
       eslint-config-originator-profile:
         specifier: workspace:*
         version: link:../eslint-config
-      happy-dom:
-        specifier: ^20.8.9
-        version: 20.8.9
       jose:
         specifier: ^6.0.11
         version: 6.2.2
       pkgroll:
         specifier: ^2.27.0
         version: 2.27.0(typescript@6.0.2)(vite@8.0.8(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.3))
-      playwright:
-        specifier: ^1.59.1
-        version: 1.59.1
       typescript:
         specifier: ^6.0.2
         version: 6.0.2
