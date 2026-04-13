@@ -22,7 +22,7 @@ export const SiteProfileInputSchema = z.object({
 export type SiteProfileInput = z.infer<typeof SiteProfileInputSchema>;
 
 export interface SiteProfileOutput {
-  originators: unknown[];
+  originators: SiteProfileInput["originators"];
   sites: string[];
 }
 
