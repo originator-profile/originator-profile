@@ -44,13 +44,6 @@ export default {
       return Response.redirect(`${url.origin}/${lang}/`, 302);
     }
 
-    if (url.pathname === "/.well-known/sp.json") {
-      return Response.redirect(
-        `${url.origin}/.well-known/sp.${lang}.json`,
-        302,
-      );
-    }
-
     return fetch(request);
   },
 };

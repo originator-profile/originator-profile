@@ -158,24 +158,203 @@
       ]
     </script>
     <script type="application/cas+json">
-      [
-        {
-          "attestation": "eyJhbGciOiJFUzI1NiIsImtpZCI6IkNCMzd2TGNKUzdsd1Fha0hkZ0NJXzJNZnVPQnJBM3Z0T2c0TG13Sjk1em8iLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ29udGVudEF0dGVzdGF0aW9uIl0sImlzc3VlciI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiJ1cm46dXVpZDpkODA0M2I5Ny0zMjRkLTRmNDgtOWVjZC1kZGY5NDRmOGU0NGUiLCJ0eXBlIjoiQXJ0aWNsZSIsImhlYWRsaW5lIjoi55Sf55Sj5oCn44KS6auY44KB44KL44Ov44O844Kv44K544Oa44O844K544Gu5L2c44KK5pa5IiwiaW1hZ2UiOnsiaWQiOiJodHRwczovL2RlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmcvYXNzZXRzL2ltYWdlcy9kZW1vLTEucG5nIiwiZGlnZXN0U1JJIjoic2hhMjU2LTRDMnAzR1FVZzNpSGZjaFBIODVLOXhBRXk5VnA4SkgxYU1YVWU2MzhaOVE9In0sImRlc2NyaXB0aW9uIjoi6KSH5pWw44GuT1BT44GoQ0FT44GM44GC44KL44OH44Oi44Oa44O844K4IiwiYXV0aG9yIjpbIuWxseeUsOiKseWtkCJdLCJlZGl0b3IiOlsi5bGx55Sw5aSq6YOOIl0sImRhdGVQdWJsaXNoZWQiOiIyMDI1LTA3LTA0VDE5OjE0OjAwWiIsImRhdGVNb2RpZmllZCI6IjIwMjUtMDctMDRUMTk6MTQ6MDBaIiwiZ2VucmUiOiJBcnRzICYgRW50ZXJ0YWlubWVudCJ9LCJhbGxvd2VkVXJsIjpbImh0dHBzOi8vZGVtby5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZy8qIiwiaHR0cDovL2xvY2FsaG9zdDo1MTczLyoiLCJodHRwOi8vbG9jYWxob3N0OjQxNzMvKiJdLCJ0YXJnZXQiOlt7InR5cGUiOiJIdG1sVGFyZ2V0SW50ZWdyaXR5IiwiY3NzU2VsZWN0b3IiOiIjaHRtbC10YXJnZXQtaW50ZWdyaXR5LWRlbW8xIiwiaW50ZWdyaXR5Ijoic2hhMjU2LVNOQmpycFJvQWwxd0ovcmtOQzc5VEJsMzFzbktLQktia2hwVXl4MW42Y0U9In0seyJ0eXBlIjoiRXh0ZXJuYWxSZXNvdXJjZVRhcmdldEludGVncml0eSIsImludGVncml0eSI6InNoYTI1Ni00QzJwM0dRVWczaUhmY2hQSDg1Szl4QUV5OVZwOEpIMWFNWFVlNjM4WjlRPSJ9XSwiaXNzIjoiZG5zOmRlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJzdWIiOiJ1cm46dXVpZDpkODA0M2I5Ny0zMjRkLTRmNDgtOWVjZC1kZGY5NDRmOGU0NGUiLCJpYXQiOjE3NjIzMjc4NTEsImV4cCI6MTc5Mzg2Mzg1MX0.IWxYzTmQr4Rk9P-zRy-uqw8l6X_pp8G1PfTike4WzTcd1nKgg24cUZ9H9raA30JF8S7gHe2I2J3e5XqvMxMiXw",
-          "main": false
+    [
+      {
+        "@context": [
+          "https://www.w3.org/ns/credentials/v2",
+          "https://originator-profile.org/ns/credentials/v1",
+          "https://originator-profile.org/ns/cip/v1",
+          {
+            "@language": "ja"
+          }
+        ],
+        "type": [
+          "VerifiableCredential",
+          "ContentAttestation"
+        ],
+        "issuer": "dns:demo.exp.originator-profile.org",
+        "credentialSubject": {
+          "id": "urn:uuid:d8043b97-324d-4f48-9ecd-ddf944f8e44e",
+          "type": "Article",
+          "headline": "生産性を高めるワークスペースの作り方",
+          "image": {
+            "id": "https://demo.exp.originator-profile.org/assets/images/demo-1.png",
+            "content": "./public/images/demo-1.png"
+          },
+          "description": "複数のOPSとCASがあるデモページ",
+          "author": [
+            "山田花子"
+          ],
+          "editor": [
+            "山田太郎"
+          ],
+          "datePublished": "2025-07-04T19:14:00Z",
+          "dateModified": "2025-07-04T19:14:00Z",
+          "genre": "Arts & Entertainment"
         },
-        {
-          "attestation": "eyJhbGciOiJFUzI1NiIsImtpZCI6ImFEY2phTVlnMWNOUWZxa0Z1R1VIelhESXJiQmNmV3lmN2FZZVBhTEVFUXMiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ29udGVudEF0dGVzdGF0aW9uIl0sImlzc3VlciI6ImRuczphbm90aGVyLW9yaWdpbmF0b3IuZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6InVybjp1dWlkOmI1ZTVkMGRiLTUzNjctNDU5Yy1iM2ZkLTk0YTI1MDRlYWM1MCIsInR5cGUiOiJBcnRpY2xlIiwiaGVhZGxpbmUiOiLlv4PjgpLnmZLjgZnmo67jga7mlaPnrZYiLCJpbWFnZSI6eyJpZCI6Imh0dHBzOi8vZGVtby5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZy9hc3NldHMvaW1hZ2VzL2RlbW8tMi5wbmciLCJkaWdlc3RTUkkiOiJzaGEyNTYtZmR3MklIYzAvZlYrTGk2bEN0aSs4TU84enRKOVJSemtMVUFyWGM2MldWZz0ifSwiZGVzY3JpcHRpb24iOiLopIfmlbDjga5PUFPjgahDQVPjgYzjgYLjgovjg4fjg6Ljg5rjg7zjgrgiLCJhdXRob3IiOlsi5bGx55Sw6Iqx5a2QIl0sImVkaXRvciI6WyLlsbHnlLDlpKrpg44iXSwiZGF0ZVB1Ymxpc2hlZCI6IjIwMjUtMDctMDRUMTk6MTQ6MDBaIiwiZGF0ZU1vZGlmaWVkIjoiMjAyNS0wNy0wNFQxOToxNDowMFoiLCJnZW5yZSI6IkFydHMgJiBFbnRlcnRhaW5tZW50In0sImFsbG93ZWRVcmwiOlsiaHR0cHM6Ly9kZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwiaHR0cDovL2xvY2FsaG9zdDo1MTczLyoiLCJodHRwOi8vbG9jYWxob3N0OjQxNzMvKiJdLCJ0YXJnZXQiOlt7InR5cGUiOiJIdG1sVGFyZ2V0SW50ZWdyaXR5IiwiY3NzU2VsZWN0b3IiOiIjaHRtbC10YXJnZXQtaW50ZWdyaXR5LWRlbW8yIiwiaW50ZWdyaXR5Ijoic2hhMjU2LWdEMjFUSVlacm51QWJwdGtremtBTG9HQTkxclgvcVdJYjc4V2lDd25VSzA9In0seyJ0eXBlIjoiRXh0ZXJuYWxSZXNvdXJjZVRhcmdldEludGVncml0eSIsImludGVncml0eSI6InNoYTI1Ni1mZHcySUhjMC9mVitMaTZsQ3RpKzhNTzh6dEo5UlJ6a0xVQXJYYzYyV1ZnPSJ9XSwiaXNzIjoiZG5zOmFub3RoZXItb3JpZ2luYXRvci5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZyIsInN1YiI6InVybjp1dWlkOmI1ZTVkMGRiLTUzNjctNDU5Yy1iM2ZkLTk0YTI1MDRlYWM1MCIsImlhdCI6MTc2MjMyNzk0MSwiZXhwIjoxNzkzODYzOTQxfQ.HvbmUedRzMi-0rTA9ddFLxLVagz64lKTWyV7lnTdGQ97ZUTiTCly0dD9d5Bh7ce2SzJi09XB9l0ZfFkS1Sg7Kg",
-          "main": false
+        "allowedUrl": [
+          "https://demo.exp.originator-profile.org/*",
+          "http://localhost:5173/*",
+          "http://localhost:4173/*"
+        ],
+        "target": [
+          {
+            "type": "HtmlTargetIntegrity",
+            "cssSelector": "#html-target-integrity-demo1"
+          },
+          {
+            "type": "ExternalResourceTargetIntegrity",
+            "content": "./public/images/demo-1.png"
+          }
+        ]
+      },
+      {
+        "@context": [
+          "https://www.w3.org/ns/credentials/v2",
+          "https://originator-profile.org/ns/credentials/v1",
+          "https://originator-profile.org/ns/cip/v1",
+          {
+            "@language": "ja"
+          }
+        ],
+        "type": [
+          "VerifiableCredential",
+          "ContentAttestation"
+        ],
+        "issuer": "dns:another-originator.exp.originator-profile.org",
+        "credentialSubject": {
+          "id": "urn:uuid:b5e5d0db-5367-459c-b3fd-94a2504eac50",
+          "type": "Article",
+          "headline": "心を癒す森の散策",
+          "image": {
+            "id": "https://demo.exp.originator-profile.org/assets/images/demo-2.png",
+            "content": "./public/images/demo-2.png"
+          },
+          "description": "複数のOPSとCASがあるデモページ",
+          "author": [
+            "山田花子"
+          ],
+          "editor": [
+            "山田太郎"
+          ],
+          "datePublished": "2025-07-04T19:14:00Z",
+          "dateModified": "2025-07-04T19:14:00Z",
+          "genre": "Arts & Entertainment"
         },
-        {
-          "attestation": "eyJhbGciOiJFUzI1NiIsImtpZCI6IkNCMzd2TGNKUzdsd1Fha0hkZ0NJXzJNZnVPQnJBM3Z0T2c0TG13Sjk1em8iLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ29udGVudEF0dGVzdGF0aW9uIl0sImlzc3VlciI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiJ1cm46dXVpZDo0ZmJiZjM3OC0zNTVkLTQ4ODMtYjM4Mi01YmRhMDM4OTBmM2QiLCJ0eXBlIjoiQWR2ZXJ0b3JpYWwiLCJoZWFkbGluZSI6IuW9ueOBq-eri-OBpFBD44Ks44K444Kn44OD44OIMTDpgbgiLCJpbWFnZSI6eyJpZCI6Imh0dHBzOi8vZGVtby5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZy9hc3NldHMvaW1hZ2VzL2FkdmVydG9yaWFsLWRlbW8ucG5nIiwiZGlnZXN0U1JJIjoic2hhMjU2LTZ1YVUrUXcwOHlMK1VzU2htUVljUFBYOW9Iem83eEpOSGNvSEpvQ3NBb1E9In0sImRlc2NyaXB0aW9uIjoi6KiY5LqL5bqD5ZGK44Gu44OH44OiIiwiYXV0aG9yIjpbIuWxseeUsOiKseWtkCJdLCJlZGl0b3IiOlsi5bGx55Sw5aSq6YOOIl0sInNwb25zb3IiOlsi44OH44OiIOOCueODneODs-OCteODvCJdLCJkYXRlUHVibGlzaGVkIjoiMjAyNS0xMC0yNFQxOToxNDowMFoiLCJkYXRlTW9kaWZpZWQiOiIyMDI1LTEwLTI0VDE5OjE0OjAwWiIsImdlbnJlIjoiUFIifSwiYWxsb3dlZFVybCI6WyJodHRwczovL2RlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmcvKiIsImh0dHA6Ly9sb2NhbGhvc3Q6NTE3My8qIiwiaHR0cDovL2xvY2FsaG9zdDo0MTczLyoiXSwidGFyZ2V0IjpbeyJ0eXBlIjoiRXh0ZXJuYWxSZXNvdXJjZVRhcmdldEludGVncml0eSIsImludGVncml0eSI6InNoYTI1Ni1QMWZKanJOcGRldmc2eDdFdDd4ZnI0WEZocWgwZE9oMmx3Nk5tcG1zVVJVPSJ9XSwiaXNzIjoiZG5zOmRlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJzdWIiOiJ1cm46dXVpZDo0ZmJiZjM3OC0zNTVkLTQ4ODMtYjM4Mi01YmRhMDM4OTBmM2QiLCJpYXQiOjE3NjIzMTk0NTksImV4cCI6MTc5Mzg1NTQ1OX0.2xOwMMipx1fBIWzt-r1Px_hsh7c0Q2f5JrzQaUwVC3_GzCDqeZCssFfJr2pMOULMVjZwHSf5d3CkAOYnDJfe3w",
-          "main": false
+        "allowedUrl": [
+          "https://demo.exp.originator-profile.org",
+          "http://localhost:5173/*",
+          "http://localhost:4173/*"
+        ],
+        "target": [
+          {
+            "type": "HtmlTargetIntegrity",
+            "cssSelector": "#html-target-integrity-demo2"
+          },
+          {
+            "type": "ExternalResourceTargetIntegrity",
+            "content": "./public/images/demo-2.png"
+          }
+        ]
+      },
+      {
+        "@context": [
+          "https://www.w3.org/ns/credentials/v2",
+          "https://originator-profile.org/ns/credentials/v1",
+          "https://originator-profile.org/ns/cip/v1",
+          {
+            "@language": "ja"
+          }
+        ],
+        "type": [
+          "VerifiableCredential",
+          "ContentAttestation"
+        ],
+        "issuer": "dns:demo.exp.originator-profile.org",
+        "credentialSubject": {
+          "id": "urn:uuid:4fbbf378-355d-4883-b382-5bda03890f3d",
+          "type": "Advertorial",
+          "headline": "役に立つPCガジェット10選",
+          "image": {
+            "id": "https://demo.exp.originator-profile.org/assets/images/advertorial-demo.png",
+            "content": "./public/images/advertorial-demo.png"
+          },
+          "description": "記事広告のデモ",
+          "author": [
+            "山田花子"
+          ],
+          "editor": [
+            "山田太郎"
+          ],
+          "sponsor": [
+            "デモ スポンサー"
+          ],
+          "datePublished": "2025-10-24T19:14:00Z",
+          "dateModified": "2025-10-24T19:14:00Z",
+          "genre": "PR"
         },
-        {
-          "attestation": "eyJhbGciOiJFUzI1NiIsImtpZCI6IkNCMzd2TGNKUzdsd1Fha0hkZ0NJXzJNZnVPQnJBM3Z0T2c0TG13Sjk1em8iLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImphIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ29udGVudEF0dGVzdGF0aW9uIl0sImlzc3VlciI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiJ1cm46dXVpZDo5YTM4YTUxNy00MzU1LTQzYTEtOWUyMi1mZDM2NjExZTM5NjYiLCJ0eXBlIjoiQXJ0aWNsZSIsImhlYWRsaW5lIjoi5aSV5pqu44KM44Gu6KGX44Gr5LiA5oGv44KSIiwiaW1hZ2UiOnsiaWQiOiJodHRwczovL2RlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmcvYXNzZXRzL2ltYWdlcy9tdWx0aXBsZS1zcmktZGVtby5wbmciLCJkaWdlc3RTUkkiOiJzaGEyNTYtRTJiT3EwMVVTYU8vY091NlZ1OWl6a2txQjZkZS9aT2VYa2gwbFoxbDVadz0ifSwiZGVzY3JpcHRpb24iOiLjgZPjga7oqJjkuovjga_opIfmlbDjga7nlLvlg4_vvIjopIfmlbBTUknvvInjgpLlkKvjgoDjg4fjg6LnlKjjgrPjg7Pjg4bjg7Pjg4TjgafjgZnjgIIiLCJhdXRob3IiOlsi5bGx55Sw6Iqx5a2QIl0sImVkaXRvciI6WyLlsbHnlLDlpKrpg44iXSwiZGF0ZVB1Ymxpc2hlZCI6IjIwMjUtMTAtMjRUMTk6MTQ6MDBaIiwiZGF0ZU1vZGlmaWVkIjoiMjAyNS0xMC0yNFQxOToxNDowMFoiLCJnZW5yZSI6IkFydHMgJiBFbnRlcnRhaW5tZW50In0sImFsbG93ZWRVcmwiOlsiaHR0cHM6Ly9kZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnLyoiLCJodHRwOi8vbG9jYWxob3N0OjQxNzMvKiIsImh0dHA6Ly9sb2NhbGhvc3Q6NTE3My8qIl0sInRhcmdldCI6W3sidHlwZSI6IkV4dGVybmFsUmVzb3VyY2VUYXJnZXRJbnRlZ3JpdHkiLCJpbnRlZ3JpdHkiOiJzaGEyNTYtTi92YzRuRjljbnFxcmVVL2taL3h2b1BNcGxyZmVmNDQ5ODM0V3ZnMUVsYz0gc2hhMjU2LVA1cTZVRmIyWmxndWlJMFJrWlpkc3poYWxhaHQ4bTVaUy9TVktSYXB3RVE9IHNoYTI1Ni1BcVIvTGZWWDJrRXhIbzYxL1BzUkE1eTd4MWV3Tk5HV291OFpNL0RJZ3JVPSJ9XSwiaXNzIjoiZG5zOmRlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJzdWIiOiJ1cm46dXVpZDo5YTM4YTUxNy00MzU1LTQzYTEtOWUyMi1mZDM2NjExZTM5NjYiLCJpYXQiOjE3NjI4NDY3NjIsImV4cCI6MTc5NDM4Mjc2Mn0.gMws2tAUlPcvutP9f88w6DDx26V2lV2ntoH75-sZzBTsiC8Fhkj0F6THPdEIGmt0q-H5WyoBmfplTB-v3Xpakg",
-          "main": false
-        }
-      ]
+        "allowedUrl": [
+          "https://demo.exp.originator-profile.org/*",
+          "http://localhost:5173/*",
+          "http://localhost:4173/*"
+        ],
+        "target": [
+          {
+            "type": "ExternalResourceTargetIntegrity",
+            "content": "./public/images/advertorial-demo.png"
+          }
+        ]
+      },
+      {
+        "@context": [
+          "https://www.w3.org/ns/credentials/v2",
+          "https://originator-profile.org/ns/credentials/v1",
+          "https://originator-profile.org/ns/cip/v1",
+          {
+            "@language": "ja"
+          }
+        ],
+        "type": [
+          "VerifiableCredential",
+          "ContentAttestation"
+        ],
+        "issuer": "dns:demo.exp.originator-profile.org",
+        "credentialSubject": {
+          "id": "urn:uuid:9a38a517-4355-43a1-9e22-fd36611e3966",
+          "type": "Article",
+          "headline": "夕暮れの街に一息を",
+          "image": {
+            "id": "https://demo.exp.originator-profile.org/assets/images/multiple-sri-demo.png",
+            "content": "./public/images/multiple-sri-demo.png"
+          },
+          "description": "この記事は複数の画像（複数SRI）を含むデモ用コンテンツです。",
+          "author": [
+            "山田花子"
+          ],
+          "editor": [
+            "山田太郎"
+          ],
+          "datePublished": "2025-10-24T19:14:00Z",
+          "dateModified": "2025-10-24T19:14:00Z",
+          "genre": "Arts & Entertainment"
+        },
+        "allowedUrl": [
+          "https://demo.exp.originator-profile.org/*",
+          "http://localhost:4173/*",
+          "http://localhost:5173/*"
+        ],
+        "target": [
+          {
+            "type": "ExternalResourceTargetIntegrity",
+            "content": [
+              "./public/images/multiple-sri-demo.png",
+              "./public/images/multiple-sri-demo-320w.png",
+              "./public/images/multiple-sri-demo-640w.png"
+            ]
+          }
+        ]
+      }
+    ]
     </script>
     <header>
       <h1>デモページ</h1>

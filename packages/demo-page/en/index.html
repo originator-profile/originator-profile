@@ -158,24 +158,203 @@
       ]
     </script>
     <script type="application/cas+json">
-      [
-        {
-          "attestation": "eyJhbGciOiJFUzI1NiIsImtpZCI6IkNCMzd2TGNKUzdsd1Fha0hkZ0NJXzJNZnVPQnJBM3Z0T2c0TG13Sjk1em8iLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImVuIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ29udGVudEF0dGVzdGF0aW9uIl0sImlzc3VlciI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiJ1cm46dXVpZDozNzZhZjNiMS1iMDA2LTQ2YTEtOTIyNC03MzczMmUwYzRhZTkiLCJ0eXBlIjoiQXJ0aWNsZSIsImhlYWRsaW5lIjoiSG93IHRvIENyZWF0ZSBhIFdvcmtzcGFjZSBUaGF0IEJvb3N0cyBQcm9kdWN0aXZpdHkiLCJpbWFnZSI6eyJpZCI6Imh0dHBzOi8vZGVtby5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZy9hc3NldHMvaW1hZ2VzL2RlbW8tMS5wbmciLCJkaWdlc3RTUkkiOiJzaGEyNTYtNEMycDNHUVVnM2lIZmNoUEg4NUs5eEFFeTlWcDhKSDFhTVhVZTYzOFo5UT0ifSwiZGVzY3JpcHRpb24iOiJEZW1vIFBhZ2UgRmVhdHVyaW5nIE9QUyBhbmQgQ0FTIGZyb20gTXVsdGlwbGUgT3JpZ2luYXRvcnMiLCJhdXRob3IiOlsiSGFuYWtvIFlhbWFkYSJdLCJlZGl0b3IiOlsiVGFybyBZYW1hZGEiXSwiZGF0ZVB1Ymxpc2hlZCI6IjIwMjUtMDctMDRUMTk6MTQ6MDBaIiwiZGF0ZU1vZGlmaWVkIjoiMjAyNS0wNy0wNFQxOToxNDowMFoiLCJnZW5yZSI6IkFydHMgJiBFbnRlcnRhaW5tZW50In0sImFsbG93ZWRVcmwiOlsiaHR0cHM6Ly9kZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwiaHR0cDovL2xvY2FsaG9zdDo1MTczIiwiaHR0cDovL2xvY2FsaG9zdDo0MTczIl0sInRhcmdldCI6W3sidHlwZSI6Ikh0bWxUYXJnZXRJbnRlZ3JpdHkiLCJjc3NTZWxlY3RvciI6IiNodG1sLXRhcmdldC1pbnRlZ3JpdHktZGVtbzEiLCJpbnRlZ3JpdHkiOiJzaGEyNTYtU05CanJwUm9BbDF3Si9ya05DNzlUQmwzMXNuS0tCS2JraHBVeXgxbjZjRT0ifSx7InR5cGUiOiJFeHRlcm5hbFJlc291cmNlVGFyZ2V0SW50ZWdyaXR5IiwiaW50ZWdyaXR5Ijoic2hhMjU2LTRDMnAzR1FVZzNpSGZjaFBIODVLOXhBRXk5VnA4SkgxYU1YVWU2MzhaOVE9In1dLCJpc3MiOiJkbnM6ZGVtby5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZyIsInN1YiI6InVybjp1dWlkOjM3NmFmM2IxLWIwMDYtNDZhMS05MjI0LTczNzMyZTBjNGFlOSIsImlhdCI6MTc2MjMyNzk5OCwiZXhwIjoxNzkzODYzOTk4fQ.O1pLaNjvT7tzxorkSy2Sv5xvD0q7GlSK8TQJAB-0vgWOtmsWOgc8ckOzSXcFsHVWHqvJ02DXej8n-VPLnttlFA",
-          "main": false
+    [
+      {
+        "@context": [
+          "https://www.w3.org/ns/credentials/v2",
+          "https://originator-profile.org/ns/credentials/v1",
+          "https://originator-profile.org/ns/cip/v1",
+          {
+            "@language": "en"
+          }
+        ],
+        "type": [
+          "VerifiableCredential",
+          "ContentAttestation"
+        ],
+        "issuer": "dns:demo.exp.originator-profile.org",
+        "credentialSubject": {
+          "id": "urn:uuid:376af3b1-b006-46a1-9224-73732e0c4ae9",
+          "type": "Article",
+          "headline": "How to Create a Workspace That Boosts Productivity",
+          "image": {
+            "id": "https://demo.exp.originator-profile.org/assets/images/demo-1.png",
+            "content": "./public/images/demo-1.png"
+          },
+          "description": "Demo Page Featuring OPS and CAS from Multiple Originators",
+          "author": [
+            "Hanako Yamada"
+          ],
+          "editor": [
+            "Taro Yamada"
+          ],
+          "datePublished": "2025-07-04T19:14:00Z",
+          "dateModified": "2025-07-04T19:14:00Z",
+          "genre": "Arts & Entertainment"
         },
-        {
-          "attestation": "eyJhbGciOiJFUzI1NiIsImtpZCI6ImFEY2phTVlnMWNOUWZxa0Z1R1VIelhESXJiQmNmV3lmN2FZZVBhTEVFUXMiLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImVuIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ29udGVudEF0dGVzdGF0aW9uIl0sImlzc3VlciI6ImRuczphbm90aGVyLW9yaWdpbmF0b3IuZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmciLCJjcmVkZW50aWFsU3ViamVjdCI6eyJpZCI6InVybjp1dWlkOjg4NGQ3MDljLWFlMWQtNDU2Zi04ZGE4LWFhOGY0M2YyZjIyMCIsInR5cGUiOiJBcnRpY2xlIiwiaGVhZGxpbmUiOiJTb3VsLUhlYWxpbmcgRm9yZXN0IFdhbGsiLCJpbWFnZSI6eyJpZCI6Imh0dHBzOi8vZGVtby5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZy9hc3NldHMvaW1hZ2VzL2RlbW8tMi5wbmciLCJkaWdlc3RTUkkiOiJzaGEyNTYtZmR3MklIYzAvZlYrTGk2bEN0aSs4TU84enRKOVJSemtMVUFyWGM2MldWZz0ifSwiZGVzY3JpcHRpb24iOiJEZW1vIFBhZ2UgRmVhdHVyaW5nIE9QUyBhbmQgQ0FTIGZyb20gTXVsdGlwbGUgT3JpZ2luYXRvcnMiLCJhdXRob3IiOlsiSGFuYWtvIFlhbWFkYSJdLCJlZGl0b3IiOlsiVGFybyBZYW1hZGEiXSwiZGF0ZVB1Ymxpc2hlZCI6IjIwMjUtMDctMDRUMTk6MTQ6MDBaIiwiZGF0ZU1vZGlmaWVkIjoiMjAyNS0wNy0wNFQxOToxNDowMFoiLCJnZW5yZSI6IkFydHMgJiBFbnRlcnRhaW5tZW50In0sImFsbG93ZWRVcmwiOlsiaHR0cHM6Ly9kZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwiaHR0cDovL2xvY2FsaG9zdDo1MTczIiwiaHR0cDovL2xvY2FsaG9zdDo0MTczIl0sInRhcmdldCI6W3sidHlwZSI6Ikh0bWxUYXJnZXRJbnRlZ3JpdHkiLCJjc3NTZWxlY3RvciI6IiNodG1sLXRhcmdldC1pbnRlZ3JpdHktZGVtbzIiLCJpbnRlZ3JpdHkiOiJzaGEyNTYtZ0QyMVRJWVpybnVBYnB0a2t6a0FMb0dBOTFyWC9xV0liNzhXaUN3blVLMD0ifSx7InR5cGUiOiJFeHRlcm5hbFJlc291cmNlVGFyZ2V0SW50ZWdyaXR5IiwiaW50ZWdyaXR5Ijoic2hhMjU2LWZkdzJJSGMwL2ZWK0xpNmxDdGkrOE1POHp0SjlSUnprTFVBclhjNjJXVmc9In1dLCJpc3MiOiJkbnM6YW5vdGhlci1vcmlnaW5hdG9yLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwic3ViIjoidXJuOnV1aWQ6ODg0ZDcwOWMtYWUxZC00NTZmLThkYTgtYWE4ZjQzZjJmMjIwIiwiaWF0IjoxNzYyMzI4MDE4LCJleHAiOjE3OTM4NjQwMTh9.zk4Albs9l3bPfsE_1gX9T-3MM86sGBeFvpzhMwVXVgHMAA2hRCoz5kyCWIeNM7NWmX9qI-bQuUDfYkpGz6mSTA",
-          "main": false
+        "allowedUrl": [
+          "https://demo.exp.originator-profile.org",
+          "http://localhost:5173",
+          "http://localhost:4173"
+        ],
+        "target": [
+          {
+            "type": "HtmlTargetIntegrity",
+            "cssSelector": "#html-target-integrity-demo1"
+          },
+          {
+            "type": "ExternalResourceTargetIntegrity",
+            "content": "./public/images/demo-1.png"
+          }
+        ]
+      },
+      {
+        "@context": [
+          "https://www.w3.org/ns/credentials/v2",
+          "https://originator-profile.org/ns/credentials/v1",
+          "https://originator-profile.org/ns/cip/v1",
+          {
+            "@language": "en"
+          }
+        ],
+        "type": [
+          "VerifiableCredential",
+          "ContentAttestation"
+        ],
+        "issuer": "dns:another-originator.exp.originator-profile.org",
+        "credentialSubject": {
+          "id": "urn:uuid:884d709c-ae1d-456f-8da8-aa8f43f2f220",
+          "type": "Article",
+          "headline": "Soul-Healing Forest Walk",
+          "image": {
+            "id": "https://demo.exp.originator-profile.org/assets/images/demo-2.png",
+            "content": "./public/images/demo-2.png"
+          },
+          "description": "Demo Page Featuring OPS and CAS from Multiple Originators",
+          "author": [
+            "Hanako Yamada"
+          ],
+          "editor": [
+            "Taro Yamada"
+          ],
+          "datePublished": "2025-07-04T19:14:00Z",
+          "dateModified": "2025-07-04T19:14:00Z",
+          "genre": "Arts & Entertainment"
         },
-        {
-          "attestation": "eyJhbGciOiJFUzI1NiIsImtpZCI6IkNCMzd2TGNKUzdsd1Fha0hkZ0NJXzJNZnVPQnJBM3Z0T2c0TG13Sjk1em8iLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImVuIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ29udGVudEF0dGVzdGF0aW9uIl0sImlzc3VlciI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiJ1cm46dXVpZDo4MjU5MWJkOS05Zjc4LTRiMTAtYjhjNS00MzM4MDNmZTU1YTkiLCJ0eXBlIjoiQWR2ZXJ0b3JpYWwiLCJoZWFkbGluZSI6IjEwIE11c3QtSGF2ZSBQQyBHYWRnZXRzIHRvIEJvb3N0cyBZb3VyIFByb2R1Y3Rpdml0eSIsImltYWdlIjp7ImlkIjoiaHR0cHM6Ly9kZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnL2Fzc2V0cy9pbWFnZXMvYWR2ZXJ0b3JpYWwtZGVtby5wbmciLCJkaWdlc3RTUkkiOiJzaGEyNTYtV294SGwxelA4bnBBK2JWNHU0ZGNwbUQwMGpPZWJVOGdqS1lVdWtTcWJxRT0ifSwiZGVzY3JpcHRpb24iOiJBZHZlcnRvcmlhbCBEZW1vIiwiYXV0aG9yIjpbIkhhbmFrbyBZYW1hZGEiXSwiZWRpdG9yIjpbIlRhcm8gWWFtYWRhIl0sInNwb25zb3IiOlsiZGVtbyBzcG9uc29yIl0sImRhdGVQdWJsaXNoZWQiOiIyMDI1LTEwLTI0VDE5OjE0OjAwWiIsImRhdGVNb2RpZmllZCI6IjIwMjUtMTAtMjRUMTk6MTQ6MDBaIiwiZ2VucmUiOiJQUiJ9LCJhbGxvd2VkVXJsIjpbImh0dHBzOi8vZGVtby5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZyIsImh0dHA6Ly9sb2NhbGhvc3Q6NTE3MyIsImh0dHA6Ly9sb2NhbGhvc3Q6NDE3MyJdLCJ0YXJnZXQiOlt7InR5cGUiOiJFeHRlcm5hbFJlc291cmNlVGFyZ2V0SW50ZWdyaXR5IiwiaW50ZWdyaXR5Ijoic2hhMjU2LVAxZkpqck5wZGV2ZzZ4N0V0N3hmcjRYRmhxaDBkT2gybHc2Tm1wbXNVUlU9In1dLCJpc3MiOiJkbnM6ZGVtby5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZyIsInN1YiI6InVybjp1dWlkOjgyNTkxYmQ5LTlmNzgtNGIxMC1iOGM1LTQzMzgwM2ZlNTVhOSIsImlhdCI6MTc2MjMyNjUyMSwiZXhwIjoxNzkzODYyNTIxfQ.wmbCcumLA6dEd2O-GD-4wFh3_v2uI99xNBGkhX9xgtOa1-TQtA3I_tJNvrR91KunaVxIM1oI04zPju_Gl4aYkQ",
-          "main": false
+        "allowedUrl": [
+          "https://demo.exp.originator-profile.org",
+          "http://localhost:5173",
+          "http://localhost:4173"
+        ],
+        "target": [
+          {
+            "type": "HtmlTargetIntegrity",
+            "cssSelector": "#html-target-integrity-demo2"
+          },
+          {
+            "type": "ExternalResourceTargetIntegrity",
+            "content": "./public/images/demo-2.png"
+          }
+        ]
+      },
+      {
+        "@context": [
+          "https://www.w3.org/ns/credentials/v2",
+          "https://originator-profile.org/ns/credentials/v1",
+          "https://originator-profile.org/ns/cip/v1",
+          {
+            "@language": "en"
+          }
+        ],
+        "type": [
+          "VerifiableCredential",
+          "ContentAttestation"
+        ],
+        "issuer": "dns:demo.exp.originator-profile.org",
+        "credentialSubject": {
+          "id": "urn:uuid:82591bd9-9f78-4b10-b8c5-433803fe55a9",
+          "type": "Advertorial",
+          "headline": "10 Must-Have PC Gadgets to Boosts Your Productivity",
+          "image": {
+            "id": "https://demo.exp.originator-profile.org/assets/images/advertorial-demo.png",
+            "content": "./public/images/advertorial-demo.png"
+          },
+          "description": "Advertorial Demo",
+          "author": [
+            "Hanako Yamada"
+          ],
+          "editor": [
+            "Taro Yamada"
+          ],
+          "sponsor": [
+            "demo sponsor"
+          ],
+          "datePublished": "2025-10-24T19:14:00Z",
+          "dateModified": "2025-10-24T19:14:00Z",
+          "genre": "PR"
         },
-        {
-          "attestation": "eyJhbGciOiJFUzI1NiIsImtpZCI6IkNCMzd2TGNKUzdsd1Fha0hkZ0NJXzJNZnVPQnJBM3Z0T2c0TG13Sjk1em8iLCJ0eXAiOiJ2Yytqd3QiLCJjdHkiOiJ2YyJ9.eyJAY29udGV4dCI6WyJodHRwczovL3d3dy53My5vcmcvbnMvY3JlZGVudGlhbHMvdjIiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY3JlZGVudGlhbHMvdjEiLCJodHRwczovL29yaWdpbmF0b3ItcHJvZmlsZS5vcmcvbnMvY2lwL3YxIix7IkBsYW5ndWFnZSI6ImVuIn1dLCJ0eXBlIjpbIlZlcmlmaWFibGVDcmVkZW50aWFsIiwiQ29udGVudEF0dGVzdGF0aW9uIl0sImlzc3VlciI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwiY3JlZGVudGlhbFN1YmplY3QiOnsiaWQiOiJ1cm46dXVpZDo1Y2I4YzUyZC00MDJhLTQzN2ItYmI0MS0zODllNTQ3MTI2MDAiLCJ0eXBlIjoiQXJ0aWNsZSIsImhlYWRsaW5lIjoiQSBQYXVzZSBpbiB0aGUgRXZlbmluZyBDaXR5IiwiaW1hZ2UiOnsiaWQiOiJodHRwczovL2RlbW8uZXhwLm9yaWdpbmF0b3ItcHJvZmlsZS5vcmcvYXNzZXRzL2ltYWdlcy9tdWx0aXBsZS1zcmktZGVtby5wbmciLCJkaWdlc3RTUkkiOiJzaGEyNTYtcld2MDZYUHFERlR0U1BCWjVWWjFSOG05YjdJbFgvSWlsb3pQV05WR1Ntaz0ifSwiZGVzY3JpcHRpb24iOiJUaGlzIGFydGljbGUgaXMgYSBkZW1vIGNvbnRlbnQgd2l0aCBtdWx0aXBsZSBpbWFnZXMobXVsdGlwbGUgU1JJIHZhbHVlcykuIiwiYXV0aG9yIjpbIkhhbmFrbyBZYW1hZGEiXSwiZWRpdG9yIjpbIlRhcm8gWWFtYWRhIl0sImRhdGVQdWJsaXNoZWQiOiIyMDI1LTEwLTI0VDE5OjE0OjAwWiIsImRhdGVNb2RpZmllZCI6IjIwMjUtMTAtMjRUMTk6MTQ6MDBaIiwiZ2VucmUiOiJBcnRzICYgRW50ZXJ0YWlubWVudCJ9LCJhbGxvd2VkVXJsIjpbImh0dHBzOi8vZGVtby5leHAub3JpZ2luYXRvci1wcm9maWxlLm9yZy8qIiwiaHR0cDovL2xvY2FsaG9zdDo0MTczLyoiLCJodHRwOi8vbG9jYWxob3N0OjUxNzMvKiJdLCJ0YXJnZXQiOlt7InR5cGUiOiJFeHRlcm5hbFJlc291cmNlVGFyZ2V0SW50ZWdyaXR5IiwiaW50ZWdyaXR5Ijoic2hhMjU2LU4vdmM0bkY5Y25xcXJlVS9rWi94dm9QTXBscmZlZjQ0OTgzNFd2ZzFFbGM9IHNoYTI1Ni1QNXE2VUZiMlpsZ3VpSTBSa1paZHN6aGFsYWh0OG01WlMvU1ZLUmFwd0VRPSBzaGEyNTYtQXFSL0xmVlgya0V4SG82MS9Qc1JBNXk3eDFld05OR1dvdThaTS9ESWdyVT0ifV0sImlzcyI6ImRuczpkZW1vLmV4cC5vcmlnaW5hdG9yLXByb2ZpbGUub3JnIiwic3ViIjoidXJuOnV1aWQ6NWNiOGM1MmQtNDAyYS00MzdiLWJiNDEtMzg5ZTU0NzEyNjAwIiwiaWF0IjoxNzYyODQ1Njg4LCJleHAiOjE3OTQzODE2ODh9.boSzb-pENnS934BZgibjIJyPYMev5jT8S4b0WESuyEFIdKd18Tf3-V1_H0Eyp8lSL8dh7GyDuu4Qmf1ukCOWaA",
-          "main": false
-        }
-      ]
+        "allowedUrl": [
+          "https://demo.exp.originator-profile.org",
+          "http://localhost:5173",
+          "http://localhost:4173"
+        ],
+        "target": [
+          {
+            "type": "ExternalResourceTargetIntegrity",
+            "content": "./public/images/advertorial-demo.png"
+          }
+        ]
+      },
+      {
+        "@context": [
+          "https://www.w3.org/ns/credentials/v2",
+          "https://originator-profile.org/ns/credentials/v1",
+          "https://originator-profile.org/ns/cip/v1",
+          {
+            "@language": "en"
+          }
+        ],
+        "type": [
+          "VerifiableCredential",
+          "ContentAttestation"
+        ],
+        "issuer": "dns:demo.exp.originator-profile.org",
+        "credentialSubject": {
+          "id": "urn:uuid:5cb8c52d-402a-437b-bb41-389e54712600",
+          "type": "Article",
+          "headline": "A Pause in the Evening City",
+          "image": {
+            "id": "https://demo.exp.originator-profile.org/assets/images/multiple-sri-demo.png",
+            "content": "./public/images/multiple-sri-demo.png"
+          },
+          "description": "This article is a demo content with multiple images(multiple SRI values).",
+          "author": [
+            "Hanako Yamada"
+          ],
+          "editor": [
+            "Taro Yamada"
+          ],
+          "datePublished": "2025-10-24T19:14:00Z",
+          "dateModified": "2025-10-24T19:14:00Z",
+          "genre": "Arts & Entertainment"
+        },
+        "allowedUrl": [
+          "https://demo.exp.originator-profile.org/*",
+          "http://localhost:4173/*",
+          "http://localhost:5173/*"
+        ],
+        "target": [
+          {
+            "type": "ExternalResourceTargetIntegrity",
+            "content": [
+              "./public/images/multiple-sri-demo.png",
+              "./public/images/multiple-sri-demo-320w.png",
+              "./public/images/multiple-sri-demo-640w.png"
+            ]
+          }
+        ]
+      }
+    ]
     </script>
     <header>
       <h1>Demo Page</h1>
