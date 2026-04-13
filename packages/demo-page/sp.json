@@ -33,10 +33,7 @@
           "@language": "en"
         }
       ],
-      "type": [
-        "VerifiableCredential",
-        "WebsiteProfile"
-      ],
+      "type": ["VerifiableCredential", "WebsiteProfile"],
       "issuer": "dns:demo.exp.originator-profile.org",
       "credentialSubject": {
         "id": "https://demo.exp.originator-profile.org",
@@ -47,7 +44,11 @@
           "id": "https://demo.exp.originator-profile.org/assets/images/favicon.ico",
           "content": "./public/images/favicon.ico"
         },
-        "allowedOrigin": ["https://demo.exp.originator-profile.org", "http://localhost:5173"]
+        "allowedOrigin": [
+          "https://demo.exp.originator-profile.org",
+          "http://localhost:5173",
+          "http://localhost:4173"
+        ]
       }
     },
     {
@@ -59,10 +60,7 @@
           "@language": "ja"
         }
       ],
-      "type": [
-        "VerifiableCredential",
-        "WebsiteProfile"
-      ],
+      "type": ["VerifiableCredential", "WebsiteProfile"],
       "issuer": "dns:demo.exp.originator-profile.org",
       "credentialSubject": {
         "id": "https://demo.exp.originator-profile.org",
@@ -73,7 +71,11 @@
           "id": "https://demo.exp.originator-profile.org/assets/images/favicon.ico",
           "content": "./public/images/favicon.ico"
         },
-        "allowedOrigin": ["https://demo.exp.originator-profile.org", "http://localhost:5173"]
+        "allowedOrigin": [
+          "https://demo.exp.originator-profile.org",
+          "http://localhost:5173",
+          "http://localhost:4173"
+        ]
       }
     }
   ]

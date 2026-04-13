@@ -158,203 +158,173 @@
       ]
     </script>
     <script type="application/cas+json">
-    [
-      {
-        "@context": [
-          "https://www.w3.org/ns/credentials/v2",
-          "https://originator-profile.org/ns/credentials/v1",
-          "https://originator-profile.org/ns/cip/v1",
-          {
-            "@language": "en"
-          }
-        ],
-        "type": [
-          "VerifiableCredential",
-          "ContentAttestation"
-        ],
-        "issuer": "dns:demo.exp.originator-profile.org",
-        "credentialSubject": {
-          "id": "urn:uuid:376af3b1-b006-46a1-9224-73732e0c4ae9",
-          "type": "Article",
-          "headline": "How to Create a Workspace That Boosts Productivity",
-          "image": {
-            "id": "https://demo.exp.originator-profile.org/assets/images/demo-1.png",
-            "content": "./public/images/demo-1.png"
+      [
+        {
+          "@context": [
+            "https://www.w3.org/ns/credentials/v2",
+            "https://originator-profile.org/ns/credentials/v1",
+            "https://originator-profile.org/ns/cip/v1",
+            {
+              "@language": "en"
+            }
+          ],
+          "type": ["VerifiableCredential", "ContentAttestation"],
+          "issuer": "dns:demo.exp.originator-profile.org",
+          "credentialSubject": {
+            "id": "urn:uuid:376af3b1-b006-46a1-9224-73732e0c4ae9",
+            "type": "Article",
+            "headline": "How to Create a Workspace That Boosts Productivity",
+            "image": {
+              "id": "https://demo.exp.originator-profile.org/assets/images/demo-1.png",
+              "content": "./public/images/demo-1.png"
+            },
+            "description": "Demo Page Featuring OPS and CAS from Multiple Originators",
+            "author": ["Hanako Yamada"],
+            "editor": ["Taro Yamada"],
+            "datePublished": "2025-07-04T19:14:00Z",
+            "dateModified": "2025-07-04T19:14:00Z",
+            "genre": "Arts & Entertainment"
           },
-          "description": "Demo Page Featuring OPS and CAS from Multiple Originators",
-          "author": [
-            "Hanako Yamada"
+          "allowedUrl": [
+            "https://demo.exp.originator-profile.org",
+            "http://localhost:5173",
+            "http://localhost:4173"
           ],
-          "editor": [
-            "Taro Yamada"
-          ],
-          "datePublished": "2025-07-04T19:14:00Z",
-          "dateModified": "2025-07-04T19:14:00Z",
-          "genre": "Arts & Entertainment"
+          "target": [
+            {
+              "type": "HtmlTargetIntegrity",
+              "cssSelector": "#html-target-integrity-demo1"
+            },
+            {
+              "type": "ExternalResourceTargetIntegrity",
+              "content": "./public/images/demo-1.png"
+            }
+          ]
         },
-        "allowedUrl": [
-          "https://demo.exp.originator-profile.org",
-          "http://localhost:5173",
-          "http://localhost:4173"
-        ],
-        "target": [
-          {
-            "type": "HtmlTargetIntegrity",
-            "cssSelector": "#html-target-integrity-demo1"
-          },
-          {
-            "type": "ExternalResourceTargetIntegrity",
-            "content": "./public/images/demo-1.png"
-          }
-        ]
-      },
-      {
-        "@context": [
-          "https://www.w3.org/ns/credentials/v2",
-          "https://originator-profile.org/ns/credentials/v1",
-          "https://originator-profile.org/ns/cip/v1",
-          {
-            "@language": "en"
-          }
-        ],
-        "type": [
-          "VerifiableCredential",
-          "ContentAttestation"
-        ],
-        "issuer": "dns:another-originator.exp.originator-profile.org",
-        "credentialSubject": {
-          "id": "urn:uuid:884d709c-ae1d-456f-8da8-aa8f43f2f220",
-          "type": "Article",
-          "headline": "Soul-Healing Forest Walk",
-          "image": {
-            "id": "https://demo.exp.originator-profile.org/assets/images/demo-2.png",
-            "content": "./public/images/demo-2.png"
-          },
-          "description": "Demo Page Featuring OPS and CAS from Multiple Originators",
-          "author": [
-            "Hanako Yamada"
+        {
+          "@context": [
+            "https://www.w3.org/ns/credentials/v2",
+            "https://originator-profile.org/ns/credentials/v1",
+            "https://originator-profile.org/ns/cip/v1",
+            {
+              "@language": "en"
+            }
           ],
-          "editor": [
-            "Taro Yamada"
+          "type": ["VerifiableCredential", "ContentAttestation"],
+          "issuer": "dns:another-originator.exp.originator-profile.org",
+          "credentialSubject": {
+            "id": "urn:uuid:884d709c-ae1d-456f-8da8-aa8f43f2f220",
+            "type": "Article",
+            "headline": "Soul-Healing Forest Walk",
+            "image": {
+              "id": "https://demo.exp.originator-profile.org/assets/images/demo-2.png",
+              "content": "./public/images/demo-2.png"
+            },
+            "description": "Demo Page Featuring OPS and CAS from Multiple Originators",
+            "author": ["Hanako Yamada"],
+            "editor": ["Taro Yamada"],
+            "datePublished": "2025-07-04T19:14:00Z",
+            "dateModified": "2025-07-04T19:14:00Z",
+            "genre": "Arts & Entertainment"
+          },
+          "allowedUrl": [
+            "https://demo.exp.originator-profile.org",
+            "http://localhost:5173",
+            "http://localhost:4173"
           ],
-          "datePublished": "2025-07-04T19:14:00Z",
-          "dateModified": "2025-07-04T19:14:00Z",
-          "genre": "Arts & Entertainment"
+          "target": [
+            {
+              "type": "HtmlTargetIntegrity",
+              "cssSelector": "#html-target-integrity-demo2"
+            },
+            {
+              "type": "ExternalResourceTargetIntegrity",
+              "content": "./public/images/demo-2.png"
+            }
+          ]
         },
-        "allowedUrl": [
-          "https://demo.exp.originator-profile.org",
-          "http://localhost:5173",
-          "http://localhost:4173"
-        ],
-        "target": [
-          {
-            "type": "HtmlTargetIntegrity",
-            "cssSelector": "#html-target-integrity-demo2"
+        {
+          "@context": [
+            "https://www.w3.org/ns/credentials/v2",
+            "https://originator-profile.org/ns/credentials/v1",
+            "https://originator-profile.org/ns/cip/v1",
+            {
+              "@language": "en"
+            }
+          ],
+          "type": ["VerifiableCredential", "ContentAttestation"],
+          "issuer": "dns:demo.exp.originator-profile.org",
+          "credentialSubject": {
+            "id": "urn:uuid:82591bd9-9f78-4b10-b8c5-433803fe55a9",
+            "type": "Advertorial",
+            "headline": "10 Must-Have PC Gadgets to Boosts Your Productivity",
+            "image": {
+              "id": "https://demo.exp.originator-profile.org/assets/images/advertorial-demo.png",
+              "content": "./public/images/advertorial-demo.png"
+            },
+            "description": "Advertorial Demo",
+            "author": ["Hanako Yamada"],
+            "editor": ["Taro Yamada"],
+            "sponsor": ["demo sponsor"],
+            "datePublished": "2025-10-24T19:14:00Z",
+            "dateModified": "2025-10-24T19:14:00Z",
+            "genre": "PR"
           },
-          {
-            "type": "ExternalResourceTargetIntegrity",
-            "content": "./public/images/demo-2.png"
-          }
-        ]
-      },
-      {
-        "@context": [
-          "https://www.w3.org/ns/credentials/v2",
-          "https://originator-profile.org/ns/credentials/v1",
-          "https://originator-profile.org/ns/cip/v1",
-          {
-            "@language": "en"
-          }
-        ],
-        "type": [
-          "VerifiableCredential",
-          "ContentAttestation"
-        ],
-        "issuer": "dns:demo.exp.originator-profile.org",
-        "credentialSubject": {
-          "id": "urn:uuid:82591bd9-9f78-4b10-b8c5-433803fe55a9",
-          "type": "Advertorial",
-          "headline": "10 Must-Have PC Gadgets to Boosts Your Productivity",
-          "image": {
-            "id": "https://demo.exp.originator-profile.org/assets/images/advertorial-demo.png",
-            "content": "./public/images/advertorial-demo.png"
-          },
-          "description": "Advertorial Demo",
-          "author": [
-            "Hanako Yamada"
+          "allowedUrl": [
+            "https://demo.exp.originator-profile.org",
+            "http://localhost:5173",
+            "http://localhost:4173"
           ],
-          "editor": [
-            "Taro Yamada"
-          ],
-          "sponsor": [
-            "demo sponsor"
-          ],
-          "datePublished": "2025-10-24T19:14:00Z",
-          "dateModified": "2025-10-24T19:14:00Z",
-          "genre": "PR"
+          "target": [
+            {
+              "type": "ExternalResourceTargetIntegrity",
+              "content": "./public/images/advertorial-demo.png"
+            }
+          ]
         },
-        "allowedUrl": [
-          "https://demo.exp.originator-profile.org",
-          "http://localhost:5173",
-          "http://localhost:4173"
-        ],
-        "target": [
-          {
-            "type": "ExternalResourceTargetIntegrity",
-            "content": "./public/images/advertorial-demo.png"
-          }
-        ]
-      },
-      {
-        "@context": [
-          "https://www.w3.org/ns/credentials/v2",
-          "https://originator-profile.org/ns/credentials/v1",
-          "https://originator-profile.org/ns/cip/v1",
-          {
-            "@language": "en"
-          }
-        ],
-        "type": [
-          "VerifiableCredential",
-          "ContentAttestation"
-        ],
-        "issuer": "dns:demo.exp.originator-profile.org",
-        "credentialSubject": {
-          "id": "urn:uuid:5cb8c52d-402a-437b-bb41-389e54712600",
-          "type": "Article",
-          "headline": "A Pause in the Evening City",
-          "image": {
-            "id": "https://demo.exp.originator-profile.org/assets/images/multiple-sri-demo.png",
-            "content": "./public/images/multiple-sri-demo.png"
+        {
+          "@context": [
+            "https://www.w3.org/ns/credentials/v2",
+            "https://originator-profile.org/ns/credentials/v1",
+            "https://originator-profile.org/ns/cip/v1",
+            {
+              "@language": "en"
+            }
+          ],
+          "type": ["VerifiableCredential", "ContentAttestation"],
+          "issuer": "dns:demo.exp.originator-profile.org",
+          "credentialSubject": {
+            "id": "urn:uuid:5cb8c52d-402a-437b-bb41-389e54712600",
+            "type": "Article",
+            "headline": "A Pause in the Evening City",
+            "image": {
+              "id": "https://demo.exp.originator-profile.org/assets/images/multiple-sri-demo.png",
+              "content": "./public/images/multiple-sri-demo.png"
+            },
+            "description": "This article is a demo content with multiple images(multiple SRI values).",
+            "author": ["Hanako Yamada"],
+            "editor": ["Taro Yamada"],
+            "datePublished": "2025-10-24T19:14:00Z",
+            "dateModified": "2025-10-24T19:14:00Z",
+            "genre": "Arts & Entertainment"
           },
-          "description": "This article is a demo content with multiple images(multiple SRI values).",
-          "author": [
-            "Hanako Yamada"
+          "allowedUrl": [
+            "https://demo.exp.originator-profile.org/*",
+            "http://localhost:5173/*",
+            "http://localhost:4173/*"
           ],
-          "editor": [
-            "Taro Yamada"
-          ],
-          "datePublished": "2025-10-24T19:14:00Z",
-          "dateModified": "2025-10-24T19:14:00Z",
-          "genre": "Arts & Entertainment"
-        },
-        "allowedUrl": [
-          "https://demo.exp.originator-profile.org/*",
-          "http://localhost:4173/*",
-          "http://localhost:5173/*"
-        ],
-        "target": [
-          {
-            "type": "ExternalResourceTargetIntegrity",
-            "content": [
-              "./public/images/multiple-sri-demo.png",
-              "./public/images/multiple-sri-demo-320w.png",
-              "./public/images/multiple-sri-demo-640w.png"
-            ]
-          }
-        ]
-      }
-    ]
+          "target": [
+            {
+              "type": "ExternalResourceTargetIntegrity",
+              "content": [
+                "./public/images/multiple-sri-demo.png",
+                "./public/images/multiple-sri-demo-320w.png",
+                "./public/images/multiple-sri-demo-640w.png"
+              ]
+            }
+          ]
+        }
+      ]
     </script>
     <header>
       <h1>Demo Page</h1>

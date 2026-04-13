@@ -1,8 +1,6 @@
 # demo-page
 
-[Originator Profile](https://docs.originator-profile.org/) の OPS / CAS / Site Profile を含むデモページです。Cloudflare Workers にデプロイされます。
-
-https://demo.exp.originator-profile.org/
+[Originator Profile](https://docs.originator-profile.org/) の OPS / CAS / Site Profile を含むデモページです。Cloudflare Workers ( https://demo.exp.originator-profile.org/ ) にデプロイされます。
 
 ## セットアップ
 
@@ -35,7 +33,26 @@ pnpm build
 pnpm preview
 ```
 
-http://localhost:4173/en/ もしくは http://localhost:4173/ja/ でビルド結果を確認できます。`pnpm preview` では拡張機能を利用して CAS の検証が可能です。
+http://localhost:4173/en/ もしくは http://localhost:4173/ja/ でビルド結果を確認できます。
+
+## 署名鍵
+
+| 環境         | 鍵の供給元         | 説明                           |
+| ------------ | ------------------ | ------------------------------ |
+| ローカル開発 | `.env.development` | `dns:localhost` の公開テスト鍵 |
+| 本番ビルド   | `wrangler secret`  | 各 issuer の本番秘密鍵         |
+
+本番用の署名鍵は Wrangler Secrets で設定してください:
+
+```bash
+npx wrangler secret put VITE_SIGNING_KEY_DEMO
+npx wrangler secret put VITE_SIGNING_KEY_ANOTHER
+```
+
+| シークレット名             | 対応する issuer                                     |
+| -------------------------- | --------------------------------------------------- |
+| `VITE_SIGNING_KEY_DEMO`    | `dns:demo.exp.originator-profile.org`               |
+| `VITE_SIGNING_KEY_ANOTHER` | `dns:another-originator.exp.originator-profile.org` |
 
 ## デプロイ
 
@@ -65,7 +82,7 @@ npx wrangler deploy  # pnpm build 後に実行
 
 - `image.content`: ローカル画像パス → `digestSRI` を計算
 - `ExternalResourceTargetIntegrity.content`: ローカルファイルパス → `integrity` を計算
-- `HtmlTargetIntegrity`: ビルド時に HTML DOM から `integrity` を計算
+- `BasicTarget`: ビルド時に HTML DOM から `integrity` を計算
 
 ## プロジェクト構成
 
@@ -78,7 +95,7 @@ demo-page/
 │   ├── images/                # 画像アセット
 │   └── ads/                   # 広告デモ用 HTML
 ├── worker/index.ts            # Cloudflare Worker（言語リダイレクト、画像 CORS）
-├── vite.config.js             # Vite + Cloudflare + originator-profile plugin
+├── vite.config.js             # Vite 設定
 ├── wrangler.toml              # Cloudflare Workers 設定
 ├── .env                       # 署名鍵（gitignore）
 └── .env.example               # .env のテンプレート

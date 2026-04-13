@@ -158,203 +158,173 @@
       ]
     </script>
     <script type="application/cas+json">
-    [
-      {
-        "@context": [
-          "https://www.w3.org/ns/credentials/v2",
-          "https://originator-profile.org/ns/credentials/v1",
-          "https://originator-profile.org/ns/cip/v1",
-          {
-            "@language": "ja"
-          }
-        ],
-        "type": [
-          "VerifiableCredential",
-          "ContentAttestation"
-        ],
-        "issuer": "dns:demo.exp.originator-profile.org",
-        "credentialSubject": {
-          "id": "urn:uuid:d8043b97-324d-4f48-9ecd-ddf944f8e44e",
-          "type": "Article",
-          "headline": "生産性を高めるワークスペースの作り方",
-          "image": {
-            "id": "https://demo.exp.originator-profile.org/assets/images/demo-1.png",
-            "content": "./public/images/demo-1.png"
+      [
+        {
+          "@context": [
+            "https://www.w3.org/ns/credentials/v2",
+            "https://originator-profile.org/ns/credentials/v1",
+            "https://originator-profile.org/ns/cip/v1",
+            {
+              "@language": "ja"
+            }
+          ],
+          "type": ["VerifiableCredential", "ContentAttestation"],
+          "issuer": "dns:demo.exp.originator-profile.org",
+          "credentialSubject": {
+            "id": "urn:uuid:d8043b97-324d-4f48-9ecd-ddf944f8e44e",
+            "type": "Article",
+            "headline": "生産性を高めるワークスペースの作り方",
+            "image": {
+              "id": "https://demo.exp.originator-profile.org/assets/images/demo-1.png",
+              "content": "./public/images/demo-1.png"
+            },
+            "description": "複数のOPSとCASがあるデモページ",
+            "author": ["山田花子"],
+            "editor": ["山田太郎"],
+            "datePublished": "2025-07-04T19:14:00Z",
+            "dateModified": "2025-07-04T19:14:00Z",
+            "genre": "Arts & Entertainment"
           },
-          "description": "複数のOPSとCASがあるデモページ",
-          "author": [
-            "山田花子"
+          "allowedUrl": [
+            "https://demo.exp.originator-profile.org/*",
+            "http://localhost:5173/*",
+            "http://localhost:4173/*"
           ],
-          "editor": [
-            "山田太郎"
-          ],
-          "datePublished": "2025-07-04T19:14:00Z",
-          "dateModified": "2025-07-04T19:14:00Z",
-          "genre": "Arts & Entertainment"
+          "target": [
+            {
+              "type": "HtmlTargetIntegrity",
+              "cssSelector": "#html-target-integrity-demo1"
+            },
+            {
+              "type": "ExternalResourceTargetIntegrity",
+              "content": "./public/images/demo-1.png"
+            }
+          ]
         },
-        "allowedUrl": [
-          "https://demo.exp.originator-profile.org/*",
-          "http://localhost:5173/*",
-          "http://localhost:4173/*"
-        ],
-        "target": [
-          {
-            "type": "HtmlTargetIntegrity",
-            "cssSelector": "#html-target-integrity-demo1"
-          },
-          {
-            "type": "ExternalResourceTargetIntegrity",
-            "content": "./public/images/demo-1.png"
-          }
-        ]
-      },
-      {
-        "@context": [
-          "https://www.w3.org/ns/credentials/v2",
-          "https://originator-profile.org/ns/credentials/v1",
-          "https://originator-profile.org/ns/cip/v1",
-          {
-            "@language": "ja"
-          }
-        ],
-        "type": [
-          "VerifiableCredential",
-          "ContentAttestation"
-        ],
-        "issuer": "dns:another-originator.exp.originator-profile.org",
-        "credentialSubject": {
-          "id": "urn:uuid:b5e5d0db-5367-459c-b3fd-94a2504eac50",
-          "type": "Article",
-          "headline": "心を癒す森の散策",
-          "image": {
-            "id": "https://demo.exp.originator-profile.org/assets/images/demo-2.png",
-            "content": "./public/images/demo-2.png"
-          },
-          "description": "複数のOPSとCASがあるデモページ",
-          "author": [
-            "山田花子"
+        {
+          "@context": [
+            "https://www.w3.org/ns/credentials/v2",
+            "https://originator-profile.org/ns/credentials/v1",
+            "https://originator-profile.org/ns/cip/v1",
+            {
+              "@language": "ja"
+            }
           ],
-          "editor": [
-            "山田太郎"
+          "type": ["VerifiableCredential", "ContentAttestation"],
+          "issuer": "dns:another-originator.exp.originator-profile.org",
+          "credentialSubject": {
+            "id": "urn:uuid:b5e5d0db-5367-459c-b3fd-94a2504eac50",
+            "type": "Article",
+            "headline": "心を癒す森の散策",
+            "image": {
+              "id": "https://demo.exp.originator-profile.org/assets/images/demo-2.png",
+              "content": "./public/images/demo-2.png"
+            },
+            "description": "複数のOPSとCASがあるデモページ",
+            "author": ["山田花子"],
+            "editor": ["山田太郎"],
+            "datePublished": "2025-07-04T19:14:00Z",
+            "dateModified": "2025-07-04T19:14:00Z",
+            "genre": "Arts & Entertainment"
+          },
+          "allowedUrl": [
+            "https://demo.exp.originator-profile.org",
+            "http://localhost:5173/*",
+            "http://localhost:4173/*"
           ],
-          "datePublished": "2025-07-04T19:14:00Z",
-          "dateModified": "2025-07-04T19:14:00Z",
-          "genre": "Arts & Entertainment"
+          "target": [
+            {
+              "type": "HtmlTargetIntegrity",
+              "cssSelector": "#html-target-integrity-demo2"
+            },
+            {
+              "type": "ExternalResourceTargetIntegrity",
+              "content": "./public/images/demo-2.png"
+            }
+          ]
         },
-        "allowedUrl": [
-          "https://demo.exp.originator-profile.org",
-          "http://localhost:5173/*",
-          "http://localhost:4173/*"
-        ],
-        "target": [
-          {
-            "type": "HtmlTargetIntegrity",
-            "cssSelector": "#html-target-integrity-demo2"
+        {
+          "@context": [
+            "https://www.w3.org/ns/credentials/v2",
+            "https://originator-profile.org/ns/credentials/v1",
+            "https://originator-profile.org/ns/cip/v1",
+            {
+              "@language": "ja"
+            }
+          ],
+          "type": ["VerifiableCredential", "ContentAttestation"],
+          "issuer": "dns:demo.exp.originator-profile.org",
+          "credentialSubject": {
+            "id": "urn:uuid:4fbbf378-355d-4883-b382-5bda03890f3d",
+            "type": "Advertorial",
+            "headline": "役に立つPCガジェット10選",
+            "image": {
+              "id": "https://demo.exp.originator-profile.org/assets/images/advertorial-demo.png",
+              "content": "./public/images/advertorial-demo.png"
+            },
+            "description": "記事広告のデモ",
+            "author": ["山田花子"],
+            "editor": ["山田太郎"],
+            "sponsor": ["デモ スポンサー"],
+            "datePublished": "2025-10-24T19:14:00Z",
+            "dateModified": "2025-10-24T19:14:00Z",
+            "genre": "PR"
           },
-          {
-            "type": "ExternalResourceTargetIntegrity",
-            "content": "./public/images/demo-2.png"
-          }
-        ]
-      },
-      {
-        "@context": [
-          "https://www.w3.org/ns/credentials/v2",
-          "https://originator-profile.org/ns/credentials/v1",
-          "https://originator-profile.org/ns/cip/v1",
-          {
-            "@language": "ja"
-          }
-        ],
-        "type": [
-          "VerifiableCredential",
-          "ContentAttestation"
-        ],
-        "issuer": "dns:demo.exp.originator-profile.org",
-        "credentialSubject": {
-          "id": "urn:uuid:4fbbf378-355d-4883-b382-5bda03890f3d",
-          "type": "Advertorial",
-          "headline": "役に立つPCガジェット10選",
-          "image": {
-            "id": "https://demo.exp.originator-profile.org/assets/images/advertorial-demo.png",
-            "content": "./public/images/advertorial-demo.png"
-          },
-          "description": "記事広告のデモ",
-          "author": [
-            "山田花子"
+          "allowedUrl": [
+            "https://demo.exp.originator-profile.org/*",
+            "http://localhost:5173/*",
+            "http://localhost:4173/*"
           ],
-          "editor": [
-            "山田太郎"
-          ],
-          "sponsor": [
-            "デモ スポンサー"
-          ],
-          "datePublished": "2025-10-24T19:14:00Z",
-          "dateModified": "2025-10-24T19:14:00Z",
-          "genre": "PR"
+          "target": [
+            {
+              "type": "ExternalResourceTargetIntegrity",
+              "content": "./public/images/advertorial-demo.png"
+            }
+          ]
         },
-        "allowedUrl": [
-          "https://demo.exp.originator-profile.org/*",
-          "http://localhost:5173/*",
-          "http://localhost:4173/*"
-        ],
-        "target": [
-          {
-            "type": "ExternalResourceTargetIntegrity",
-            "content": "./public/images/advertorial-demo.png"
-          }
-        ]
-      },
-      {
-        "@context": [
-          "https://www.w3.org/ns/credentials/v2",
-          "https://originator-profile.org/ns/credentials/v1",
-          "https://originator-profile.org/ns/cip/v1",
-          {
-            "@language": "ja"
-          }
-        ],
-        "type": [
-          "VerifiableCredential",
-          "ContentAttestation"
-        ],
-        "issuer": "dns:demo.exp.originator-profile.org",
-        "credentialSubject": {
-          "id": "urn:uuid:9a38a517-4355-43a1-9e22-fd36611e3966",
-          "type": "Article",
-          "headline": "夕暮れの街に一息を",
-          "image": {
-            "id": "https://demo.exp.originator-profile.org/assets/images/multiple-sri-demo.png",
-            "content": "./public/images/multiple-sri-demo.png"
+        {
+          "@context": [
+            "https://www.w3.org/ns/credentials/v2",
+            "https://originator-profile.org/ns/credentials/v1",
+            "https://originator-profile.org/ns/cip/v1",
+            {
+              "@language": "ja"
+            }
+          ],
+          "type": ["VerifiableCredential", "ContentAttestation"],
+          "issuer": "dns:demo.exp.originator-profile.org",
+          "credentialSubject": {
+            "id": "urn:uuid:9a38a517-4355-43a1-9e22-fd36611e3966",
+            "type": "Article",
+            "headline": "夕暮れの街に一息を",
+            "image": {
+              "id": "https://demo.exp.originator-profile.org/assets/images/multiple-sri-demo.png",
+              "content": "./public/images/multiple-sri-demo.png"
+            },
+            "description": "この記事は複数の画像（複数SRI）を含むデモ用コンテンツです。",
+            "author": ["山田花子"],
+            "editor": ["山田太郎"],
+            "datePublished": "2025-10-24T19:14:00Z",
+            "dateModified": "2025-10-24T19:14:00Z",
+            "genre": "Arts & Entertainment"
           },
-          "description": "この記事は複数の画像（複数SRI）を含むデモ用コンテンツです。",
-          "author": [
-            "山田花子"
+          "allowedUrl": [
+            "https://demo.exp.originator-profile.org/*",
+            "http://localhost:5173/*",
+            "http://localhost:4173/*"
           ],
-          "editor": [
-            "山田太郎"
-          ],
-          "datePublished": "2025-10-24T19:14:00Z",
-          "dateModified": "2025-10-24T19:14:00Z",
-          "genre": "Arts & Entertainment"
-        },
-        "allowedUrl": [
-          "https://demo.exp.originator-profile.org/*",
-          "http://localhost:4173/*",
-          "http://localhost:5173/*"
-        ],
-        "target": [
-          {
-            "type": "ExternalResourceTargetIntegrity",
-            "content": [
-              "./public/images/multiple-sri-demo.png",
-              "./public/images/multiple-sri-demo-320w.png",
-              "./public/images/multiple-sri-demo-640w.png"
-            ]
-          }
-        ]
-      }
-    ]
+          "target": [
+            {
+              "type": "ExternalResourceTargetIntegrity",
+              "content": [
+                "./public/images/multiple-sri-demo.png",
+                "./public/images/multiple-sri-demo-320w.png",
+                "./public/images/multiple-sri-demo-640w.png"
+              ]
+            }
+          ]
+        }
+      ]
     </script>
     <header>
       <h1>デモページ</h1>
