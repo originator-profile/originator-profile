@@ -5,7 +5,10 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { decodeJwt } from "jose";
 import { beforeAll, describe, expect, test } from "vitest";
-import { signSiteProfile } from "./sign-site-profile";
+import {
+  SiteProfileInputSchema,
+  signSiteProfile,
+} from "./sign-site-profile";
 
 let privateKey: Jwk;
 
@@ -136,18 +139,18 @@ describe("signSiteProfile", () => {
     expect(output.sites[1].startsWith("eyJ")).toBe(true);
   });
 
-  test("originators が空の場合エラー", async () => {
+  test("originators が空の場合スキーマバリデーションエラー", () => {
     const input = { originators: [], sites: [sampleUwsp] };
-    await expect(
-      signSiteProfile(input as never, signingCtx(), "/tmp"),
-    ).rejects.toThrow("originators must not be empty");
+    expect(() => SiteProfileInputSchema.parse(input)).toThrow(
+      "originators must not be empty",
+    );
   });
 
-  test("sites が空の場合エラー", async () => {
+  test("sites が空の場合スキーマバリデーションエラー", () => {
     const input = { originators: [{ core: "eyJ..." }], sites: [] };
-    await expect(
-      signSiteProfile(input as never, signingCtx(), "/tmp"),
-    ).rejects.toThrow("sites must not be empty");
+    expect(() => SiteProfileInputSchema.parse(input)).toThrow(
+      "sites must not be empty",
+    );
   });
 
   test("未登録の issuer はエラー", async () => {

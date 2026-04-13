@@ -4,7 +4,10 @@ import { dirname, resolve } from "node:path";
 import type { Plugin, ResolvedConfig } from "vite";
 import { parseExpiresIn, parseKey } from "./resolve-content";
 import { signCas } from "./sign-cas";
-import { signSiteProfile } from "./sign-site-profile";
+import {
+  SiteProfileInputSchema,
+  signSiteProfile,
+} from "./sign-site-profile";
 
 export type { OriginatorProfileOptions } from "./types";
 export { OriginatorProfileOptionsSchema } from "./types";
@@ -62,7 +65,7 @@ export function originatorProfile(
           ) as unknown;
 
           const output = await signSiteProfile(
-            input as never,
+            SiteProfileInputSchema.parse(input),
             { issuers, issuedAt, expiredAt },
             inputDir,
           );

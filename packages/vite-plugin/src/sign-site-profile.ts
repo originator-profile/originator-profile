@@ -37,8 +37,6 @@ export async function signSiteProfile(
   ctx: SigningContext,
   baseDir: string,
 ): Promise<SiteProfileOutput> {
-  SiteProfileInputSchema.parse(input);
-
   const signedSites = await Promise.all(
     input.sites.map(async (uwsp: UnsignedWebsiteProfile) => {
       resolveLocalContent(
