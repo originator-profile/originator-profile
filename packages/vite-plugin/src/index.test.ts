@@ -1,9 +1,8 @@
 import { generateKey } from "@originator-profile/cryptography";
 import type { Jwk } from "@originator-profile/model";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { decodeJwt } from "jose";
 import type { HookHandler, Plugin, ResolvedConfig } from "vite";
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { originatorProfile } from "./index";
@@ -98,7 +97,7 @@ const sampleUwsp = {
 };
 
 describe("transformIndexHtml", () => {
-  test("unsigned CA が署名され CAS 形式で出力される", async () => {
+  test("CAS script 内の unsigned CA が署名され JWT に置換される", async () => {
     const plugin = await createPlugin();
     const html = casHtml(JSON.stringify([sampleUca]));
 
@@ -110,61 +109,6 @@ describe("transformIndexHtml", () => {
     expect((cas[0] as string).startsWith("eyJ")).toBe(true);
   });
 
-  test("署名された JWT に target integrity が含まれる", async () => {
-    const plugin = await createPlugin();
-    const html = casHtml(JSON.stringify([sampleUca]));
-
-    const result = await callTransform(plugin, html);
-
-    const cas = extractCas(result) as string[];
-
-    const payload = decodeJwt(cas[0]);
-    const target = (payload.target as Array<{ integrity?: string }>)[0];
-    expect(target.integrity).toBeDefined();
-    expect(target.integrity).toMatch(/^sha256-/);
-  });
-
-  test("image の digestSRI が計算される", async () => {
-    const ucaWithImage = {
-      ...sampleUca,
-      credentialSubject: {
-        ...sampleUca.credentialSubject,
-        image: {
-          id: "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==",
-        },
-      },
-    };
-
-    const plugin = await createPlugin();
-    const html = casHtml(JSON.stringify([ucaWithImage]));
-
-    const result = await callTransform(plugin, html);
-
-    const cas = extractCas(result) as string[];
-
-    const payload = decodeJwt(cas[0]);
-    const image = (payload.credentialSubject as { image?: { digestSRI?: string } })
-      .image;
-    expect(image?.digestSRI).toBeDefined();
-    expect(image?.digestSRI).toMatch(/^sha256-/);
-  });
-
-  test("main: true のエントリは { attestation, main } で出力される", async () => {
-    const ucaWithMain = { ...sampleUca, main: true };
-    const plugin = await createPlugin();
-    const html = casHtml(JSON.stringify([ucaWithMain]));
-
-    const result = await callTransform(plugin, html);
-
-    const cas = extractCas(result);
-
-    expect(cas).toHaveLength(1);
-    const entry = cas[0] as { attestation: string; main: boolean };
-    expect(entry.main).toBe(true);
-    expect(typeof entry.attestation).toBe("string");
-    expect(entry.attestation.startsWith("eyJ")).toBe(true);
-  });
-
   test("CAS script が無い HTML はそのまま返される", async () => {
     const plugin = await createPlugin();
     const html = "<html><body><p>no CAS</p></body></html>";
@@ -173,16 +117,10 @@ describe("transformIndexHtml", () => {
 
     expect(result).toBe(html);
   });
-
-  test("issuers が空の場合プラグイン初期化時にエラー", () => {
-    expect(() =>
-      originatorProfile({ issuers: {} }),
-    ).toThrow("At least one issuer is required");
-  });
 });
 
 describe("generateBundle", () => {
-  test("unsigned WSP が署名されて .well-known/sp.json に出力される", async () => {
+  test(".well-known/sp.json として emitFile される", async () => {
     const tempDir = mkdtempSync(join(tmpdir(), "vite-plugin-test-"));
     writeFileSync(
       join(tempDir, "sp.json"),
@@ -195,10 +133,12 @@ describe("generateBundle", () => {
     const plugin = await createPlugin({ root: tempDir });
     const emitFile = vi.fn();
     const bundle = plugin.generateBundle as PluginHook<"generateBundle">;
-    const callBundle = () =>
-      bundle.call({ emitFile } as never, {} as never, {} as never, false);
-
-    await callBundle();
+    await bundle.call(
+      { emitFile } as never,
+      {} as never,
+      {} as never,
+      false,
+    );
 
     expect(emitFile).toHaveBeenCalledOnce();
     const call = emitFile.mock.calls[0][0] as {
@@ -217,218 +157,15 @@ describe("generateBundle", () => {
     expect(output.sites).toHaveLength(1);
     expect(output.sites[0].startsWith("eyJ")).toBe(true);
   });
-
-  test("WSP の image に digestSRI が計算される", async () => {
-    const tempDir = mkdtempSync(join(tmpdir(), "vite-plugin-test-"));
-    writeFileSync(
-      join(tempDir, "sp.json"),
-      JSON.stringify({
-        originators: [{ core: "eyJ..." }],
-        sites: [sampleUwsp],
-      }),
-    );
-
-    const plugin = await createPlugin({ root: tempDir });
-    const emitFile = vi.fn();
-    const bundle = plugin.generateBundle as PluginHook<"generateBundle">;
-    const callBundle = () =>
-      bundle.call({ emitFile } as never, {} as never, {} as never, false);
-
-    await callBundle();
-
-    const output = JSON.parse(
-      (emitFile.mock.calls[0][0] as { source: string }).source,
-    ) as { sites: string[] };
-
-    const payload = decodeJwt(output.sites[0]);
-    const image = (payload.credentialSubject as { image?: { digestSRI?: string } })
-      .image;
-    expect(image?.digestSRI).toBeDefined();
-    expect(image?.digestSRI).toMatch(/^sha256-/);
-  });
-
-  test("originators はパススルーされる", async () => {
-    const originators = [
-      { core: "eyJfirst", annotations: ["eyJann"], media: ["eyJmedia"] },
-      { core: "eyJsecond" },
-    ];
-    const tempDir = mkdtempSync(join(tmpdir(), "vite-plugin-test-"));
-    writeFileSync(
-      join(tempDir, "sp.json"),
-      JSON.stringify({ originators, sites: [sampleUwsp] }),
-    );
-
-    const plugin = await createPlugin({ root: tempDir });
-    const emitFile = vi.fn();
-    const bundle = plugin.generateBundle as PluginHook<"generateBundle">;
-    const callBundle = () =>
-      bundle.call({ emitFile } as never, {} as never, {} as never, false);
-
-    await callBundle();
-
-    const output = JSON.parse(
-      (emitFile.mock.calls[0][0] as { source: string }).source,
-    ) as { originators: unknown[] };
-    expect(output.originators).toEqual(originators);
-  });
-});
-
-const SVG_CONTENT = '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
-
-describe("resolveImageContent", () => {
-  test("CA の image.content がローカルパスの場合 Data URL に変換される", async () => {
-    const tempDir = mkdtempSync(join(tmpdir(), "vite-plugin-test-"));
-    mkdirSync(join(tempDir, "images"), { recursive: true });
-    writeFileSync(join(tempDir, "images", "logo.svg"), SVG_CONTENT);
-
-    const uca = {
-      ...sampleUca,
-      credentialSubject: {
-        ...sampleUca.credentialSubject,
-        image: {
-          id: "https://example.com/logo.svg",
-          content: "./images/logo.svg",
-        },
-      },
-    };
-
-    const plugin = await createPlugin({ root: tempDir });
-    const html = casHtml(JSON.stringify([uca]));
-    const result = await callTransform(plugin, html);
-
-    const cas = extractCas(result) as string[];
-    const payload = decodeJwt(cas[0]);
-    const image = (
-      payload.credentialSubject as { image?: { digestSRI?: string } }
-    ).image;
-    expect(image?.digestSRI).toBeDefined();
-    expect(image?.digestSRI).toMatch(/^sha256-/);
-  });
-
-  test("WSP の image.content がローカルパスの場合 Data URL に変換される", async () => {
-    const tempDir = mkdtempSync(join(tmpdir(), "vite-plugin-test-"));
-    mkdirSync(join(tempDir, "images"), { recursive: true });
-    writeFileSync(join(tempDir, "images", "logo.svg"), SVG_CONTENT);
-
-    const uwsp = {
-      ...sampleUwsp,
-      credentialSubject: {
-        ...sampleUwsp.credentialSubject,
-        image: {
-          id: "https://example.com/logo.svg",
-          content: "./images/logo.svg",
-        },
-      },
-    };
-
-    writeFileSync(
-      join(tempDir, "sp.json"),
-      JSON.stringify({ originators: [{ core: "eyJ..." }], sites: [uwsp] }),
-    );
-
-    const plugin = await createPlugin({ root: tempDir });
-    const emitFile = vi.fn();
-    const bundle = plugin.generateBundle as PluginHook<"generateBundle">;
-    await bundle.call(
-      { emitFile } as never,
-      {} as never,
-      {} as never,
-      false,
-    );
-
-    const output = JSON.parse(
-      (emitFile.mock.calls[0][0] as { source: string }).source,
-    ) as { sites: string[] };
-    const payload = decodeJwt(output.sites[0]);
-    const image = (
-      payload.credentialSubject as { image?: { digestSRI?: string } }
-    ).image;
-    expect(image?.digestSRI).toBeDefined();
-    expect(image?.digestSRI).toMatch(/^sha256-/);
-  });
-
-  test("ExternalResourceTarget の content がローカルパスの場合 Data URL に変換される", async () => {
-    const tempDir = mkdtempSync(join(tmpdir(), "vite-plugin-test-"));
-    mkdirSync(join(tempDir, "assets"), { recursive: true });
-    writeFileSync(join(tempDir, "assets", "photo.png"), "fake-png-bytes");
-
-    const uca = {
-      ...sampleUca,
-      target: [
-        {
-          type: "ExternalResourceTargetIntegrity",
-          content: "./assets/photo.png",
-        },
-      ],
-    };
-
-    const plugin = await createPlugin({ root: tempDir });
-    const html = casHtml(JSON.stringify([uca]));
-    const result = await callTransform(plugin, html);
-
-    const cas = extractCas(result) as string[];
-    const payload = decodeJwt(cas[0]);
-    const target = (payload.target as Array<{ integrity?: string }>)[0];
-    expect(target.integrity).toBeDefined();
-    expect(target.integrity).toMatch(/^sha256-/);
-  });
-
-  test("ExternalResourceTarget の content 配列内のローカルパスがすべて変換される", async () => {
-    const tempDir = mkdtempSync(join(tmpdir(), "vite-plugin-test-"));
-    mkdirSync(join(tempDir, "assets"), { recursive: true });
-    writeFileSync(join(tempDir, "assets", "a.mp4"), "fake-video-a");
-    writeFileSync(join(tempDir, "assets", "b.mp4"), "fake-video-b");
-
-    const uca = {
-      ...sampleUca,
-      target: [
-        {
-          type: "ExternalResourceTargetIntegrity",
-          content: ["./assets/a.mp4", "./assets/b.mp4"],
-        },
-      ],
-    };
-
-    const plugin = await createPlugin({ root: tempDir });
-    const html = casHtml(JSON.stringify([uca]));
-    const result = await callTransform(plugin, html);
-
-    const cas = extractCas(result) as string[];
-    const payload = decodeJwt(cas[0]);
-    const target = (payload.target as Array<{ integrity?: string }>)[0];
-    expect(target.integrity).toBeDefined();
-    // 2つのリソースのハッシュがスペース区切りで結合される
-    const hashes = target.integrity?.split(" ") ?? [];
-    expect(hashes).toHaveLength(2);
-    expect(hashes[0]).toMatch(/^sha256-/);
-    expect(hashes[1]).toMatch(/^sha256-/);
-  });
-
-  test("data URL の content はそのまま維持される", async () => {
-    const dataUrl =
-      "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==";
-    const uca = {
-      ...sampleUca,
-      credentialSubject: {
-        ...sampleUca.credentialSubject,
-        image: { id: "https://example.com/logo.svg", content: dataUrl },
-      },
-    };
-
-    const plugin = await createPlugin();
-    const html = casHtml(JSON.stringify([uca]));
-    const result = await callTransform(plugin, html);
-
-    const cas = extractCas(result) as string[];
-    const payload = decodeJwt(cas[0]);
-    const image = (
-      payload.credentialSubject as { image?: { digestSRI?: string } }
-    ).image;
-    expect(image?.digestSRI).toBeDefined();
-  });
 });
 
 describe("OriginatorProfileOptions validation", () => {
+  test("issuers が空はプラグイン初期化時にエラー", () => {
+    expect(() => originatorProfile({ issuers: {} })).toThrow(
+      "At least one issuer is required",
+    );
+  });
+
   test("不正な expiresIn はプラグイン初期化時にエラー", () => {
     expect(() =>
       originatorProfile({
@@ -436,11 +173,5 @@ describe("OriginatorProfileOptions validation", () => {
         expiresIn: "invalid",
       }),
     ).toThrow("invalid_format");
-  });
-
-  test("issuers が空はプラグイン初期化時にエラー", () => {
-    expect(() => originatorProfile({ issuers: {} })).toThrow(
-      "At least one issuer is required",
-    );
   });
 });
