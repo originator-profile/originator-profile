@@ -183,6 +183,12 @@ describe("parseKey", () => {
   test("不正な JSON 文字列は issuer なしでもエラー", () => {
     expect(() => parseKey("not-json")).toThrow("Invalid signing key");
   });
+
+  test("kty が欠落した JSON はバリデーションエラー", () => {
+    expect(() => parseKey('{"kid":"test"}', "dns:example.com")).toThrow(
+      'Invalid signing key for issuer "dns:example.com"',
+    );
+  });
 });
 
 describe("resolveKey", () => {

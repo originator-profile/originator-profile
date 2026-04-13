@@ -1,4 +1,4 @@
-import type { Jwk } from "@originator-profile/model";
+import { Jwk as JwkSchema, type Jwk } from "@originator-profile/model";
 import { readFileSync } from "node:fs";
 import { extname, resolve } from "node:path";
 
@@ -77,12 +77,20 @@ export function parseExpiresIn(expiresIn: string, from: Date): Date {
 
 export function parseKey(value: string | Jwk, issuer?: string): Jwk {
   if (typeof value !== "string") return value;
+  const context = issuer ? ` for issuer "${issuer}"` : "";
+  let parsed: unknown;
   try {
-    return JSON.parse(value) as Jwk;
+    parsed = JSON.parse(value);
   } catch {
-    const context = issuer ? ` for issuer "${issuer}"` : "";
     throw new Error(`Invalid signing key${context}: expected valid JSON`);
   }
+  const result = JwkSchema.safeParse(parsed);
+  if (!result.success) {
+    throw new Error(
+      `Invalid signing key${context}: ${result.error.issues[0].message}`,
+    );
+  }
+  return result.data;
 }
 
 export function resolveKey(
