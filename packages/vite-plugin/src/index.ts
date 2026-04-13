@@ -1,124 +1,29 @@
-import type {
-  Jwk,
-  RawImage,
-  RawTarget,
-  UnsignedContentAttestation,
-  UnsignedWebsiteProfile,
-} from "@originator-profile/model";
-import {
-  ContentAttestation,
-  WebsiteProfile,
-} from "@originator-profile/opvc";
+import type { Jwk, UnsignedContentAttestation } from "@originator-profile/model";
 import { readFileSync } from "node:fs";
-import { dirname, extname, resolve } from "node:path";
+import { dirname, resolve } from "node:path";
 import type { IndexHtmlTransformContext, Plugin, ResolvedConfig } from "vite";
+import { parseExpiresIn, parseKey } from "./resolve-content";
+import { signCas } from "./sign-cas";
+import {
+  signSiteProfile,
+  type SiteProfileInput,
+} from "./sign-site-profile";
 
-export interface OriginatorProfileOptions {
-  /** Mapping of OP ID to signing key (JWK object or JSON string). */
-  issuers: Record<string, string | Jwk>;
-  /** Duration until signed credentials expire. Defaults to "1y". */
-  expiresIn?: string;
-  wsp?: {
-    /** Path to unsigned Site Profile, relative to project root. Defaults to "./sp.json". */
-    input?: string;
-  };
-}
+export type { OriginatorProfileOptions } from "./types";
 
-interface SiteProfileInput {
-  originators: unknown[];
-  sites: UnsignedWebsiteProfile[];
-}
+export { signCas } from "./sign-cas";
+export { signSiteProfile } from "./sign-site-profile";
+export {
+  fileToDataUrl,
+  isLocalPath,
+  parseExpiresIn,
+  resolveLocalContent,
+} from "./resolve-content";
+
+import type { OriginatorProfileOptions } from "./types";
 
 const CAS_RE =
   /<script\b[^>]*\btype\s*=\s*["']application\/cas\+json["'][^>]*>([\s\S]*?)<\/script>/g;
-
-function parseExpiresIn(expiresIn: string, from: Date): Date {
-  const match = expiresIn.match(/^(\d+)([ymd])$/);
-  if (!match) {
-    throw new Error(
-      `Invalid expiresIn format: "${expiresIn}". Use "1y", "6m", or "30d".`,
-    );
-  }
-  const amount = Number(match[1]);
-  const unit = match[2];
-  const result = new Date(from);
-  switch (unit) {
-    case "y":
-      result.setFullYear(result.getFullYear() + amount);
-      break;
-    case "m":
-      result.setMonth(result.getMonth() + amount);
-      break;
-    case "d":
-      result.setDate(result.getDate() + amount);
-      break;
-  }
-  return result;
-}
-
-function parseKey(value: string | Jwk): Jwk {
-  return typeof value === "string" ? (JSON.parse(value) as Jwk) : value;
-}
-
-function resolveKey(issuers: Record<string, Jwk>, issuer: string): Jwk {
-  const key = issuers[issuer];
-  if (!key) {
-    throw new Error(
-      `No signing key found for issuer "${issuer}". ` +
-        `Registered issuers: ${Object.keys(issuers).join(", ")}`,
-    );
-  }
-  return key;
-}
-
-const MEDIA_MIME: Record<string, string> = {
-  // image
-  ".avif": "image/avif",
-  ".gif": "image/gif",
-  ".ico": "image/x-icon",
-  ".jpeg": "image/jpeg",
-  ".jpg": "image/jpeg",
-  ".png": "image/png",
-  ".svg": "image/svg+xml",
-  ".webp": "image/webp",
-  // video
-  ".mp4": "video/mp4",
-  ".ogg": "video/ogg",
-  ".webm": "video/webm",
-  // audio
-  ".aac": "audio/aac",
-  ".flac": "audio/flac",
-  ".mp3": "audio/mpeg",
-  ".wav": "audio/wav",
-};
-
-function isLocalPath(value: string): boolean {
-  return !value.startsWith("data:") && !/^https?:\/\//.test(value);
-}
-
-function fileToDataUrl(filePath: string): string {
-  const bytes = readFileSync(filePath);
-  const mime =
-    MEDIA_MIME[extname(filePath).toLowerCase()] ?? "application/octet-stream";
-  return `data:${mime};base64,${bytes.toString("base64")}`;
-}
-
-function resolveLocalContent(
-  obj: { content?: string | string[] } | undefined,
-  baseDir: string,
-): void {
-  if (!obj?.content) return;
-
-  if (typeof obj.content === "string") {
-    if (isLocalPath(obj.content)) {
-      obj.content = fileToDataUrl(resolve(baseDir, obj.content));
-    }
-  } else {
-    obj.content = obj.content.map((c) =>
-      isLocalPath(c) ? fileToDataUrl(resolve(baseDir, c)) : c,
-    );
-  }
-}
 
 export function originatorProfile(
   options: OriginatorProfileOptions,
@@ -146,6 +51,7 @@ export function originatorProfile(
       if (matches.length === 0) return html;
 
       const baseDir = dirname(ctx.filename);
+      const signingCtx = { issuers, issuedAt, expiredAt };
 
       const replacements = await Promise.all(
         matches.map(async ([fullMatch, jsonContent]) => {
@@ -153,27 +59,7 @@ export function originatorProfile(
             UnsignedContentAttestation & { main?: boolean }
           >;
 
-          const signed = await Promise.all(
-            entries.map(async (entry) => {
-              const { main, ...uca } = entry;
-              resolveLocalContent(
-                uca.credentialSubject.image as RawImage | undefined,
-                baseDir,
-              );
-              for (const target of uca.target) {
-                resolveLocalContent(target as RawTarget, baseDir);
-              }
-              const key = resolveKey(issuers, uca.issuer);
-
-              const jwt = await ContentAttestation.sign(
-                uca as UnsignedContentAttestation,
-                key,
-                { issuedAt, expiredAt },
-              );
-
-              return main ? { attestation: jwt, main: true } : jwt;
-            }),
-          );
+          const signed = await signCas(entries, signingCtx, baseDir);
 
           return {
             from: fullMatch,
@@ -196,28 +82,16 @@ export function originatorProfile(
         readFileSync(inputPath, "utf-8"),
       ) as SiteProfileInput;
 
-      const signedSites = await Promise.all(
-        input.sites.map(async (uwsp) => {
-          resolveLocalContent(
-            uwsp.credentialSubject.image as RawImage | undefined,
-            inputDir,
-          );
-          const key = resolveKey(issuers, uwsp.issuer);
-
-          return await WebsiteProfile.sign(uwsp, key, {
-            issuedAt,
-            expiredAt,
-          });
-        }),
+      const output = await signSiteProfile(
+        input,
+        { issuers, issuedAt, expiredAt },
+        inputDir,
       );
 
       this.emitFile({
         type: "asset",
         fileName: ".well-known/sp.json",
-        source: JSON.stringify({
-          originators: input.originators,
-          sites: signedSites,
-        }),
+        source: JSON.stringify(output),
       });
     },
   };
