@@ -167,6 +167,18 @@ See the [`UnsignedContentAttestation` model](https://github.com/originator-profi
 
 Entries without `main: true` are serialized as bare JWT strings. Entries with `main: true` are serialized as `{ "attestation": "eyJ...", "main": true }`.
 
+## Limitations
+
+### `ExternalResourceTargetIntegrity` requires manual `integrity` attribute
+
+When using [`ExternalResourceTargetIntegrity`](https://docs.originator-profile.org/en/opb/content-integrity-descriptor/external-resource/), verifiers [locate target elements by matching the `integrity` HTML attribute](https://docs.originator-profile.org/en/opb/content-integrity-descriptor/external-resource/#how-to-identify-element-location). This plugin computes the `integrity` value and includes it in the signed CA, but **does not** automatically add the `integrity` attribute to the corresponding HTML elements.
+
+You must manually set the `integrity` attribute on each `<img>`, `<source>`, or other resource element to match the signed value:
+
+```html
+<img src="https://example.com/image.png" integrity="sha256-..." />
+```
+
 ## License
 
 Apache-2.0
