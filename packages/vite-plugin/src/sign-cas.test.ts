@@ -1,9 +1,12 @@
 import { generateKey } from "@originator-profile/cryptography";
-import type { Jwk, UnsignedContentAttestation } from "@originator-profile/model";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import type {
+  Jwk,
+  UnsignedContentAttestation,
+} from "@originator-profile/model";
+import { decodeJwt } from "jose";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { decodeJwt } from "jose";
 import { beforeAll, describe, expect, test } from "vitest";
 import { signCas } from "./sign-cas";
 

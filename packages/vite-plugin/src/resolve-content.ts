@@ -93,10 +93,7 @@ export function parseKey(value: string | Jwk, issuer?: string): Jwk {
   return result.data;
 }
 
-export function resolveKey(
-  issuers: Record<string, Jwk>,
-  issuer: string,
-): Jwk {
+export function resolveKey(issuers: Record<string, Jwk>, issuer: string): Jwk {
   const key = issuers[issuer];
   if (!key) {
     throw new Error(

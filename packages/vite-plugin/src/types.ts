@@ -8,11 +8,9 @@ const ExpiresIn = z
 const SigningKey = z.union([z.string(), Jwk]);
 
 export const OriginatorProfileOptionsSchema = z.object({
-  issuers: z
-    .record(OpId, SigningKey)
-    .refine((v) => Object.keys(v).length > 0, {
-      message: "At least one issuer is required",
-    }),
+  issuers: z.record(OpId, SigningKey).refine((v) => Object.keys(v).length > 0, {
+    message: "At least one issuer is required",
+  }),
   expiresIn: ExpiresIn.optional(),
   wsp: z
     .object({

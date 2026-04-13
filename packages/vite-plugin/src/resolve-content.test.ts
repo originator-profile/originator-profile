@@ -150,9 +150,7 @@ describe("parseExpiresIn", () => {
     expect(() => parseExpiresIn("1x", base)).toThrow(
       "Invalid expiresIn format",
     );
-    expect(() => parseExpiresIn("", base)).toThrow(
-      "Invalid expiresIn format",
-    );
+    expect(() => parseExpiresIn("", base)).toThrow("Invalid expiresIn format");
   });
 });
 

@@ -1,14 +1,11 @@
 import { generateKey } from "@originator-profile/cryptography";
 import type { Jwk, UnsignedWebsiteProfile } from "@originator-profile/model";
-import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
+import { decodeJwt } from "jose";
+import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
-import { decodeJwt } from "jose";
 import { beforeAll, describe, expect, test } from "vitest";
-import {
-  SiteProfileInputSchema,
-  signSiteProfile,
-} from "./sign-site-profile";
+import { SiteProfileInputSchema, signSiteProfile } from "./sign-site-profile";
 
 let privateKey: Jwk;
 

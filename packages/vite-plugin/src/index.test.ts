@@ -38,8 +38,7 @@ function casHtml(json: string): string {
 </body></html>`;
 }
 
-const CAS_RE =
-  /<script type="application\/cas\+json">([\s\S]*?)<\/script>/;
+const CAS_RE = /<script type="application\/cas\+json">([\s\S]*?)<\/script>/;
 
 function extractCas(html: string): unknown[] {
   const match = html.match(CAS_RE);
@@ -133,12 +132,7 @@ describe("generateBundle", () => {
     const plugin = await createPlugin({ root: tempDir });
     const emitFile = vi.fn();
     const bundle = plugin.generateBundle as PluginHook<"generateBundle">;
-    await bundle.call(
-      { emitFile } as never,
-      {} as never,
-      {} as never,
-      false,
-    );
+    await bundle.call({ emitFile } as never, {} as never, {} as never, false);
 
     expect(emitFile).toHaveBeenCalledOnce();
     const call = emitFile.mock.calls[0][0] as {

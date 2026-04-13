@@ -161,7 +161,7 @@ See the [`UnsignedContentAttestation` model](https://github.com/originator-profi
 
 ```html
 <script type="application/cas+json">
-[{"attestation":"eyJ...signed","main":true}]
+  [{ "attestation": "eyJ...signed", "main": true }]
 </script>
 ```
 

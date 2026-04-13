@@ -15,8 +15,12 @@ const OriginatorProfile = z.looseObject({
 });
 
 export const SiteProfileInputSchema = z.object({
-  originators: z.array(OriginatorProfile).min(1, "originators must not be empty"),
-  sites: z.array(UnsignedWebsiteProfileSchema).min(1, "sites must not be empty"),
+  originators: z
+    .array(OriginatorProfile)
+    .min(1, "originators must not be empty"),
+  sites: z
+    .array(UnsignedWebsiteProfileSchema)
+    .min(1, "sites must not be empty"),
 });
 
 export type SiteProfileInput = z.infer<typeof SiteProfileInputSchema>;

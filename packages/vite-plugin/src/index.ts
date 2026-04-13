@@ -1,26 +1,29 @@
-import type { Jwk, UnsignedContentAttestation } from "@originator-profile/model";
+import type {
+  Jwk,
+  UnsignedContentAttestation,
+} from "@originator-profile/model";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import type { Plugin, ResolvedConfig } from "vite";
 import { parseExpiresIn, parseKey } from "./resolve-content";
 import { signCas } from "./sign-cas";
 import {
+  signSiteProfile,
   SiteProfileInputSchema,
   type SiteProfileOutput,
-  signSiteProfile,
 } from "./sign-site-profile";
 
-export type { OriginatorProfileOptions } from "./types";
 export { OriginatorProfileOptionsSchema } from "./types";
+export type { OriginatorProfileOptions } from "./types";
 
-export { signCas } from "./sign-cas";
-export { signSiteProfile, SiteProfileInputSchema } from "./sign-site-profile";
 export {
   fileToDataUrl,
   isLocalPath,
   parseExpiresIn,
   resolveLocalContent,
 } from "./resolve-content";
+export { signCas } from "./sign-cas";
+export { signSiteProfile, SiteProfileInputSchema } from "./sign-site-profile";
 
 import {
   OriginatorProfileOptionsSchema,
@@ -35,15 +38,17 @@ async function buildSiteProfile(
   const inputPath = resolve(root, wspInput ?? "./sp.json");
   const inputDir = dirname(inputPath);
   const input = JSON.parse(readFileSync(inputPath, "utf-8")) as unknown;
-  return signSiteProfile(SiteProfileInputSchema.parse(input), signingCtx, inputDir);
+  return signSiteProfile(
+    SiteProfileInputSchema.parse(input),
+    signingCtx,
+    inputDir,
+  );
 }
 
 const CAS_RE =
   /<script\b[^>]*\btype\s*=\s*["']application\/cas\+json["'][^>]*>([\s\S]*?)<\/script>/g;
 
-export function originatorProfile(
-  options: OriginatorProfileOptions,
-): Plugin {
+export function originatorProfile(options: OriginatorProfileOptions): Plugin {
   OriginatorProfileOptionsSchema.parse(options);
 
   let root: string;
@@ -68,17 +73,22 @@ export function originatorProfile(
     },
 
     configureServer(server) {
-      server.middlewares.use("/.well-known/sp.json", async (_req, res, next) => {
-        try {
-          const output = await buildSiteProfile(
-            root, options.wsp?.input, { issuers, issuedAt, expiredAt },
-          );
-          res.setHeader("Content-Type", "application/json");
-          res.end(JSON.stringify(output));
-        } catch (err) {
-          next(err);
-        }
-      });
+      server.middlewares.use(
+        "/.well-known/sp.json",
+        async (_req, res, next) => {
+          try {
+            const output = await buildSiteProfile(root, options.wsp?.input, {
+              issuers,
+              issuedAt,
+              expiredAt,
+            });
+            res.setHeader("Content-Type", "application/json");
+            res.end(JSON.stringify(output));
+          } catch (err) {
+            next(err);
+          }
+        },
+      );
     },
 
     async transformIndexHtml(html: string) {
@@ -109,9 +119,11 @@ export function originatorProfile(
     },
 
     async generateBundle() {
-      const output = await buildSiteProfile(
-        root, options.wsp?.input, { issuers, issuedAt, expiredAt },
-      );
+      const output = await buildSiteProfile(root, options.wsp?.input, {
+        issuers,
+        issuedAt,
+        expiredAt,
+      });
 
       this.emitFile({
         type: "asset",

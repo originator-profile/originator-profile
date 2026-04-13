@@ -11,9 +11,9 @@ cp .env.example .env
 
 `.env` に署名用秘密鍵（JWK JSON 形式）を設定してください。
 
-| 変数名 | 対応する issuer |
-|--------|----------------|
-| `SIGNING_KEY_DEMO` | `dns:demo.exp.originator-profile.org` |
+| 変数名                | 対応する issuer                                     |
+| --------------------- | --------------------------------------------------- |
+| `SIGNING_KEY_DEMO`    | `dns:demo.exp.originator-profile.org`               |
 | `SIGNING_KEY_ANOTHER` | `dns:another-originator.exp.originator-profile.org` |
 
 鍵の生成: `pnpm opvc key-gen <output-name>`
@@ -49,8 +49,8 @@ npx wrangler secret put SIGNING_KEY_DEMO
 npx wrangler secret put SIGNING_KEY_ANOTHER
 ```
 
-| シークレット名             | 対応する issuer                                     |
-| -------------------------- | --------------------------------------------------- |
+| シークレット名        | 対応する issuer                                     |
+| --------------------- | --------------------------------------------------- |
 | `SIGNING_KEY_DEMO`    | `dns:demo.exp.originator-profile.org`               |
 | `SIGNING_KEY_ANOTHER` | `dns:another-originator.exp.originator-profile.org` |
 

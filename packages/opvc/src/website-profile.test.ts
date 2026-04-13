@@ -1,7 +1,7 @@
 import type { Jwk, UnsignedWebsiteProfile } from "@originator-profile/model";
+import { BadRequestError } from "http-errors-enhanced";
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
-import { BadRequestError } from "http-errors-enhanced";
 import { sign, unsignedWsp } from "./website-profile.ts";
 
 function createUnsignedWebsiteProfile(): UnsignedWebsiteProfile {
