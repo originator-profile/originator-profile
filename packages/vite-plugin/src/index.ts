@@ -53,21 +53,25 @@ export function originatorProfile(
     },
 
     configureServer(server) {
-      server.middlewares.use("/.well-known/sp.json", async (_req, res) => {
-        const inputPath = resolve(root, options.wsp?.input ?? "./sp.json");
-        const inputDir = dirname(inputPath);
-        const input = JSON.parse(
-          readFileSync(inputPath, "utf-8"),
-        ) as unknown;
+      server.middlewares.use("/.well-known/sp.json", async (_req, res, next) => {
+        try {
+          const inputPath = resolve(root, options.wsp?.input ?? "./sp.json");
+          const inputDir = dirname(inputPath);
+          const input = JSON.parse(
+            readFileSync(inputPath, "utf-8"),
+          ) as unknown;
 
-        const output = await signSiteProfile(
-          input as never,
-          { issuers, issuedAt, expiredAt },
-          inputDir,
-        );
+          const output = await signSiteProfile(
+            input as never,
+            { issuers, issuedAt, expiredAt },
+            inputDir,
+          );
 
-        res.setHeader("Content-Type", "application/json");
-        res.end(JSON.stringify(output));
+          res.setHeader("Content-Type", "application/json");
+          res.end(JSON.stringify(output));
+        } catch (err) {
+          next(err);
+        }
       });
     },
 
