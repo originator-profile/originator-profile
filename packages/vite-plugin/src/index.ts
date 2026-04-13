@@ -1,7 +1,7 @@
 import type { Jwk, UnsignedContentAttestation } from "@originator-profile/model";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import type { IndexHtmlTransformContext, Plugin, ResolvedConfig } from "vite";
+import type { Plugin, ResolvedConfig } from "vite";
 import { parseExpiresIn, parseKey } from "./resolve-content";
 import { signCas } from "./sign-cas";
 import { signSiteProfile } from "./sign-site-profile";
@@ -52,11 +52,28 @@ export function originatorProfile(
       );
     },
 
-    async transformIndexHtml(html: string, ctx: IndexHtmlTransformContext) {
+    configureServer(server) {
+      server.middlewares.use("/.well-known/sp.json", async (_req, res) => {
+        const inputPath = resolve(root, options.wsp?.input ?? "./sp.json");
+        const inputDir = dirname(inputPath);
+        const input = JSON.parse(
+          readFileSync(inputPath, "utf-8"),
+        ) as unknown;
+
+        const output = await signSiteProfile(
+          input as never,
+          { issuers, issuedAt, expiredAt },
+          inputDir,
+        );
+
+        res.setHeader("Content-Type", "application/json");
+        res.end(JSON.stringify(output));
+      });
+    },
+
+    async transformIndexHtml(html: string) {
       const matches = [...html.matchAll(CAS_RE)];
       if (matches.length === 0) return html;
-
-      const baseDir = dirname(ctx.filename);
       const signingCtx = { issuers, issuedAt, expiredAt };
 
       const replacements = await Promise.all(
@@ -65,7 +82,7 @@ export function originatorProfile(
             UnsignedContentAttestation & { main?: boolean }
           >;
 
-          const signed = await signCas(entries, signingCtx, baseDir);
+          const signed = await signCas(entries, signingCtx, root, html);
 
           return {
             from: fullMatch,

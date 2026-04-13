@@ -4,12 +4,7 @@ import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { decodeJwt } from "jose";
-import type {
-  HookHandler,
-  IndexHtmlTransformContext,
-  Plugin,
-  ResolvedConfig,
-} from "vite";
+import type { HookHandler, Plugin, ResolvedConfig } from "vite";
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { originatorProfile } from "./index";
 
@@ -53,17 +48,9 @@ function extractCas(html: string): unknown[] {
   return JSON.parse(match[1]) as unknown[];
 }
 
-function callTransform(
-  plugin: Plugin,
-  html: string,
-  filename = "/tmp/test.html",
-) {
+function callTransform(plugin: Plugin, html: string) {
   const hook = plugin.transformIndexHtml as PluginHook<"transformIndexHtml">;
-  return hook.call(
-    {} as never,
-    html,
-    { filename } as IndexHtmlTransformContext,
-  ) as Promise<string>;
+  return hook.call({} as never, html, {} as never) as Promise<string>;
 }
 
 const sampleUca = {
@@ -307,11 +294,7 @@ describe("resolveImageContent", () => {
 
     const plugin = await createPlugin({ root: tempDir });
     const html = casHtml(JSON.stringify([uca]));
-    const result = await callTransform(
-      plugin,
-      html,
-      join(tempDir, "index.html"),
-    );
+    const result = await callTransform(plugin, html);
 
     const cas = extractCas(result) as string[];
     const payload = decodeJwt(cas[0]);
@@ -381,11 +364,7 @@ describe("resolveImageContent", () => {
 
     const plugin = await createPlugin({ root: tempDir });
     const html = casHtml(JSON.stringify([uca]));
-    const result = await callTransform(
-      plugin,
-      html,
-      join(tempDir, "index.html"),
-    );
+    const result = await callTransform(plugin, html);
 
     const cas = extractCas(result) as string[];
     const payload = decodeJwt(cas[0]);
@@ -412,11 +391,7 @@ describe("resolveImageContent", () => {
 
     const plugin = await createPlugin({ root: tempDir });
     const html = casHtml(JSON.stringify([uca]));
-    const result = await callTransform(
-      plugin,
-      html,
-      join(tempDir, "index.html"),
-    );
+    const result = await callTransform(plugin, html);
 
     const cas = extractCas(result) as string[];
     const payload = decodeJwt(cas[0]);
