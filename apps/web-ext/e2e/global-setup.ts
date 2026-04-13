@@ -3,12 +3,10 @@ import { mkdirSync, writeFileSync } from "node:fs";
 import { platform } from "node:os";
 import { join } from "node:path";
 
+import { type BrowserDomain, BROWSER_DOMAINS } from "./browser-domains";
+
 // 現在のブラウザ言語設定を取得
-function getCurrentLanguage(
-  browser: "chromium" | "chrome",
-): string | undefined {
-  const domain =
-    browser === "chromium" ? "org.chromium.Chromium" : "com.google.Chrome";
+function getCurrentLanguage(domain: BrowserDomain): string | undefined {
   try {
     return execSync(`defaults read ${domain} AppleLanguages 2>/dev/null`)
       .toString()
@@ -19,21 +17,19 @@ function getCurrentLanguage(
 }
 
 // ブラウザの言語設定を変更
-function setLanguage(browser: "chromium" | "chrome", locale: string): void {
-  const domain =
-    browser === "chromium" ? "org.chromium.Chromium" : "com.google.Chrome";
+function setLanguage(domain: BrowserDomain, locale: string): void {
   execSync(`defaults write ${domain} AppleLanguages '("${locale}")'`);
 }
 
 // バックアップファイルを保存
 function saveBackup(
-  browser: "chromium" | "chrome",
+  domain: BrowserDomain,
   currentLanguages: string | undefined,
 ): void {
   const tempDir = join(process.cwd(), ".e2e-temp");
   mkdirSync(tempDir, { recursive: true });
 
-  const backupFile = join(tempDir, `${browser}-language-backup.json`);
+  const backupFile = join(tempDir, `${domain}-language-backup.json`);
   writeFileSync(
     backupFile,
     JSON.stringify({ originalLanguages: currentLanguages }),
@@ -42,23 +38,21 @@ function saveBackup(
 
 // ブラウザの言語設定をセットアップ
 function setupBrowserLanguage(
-  browser: "chromium" | "chrome",
+  domain: BrowserDomain,
   targetLocale: string,
 ): void {
-  const browserName = browser === "chromium" ? "Chromium" : "Chrome";
-
-  const currentLanguages = getCurrentLanguage(browser);
+  const currentLanguages = getCurrentLanguage(domain);
   console.log(
-    `現在の${browserName}言語設定:`,
+    `現在の${domain}言語設定:`,
     currentLanguages || "なし（システムデフォルト）",
   );
 
-  saveBackup(browser, currentLanguages);
-  setLanguage(browser, targetLocale);
+  saveBackup(domain, currentLanguages);
+  setLanguage(domain, targetLocale);
 
-  const newLanguages = getCurrentLanguage(browser);
+  const newLanguages = getCurrentLanguage(domain);
   console.log(
-    `${browserName}の言語設定を${targetLocale}に変更しました:`,
+    `${domain}の言語設定を${targetLocale}に変更しました:`,
     newLanguages,
   );
 }
@@ -78,8 +72,9 @@ async function globalSetup() {
     `目標ロケール: ${targetLocale} (LC_ALL=${process.env.LC_ALL || "デフォルト"})`,
   );
 
-  setupBrowserLanguage("chromium", targetLocale);
-  setupBrowserLanguage("chrome", targetLocale);
+  for (const domain of BROWSER_DOMAINS) {
+    setupBrowserLanguage(domain, targetLocale);
+  }
 }
 
 export default globalSetup;
