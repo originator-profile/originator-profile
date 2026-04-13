@@ -1,10 +1,15 @@
 import { generateKey } from "@originator-profile/cryptography";
 import type { Jwk } from "@originator-profile/model";
-import { mkdtempSync, writeFileSync } from "node:fs";
+import { mkdtempSync, mkdirSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { decodeJwt } from "jose";
-import type { HookHandler, Plugin, ResolvedConfig } from "vite";
+import type {
+  HookHandler,
+  IndexHtmlTransformContext,
+  Plugin,
+  ResolvedConfig,
+} from "vite";
 import { beforeAll, describe, expect, test, vi } from "vitest";
 import { originatorProfile } from "./index";
 
@@ -46,6 +51,19 @@ function extractCas(html: string): unknown[] {
   const match = html.match(CAS_RE);
   if (!match) throw new Error("CAS script tag not found in output HTML");
   return JSON.parse(match[1]) as unknown[];
+}
+
+function callTransform(
+  plugin: Plugin,
+  html: string,
+  filename = "/tmp/test.html",
+) {
+  const hook = plugin.transformIndexHtml as PluginHook<"transformIndexHtml">;
+  return hook.call(
+    {} as never,
+    html,
+    { filename } as IndexHtmlTransformContext,
+  ) as Promise<string>;
 }
 
 const sampleUca = {
@@ -97,8 +115,7 @@ describe("transformIndexHtml", () => {
     const plugin = await createPlugin();
     const html = casHtml(JSON.stringify([sampleUca]));
 
-    const transform = plugin.transformIndexHtml as PluginHook<"transformIndexHtml">;
-    const result = (await transform.call({} as never, html, {} as never)) as string;
+    const result = await callTransform(plugin, html);
 
     const cas = extractCas(result);
     expect(cas).toHaveLength(1);
@@ -110,8 +127,7 @@ describe("transformIndexHtml", () => {
     const plugin = await createPlugin();
     const html = casHtml(JSON.stringify([sampleUca]));
 
-    const transform = plugin.transformIndexHtml as PluginHook<"transformIndexHtml">;
-    const result = (await transform.call({} as never, html, {} as never)) as string;
+    const result = await callTransform(plugin, html);
 
     const cas = extractCas(result) as string[];
 
@@ -135,8 +151,7 @@ describe("transformIndexHtml", () => {
     const plugin = await createPlugin();
     const html = casHtml(JSON.stringify([ucaWithImage]));
 
-    const transform = plugin.transformIndexHtml as PluginHook<"transformIndexHtml">;
-    const result = (await transform.call({} as never, html, {} as never)) as string;
+    const result = await callTransform(plugin, html);
 
     const cas = extractCas(result) as string[];
 
@@ -152,8 +167,7 @@ describe("transformIndexHtml", () => {
     const plugin = await createPlugin();
     const html = casHtml(JSON.stringify([ucaWithMain]));
 
-    const transform = plugin.transformIndexHtml as PluginHook<"transformIndexHtml">;
-    const result = (await transform.call({} as never, html, {} as never)) as string;
+    const result = await callTransform(plugin, html);
 
     const cas = extractCas(result);
 
@@ -168,8 +182,7 @@ describe("transformIndexHtml", () => {
     const plugin = await createPlugin();
     const html = "<html><body><p>no CAS</p></body></html>";
 
-    const transform = plugin.transformIndexHtml as PluginHook<"transformIndexHtml">;
-    const result = (await transform.call({} as never, html, {} as never)) as string;
+    const result = await callTransform(plugin, html);
 
     expect(result).toBe(html);
   });
@@ -178,9 +191,9 @@ describe("transformIndexHtml", () => {
     const plugin = await createPlugin({ issuers: {} });
     const html = casHtml(JSON.stringify([sampleUca]));
 
-    await expect(
-      (plugin.transformIndexHtml as (html: string) => Promise<string>)(html),
-    ).rejects.toThrow('No signing key found for issuer "dns:example.com"');
+    await expect(callTransform(plugin, html)).rejects.toThrow(
+      'No signing key found for issuer "dns:example.com"',
+    );
   });
 });
 
@@ -273,6 +286,108 @@ describe("generateBundle", () => {
       (emitFile.mock.calls[0][0] as { source: string }).source,
     ) as { originators: unknown[] };
     expect(output.originators).toEqual(originators);
+  });
+});
+
+const SVG_CONTENT = '<svg xmlns="http://www.w3.org/2000/svg"></svg>';
+
+describe("resolveImageContent", () => {
+  test("CA の image.content がローカルパスの場合 Data URL に変換される", async () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "vite-plugin-test-"));
+    mkdirSync(join(tempDir, "images"), { recursive: true });
+    writeFileSync(join(tempDir, "images", "logo.svg"), SVG_CONTENT);
+
+    const uca = {
+      ...sampleUca,
+      credentialSubject: {
+        ...sampleUca.credentialSubject,
+        image: {
+          id: "https://example.com/logo.svg",
+          content: "./images/logo.svg",
+        },
+      },
+    };
+
+    const plugin = await createPlugin({ root: tempDir });
+    const html = casHtml(JSON.stringify([uca]));
+    const result = await callTransform(
+      plugin,
+      html,
+      join(tempDir, "index.html"),
+    );
+
+    const cas = extractCas(result) as string[];
+    const payload = decodeJwt(cas[0]);
+    const image = (
+      payload.credentialSubject as { image?: { digestSRI?: string } }
+    ).image;
+    expect(image?.digestSRI).toBeDefined();
+    expect(image?.digestSRI).toMatch(/^sha256-/);
+  });
+
+  test("WSP の image.content がローカルパスの場合 Data URL に変換される", async () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "vite-plugin-test-"));
+    mkdirSync(join(tempDir, "images"), { recursive: true });
+    writeFileSync(join(tempDir, "images", "logo.svg"), SVG_CONTENT);
+
+    const uwsp = {
+      ...sampleUwsp,
+      credentialSubject: {
+        ...sampleUwsp.credentialSubject,
+        image: {
+          id: "https://example.com/logo.svg",
+          content: "./images/logo.svg",
+        },
+      },
+    };
+
+    writeFileSync(
+      join(tempDir, "sp.json"),
+      JSON.stringify({ originators: [], sites: [uwsp] }),
+    );
+
+    const plugin = await createPlugin({ root: tempDir });
+    const emitFile = vi.fn();
+    const bundle = plugin.generateBundle as PluginHook<"generateBundle">;
+    await bundle.call(
+      { emitFile } as never,
+      {} as never,
+      {} as never,
+      false,
+    );
+
+    const output = JSON.parse(
+      (emitFile.mock.calls[0][0] as { source: string }).source,
+    ) as { sites: string[] };
+    const payload = decodeJwt(output.sites[0]);
+    const image = (
+      payload.credentialSubject as { image?: { digestSRI?: string } }
+    ).image;
+    expect(image?.digestSRI).toBeDefined();
+    expect(image?.digestSRI).toMatch(/^sha256-/);
+  });
+
+  test("data URL の content はそのまま維持される", async () => {
+    const dataUrl =
+      "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==";
+    const uca = {
+      ...sampleUca,
+      credentialSubject: {
+        ...sampleUca.credentialSubject,
+        image: { id: "https://example.com/logo.svg", content: dataUrl },
+      },
+    };
+
+    const plugin = await createPlugin();
+    const html = casHtml(JSON.stringify([uca]));
+    const result = await callTransform(plugin, html);
+
+    const cas = extractCas(result) as string[];
+    const payload = decodeJwt(cas[0]);
+    const image = (
+      payload.credentialSubject as { image?: { digestSRI?: string } }
+    ).image;
+    expect(image?.digestSRI).toBeDefined();
   });
 });
 

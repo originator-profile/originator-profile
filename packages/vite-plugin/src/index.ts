@@ -1,5 +1,6 @@
 import type {
   Jwk,
+  RawImage,
   UnsignedContentAttestation,
   UnsignedWebsiteProfile,
 } from "@originator-profile/model";
@@ -8,8 +9,8 @@ import {
   WebsiteProfile,
 } from "@originator-profile/opvc";
 import { readFileSync } from "node:fs";
-import { resolve } from "node:path";
-import type { Plugin, ResolvedConfig } from "vite";
+import { dirname, extname, resolve } from "node:path";
+import type { IndexHtmlTransformContext, Plugin, ResolvedConfig } from "vite";
 
 export interface OriginatorProfileOptions {
   /** Mapping of OP ID to signing key (JWK object or JSON string). */
@@ -69,6 +70,44 @@ function resolveKey(issuers: Record<string, Jwk>, issuer: string): Jwk {
   return key;
 }
 
+const IMAGE_MIME: Record<string, string> = {
+  ".avif": "image/avif",
+  ".gif": "image/gif",
+  ".ico": "image/x-icon",
+  ".jpeg": "image/jpeg",
+  ".jpg": "image/jpeg",
+  ".png": "image/png",
+  ".svg": "image/svg+xml",
+  ".webp": "image/webp",
+};
+
+function isLocalPath(value: string): boolean {
+  return !value.startsWith("data:") && !/^https?:\/\//.test(value);
+}
+
+function fileToDataUrl(filePath: string): string {
+  const bytes = readFileSync(filePath);
+  const mime = IMAGE_MIME[extname(filePath).toLowerCase()] ?? "application/octet-stream";
+  return `data:${mime};base64,${bytes.toString("base64")}`;
+}
+
+function resolveImageContent(
+  image: RawImage | undefined,
+  baseDir: string,
+): void {
+  if (!image?.content) return;
+
+  if (typeof image.content === "string") {
+    if (isLocalPath(image.content)) {
+      image.content = fileToDataUrl(resolve(baseDir, image.content));
+    }
+  } else {
+    image.content = image.content.map((c) =>
+      isLocalPath(c) ? fileToDataUrl(resolve(baseDir, c)) : c,
+    );
+  }
+}
+
 export function originatorProfile(
   options: OriginatorProfileOptions,
 ): Plugin {
@@ -90,9 +129,11 @@ export function originatorProfile(
       );
     },
 
-    async transformIndexHtml(html: string) {
+    async transformIndexHtml(html: string, ctx: IndexHtmlTransformContext) {
       const matches = [...html.matchAll(CAS_RE)];
       if (matches.length === 0) return html;
+
+      const baseDir = dirname(ctx.filename);
 
       const replacements = await Promise.all(
         matches.map(async ([fullMatch, jsonContent]) => {
@@ -103,6 +144,10 @@ export function originatorProfile(
           const signed = await Promise.all(
             entries.map(async (entry) => {
               const { main, ...uca } = entry;
+              resolveImageContent(
+                uca.credentialSubject.image as RawImage | undefined,
+                baseDir,
+              );
               const key = resolveKey(issuers, uca.issuer);
 
               const jwt = await ContentAttestation.sign(
@@ -131,12 +176,17 @@ export function originatorProfile(
 
     async generateBundle() {
       const inputPath = resolve(root, options.wsp?.input ?? "./sp.json");
+      const inputDir = dirname(inputPath);
       const input = JSON.parse(
         readFileSync(inputPath, "utf-8"),
       ) as SiteProfileInput;
 
       const signedSites = await Promise.all(
         input.sites.map(async (uwsp) => {
+          resolveImageContent(
+            uwsp.credentialSubject.image as RawImage | undefined,
+            inputDir,
+          );
           const key = resolveKey(issuers, uwsp.issuer);
 
           return await WebsiteProfile.sign(uwsp, key, {
