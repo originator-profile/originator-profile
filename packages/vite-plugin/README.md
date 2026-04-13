@@ -1,6 +1,8 @@
 # @originator-profile/vite-plugin
 
-WSP と CA を署名するための Vite プラグインです。
+[![npm version](https://img.shields.io/npm/v/@originator-profile/vite-plugin)](https://www.npmjs.com/package/@originator-profile/vite-plugin)
+
+Vite plugin that signs [Website Profiles](https://docs.originator-profile.org/en/opb/site-profile/) (WSP) and [Content Attestations](https://docs.originator-profile.org/en/opb/content-attestation/) (CA) at build time.
 
 ```js
 // vite.config.js
@@ -10,7 +12,7 @@ import originatorProfile from "@originator-profile/vite-plugin";
 export default defineConfig({
   plugins: [
     originatorProfile({
-      opId: "dns:localhost",
+      opId: "dns:example.com",
       wsp: {
         signingKey: import.meta.env.SIGNING_KEY,
       },
@@ -22,29 +24,33 @@ export default defineConfig({
 });
 ```
 
-## オプション
+## Install
 
-### opId
+```bash
+npm install -D @originator-profile/vite-plugin
+```
 
-必須。WSP と CA の Holder となる主体の OP ID です。形式は [DNS URI OP ID](https://docs.originator-profile.org/en/opb/dns-uri-op-id/) でなければなりません。
+## Options
 
-### wsp.signingKey
+### `opId`
 
-必須。WSP の署名に用いる鍵です。JSON Web Key 形式です。[Core Profile](https://docs.originator-profile.org/en/opb/cp/)に含まれている公開鍵とペアでなければなりません。
+**Required.** The [DNS URI OP ID](https://docs.originator-profile.org/en/opb/dns-uri-op-id/) of the holder that issues both WSP and CA credentials.
 
-### wsp.input
+### `wsp.signingKey`
 
-任意。未署名 WSP の Vite プロジェクトルートからの相対パスです。既定値は `./sp.json` です。[Site Profile](https://docs.originator-profile.org/en/opb/site-profile/)に未署名 WSP が含まれた形式でなければなりません。
+**Required.** A JSON Web Key used to sign the Website Profile. Must be the private key paired with the public key in your [Core Profile](https://docs.originator-profile.org/en/opb/cp/).
 
-### ca.signingKey
+### `wsp.input`
 
-必須。CA の署名に用いる鍵です。JSON Web Key 形式です。[Core Profile](https://docs.originator-profile.org/en/opb/cp/)に含まれている公開鍵とペアでなければなりません。
+Path to the unsigned WSP input file, relative to the Vite project root. Defaults to `"./sp.json"`.
 
-## WSP の署名
+### `ca.signingKey`
 
-`<root>/sp.json` に次のような JSON を用意すると、WSP が署名された状態で `/.well-known/sp.json` に書き出されます。
+**Required.** A JSON Web Key used to sign Content Attestations. Must be the private key paired with the public key in your [Core Profile](https://docs.originator-profile.org/en/opb/cp/).
 
-形式は [Unsigned Website Profile モデル](../model/src/unsigned-website-profile.ts)を確認してください。
+## WSP Signing
+
+Place an unsigned [Site Profile](https://docs.originator-profile.org/en/opb/site-profile/) at `<root>/sp.json`. During build, the plugin signs the WSP and emits it to `/.well-known/sp.json`. See the [`UnsignedWebsiteProfile` model](https://github.com/originator-profile/originator-profile/blob/main/packages/model/src/unsigned-website-profile.ts) for the input schema.
 
 ```json
 {
@@ -52,11 +58,6 @@ export default defineConfig({
     {
       "core": "eyJ...",
       "annotations": ["eyJ...", "eyJ..."],
-      "media": ["eyJ..."]
-    },
-    {
-      "core": "eyJ...",
-      "annotations": ["eyJ..."],
       "media": ["eyJ..."]
     }
   ],
@@ -71,25 +72,23 @@ export default defineConfig({
       "type": ["VerifiableCredential", "WebsiteProfile"],
       "issuer": "dns:example.com",
       "credentialSubject": {
-        "id": "https://media.example.com",
+        "id": "https://example.com",
         "type": "WebSite",
-        "name": "<Title of Web site>",
-        "description": "<Description of Web site>",
+        "name": "Example Site",
+        "description": "An example website",
         "image": {
-          "id": "https://media.example.com/image.png"
+          "id": "https://example.com/logo.png"
         },
-        "allowedOrigin": ["https://media.example.com"]
+        "allowedOrigin": ["https://example.com"]
       }
     }
   ]
 }
 ```
 
-## CA の署名
+## CA Signing
 
-[HTML に埋め込む形式](https://docs.originator-profile.org/en/opb/link-to-html/#embedded-method) で次のような JSON を用意すると、CA が署名された状態で HTML に書き出されます。
-
-形式は [Unsigned Content Attestation モデル](../model/src/unsigned-content-attestation.ts)を確認してください。
+Embed unsigned Content Attestations in your HTML using the [embedded method](https://docs.originator-profile.org/en/opb/link-to-html/#embedded-method). During build, the plugin signs each CA and replaces them with signed JWTs in the output HTML. See the [`UnsignedContentAttestation` model](https://github.com/originator-profile/originator-profile/blob/main/packages/model/src/content-attestation/unsigned-content-attestation.ts) for the input schema.
 
 ```html
 <script type="application/cas+json">
@@ -106,26 +105,27 @@ export default defineConfig({
       "credentialSubject": {
         "id": "urn:uuid:78550fa7-f846-4e0f-ad5c-8d34461cb95b",
         "type": "Article",
-        "headline": "<Article Title>",
+        "headline": "Article Title",
         "image": {
-          "id": "https://media.example.com/image.png"
+          "id": "https://example.com/image.png"
         },
-        "description": "<Web page description>",
+        "description": "Article description",
         "author": ["Jane Smith"],
-        "editor": ["John Smith"],
-        "datePublished": "2023-07-04T19:14:00Z",
-        "dateModified": "2023-07-04T19:14:00Z",
-        "genre": "Arts & Entertainment"
+        "datePublished": "2025-01-01T00:00:00Z"
       },
-      "allowedUrl": ["https://media.example.com/articles/2024-06-30"],
+      "allowedUrl": ["https://example.com/articles/1"],
       "target": [
         {
           "type": "VisibleTextTargetIntegrity",
-          "cssSelector": "#target",
-          "content": "data:text/html,<p id=\"target\">This is a visible text</p>"
+          "cssSelector": "#article",
+          "content": "data:text/html,<article id=\"article\">...</article>"
         }
       ]
     }
   ]
 </script>
 ```
+
+## License
+
+Apache-2.0
