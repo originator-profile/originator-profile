@@ -12,12 +12,8 @@ import originatorProfile from "@originator-profile/vite-plugin";
 export default defineConfig({
   plugins: [
     originatorProfile({
-      opId: "dns:example.com",
-      wsp: {
-        signingKey: import.meta.env.SIGNING_KEY,
-      },
-      ca: {
-        signingKey: import.meta.env.SIGNING_KEY,
+      issuers: {
+        "dns:example.com": import.meta.env.SIGNING_KEY,
       },
     }),
   ],
@@ -32,32 +28,47 @@ npm install -D @originator-profile/vite-plugin
 
 ## Options
 
-### `opId`
+### `issuers`
 
-**Required.** The [DNS URI OP ID](https://docs.originator-profile.org/en/opb/dns-uri-op-id/) of the holder that issues both WSP and CA credentials.
+**Required.** A mapping of [OP ID](https://docs.originator-profile.org/en/opb/dns-uri-op-id/) to signing key. Each key must be the private key paired with the public key in the issuer's [Core Profile](https://docs.originator-profile.org/en/opb/cp/).
 
-### `wsp.signingKey`
+Values can be a JWK object or a JSON string (parsed internally).
 
-**Required.** A JSON Web Key used to sign the Website Profile. Must be the private key paired with the public key in your [Core Profile](https://docs.originator-profile.org/en/opb/cp/).
+```js
+originatorProfile({
+  issuers: {
+    "dns:example.com": import.meta.env.SIGNING_KEY_PROD,
+    "dns:localhost": import.meta.env.SIGNING_KEY_LOCAL,
+  },
+});
+```
+
+The plugin looks up the signing key for each WSP and CA by matching its `issuer` field against this mapping.
+
+### `expiresIn`
+
+Duration until signed credentials expire, relative to build time. Defaults to `"1y"`.
+
+Accepts values like `"1y"` (1 year), `"6m"` (6 months), or `"30d"` (30 days).
 
 ### `wsp.input`
 
-Path to the unsigned WSP input file, relative to the Vite project root. Defaults to `"./sp.json"`.
-
-### `ca.signingKey`
-
-**Required.** A JSON Web Key used to sign Content Attestations. Must be the private key paired with the public key in your [Core Profile](https://docs.originator-profile.org/en/opb/cp/).
+Path to the unsigned Site Profile input file, relative to the Vite project root. Defaults to `"./sp.json"`.
 
 ## WSP Signing
 
-Place an unsigned [Site Profile](https://docs.originator-profile.org/en/opb/site-profile/) at `<root>/sp.json`. During build, the plugin signs the WSP and emits it to `/.well-known/sp.json`. See the [`UnsignedWebsiteProfile` model](https://github.com/originator-profile/originator-profile/blob/main/packages/model/src/unsigned-website-profile.ts) for the input schema.
+Place an unsigned [Site Profile](https://docs.originator-profile.org/en/opb/site-profile/) at `<root>/sp.json`. During build, the plugin signs each WSP in the `sites` array and emits the result to `/.well-known/sp.json`.
+
+The `originators` array is passed through as-is. See the [`UnsignedWebsiteProfile` model](https://github.com/originator-profile/originator-profile/blob/main/packages/model/src/unsigned-website-profile.ts) for the schema of each entry in `sites`.
+
+**Input** (`sp.json`):
 
 ```json
 {
   "originators": [
     {
       "core": "eyJ...",
-      "annotations": ["eyJ...", "eyJ..."],
+      "annotations": ["eyJ..."],
       "media": ["eyJ..."]
     }
   ],
@@ -86,9 +97,28 @@ Place an unsigned [Site Profile](https://docs.originator-profile.org/en/opb/site
 }
 ```
 
+**Output** (`/.well-known/sp.json`):
+
+```json
+{
+  "originators": [
+    {
+      "core": "eyJ...",
+      "annotations": ["eyJ..."],
+      "media": ["eyJ..."]
+    }
+  ],
+  "sites": ["eyJ...signed"]
+}
+```
+
 ## CA Signing
 
-Embed unsigned Content Attestations in your HTML using the [embedded method](https://docs.originator-profile.org/en/opb/link-to-html/#embedded-method). During build, the plugin signs each CA and replaces them with signed JWTs in the output HTML. See the [`UnsignedContentAttestation` model](https://github.com/originator-profile/originator-profile/blob/main/packages/model/src/content-attestation/unsigned-content-attestation.ts) for the input schema.
+Embed unsigned Content Attestations in your HTML using the [embedded method](https://docs.originator-profile.org/en/opb/link-to-html/#embedded-method). During build, the plugin signs each CA, then serializes the result as a [Content Attestation Set](https://docs.originator-profile.org/en/opb/content-attestation-set/).
+
+See the [`UnsignedContentAttestation` model](https://github.com/originator-profile/originator-profile/blob/main/packages/model/src/content-attestation/unsigned-content-attestation.ts) for the schema of each entry. The `main` property can be set on any entry to mark it as the main content attestation.
+
+**Input** (HTML):
 
 ```html
 <script type="application/cas+json">
@@ -120,11 +150,22 @@ Embed unsigned Content Attestations in your HTML using the [embedded method](htt
           "cssSelector": "#article",
           "content": "data:text/html,<article id=\"article\">...</article>"
         }
-      ]
+      ],
+      "main": true
     }
   ]
 </script>
 ```
+
+**Output** (HTML):
+
+```html
+<script type="application/cas+json">
+[{"attestation":"eyJ...signed","main":true}]
+</script>
+```
+
+Entries without `main: true` are serialized as bare JWT strings. Entries with `main: true` are serialized as `{ "attestation": "eyJ...", "main": true }`.
 
 ## License
 
