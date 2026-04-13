@@ -44,6 +44,12 @@ export default {
       return Response.redirect(`${url.origin}/${lang}/`, 302);
     }
 
-    return fetch(request);
+    const response = await fetch(request);
+    if (response.headers.get("Content-Type")?.startsWith("image/")) {
+      const headers = new Headers(response.headers);
+      headers.set("Access-Control-Allow-Origin", "*");
+      return new Response(response.body, { ...response, headers });
+    }
+    return response;
   },
 };
