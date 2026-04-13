@@ -1,12 +1,25 @@
-import type { Jwk } from "@originator-profile/model";
+import { z } from "zod";
 
-export interface OriginatorProfileOptions {
-  /** Mapping of OP ID to signing key (JWK object or JSON string). */
-  issuers: Record<string, string | Jwk>;
-  /** Duration until signed credentials expire. Defaults to "1y". */
-  expiresIn?: string;
-  wsp?: {
-    /** Path to unsigned Site Profile, relative to project root. Defaults to "./sp.json". */
-    input?: string;
-  };
-}
+const ExpiresIn = z
+  .string()
+  .regex(/^\d+[ymd]$/, 'Must be a duration like "1y", "6m", or "30d"');
+
+const SigningKey = z.union([z.string(), z.looseObject({})]);
+
+export const OriginatorProfileOptionsSchema = z.object({
+  issuers: z
+    .record(z.string(), SigningKey)
+    .refine((v) => Object.keys(v).length > 0, {
+      message: "At least one issuer is required",
+    }),
+  expiresIn: ExpiresIn.optional(),
+  wsp: z
+    .object({
+      input: z.string().optional(),
+    })
+    .optional(),
+});
+
+export type OriginatorProfileOptions = z.infer<
+  typeof OriginatorProfileOptionsSchema
+>;

@@ -37,7 +37,8 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@originator-profile/opvc": "workspace:*"
+    "@originator-profile/opvc": "workspace:*",
+    "zod": "^4.3.6"
   },
   "peerDependencies": {
     "vite": "^6.0.0 || ^7.0.0 || ^8.0.0"

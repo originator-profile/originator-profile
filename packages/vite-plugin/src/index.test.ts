@@ -187,13 +187,10 @@ describe("transformIndexHtml", () => {
     expect(result).toBe(html);
   });
 
-  test("issuer に対応する鍵がない場合エラー", async () => {
-    const plugin = await createPlugin({ issuers: {} });
-    const html = casHtml(JSON.stringify([sampleUca]));
-
-    await expect(callTransform(plugin, html)).rejects.toThrow(
-      'No signing key found for issuer "dns:example.com"',
-    );
+  test("issuers が空の場合プラグイン初期化時にエラー", () => {
+    expect(() =>
+      originatorProfile({ issuers: {} }),
+    ).toThrow("At least one issuer is required");
   });
 });
 
@@ -239,7 +236,7 @@ describe("generateBundle", () => {
     writeFileSync(
       join(tempDir, "sp.json"),
       JSON.stringify({
-        originators: [],
+        originators: [{ core: "eyJ..." }],
         sites: [sampleUwsp],
       }),
     );
@@ -343,7 +340,7 @@ describe("resolveImageContent", () => {
 
     writeFileSync(
       join(tempDir, "sp.json"),
-      JSON.stringify({ originators: [], sites: [uwsp] }),
+      JSON.stringify({ originators: [{ core: "eyJ..." }], sites: [uwsp] }),
     );
 
     const plugin = await createPlugin({ root: tempDir });
@@ -456,17 +453,19 @@ describe("resolveImageContent", () => {
   });
 });
 
-describe("parseExpiresIn", () => {
-  test("不正な expiresIn はエラー", () => {
+describe("OriginatorProfileOptions validation", () => {
+  test("不正な expiresIn はプラグイン初期化時にエラー", () => {
     expect(() =>
-      originatorProfile({ issuers: {}, expiresIn: "invalid" }),
-    ).not.toThrow();
+      originatorProfile({
+        issuers: { "dns:example.com": "{}" },
+        expiresIn: "invalid",
+      }),
+    ).toThrow("invalid_format");
+  });
 
-    const plugin = originatorProfile({ issuers: {}, expiresIn: "invalid" });
-
-    const configResolved = plugin.configResolved as PluginHook<"configResolved">;
-    expect(() =>
-      configResolved.call({} as never, { root: "/tmp" } as ResolvedConfig),
-    ).toThrow("Invalid expiresIn format");
+  test("issuers が空はプラグイン初期化時にエラー", () => {
+    expect(() => originatorProfile({ issuers: {} })).toThrow(
+      "At least one issuer is required",
+    );
   });
 });

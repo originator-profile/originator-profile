@@ -45,7 +45,7 @@ const sampleUwsp = {
 
 describe("signSiteProfile", () => {
   test("sites 内の unsigned WSP を署名する", async () => {
-    const input = { originators: [], sites: [sampleUwsp] };
+    const input = { originators: [{ core: "eyJ..." }], sites: [sampleUwsp] };
 
     const output = await signSiteProfile(input, signingCtx(), "/tmp");
 
@@ -66,7 +66,7 @@ describe("signSiteProfile", () => {
   });
 
   test("署名された JWT に iss, sub, iat, exp が含まれる", async () => {
-    const input = { originators: [], sites: [sampleUwsp] };
+    const input = { originators: [{ core: "eyJ..." }], sites: [sampleUwsp] };
 
     const output = await signSiteProfile(input, signingCtx(), "/tmp");
     const payload = decodeJwt(output.sites[0]);
@@ -78,7 +78,7 @@ describe("signSiteProfile", () => {
   });
 
   test("image の digestSRI が計算される", async () => {
-    const input = { originators: [], sites: [sampleUwsp] };
+    const input = { originators: [{ core: "eyJ..." }], sites: [sampleUwsp] };
 
     const output = await signSiteProfile(input, signingCtx(), "/tmp");
     const payload = decodeJwt(output.sites[0]);
@@ -106,7 +106,7 @@ describe("signSiteProfile", () => {
         },
       },
     };
-    const input = { originators: [], sites: [uwsp] };
+    const input = { originators: [{ core: "eyJ..." }], sites: [uwsp] };
 
     const output = await signSiteProfile(input, signingCtx(), tempDir);
     const payload = decodeJwt(output.sites[0]);
@@ -127,7 +127,7 @@ describe("signSiteProfile", () => {
         { "@language": "ja" },
       ],
     } satisfies UnsignedWebsiteProfile;
-    const input = { originators: [], sites: [en, ja] };
+    const input = { originators: [{ core: "eyJ..." }], sites: [en, ja] };
 
     const output = await signSiteProfile(input, signingCtx(), "/tmp");
 
@@ -136,8 +136,22 @@ describe("signSiteProfile", () => {
     expect(output.sites[1].startsWith("eyJ")).toBe(true);
   });
 
-  test("未登録の issuer はエラー", async () => {
+  test("originators が空の場合エラー", async () => {
     const input = { originators: [], sites: [sampleUwsp] };
+    await expect(
+      signSiteProfile(input as never, signingCtx(), "/tmp"),
+    ).rejects.toThrow("originators must not be empty");
+  });
+
+  test("sites が空の場合エラー", async () => {
+    const input = { originators: [{ core: "eyJ..." }], sites: [] };
+    await expect(
+      signSiteProfile(input as never, signingCtx(), "/tmp"),
+    ).rejects.toThrow("sites must not be empty");
+  });
+
+  test("未登録の issuer はエラー", async () => {
+    const input = { originators: [{ core: "eyJ..." }], sites: [sampleUwsp] };
     const ctx = { ...signingCtx(), issuers: {} };
 
     await expect(signSiteProfile(input, ctx, "/tmp")).rejects.toThrow(
