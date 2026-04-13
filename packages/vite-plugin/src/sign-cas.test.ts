@@ -128,6 +128,61 @@ describe("signCas", () => {
     expect(target.integrity).toMatch(/^sha256-/);
   });
 
+  test("html パラメータ渡しで HtmlTargetIntegrity の content が自動設定される", async () => {
+    const entry = {
+      ...sampleUca,
+      target: [
+        {
+          type: "HtmlTargetIntegrity" as const,
+          cssSelector: "#main",
+        },
+      ],
+    };
+    const html = '<html><body><div id="main">Hello</div></body></html>';
+
+    const result = await signCas([entry], signingCtx(), "/tmp", html);
+    const payload = decodeJwt(result[0] as string);
+    const target = (payload.target as Array<{ integrity?: string }>)[0];
+    expect(target.integrity).toMatch(/^sha256-/);
+  });
+
+  test("integrity が既に設定済みの DOM target は html パラメータの影響を受けない", async () => {
+    const entry = {
+      ...sampleUca,
+      target: [
+        {
+          type: "HtmlTargetIntegrity" as const,
+          cssSelector: "#main",
+          integrity: "sha256-existing",
+        },
+      ],
+    };
+    const html = '<html><body><div id="main">Hello</div></body></html>';
+
+    const result = await signCas([entry], signingCtx(), "/tmp", html);
+    const payload = decodeJwt(result[0] as string);
+    const target = (payload.target as Array<{ integrity?: string }>)[0];
+    expect(target.integrity).toBe("sha256-existing");
+  });
+
+  test("html パラメータなしでは DOM target の content は自動設定されない", async () => {
+    const entry = {
+      ...sampleUca,
+      target: [
+        {
+          type: "HtmlTargetIntegrity" as const,
+          cssSelector: "#main",
+          integrity: "sha256-preset",
+        },
+      ],
+    };
+
+    const result = await signCas([entry], signingCtx(), "/tmp");
+    const payload = decodeJwt(result[0] as string);
+    const target = (payload.target as Array<{ integrity?: string }>)[0];
+    expect(target.integrity).toBe("sha256-preset");
+  });
+
   test("未登録の issuer はエラー", async () => {
     const ctx = { ...signingCtx(), issuers: {} };
 
