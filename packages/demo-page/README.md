@@ -65,7 +65,7 @@ npx wrangler deploy  # pnpm build 後に実行
 
 - `image.content`: ローカル画像パス → `digestSRI` を計算
 - `ExternalResourceTargetIntegrity.content`: ローカルファイルパス → `integrity` を計算
-- `HtmlTargetIntegrity.integrity`: 事前計算値を維持
+- `HtmlTargetIntegrity`: ビルド時に HTML DOM から `integrity` を計算
 
 ## プロジェクト構成
 
@@ -77,7 +77,7 @@ demo-page/
 ├── public/
 │   ├── images/                # 画像アセット
 │   └── ads/                   # 広告デモ用 HTML
-├── worker/index.ts            # Cloudflare Worker（言語リダイレクト）
+├── worker/index.ts            # Cloudflare Worker（言語リダイレクト、画像 CORS）
 ├── vite.config.js             # Vite + Cloudflare + originator-profile plugin
 ├── wrangler.toml              # Cloudflare Workers 設定
 ├── .env                       # 署名鍵（gitignore）
