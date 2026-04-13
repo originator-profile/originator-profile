@@ -1,6 +1,6 @@
 import { mergeTests } from "@playwright/test";
 import { expectStatus } from "./expect-status";
-import { test as base, expect, popup } from "./fixtures";
+import { test as base, expect, sidepanel } from "./fixtures";
 import { gotoDetailPage } from "./goto-detail-page";
 import { test as siteProfileTest } from "./site-profile-fixtures";
 import { test as staticHtmlTest } from "./static-html-fixtures";
@@ -14,7 +14,7 @@ test("OPS / CAS 未設置かつSiteProfileの取得の失敗した場合非サ�
   credentialsMissingPage,
 }) => {
   await page.goto(credentialsMissingPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
   await expect(ext.getByTestId("p-elm-unsupported-message")).toBeVisible();
   await expect(
     ext.getByText(

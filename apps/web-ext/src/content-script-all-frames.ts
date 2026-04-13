@@ -3,7 +3,6 @@ import { OpMeta, OpVc } from "@originator-profile/model";
 import {
   fetchCredentials,
   fetchOpMeta,
-  fetchSiteProfile,
 } from "@originator-profile/presentation";
 import {
   normalizeCasItem,
@@ -11,6 +10,7 @@ import {
   verifyIntegrity,
 } from "@originator-profile/verify";
 
+import { activeTabMessenger } from "./components/activeTab/events";
 import {
   credentialsMessenger,
   FrameLocation,
@@ -29,7 +29,6 @@ import "./utils/cors-basic-auth";
 credentialsMessenger.onMessage("fetchCredentials", async () => {
   const { ops, cas } = await fetchCredentials(document);
   const opMeta = fetchOpMeta(document);
-  const sp = await fetchSiteProfile(document);
   const frameLocation: FrameLocation = {
     origin: window.origin,
     url: window.location.href,
@@ -37,7 +36,6 @@ credentialsMessenger.onMessage("fetchCredentials", async () => {
   return {
     ops: serializeIfError(ops),
     cas: serializeIfError(cas),
-    sp: serializeIfError(sp),
     opMeta,
     ...frameLocation,
   };
@@ -376,3 +374,23 @@ frameCasWindowMessenger.onMessage(
     sendFrameCasMessage(frame, ancestor, coordinate, frames);
   },
 );
+
+// Side Panel にコンテンツスクリプトの準備完了を通知する
+const notifyReady = () => {
+  void activeTabMessenger.sendMessage("contentReady", null);
+};
+
+if (document.readyState === "loading") {
+  document.addEventListener("DOMContentLoaded", notifyReady, { once: true });
+} else {
+  notifyReady();
+}
+
+// bfcache から復元された場合、Content Script は再注入されないため
+// pageshow イベントで contentReady を再送信する
+// see: https://developer.chrome.com/blog/bfcache-extension-messaging-changes
+window.addEventListener("pageshow", (event) => {
+  if (event.persisted) {
+    notifyReady();
+  }
+});

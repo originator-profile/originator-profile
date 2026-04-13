@@ -1,3 +1,4 @@
+import { activeTabMessenger } from "./components/activeTab/events";
 import { credentialsMessenger } from "./components/credentials/events";
 import type { LinkVerificationResult } from "./components/credentials/types";
 import { frameCasExtensionMessenger } from "./components/frameCas";
@@ -11,23 +12,69 @@ import {
   verificationCache,
   verificationResults,
 } from "./components/link-verification";
+import { overlayExtensionMessenger } from "./components/overlay/extension-events";
 import { updateBadge, verifyTabCredentials } from "./components/tabBadge";
 import "./utils/cors-basic-auth";
 import { normalizeUrl } from "./utils/navigation-state";
 
-const windowSize = {
-  width: 520,
-  height: 640,
-} as const;
-
 /** バッジ更新のデバウンス時間（ミリ秒） */
 const BADGE_UPDATE_DEBOUNCE_MS = 300;
 
-chrome.action.onClicked.addListener(async (tab) => {
-  if (tab.id === undefined) return;
-  const url = `${chrome.runtime.getURL("index.html")}#/tab/${tab.id}`;
-  await chrome.windows.create({ url, type: "popup", ...windowSize });
-});
+// Chromium: アクションクリック時にサイドパネルを開く
+if (chrome.sidePanel) {
+  chrome.sidePanel
+    .setPanelBehavior({ openPanelOnActionClick: true })
+    .catch(console.error);
+}
+
+// Firefox: アクションクリック時にサイドバーを開く
+// （sidebarAction.open() はユーザージェスチャからのみ呼べる）
+if (chrome.sidebarAction) {
+  chrome.action.onClicked.addListener(() => {
+    void chrome.sidebarAction.open();
+  });
+
+  // Firefox: サイドバー閉じる検知。
+  // sidebarAction.isOpen() ポーリングで close を検知する。
+  // see: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/sidebarAction
+  const SIDEBAR_POLL_INTERVAL_MS = 500;
+  const sidebarPollers = new Map<number, ReturnType<typeof setInterval>>();
+
+  const stopPolling = (windowId: number) => {
+    const timer = sidebarPollers.get(windowId);
+    if (timer !== undefined) {
+      clearInterval(timer);
+      sidebarPollers.delete(windowId);
+    }
+  };
+
+  activeTabMessenger.onMessage("firefoxSidebarOpened", ({ data }) => {
+    const { windowId } = data;
+    if (sidebarPollers.has(windowId)) return;
+
+    const timer = setInterval(async () => {
+      try {
+        const isOpen = await chrome.sidebarAction.isOpen({ windowId });
+        if (isOpen) return;
+
+        stopPolling(windowId);
+        const [tab] = await chrome.tabs.query({ active: true, windowId });
+        if (tab?.id !== undefined) {
+          void overlayExtensionMessenger.sendMessage("leave", null, tab.id);
+        }
+      } catch {
+        // ウィンドウが既に閉じられている等の場合
+        stopPolling(windowId);
+      }
+    }, SIDEBAR_POLL_INTERVAL_MS);
+    sidebarPollers.set(windowId, timer);
+  });
+
+  // ウィンドウ自体が閉じられた場合のクリーンアップ
+  chrome.windows.onRemoved.addListener((windowId) => {
+    stopPolling(windowId);
+  });
+}
 
 /**
  * タブのバッジを更新する

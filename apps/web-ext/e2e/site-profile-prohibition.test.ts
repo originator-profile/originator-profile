@@ -1,6 +1,6 @@
 import { mergeTests } from "@playwright/test";
 import { expectStatus } from "./expect-status";
-import { test as base, expect, popup } from "./fixtures";
+import { test as base, expect, sidepanel } from "./fixtures";
 import { gotoDetailPage } from "./goto-detail-page";
 import { test as siteProfileTest } from "./site-profile-fixtures";
 import { test as staticHtmlTest } from "./static-html-fixtures";
@@ -14,7 +14,7 @@ test("Site Profile の検証に失敗した場合閲覧禁止ページが表示�
   credentialsMissingPage,
 }) => {
   await page.goto(credentialsMissingPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
   await expect(ext?.getByTestId("p-elm-prohibition-message")).toBeVisible();
 
   await gotoDetailPage(ext);

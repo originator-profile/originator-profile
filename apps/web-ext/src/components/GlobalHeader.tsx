@@ -1,8 +1,10 @@
 import { Icon } from "@iconify/react";
 import { Header, _ } from "@originator-profile/ui";
-import { useParams } from "react-router";
+import { useNavigate, useParams } from "react-router";
+import { useSWRConfig } from "swr";
 import { twMerge } from "tailwind-merge";
-import { buildDetailUrl } from "../utils/routes";
+import { buildDetailUrl, routes } from "../utils/routes";
+import { matchTabCacheKey } from "./activeTab/match-tab-cache-key";
 import { Menu, MenuButton, MenuItem, useMenuButton } from "./Menu";
 
 type Props = {
@@ -12,6 +14,8 @@ type Props = {
 
 function GlobalHeader({ className, children }: Props) {
   const { tabId } = useParams<{ tabId: string }>();
+  const navigate = useNavigate();
+  const { mutate } = useSWRConfig();
   const {
     isOpen,
     activeIndex,
@@ -34,10 +38,27 @@ function GlobalHeader({ className, children }: Props) {
     },
   });
 
+  const handleReload = () => {
+    if (!tabId) return;
+    const numericTabId = Number(tabId);
+    const base = routes.base.build({ tabId });
+    void mutate(matchTabCacheKey(numericTabId), undefined);
+    void navigate(base, { replace: true });
+  };
+
   return (
     <Header className={twMerge("border-gray-200", className)}>
       {children}
-      <div className="ml-auto relative">
+      <div className="ml-auto flex items-center relative">
+        <button
+          type="button"
+          className="p-2 hover:bg-gray-100 rounded"
+          onClick={handleReload}
+          title={_("GlobalHeader_Reload")}
+          aria-label={_("GlobalHeader_Reload")}
+        >
+          <Icon icon="mdi:refresh" className="w-5 h-5 text-gray-700" />
+        </button>
         <MenuButton
           data-testid="global-header-menu-button"
           ref={buttonRef}

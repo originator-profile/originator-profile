@@ -499,5 +499,8 @@
   },
   "Verification_FetchFailed": {
     "message": "Credentials not found (fetch failed)"
+  },
+  "GlobalHeader_Reload": {
+    "message": "Reload"
   }
 }

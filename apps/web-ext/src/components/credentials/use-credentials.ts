@@ -109,7 +109,6 @@ export function useCredentials() {
   const params = useParams<{ tabId: string }>();
   const tabId = Number(params.tabId);
   const { siteProfile } = useSiteProfile();
-  // TODO: 自動再検証する場合は取得エンドポイントが変わりうることをUIの振る舞いで考慮して
   const {
     data: credentials,
     error,

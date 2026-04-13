@@ -14,7 +14,6 @@ import {
   VerifiedSp,
 } from "@originator-profile/verify";
 import flush from "just-flush";
-import { useCallback } from "react";
 import { Navigate } from "react-router";
 import { useMount, useTitle } from "react-use";
 import Loading from "../components/Loading";
@@ -115,14 +114,6 @@ function Base() {
   const { tabId, siteProfile, error: sp_error } = useSiteProfile();
   const { ops, cas, framesCas, error: credentials_error } = useCredentials();
   useFrameCasLocationProvider(tabId, framesCas ?? []);
-
-  window.addEventListener(
-    "pagehide",
-    useCallback(
-      () => void overlayExtensionMessenger.sendMessage("leave", null, tabId),
-      [tabId],
-    ),
-  );
 
   const title = [_("Base_ContentsInformation"), origin]
     .filter(Boolean)

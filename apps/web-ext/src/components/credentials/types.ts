@@ -6,7 +6,6 @@ import type {
   ContentAttestationSet,
   OpMeta,
   OriginatorProfileSet,
-  SiteProfile,
   WebMediaProfile,
 } from "@originator-profile/model";
 import type { FetchCredentialSetResult } from "@originator-profile/presentation";
@@ -15,7 +14,6 @@ import type {
   VerifiedCas,
   VerifiedOps,
 } from "@originator-profile/verify";
-import { SerializedSiteProfileResult } from "../siteProfile/types";
 
 /** 表示に対応している CA */
 export type SupportedCa = ArticleCA | AdvertisementCA | AdvertorialCA;
@@ -34,7 +32,6 @@ export type FrameLocation = { origin: string; url: string };
 export type FetchCredentialsMessageResponse = FrameLocation & {
   ops: Serialized<FetchCredentialSetResult<OriginatorProfileSet>>;
   cas: Serialized<FetchCredentialSetResult<ContentAttestationSet>>;
-  sp: SerializedSiteProfileResult;
   opMeta?: OpMeta;
 };
 
@@ -48,7 +45,6 @@ export type FrameCredentials = FrameResponse &
   FrameLocation & {
     ops: OriginatorProfileSet;
     cas: ContentAttestationSet;
-    sp: SiteProfile | null;
     opMeta?: OpMeta;
   };
 export type TabCredentials = FrameCredentials & { frames: FrameCredentials[] };

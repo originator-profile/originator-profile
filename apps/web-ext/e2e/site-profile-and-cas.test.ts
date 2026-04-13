@@ -3,7 +3,7 @@ import privateKey from "./account-key.example.priv.json" with { type: "json" };
 import publicKey from "./account-key.example.pub.json" with { type: "json" };
 import { test as credentialsTest } from "./credentials-fixtures";
 import { expectStatus } from "./expect-status";
-import { test as base, expect, popup } from "./fixtures";
+import { test as base, expect, sidepanel } from "./fixtures";
 import { gotoDetailPage } from "./goto-detail-page";
 import { test as siteProfileTest } from "./site-profile-fixtures";
 import { test as staticHtmlTest } from "./static-html-fixtures";
@@ -30,7 +30,7 @@ test("SiteProfile/CASの検証に成功するが、htmlに記載されたOPSの�
     credentialsPage.issuer,
   );
   await page.goto(credentialsPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
   await expect(ext?.getByTestId("site-profile")).toBeVisible();
   expect(await ext?.getByTestId("site-profile-wsp-name").innerText()).toBe(
     "SiteProfileの取得検証",
@@ -63,7 +63,7 @@ test("CASの検証に成功するが、SiteProfileのWMPの取得に失敗した
   );
 
   await page.goto(credentialsPage.endpoint);
-  const ext = await popup(context);
+  const ext = await sidepanel(context);
   await expect(ext?.getByTestId("site-profile")).toBeVisible();
   await expect(ext?.getByTestId("cas")).toBeVisible();
 
