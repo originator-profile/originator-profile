@@ -46,24 +46,17 @@ function parseDates({
  */
 export async function unsignedWsp(
   uwsp: UnsignedWebsiteProfile,
-  {
-    issuedAt: issuedAtDateOrString = new Date(),
-    expiredAt: expiredAtDateOrString = addYears(new Date(), 1),
-  }: {
-    issuedAt?: Date | string;
-    expiredAt?: Date | string;
-  },
+  timingOptions: WebsiteProfileTimingOptions,
 ): Promise<UnsignedWebsiteProfile> {
-  UnsignedWebsiteProfile.parse(uwsp);
+  const { issuedAt, expiredAt } = parseDates(timingOptions);
 
-  const issuedAt: Date = new Date(issuedAtDateOrString);
+  try {
+    UnsignedWebsiteProfile.parse(uwsp);
 
-  const expiredAt: Date =
-    typeof expiredAtDateOrString === "string"
-      ? parseExpirationDate(expiredAtDateOrString)
-      : expiredAtDateOrString;
-
-  await fetchAndSetDigestSri("sha256", uwsp.credentialSubject.image);
+    await fetchAndSetDigestSri("sha256", uwsp.credentialSubject.image);
+  } catch (e) {
+    throw new BadRequestError((e as Error).message);
+  }
 
   return {
     iss: uwsp.issuer,
