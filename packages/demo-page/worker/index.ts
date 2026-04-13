@@ -1,5 +1,5 @@
 // Cloudflare Worker script
-// ブラウザの言語やアクセスしたページの言語によって、日本語/英語のページ、SPへリダイレクトする
+// ブラウザの言語やアクセスしたページの言語によって、日本語/英語のページへリダイレクトする
 import { parse } from "accept-language-parser";
 
 const LANGS = ["en", "ja"] as const;
