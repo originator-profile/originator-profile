@@ -367,6 +367,71 @@ describe("resolveImageContent", () => {
     expect(image?.digestSRI).toMatch(/^sha256-/);
   });
 
+  test("ExternalResourceTarget の content がローカルパスの場合 Data URL に変換される", async () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "vite-plugin-test-"));
+    mkdirSync(join(tempDir, "assets"), { recursive: true });
+    writeFileSync(join(tempDir, "assets", "photo.png"), "fake-png-bytes");
+
+    const uca = {
+      ...sampleUca,
+      target: [
+        {
+          type: "ExternalResourceTargetIntegrity",
+          content: "./assets/photo.png",
+        },
+      ],
+    };
+
+    const plugin = await createPlugin({ root: tempDir });
+    const html = casHtml(JSON.stringify([uca]));
+    const result = await callTransform(
+      plugin,
+      html,
+      join(tempDir, "index.html"),
+    );
+
+    const cas = extractCas(result) as string[];
+    const payload = decodeJwt(cas[0]);
+    const target = (payload.target as Array<{ integrity?: string }>)[0];
+    expect(target.integrity).toBeDefined();
+    expect(target.integrity).toMatch(/^sha256-/);
+  });
+
+  test("ExternalResourceTarget の content 配列内のローカルパスがすべて変換される", async () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "vite-plugin-test-"));
+    mkdirSync(join(tempDir, "assets"), { recursive: true });
+    writeFileSync(join(tempDir, "assets", "a.mp4"), "fake-video-a");
+    writeFileSync(join(tempDir, "assets", "b.mp4"), "fake-video-b");
+
+    const uca = {
+      ...sampleUca,
+      target: [
+        {
+          type: "ExternalResourceTargetIntegrity",
+          content: ["./assets/a.mp4", "./assets/b.mp4"],
+        },
+      ],
+    };
+
+    const plugin = await createPlugin({ root: tempDir });
+    const html = casHtml(JSON.stringify([uca]));
+    const result = await callTransform(
+      plugin,
+      html,
+      join(tempDir, "index.html"),
+    );
+
+    const cas = extractCas(result) as string[];
+    const payload = decodeJwt(cas[0]);
+    const target = (payload.target as Array<{ integrity?: string }>)[0];
+    expect(target.integrity).toBeDefined();
+    // 2つのリソースのハッシュがスペース区切りで結合される
+    const hashes = target.integrity?.split(" ") ?? [];
+    expect(hashes).toHaveLength(2);
+    expect(hashes[0]).toMatch(/^sha256-/);
+    expect(hashes[1]).toMatch(/^sha256-/);
+  });
+
   test("data URL の content はそのまま維持される", async () => {
     const dataUrl =
       "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==";

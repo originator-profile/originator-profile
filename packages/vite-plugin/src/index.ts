@@ -1,6 +1,7 @@
 import type {
   Jwk,
   RawImage,
+  RawTarget,
   UnsignedContentAttestation,
   UnsignedWebsiteProfile,
 } from "@originator-profile/model";
@@ -70,7 +71,8 @@ function resolveKey(issuers: Record<string, Jwk>, issuer: string): Jwk {
   return key;
 }
 
-const IMAGE_MIME: Record<string, string> = {
+const MEDIA_MIME: Record<string, string> = {
+  // image
   ".avif": "image/avif",
   ".gif": "image/gif",
   ".ico": "image/x-icon",
@@ -79,6 +81,15 @@ const IMAGE_MIME: Record<string, string> = {
   ".png": "image/png",
   ".svg": "image/svg+xml",
   ".webp": "image/webp",
+  // video
+  ".mp4": "video/mp4",
+  ".ogg": "video/ogg",
+  ".webm": "video/webm",
+  // audio
+  ".aac": "audio/aac",
+  ".flac": "audio/flac",
+  ".mp3": "audio/mpeg",
+  ".wav": "audio/wav",
 };
 
 function isLocalPath(value: string): boolean {
@@ -87,22 +98,23 @@ function isLocalPath(value: string): boolean {
 
 function fileToDataUrl(filePath: string): string {
   const bytes = readFileSync(filePath);
-  const mime = IMAGE_MIME[extname(filePath).toLowerCase()] ?? "application/octet-stream";
+  const mime =
+    MEDIA_MIME[extname(filePath).toLowerCase()] ?? "application/octet-stream";
   return `data:${mime};base64,${bytes.toString("base64")}`;
 }
 
-function resolveImageContent(
-  image: RawImage | undefined,
+function resolveLocalContent(
+  obj: { content?: string | string[] } | undefined,
   baseDir: string,
 ): void {
-  if (!image?.content) return;
+  if (!obj?.content) return;
 
-  if (typeof image.content === "string") {
-    if (isLocalPath(image.content)) {
-      image.content = fileToDataUrl(resolve(baseDir, image.content));
+  if (typeof obj.content === "string") {
+    if (isLocalPath(obj.content)) {
+      obj.content = fileToDataUrl(resolve(baseDir, obj.content));
     }
   } else {
-    image.content = image.content.map((c) =>
+    obj.content = obj.content.map((c) =>
       isLocalPath(c) ? fileToDataUrl(resolve(baseDir, c)) : c,
     );
   }
@@ -144,10 +156,13 @@ export function originatorProfile(
           const signed = await Promise.all(
             entries.map(async (entry) => {
               const { main, ...uca } = entry;
-              resolveImageContent(
+              resolveLocalContent(
                 uca.credentialSubject.image as RawImage | undefined,
                 baseDir,
               );
+              for (const target of uca.target) {
+                resolveLocalContent(target as RawTarget, baseDir);
+              }
               const key = resolveKey(issuers, uca.issuer);
 
               const jwt = await ContentAttestation.sign(
@@ -183,7 +198,7 @@ export function originatorProfile(
 
       const signedSites = await Promise.all(
         input.sites.map(async (uwsp) => {
-          resolveImageContent(
+          resolveLocalContent(
             uwsp.credentialSubject.image as RawImage | undefined,
             inputDir,
           );
