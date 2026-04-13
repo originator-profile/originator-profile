@@ -1,3 +1,4 @@
+import { OpId } from "@originator-profile/model";
 import { z } from "zod";
 
 const ExpiresIn = z
@@ -8,7 +9,7 @@ const SigningKey = z.union([z.string(), z.looseObject({})]);
 
 export const OriginatorProfileOptionsSchema = z.object({
   issuers: z
-    .record(z.string(), SigningKey)
+    .record(OpId, SigningKey)
     .refine((v) => Object.keys(v).length > 0, {
       message: "At least one issuer is required",
     }),
