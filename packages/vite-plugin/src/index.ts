@@ -1,9 +1,12 @@
-import type { Jwk, UnsignedContentAttestation } from "@originator-profile/model";
+import type {
+  Jwk,
+  UnsignedContentAttestation,
+  UnsignedWebsiteProfile,
+} from "@originator-profile/model";
 import {
   ContentAttestation,
   WebsiteProfile,
 } from "@originator-profile/opvc";
-import type { UnsignedWebsiteProfile } from "@originator-profile/model";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import type { Plugin, ResolvedConfig } from "vite";
@@ -66,7 +69,7 @@ function resolveKey(issuers: Record<string, Jwk>, issuer: string): Jwk {
   return key;
 }
 
-export default function originatorProfile(
+export function originatorProfile(
   options: OriginatorProfileOptions,
 ): Plugin {
   let root: string;
@@ -91,35 +94,38 @@ export default function originatorProfile(
       const matches = [...html.matchAll(CAS_RE)];
       if (matches.length === 0) return html;
 
+      const replacements = await Promise.all(
+        matches.map(async ([fullMatch, jsonContent]) => {
+          const entries = JSON.parse(jsonContent) as Array<
+            UnsignedContentAttestation & { main?: boolean }
+          >;
+
+          const signed = await Promise.all(
+            entries.map(async (entry) => {
+              const { main, ...uca } = entry;
+              const key = resolveKey(issuers, uca.issuer);
+
+              const jwt = await ContentAttestation.sign(
+                uca as UnsignedContentAttestation,
+                key,
+                { issuedAt, expiredAt },
+              );
+
+              return main ? { attestation: jwt, main: true } : jwt;
+            }),
+          );
+
+          return {
+            from: fullMatch,
+            to: `<script type="application/cas+json">${JSON.stringify(signed)}</script>`,
+          };
+        }),
+      );
+
       let result = html;
-
-      for (const match of matches) {
-        const [fullMatch, jsonContent] = match;
-        const entries = JSON.parse(jsonContent) as Array<
-          UnsignedContentAttestation & { main?: boolean }
-        >;
-
-        const signed = await Promise.all(
-          entries.map(async (entry) => {
-            const { main, ...uca } = entry;
-            const key = resolveKey(issuers, uca.issuer);
-
-            const jwt = await ContentAttestation.sign(
-              uca as UnsignedContentAttestation,
-              key,
-              { issuedAt, expiredAt },
-            );
-
-            return main ? { attestation: jwt, main: true } : jwt;
-          }),
-        );
-
-        result = result.replace(
-          fullMatch,
-          `<script type="application/cas+json">${JSON.stringify(signed)}</script>`,
-        );
+      for (const { from, to } of replacements) {
+        result = result.replace(from, to);
       }
-
       return result;
     },
 

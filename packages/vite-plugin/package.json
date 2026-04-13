@@ -37,20 +37,17 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "@originator-profile/core": "workspace:*",
-    "@originator-profile/cryptography": "workspace:*",
-    "@originator-profile/model": "workspace:*",
-    "@originator-profile/opvc": "workspace:*",
-    "@originator-profile/securing-mechanism": "workspace:*",
-    "@originator-profile/sign": "workspace:*"
+    "@originator-profile/opvc": "workspace:*"
   },
   "peerDependencies": {
     "vite": "^6.0.0 || ^7.0.0 || ^8.0.0"
   },
   "devDependencies": {
+    "@originator-profile/cryptography": "workspace:*",
+    "@originator-profile/model": "workspace:*",
     "@originator-profile/tsconfig": "workspace:*",
+    "jose": "^6.0.11",
     "@playwright/test": "^1.59.1",
-    "date-fns": "^4.1.0",
     "eslint": "^10.1.0",
     "eslint-config-originator-profile": "workspace:*",
     "happy-dom": "^20.8.9",
@@ -58,7 +55,6 @@
     "playwright": "^1.59.1",
     "typescript": "^6.0.2",
     "vite": "^8.0.3",
-    "vitest": "^4.1.2",
-    "websri": "^1.0.1"
+    "vitest": "^4.1.2"
   }
 }

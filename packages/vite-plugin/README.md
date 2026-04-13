@@ -7,7 +7,7 @@ Vite plugin that signs [Website Profiles](https://docs.originator-profile.org/en
 ```js
 // vite.config.js
 import { defineConfig } from "vite";
-import originatorProfile from "@originator-profile/vite-plugin";
+import { originatorProfile } from "@originator-profile/vite-plugin";
 
 export default defineConfig({
   plugins: [
