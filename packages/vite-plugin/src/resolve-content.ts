@@ -75,8 +75,14 @@ export function parseExpiresIn(expiresIn: string, from: Date): Date {
   return result;
 }
 
-export function parseKey(value: string | Jwk): Jwk {
-  return typeof value === "string" ? (JSON.parse(value) as Jwk) : value;
+export function parseKey(value: string | Jwk, issuer?: string): Jwk {
+  if (typeof value !== "string") return value;
+  try {
+    return JSON.parse(value) as Jwk;
+  } catch {
+    const context = issuer ? ` for issuer "${issuer}"` : "";
+    throw new Error(`Invalid signing key${context}: expected valid JSON`);
+  }
 }
 
 export function resolveKey(

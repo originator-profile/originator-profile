@@ -173,6 +173,16 @@ describe("parseKey", () => {
     const result = parseKey(json);
     expect(result).toEqual(privateKey);
   });
+
+  test("不正な JSON 文字列は issuer を含むエラーメッセージ", () => {
+    expect(() => parseKey("not-json", "dns:example.com")).toThrow(
+      'Invalid signing key for issuer "dns:example.com"',
+    );
+  });
+
+  test("不正な JSON 文字列は issuer なしでもエラー", () => {
+    expect(() => parseKey("not-json")).toThrow("Invalid signing key");
+  });
 });
 
 describe("resolveKey", () => {

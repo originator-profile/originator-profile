@@ -62,7 +62,7 @@ export function originatorProfile(
       issuers = Object.fromEntries(
         Object.entries(options.issuers).map(([id, key]) => [
           id,
-          parseKey(key),
+          parseKey(key, id),
         ]),
       );
     },
