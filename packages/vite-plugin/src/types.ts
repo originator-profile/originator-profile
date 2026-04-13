@@ -1,11 +1,11 @@
-import { OpId } from "@originator-profile/model";
+import { Jwk, OpId } from "@originator-profile/model";
 import { z } from "zod";
 
 const ExpiresIn = z
   .string()
   .regex(/^\d+[ymd]$/, 'Must be a duration like "1y", "6m", or "30d"');
 
-const SigningKey = z.union([z.string(), z.looseObject({})]);
+const SigningKey = z.union([z.string(), Jwk]);
 
 export const OriginatorProfileOptionsSchema = z.object({
   issuers: z
