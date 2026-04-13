@@ -44,6 +44,9 @@
     "@originator-profile/securing-mechanism": "workspace:*",
     "@originator-profile/sign": "workspace:*"
   },
+  "peerDependencies": {
+    "vite": "^6.0.0 || ^7.0.0 || ^8.0.0"
+  },
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",
     "@playwright/test": "^1.59.1",

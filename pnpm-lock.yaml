@@ -692,6 +692,64 @@ importers:
         specifier: ^1.0.1
         version: 1.0.1
 
+  packages/vite-plugin:
+    dependencies:
+      '@originator-profile/core':
+        specifier: workspace:*
+        version: link:../core
+      '@originator-profile/cryptography':
+        specifier: workspace:*
+        version: link:../cryptography
+      '@originator-profile/model':
+        specifier: workspace:*
+        version: link:../model
+      '@originator-profile/opvc':
+        specifier: workspace:*
+        version: link:../opvc
+      '@originator-profile/securing-mechanism':
+        specifier: workspace:*
+        version: link:../securing-mechanism
+      '@originator-profile/sign':
+        specifier: workspace:*
+        version: link:../sign
+    devDependencies:
+      '@originator-profile/tsconfig':
+        specifier: workspace:*
+        version: link:../tsconfig
+      '@playwright/test':
+        specifier: ^1.59.1
+        version: 1.59.1
+      date-fns:
+        specifier: ^4.1.0
+        version: 4.1.0
+      eslint:
+        specifier: ^10.1.0
+        version: 10.2.0(jiti@2.6.1)
+      eslint-config-originator-profile:
+        specifier: workspace:*
+        version: link:../eslint-config
+      happy-dom:
+        specifier: ^20.8.9
+        version: 20.8.9
+      pkgroll:
+        specifier: ^2.27.0
+        version: 2.27.0(typescript@6.0.2)(vite@8.0.8(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.3))
+      playwright:
+        specifier: ^1.59.1
+        version: 1.59.1
+      typescript:
+        specifier: ^6.0.2
+        version: 6.0.2
+      vite:
+        specifier: ^8.0.3
+        version: 8.0.8(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.3)
+      vitest:
+        specifier: ^4.1.2
+        version: 4.1.4(@types/node@25.6.0)(happy-dom@20.8.9)(jsdom@29.0.2)(msw@2.13.2(@types/node@25.6.0)(typescript@6.0.2))(vite@8.0.8(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.3))
+      websri:
+        specifier: ^1.0.1
+        version: 1.0.1
+
   packages/wordpress:
     devDependencies:
       '@playwright/test':
