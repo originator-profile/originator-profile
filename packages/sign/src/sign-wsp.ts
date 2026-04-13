@@ -1,7 +1,7 @@
 import type { Jwk, UnsignedWebsiteProfile } from "@originator-profile/model";
 import { signJwtVc } from "@originator-profile/securing-mechanism";
 import type { HashAlgorithm } from "websri";
-import { type DocumentProvider, fetchAndSetDigestSri } from "./integrity/";
+import { fetchAndSetDigestSri } from "./integrity/";
 
 /**
  * Website Profile への署名
@@ -22,7 +22,6 @@ export async function signWsp(
     issuedAt?: Date;
     expiredAt: Date;
     integrityAlg?: HashAlgorithm;
-    documentProvider?: DocumentProvider;
   },
 ): Promise<string> {
   await fetchAndSetDigestSri(integrityAlg, uwsp.credentialSubject.image);
