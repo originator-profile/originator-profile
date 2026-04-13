@@ -6,6 +6,7 @@ import { parseExpiresIn, parseKey } from "./resolve-content";
 import { signCas } from "./sign-cas";
 import {
   SiteProfileInputSchema,
+  type SiteProfileOutput,
   signSiteProfile,
 } from "./sign-site-profile";
 
@@ -25,6 +26,17 @@ import {
   OriginatorProfileOptionsSchema,
   type OriginatorProfileOptions,
 } from "./types";
+
+async function buildSiteProfile(
+  root: string,
+  wspInput: string | undefined,
+  signingCtx: { issuers: Record<string, Jwk>; issuedAt: Date; expiredAt: Date },
+): Promise<SiteProfileOutput> {
+  const inputPath = resolve(root, wspInput ?? "./sp.json");
+  const inputDir = dirname(inputPath);
+  const input = JSON.parse(readFileSync(inputPath, "utf-8")) as unknown;
+  return signSiteProfile(SiteProfileInputSchema.parse(input), signingCtx, inputDir);
+}
 
 const CAS_RE =
   /<script\b[^>]*\btype\s*=\s*["']application\/cas\+json["'][^>]*>([\s\S]*?)<\/script>/g;
@@ -58,18 +70,9 @@ export function originatorProfile(
     configureServer(server) {
       server.middlewares.use("/.well-known/sp.json", async (_req, res, next) => {
         try {
-          const inputPath = resolve(root, options.wsp?.input ?? "./sp.json");
-          const inputDir = dirname(inputPath);
-          const input = JSON.parse(
-            readFileSync(inputPath, "utf-8"),
-          ) as unknown;
-
-          const output = await signSiteProfile(
-            SiteProfileInputSchema.parse(input),
-            { issuers, issuedAt, expiredAt },
-            inputDir,
+          const output = await buildSiteProfile(
+            root, options.wsp?.input, { issuers, issuedAt, expiredAt },
           );
-
           res.setHeader("Content-Type", "application/json");
           res.end(JSON.stringify(output));
         } catch (err) {
@@ -106,14 +109,8 @@ export function originatorProfile(
     },
 
     async generateBundle() {
-      const inputPath = resolve(root, options.wsp?.input ?? "./sp.json");
-      const inputDir = dirname(inputPath);
-      const input = JSON.parse(readFileSync(inputPath, "utf-8")) as unknown;
-
-      const output = await signSiteProfile(
-        input as never,
-        { issuers, issuedAt, expiredAt },
-        inputDir,
+      const output = await buildSiteProfile(
+        root, options.wsp?.input, { issuers, issuedAt, expiredAt },
       );
 
       this.emitFile({
