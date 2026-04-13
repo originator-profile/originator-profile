@@ -13,8 +13,8 @@ cp .env.example .env
 
 | 変数名 | 対応する issuer |
 |--------|----------------|
-| `VITE_SIGNING_KEY_DEMO` | `dns:demo.exp.originator-profile.org` |
-| `VITE_SIGNING_KEY_ANOTHER` | `dns:another-originator.exp.originator-profile.org` |
+| `SIGNING_KEY_DEMO` | `dns:demo.exp.originator-profile.org` |
+| `SIGNING_KEY_ANOTHER` | `dns:another-originator.exp.originator-profile.org` |
 
 鍵の生成: `pnpm opvc key-gen <output-name>`
 
@@ -45,14 +45,14 @@ http://localhost:4173/en/ もしくは http://localhost:4173/ja/ でビルド結
 本番用の署名鍵は Wrangler Secrets で設定してください:
 
 ```bash
-npx wrangler secret put VITE_SIGNING_KEY_DEMO
-npx wrangler secret put VITE_SIGNING_KEY_ANOTHER
+npx wrangler secret put SIGNING_KEY_DEMO
+npx wrangler secret put SIGNING_KEY_ANOTHER
 ```
 
 | シークレット名             | 対応する issuer                                     |
 | -------------------------- | --------------------------------------------------- |
-| `VITE_SIGNING_KEY_DEMO`    | `dns:demo.exp.originator-profile.org`               |
-| `VITE_SIGNING_KEY_ANOTHER` | `dns:another-originator.exp.originator-profile.org` |
+| `SIGNING_KEY_DEMO`    | `dns:demo.exp.originator-profile.org`               |
+| `SIGNING_KEY_ANOTHER` | `dns:another-originator.exp.originator-profile.org` |
 
 ## デプロイ
 

@@ -5,7 +5,7 @@ import path from "path";
 import { defineConfig, loadEnv } from "vite";
 
 export default defineConfig(({ mode }) => {
-  const env = loadEnv(mode, ".", "VITE_");
+  const env = loadEnv(mode, ".", "");
 
   return {
     base: "./",
@@ -24,9 +24,9 @@ export default defineConfig(({ mode }) => {
     plugins: [
       originatorProfile({
         issuers: {
-          "dns:demo.exp.originator-profile.org": env.VITE_SIGNING_KEY_DEMO,
+          "dns:demo.exp.originator-profile.org": env.SIGNING_KEY_DEMO,
           "dns:another-originator.exp.originator-profile.org":
-            env.VITE_SIGNING_KEY_ANOTHER,
+            env.SIGNING_KEY_ANOTHER,
         },
       }),
       cloudflare(),
