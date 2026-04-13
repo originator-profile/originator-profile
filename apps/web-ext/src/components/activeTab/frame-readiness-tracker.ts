@@ -34,7 +34,6 @@ export function createFrameReadinessTracker(
   onRefetch: (tabId: number) => void,
 ): FrameReadinessTracker {
   const pendings = new Map<number, PendingFrames>();
-  const knownTabs = new Set<number>();
 
   const clearPending = (tabId: number): void => {
     const pending = pendings.get(tabId);
@@ -63,11 +62,6 @@ export function createFrameReadinessTracker(
     isCurrentTab: boolean,
   ): ReadinessResult => {
     if (!isCurrentTab) return "skip";
-
-    if (frameId === 0 && !knownTabs.has(tabId)) {
-      knownTabs.add(tabId);
-      return "skip";
-    }
 
     if (frameId === 0) {
       clearPending(tabId);
@@ -114,7 +108,6 @@ export function createFrameReadinessTracker(
 
   const removeTab = (tabId: number): void => {
     clearPending(tabId);
-    knownTabs.delete(tabId);
   };
 
   const dispose = (): void => {
@@ -122,7 +115,6 @@ export function createFrameReadinessTracker(
       clearTimeout(pending.timer);
     }
     pendings.clear();
-    knownTabs.clear();
   };
 
   return { handleContentReady, resolveExpectedFrames, removeTab, dispose };
