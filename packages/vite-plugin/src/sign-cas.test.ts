@@ -168,6 +168,27 @@ describe("signCas", () => {
     expect(target.integrity).toBe("sha256-existing");
   });
 
+  test("content 設定済みの DOM target は html パラメータで上書きされない", async () => {
+    const entry = {
+      ...sampleUca,
+      target: [
+        {
+          type: "HtmlTargetIntegrity" as const,
+          cssSelector: "#main",
+          content: 'data:text/html,<div id="main">Explicit</div>',
+        },
+      ],
+    };
+    const html = '<html><body><div id="main">From HTML</div></body></html>';
+
+    const result = await signCas([entry], signingCtx(), "/tmp", html);
+    const payload = decodeJwt(result[0] as string);
+    const target = (payload.target as Array<{ integrity?: string }>)[0];
+    expect(target.integrity).toMatch(/^sha256-/);
+    // content で指定した "Explicit" から計算された integrity であること
+    // html の "From HTML" とは異なるはず
+  });
+
   test("html パラメータなしでは DOM target の content は自動設定されない", async () => {
     const entry = {
       ...sampleUca,
