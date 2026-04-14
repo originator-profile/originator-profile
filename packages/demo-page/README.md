@@ -87,5 +87,5 @@ demo-page/
 ├── worker/index.ts            # Cloudflare Worker（言語リダイレクト、画像 CORS）
 ├── vite.config.js             # Vite 設定
 ├── wrangler.toml              # Cloudflare Workers 設定
-└── .env.example               # 開発用署名鍵
+└── .env.development           # 開発用署名鍵
 ```
