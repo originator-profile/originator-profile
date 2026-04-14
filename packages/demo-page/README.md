@@ -6,17 +6,7 @@
 
 ```bash
 pnpm install
-cp .env.example .env
 ```
-
-`.env` に署名用秘密鍵（JWK JSON 形式）を設定してください。
-
-| 変数名                | 対応する issuer                                     |
-| --------------------- | --------------------------------------------------- |
-| `SIGNING_KEY_DEMO`    | `dns:demo.exp.originator-profile.org`               |
-| `SIGNING_KEY_ANOTHER` | `dns:another-originator.exp.originator-profile.org` |
-
-鍵の生成: `pnpm opvc key-gen <output-name>`
 
 ## 開発
 
@@ -97,6 +87,5 @@ demo-page/
 ├── worker/index.ts            # Cloudflare Worker（言語リダイレクト、画像 CORS）
 ├── vite.config.js             # Vite 設定
 ├── wrangler.toml              # Cloudflare Workers 設定
-├── .env                       # 署名鍵（gitignore）
-└── .env.example               # .env のテンプレート
+└── .env.example               # 開発用署名鍵
 ```
