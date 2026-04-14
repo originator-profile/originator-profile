@@ -1,10 +1,7 @@
 import { cloudflare } from "@cloudflare/vite-plugin";
 import { originatorProfile } from "@originator-profile/vite-plugin";
 import { resolve } from "path";
-import { fileURLToPath } from "url";
 import { defineConfig, loadEnv } from "vite";
-
-const dirname = fileURLToPath(new URL(".", import.meta.url));
 
 export default defineConfig(({ mode }) => {
   const env = loadEnv(mode, ".", "");
@@ -16,8 +13,8 @@ export default defineConfig(({ mode }) => {
         build: {
           rollupOptions: {
             input: {
-              "ja/index": resolve(dirname, "ja/index.html"),
-              "en/index": resolve(dirname, "en/index.html"),
+              "ja/index": resolve(import.meta.dirname, "ja/index.html"),
+              "en/index": resolve(import.meta.dirname, "en/index.html"),
             },
           },
         },
