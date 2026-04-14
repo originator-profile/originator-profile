@@ -697,6 +697,9 @@ importers:
 
   packages/vite-plugin:
     dependencies:
+      '@originator-profile/model':
+        specifier: workspace:*
+        version: link:../model
       '@originator-profile/opvc':
         specifier: workspace:*
         version: link:../opvc
@@ -707,9 +710,6 @@ importers:
       '@originator-profile/cryptography':
         specifier: workspace:*
         version: link:../cryptography
-      '@originator-profile/model':
-        specifier: workspace:*
-        version: link:../model
       '@originator-profile/tsconfig':
         specifier: workspace:*
         version: link:../tsconfig

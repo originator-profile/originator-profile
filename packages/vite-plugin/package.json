@@ -35,6 +35,7 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
+    "@originator-profile/model": "workspace:*",
     "@originator-profile/opvc": "workspace:*",
     "zod": "^4.3.6"
   },
@@ -43,7 +44,6 @@
   },
   "devDependencies": {
     "@originator-profile/cryptography": "workspace:*",
-    "@originator-profile/model": "workspace:*",
     "@originator-profile/tsconfig": "workspace:*",
     "jose": "^6.0.11",
     "eslint": "^10.1.0",
