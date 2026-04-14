@@ -1,4 +1,5 @@
 import { Jwk as JwkSchema, type Jwk } from "@originator-profile/model";
+import { addDays, addMonths, addYears } from "date-fns";
 import { readFileSync } from "node:fs";
 import { extname, resolve } from "node:path";
 
@@ -60,19 +61,16 @@ export function parseExpiresIn(expiresIn: string, from: Date): Date {
   }
   const amount = Number(match[1]);
   const unit = match[2];
-  const result = new Date(from);
   switch (unit) {
     case "y":
-      result.setFullYear(result.getFullYear() + amount);
-      break;
+      return addYears(from, amount);
     case "m":
-      result.setMonth(result.getMonth() + amount);
-      break;
+      return addMonths(from, amount);
     case "d":
-      result.setDate(result.getDate() + amount);
-      break;
+      return addDays(from, amount);
+    default:
+      throw new Error(`Unexpected unit: ${unit}`);
   }
-  return result;
 }
 
 export function parseKey(value: string | Jwk, issuer?: string): Jwk {
