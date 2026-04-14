@@ -7,6 +7,7 @@ export default defineConfig(({ mode }) => {
   const env = {
     ...loadEnv("development", ".", ""),
     ...loadEnv(mode, ".", ""),
+    ...process.env,
   };
 
   return {

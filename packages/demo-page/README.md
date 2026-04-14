@@ -27,19 +27,14 @@ http://localhost:4173/en/ もしくは http://localhost:4173/ja/ でビルド結
 
 ## 署名鍵
 
-| 環境         | 鍵の供給元         | 説明                           |
-| ------------ | ------------------ | ------------------------------ |
-| ローカル開発 | `.env.development` | `dns:localhost` の公開テスト鍵 |
-| 本番ビルド   | `wrangler secret`  | 各 issuer の本番秘密鍵         |
+| 環境         | 鍵の供給元                    | 説明                           |
+| ------------ | ----------------------------- | ------------------------------ |
+| ローカル開発 | `.env.development`            | `dns:localhost` の公開テスト鍵 |
+| 本番ビルド   | Cloudflare Build の環境変数   | 各 issuer の本番秘密鍵         |
 
-本番用の署名鍵は Wrangler Secrets で設定してください:
+本番用の署名鍵は Cloudflare ダッシュボードの Build 設定で環境変数として設定してください。
 
-```bash
-npx wrangler secret put SIGNING_KEY_DEMO
-npx wrangler secret put SIGNING_KEY_ANOTHER
-```
-
-| シークレット名        | 対応する issuer                                     |
+| 環境変数名            | 対応する issuer                                     |
 | --------------------- | --------------------------------------------------- |
 | `SIGNING_KEY_DEMO`    | `dns:demo.exp.originator-profile.org`               |
 | `SIGNING_KEY_ANOTHER` | `dns:another-originator.exp.originator-profile.org` |
