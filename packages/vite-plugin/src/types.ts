@@ -22,3 +22,9 @@ export const OriginatorProfileOptionsSchema = z.object({
 export type OriginatorProfileOptions = z.infer<
   typeof OriginatorProfileOptionsSchema
 >;
+
+export interface SigningContext {
+  issuers: Record<string, z.infer<typeof Jwk>>;
+  issuedAt: Date;
+  expiredAt: Date;
+}

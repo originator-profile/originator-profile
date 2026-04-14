@@ -1,12 +1,12 @@
 import {
   UnsignedWebsiteProfile as UnsignedWebsiteProfileSchema,
-  type Jwk,
   type RawImage,
   type UnsignedWebsiteProfile,
 } from "@originator-profile/model";
 import { WebsiteProfile } from "@originator-profile/opvc";
 import { z } from "zod";
 import { resolveKey, resolveLocalContent } from "./resolve-content";
+import type { SigningContext } from "./types";
 
 const OriginatorProfile = z.looseObject({
   core: z.string(),
@@ -28,12 +28,6 @@ export type SiteProfileInput = z.infer<typeof SiteProfileInputSchema>;
 export interface SiteProfileOutput {
   originators: SiteProfileInput["originators"];
   sites: string[];
-}
-
-export interface SigningContext {
-  issuers: Record<string, Jwk>;
-  issuedAt: Date;
-  expiredAt: Date;
 }
 
 export async function signSiteProfile(

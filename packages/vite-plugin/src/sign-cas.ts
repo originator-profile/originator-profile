@@ -1,19 +1,13 @@
 import type {
-  Jwk,
   RawImage,
   RawTarget,
   UnsignedContentAttestation,
 } from "@originator-profile/model";
 import { ContentAttestation } from "@originator-profile/opvc";
 import { resolveKey, resolveLocalContent } from "./resolve-content";
+import type { SigningContext } from "./types";
 
 export type CasOutput = string | { attestation: string; main: true };
-
-export interface SigningContext {
-  issuers: Record<string, Jwk>;
-  issuedAt: Date;
-  expiredAt: Date;
-}
 
 const DOM_TARGET_TYPES = new Set([
   "HtmlTargetIntegrity",
