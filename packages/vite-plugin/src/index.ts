@@ -113,7 +113,7 @@ export function originatorProfile(options: OriginatorProfileOptions): Plugin {
 
       let result = html;
       for (const { from, to } of replacements) {
-        result = result.replace(from, to);
+        result = result.replace(from, () => to);
       }
       return result;
     },
