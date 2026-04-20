@@ -1,6 +1,6 @@
 {
   "name": "@originator-profile/originator-profile",
-  "description": "OP Inspector",
+  "description": "Originator Profile Project",
   "version": "0.6.0-beta.0",
   "license": "Apache-2.0",
   "private": true,
