@@ -13,7 +13,7 @@ runs:
     - name: Get Playwright version
       id: playwright-version
       run: |
-        PLAYWRIGHT_VERSION=$(pnpm why --filter @originator-profile/web-ext --json playwright | jq -r '.[].version')
+        PLAYWRIGHT_VERSION=$(pnpm why --filter @originator-profile/inspector --json playwright | jq -r '.[].version')
         if [ -z "$PLAYWRIGHT_VERSION" ]; then
           echo "Error: Failed to detect Playwright version" >&2
           exit 1
@@ -29,5 +29,5 @@ runs:
       run: pnpm install --frozen-lockfile
       shell: bash
     - name: Install Playwright browsers and system dependencies
-      run: pnpm --filter @originator-profile/web-ext exec playwright install --with-deps
+      run: pnpm --filter @originator-profile/inspector exec playwright install --with-deps
       shell: bash

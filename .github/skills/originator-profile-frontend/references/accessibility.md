@@ -10,7 +10,7 @@
 次の例は、[ARIA APG Menu Button Pattern](https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/) に準拠してキーボードナビゲーションを実装しています。
 
 ```tsx
-// apps/web-ext/src/hooks/useMenuButton.ts
+// apps/inspector/src/hooks/useMenuButton.ts
 export function useMenuButton({ onItemSelect, items }: UseMenuButtonOptions) {
   // ...
 

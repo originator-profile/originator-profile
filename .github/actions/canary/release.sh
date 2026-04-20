@@ -5,7 +5,7 @@ cd "$(dirname "$0")/../../.."
 
 mkdir -p .github/dist
 
-cp apps/web-ext/web-ext-artifacts/*.zip packages/wordpress/dist/*.zip .github/dist/
+cp apps/inspector/web-ext-artifacts/*.zip packages/wordpress/dist/*.zip .github/dist/
 cd .github/dist
 for f in *.zip; do
   [[ $f =~ -[0-9]+\.[0-9]+\.[0-9]+\.zip$ ]] || continue

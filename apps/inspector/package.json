@@ -1,5 +1,5 @@
 {
-  "name": "@originator-profile/web-ext",
+  "name": "@originator-profile/inspector",
   "description": "Profile Web Extension",
   "version": "0.6.0-beta.0",
   "license": "Apache-2.0",
@@ -9,7 +9,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/originator-profile/originator-profile.git",
-    "directory": "apps/web-ext"
+    "directory": "apps/inspector"
   },
   "type": "module",
   "dependencies": {
