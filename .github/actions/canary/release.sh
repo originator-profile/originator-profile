@@ -27,10 +27,10 @@ NOTE="> [!WARNING]
 
 Download from the Assets below.
 
-- Testing Extension (Chrome) _testing_profile_web_extension-chromium-canary.zip
-- Testing Extension (Firefox) _testing_profile_web_extension-firefox-desktop-canary.zip
-- Extension (Chrome) profile_web_extension-chromium-canary.zip
-- Extension (Firefox) profile_web_extension-firefox-desktop-canary.zip
+- Testing Extension (Chrome) _testing_op_inspector-chromium-canary.zip
+- Testing Extension (Firefox) _testing_op_inspector-firefox-desktop-canary.zip
+- Extension (Chrome) op_inspector-chromium-canary.zip
+- Extension (Firefox) op_inspector-firefox-desktop-canary.zip
 - WordPress Plugin wordpress-ca-manager.zip
 
 </details>"

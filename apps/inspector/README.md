@@ -1,4 +1,4 @@
-# Profile Web Extension
+# OP Inspector
 
 Web ブラウザーで Originator Profile と Content Attestation の閲覧と検証を行うアプリです。
 

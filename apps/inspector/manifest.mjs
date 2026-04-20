@@ -73,11 +73,11 @@ const firefox = {
   ...base,
   browser_specific_settings: {
     gecko: {
-      id: "bot@originator-profile.org",
+      id: "inspector@originator-profile.org",
       strict_min_version: "109.0",
     },
     gecko_android: {
-      id: "bot@originator-profile.org",
+      id: "inspector@originator-profile.org",
       strict_min_version: "120.0",
     },
   },
