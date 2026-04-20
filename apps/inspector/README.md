@@ -1,6 +1,6 @@
 # OP Inspector
 
-Web ブラウザーで Originator Profile と Content Attestation の閲覧と検証を行うアプリです。
+コンテンツの作成者やそれがどのような者かなど、OP 技術でデジタル化された内容を可視化・確認するツールです。
 
 ## 使い方
 

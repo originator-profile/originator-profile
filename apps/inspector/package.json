@@ -1,6 +1,6 @@
 {
   "name": "@originator-profile/inspector",
-  "description": "OP Inspector",
+  "description": "OP Inspector is a tool for visualizing and verifying content digitized with OP technology, including who created it and what kind of entity they are.",
   "version": "0.6.0-beta.0",
   "license": "Apache-2.0",
   "private": true,
