@@ -1,4 +1,10 @@
 {
+  "extensionName": {
+    "message": "OP Inspector"
+  },
+  "extensionDescription": {
+    "message": "コンテンツの作成者やそれがどのような者かなど、OP 技術でデジタル化された内容を可視化・確認するツールです。"
+  },
   "CaFilter_All": {
     "message": "すべて"
   },

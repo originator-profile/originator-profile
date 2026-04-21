@@ -55,7 +55,7 @@ pnpm test --coverage
 E2E テストは `e2e/` ディレクトリに配置します。
 
 ```
-apps/web-ext/
+apps/inspector/
 ├── src/
 └── e2e/
     ├── fixtures.ts

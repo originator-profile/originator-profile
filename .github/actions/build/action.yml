@@ -23,7 +23,7 @@ runs:
   using: composite
   steps:
     - name: Clean up previous artifacts
-      run: rm -rf ./apps/web-ext/web-ext-artifacts*
+      run: rm -rf ./apps/inspector/web-ext-artifacts*
       shell: bash
     - run: pnpm build
       shell: bash
@@ -35,5 +35,5 @@ runs:
     - id: upload
       uses: actions/upload-artifact@v7
       with:
-        name: web-ext
-        path: apps/web-ext/web-ext-artifacts*
+        name: inspector
+        path: apps/inspector/web-ext-artifacts*
