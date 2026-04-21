@@ -36,7 +36,7 @@ importers:
         specifier: ^0.28.18
         version: 0.28.18(typescript@6.0.2)
 
-  apps/web-ext:
+  apps/inspector:
     dependencies:
       react:
         specifier: ^19.2.4

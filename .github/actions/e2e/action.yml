@@ -14,7 +14,7 @@ runs:
         path: |
           packages/verify/playwright-report
           packages/verify/test-results
-          apps/web-ext/playwright-report
-          apps/web-ext/test-results
-          apps/web-ext/screenshots
+          apps/inspector/playwright-report
+          apps/inspector/test-results
+          apps/inspector/screenshots
         retention-days: 7

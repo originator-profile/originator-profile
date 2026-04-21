@@ -19,5 +19,5 @@ runs:
       run: pnpm install --frozen-lockfile
       shell: bash
     - name: Install browsers and system dependencies
-      run: pnpm --filter @originator-profile/web-ext exec playwright install --with-deps
+      run: pnpm --filter @originator-profile/inspector exec playwright install --with-deps
       shell: bash

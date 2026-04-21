@@ -10,12 +10,12 @@ playwright-report
 test-results
 tmp
 vendor
-/apps/web-ext/credentials.json
-/apps/web-ext/dist*
-/apps/web-ext/screenshots
-/apps/web-ext/web-ext-artifacts*
-/apps/web-ext/\\\\wsl.localhost\\*
-/apps/web-ext/.e2e-temp
+/apps/inspector/credentials.json
+/apps/inspector/dist*
+/apps/inspector/screenshots
+/apps/inspector/web-ext-artifacts*
+/apps/inspector/\\\\wsl.localhost\\*
+/apps/inspector/.e2e-temp
 /public/ts
 
 .claude/settings.local.json

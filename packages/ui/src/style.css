@@ -1,4 +1,4 @@
-/* NOTE: 本ファイルは ui パッケージのスタイルが tailwind-config-originator-profile に準拠していることを表明する目的で設置しています。コンポーネントを利用する際は呼び出し側（registry-ui, web-ext, etc.）のパッケージの設定が使用されます。 */
+/* NOTE: 本ファイルは ui パッケージのスタイルが tailwind-config-originator-profile に準拠していることを表明する目的で設置しています。コンポーネントを利用する際は呼び出し側（registry-ui, inspector, etc.）のパッケージの設定が使用されます。 */
 
 @import "tailwindcss";
 @import "tailwind-config-originator-profile";
