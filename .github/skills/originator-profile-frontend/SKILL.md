@@ -20,7 +20,7 @@ description: フロントエンド開発支援（React コンポーネント、T
 
 ```
 apps/
-├── web-ext/          # ブラウザ拡張機能
+├── inspector/       # ブラウザ拡張機能
 │   ├── src/
 │   │   ├── components/   # Feature-driven 構造
 │   │   ├── hooks/        # カスタムフック

@@ -12,8 +12,8 @@ const pkg = await readFile(new URL("./package.json", import.meta.url))
 
 const base = {
   manifest_version: 3,
-  name: pkg.description,
-  description: pkg.description,
+  name: "__MSG_extensionName__",
+  description: "__MSG_extensionDescription__",
   version: pkg.version.split("-")[0],
   homepage_url: "https://originator-profile.org/",
   icons: {
@@ -71,11 +71,11 @@ const firefox = {
   ...base,
   browser_specific_settings: {
     gecko: {
-      id: "bot@originator-profile.org",
+      id: "inspector@originator-profile.org",
       strict_min_version: "109.0",
     },
     gecko_android: {
-      id: "bot@originator-profile.org",
+      id: "inspector@originator-profile.org",
       strict_min_version: "120.0",
     },
   },

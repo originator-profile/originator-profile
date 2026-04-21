@@ -36,7 +36,7 @@
       "dependsOn": ["build"],
       "outputs": []
     },
-    "@originator-profile/web-ext#build": {
+    "@originator-profile/inspector#build": {
       "dependsOn": ["^build"],
       "env": [
         "NODE_ENV",

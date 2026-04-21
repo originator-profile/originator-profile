@@ -79,7 +79,7 @@ jobs:
         with:
           name: vrt-baselines
           path: |
-            apps/web-ext/e2e/**/*-snapshots/
+            apps/inspector/e2e/**/*-snapshots/
             packages/verify/e2e/**/*-snapshots/
           retention-days: 30
 
