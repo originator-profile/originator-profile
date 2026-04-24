@@ -247,8 +247,8 @@ importers:
         specifier: ^6.0.2
         version: 6.0.2
       uuid:
-        specifier: ^13.0.0
-        version: 13.0.0
+        specifier: ^14.0.0
+        version: 14.0.0
       vitest:
         specifier: ^4.1.2
         version: 4.1.2(@opentelemetry/api@1.9.1)(@types/node@25.5.2)(happy-dom@20.8.9)(jsdom@29.0.1)(msw@2.12.14(@types/node@25.5.2)(typescript@6.0.2))(vite@8.0.5(@emnapi/core@1.9.2)(@emnapi/runtime@1.10.0)(@types/node@25.5.2)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.46.1)(yaml@2.8.3))
@@ -9719,8 +9719,8 @@ packages:
   util-deprecate@1.0.2:
     resolution: {integrity: sha512-EPD5q1uXyFxJpCrLnCc1nHnq3gOa6DZBocAIiI2TaSCA7VCJ1UJDMagCzIkXNsUYfD1daK//LTEQ8xiIbrHtcw==}
 
-  uuid@13.0.0:
-    resolution: {integrity: sha512-XQegIaBTVUjSHliKqcnFqYypAd4S+WCYt5NIeRs6w/UAry7z8Y9j5ZwRRL4kzq9U3sD6v+85er9FvkEaBpji2w==}
+  uuid@14.0.0:
+    resolution: {integrity: sha512-Qo+uWgilfSmAhXCMav1uYFynlQO7fMFiMVZsQqZRMIXp0O7rR7qjkj+cPvBHLgBqi960QCoo/PH2/6ZtVqKvrg==}
     hasBin: true
 
   uuid@8.3.2:
@@ -21051,7 +21051,7 @@ snapshots:
 
   util-deprecate@1.0.2: {}
 
-  uuid@13.0.0: {}
+  uuid@14.0.0: {}
 
   uuid@8.3.2: {}
 
