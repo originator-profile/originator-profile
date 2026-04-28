@@ -17,10 +17,16 @@ export default defineConfig(({ mode }) => {
         build: {
           rolldownOptions: {
             input: {
-              "en": resolve(import.meta.dirname, "en/index.html"),
-              "en/ad-iframe-demo": resolve(import.meta.dirname, "en/ad-iframe-demo.html"),
-              "ja": resolve(import.meta.dirname, "ja/index.html"),
-              "ja/ad-iframe-demo": resolve(import.meta.dirname, "ja/ad-iframe-demo.html"),
+              en: resolve(import.meta.dirname, "en/index.html"),
+              "en/ad-iframe-demo": resolve(
+                import.meta.dirname,
+                "en/ad-iframe-demo.html",
+              ),
+              ja: resolve(import.meta.dirname, "ja/index.html"),
+              "ja/ad-iframe-demo": resolve(
+                import.meta.dirname,
+                "ja/ad-iframe-demo.html",
+              ),
             },
           },
         },
