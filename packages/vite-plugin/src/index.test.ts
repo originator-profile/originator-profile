@@ -42,12 +42,12 @@ function casHtml(json: string): string {
 </body></html>`;
 }
 
-const SIGNED_CAS_RE = new RegExp(
-  `<script type="${SIGNED_CAS_TYPE.replace(/\+/g, "\\+")}">([\\s\\S]*?)</script>`,
-);
+const SIGNED_CAS_RE =
+  /<script type="application\/cas\+json">([\s\S]*?)<\/script>/g;
 
 function extractCas(html: string): unknown[] {
-  const match = html.match(SIGNED_CAS_RE);
+  SIGNED_CAS_RE.lastIndex = 0;
+  const match = SIGNED_CAS_RE.exec(html);
   if (!match) throw new Error("Signed CAS script tag not found in output HTML");
   return JSON.parse(match[1]) as unknown[];
 }
@@ -198,12 +198,7 @@ describe("transformIndexHtml", () => {
     const result = await callTransform(plugin, html);
 
     const signedMatches = [
-      ...result.matchAll(
-        new RegExp(
-          `<script type="${SIGNED_CAS_TYPE.replace(/\+/g, "\\+")}">`,
-          "g",
-        ),
-      ),
+      ...result.matchAll(/<script type="application\/cas\+json">/g),
     ];
     expect(signedMatches).toHaveLength(2);
     expect(result).toContain("<p>middle</p>");
