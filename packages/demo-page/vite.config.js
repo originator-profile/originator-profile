@@ -15,7 +15,7 @@ export default defineConfig(({ mode }) => {
     environments: {
       client: {
         build: {
-          rollupOptions: {
+          rolldownOptions: {
             input: {
               "en": resolve(import.meta.dirname, "en/index.html"),
               "en/ad-iframe-demo": resolve(import.meta.dirname, "en/ad-iframe-demo.html"),
