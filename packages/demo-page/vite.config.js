@@ -17,8 +17,10 @@ export default defineConfig(({ mode }) => {
         build: {
           rollupOptions: {
             input: {
-              "ja/index": resolve(import.meta.dirname, "ja/index.html"),
-              "en/index": resolve(import.meta.dirname, "en/index.html"),
+              "en": resolve(import.meta.dirname, "en/index.html"),
+              "en/ad-iframe-demo": resolve(import.meta.dirname, "en/ad-iframe-demo.html"),
+              "ja": resolve(import.meta.dirname, "ja/index.html"),
+              "ja/ad-iframe-demo": resolve(import.meta.dirname, "ja/ad-iframe-demo.html"),
             },
           },
         },
@@ -30,6 +32,7 @@ export default defineConfig(({ mode }) => {
           "dns:demo.exp.originator-profile.org": env.SIGNING_KEY_DEMO,
           "dns:another-originator.exp.originator-profile.org":
             env.SIGNING_KEY_ANOTHER,
+          "dns:ad.oprexpt.example": env.SIGNING_KEY_AD,
         },
       }),
       cloudflare(),
