@@ -6,7 +6,7 @@ Web Extension と WordPress プラグインのカナリアリリースを GitHub
 
 ### 前提条件
 
-- `apps/web-ext/web-ext-artifacts/*.zip` が存在すること
+- `apps/inspector/web-ext-artifacts/*.zip` が存在すること
 - `packages/wordpress/dist/*.zip` が存在すること
 - `gh` CLI がインストールされ、認証済みであること
 

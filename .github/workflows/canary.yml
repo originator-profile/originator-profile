@@ -31,7 +31,7 @@ jobs:
       - name: Build for WordPress plugin
         uses: "./.github/actions/wordpress_build"
       - name: Testing Build
-        run: pnpm --filter=@originator-profile/web-ext build --mode testing
+        run: pnpm --filter=@originator-profile/inspector build --mode testing
       - name: Canary Release
         run: .github/actions/canary/release.sh
         env:

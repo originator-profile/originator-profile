@@ -46,7 +46,7 @@ export function useNavigationRefetch() {
   useEffect(() => {
     const tracker = createFrameReadinessTracker(onRefetch);
 
-    // タブが閉じられたときに knownTabs / pendings をクリーンアップ
+    // タブが閉じられたときに pendings をクリーンアップ
     const removedListener = (tabId: number) => {
       tracker.removeTab(tabId);
     };
