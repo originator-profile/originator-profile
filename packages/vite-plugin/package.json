@@ -38,6 +38,7 @@
     "@originator-profile/model": "workspace:*",
     "@originator-profile/opvc": "workspace:*",
     "date-fns": "^4.1.0",
+    "parse5": "^8.0.1",
     "zod": "^4.3.6"
   },
   "peerDependencies": {
@@ -46,9 +47,9 @@
   "devDependencies": {
     "@originator-profile/cryptography": "workspace:*",
     "@originator-profile/tsconfig": "workspace:*",
-    "jose": "^6.0.11",
     "eslint": "^10.1.0",
     "eslint-config-originator-profile": "workspace:*",
+    "jose": "^6.0.11",
     "pkgroll": "^2.27.0",
     "typescript": "^6.0.2",
     "vite": "^8.0.3",

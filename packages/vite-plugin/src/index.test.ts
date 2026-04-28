@@ -30,19 +30,25 @@ async function createPlugin(
   return plugin;
 }
 
+const UNSIGNED_CAS_TYPE =
+  "application/prs.originator-profile.unsigned-cas+json";
+const SIGNED_CAS_TYPE = "application/cas+json";
+
 function casHtml(json: string): string {
   return `<!DOCTYPE html>
 <html><head><title>test</title></head>
 <body>
-<script type="application/cas+json">${json}</script>
+<script type="${UNSIGNED_CAS_TYPE}">${json}</script>
 </body></html>`;
 }
 
-const CAS_RE = /<script type="application\/cas\+json">([\s\S]*?)<\/script>/;
+const SIGNED_CAS_RE = new RegExp(
+  `<script type="${SIGNED_CAS_TYPE.replace(/\+/g, "\\+")}">([\\s\\S]*?)</script>`,
+);
 
 function extractCas(html: string): unknown[] {
-  const match = html.match(CAS_RE);
-  if (!match) throw new Error("CAS script tag not found in output HTML");
+  const match = html.match(SIGNED_CAS_RE);
+  if (!match) throw new Error("Signed CAS script tag not found in output HTML");
   return JSON.parse(match[1]) as unknown[];
 }
 
@@ -96,11 +102,14 @@ const sampleUwsp = {
 };
 
 describe("transformIndexHtml", () => {
-  test("CAS script 内の unsigned CA が署名され JWT に置換される", async () => {
+  test("unsigned CAS script の中身が署名され application/cas+json に置換される", async () => {
     const plugin = await createPlugin();
     const html = casHtml(JSON.stringify([sampleUca]));
 
     const result = await callTransform(plugin, html);
+
+    expect(result).not.toContain(UNSIGNED_CAS_TYPE);
+    expect(result).toContain(`<script type="${SIGNED_CAS_TYPE}">`);
 
     const cas = extractCas(result);
     expect(cas).toHaveLength(1);
@@ -108,13 +117,96 @@ describe("transformIndexHtml", () => {
     expect((cas[0] as string).startsWith("eyJ")).toBe(true);
   });
 
-  test("CAS script が無い HTML はそのまま返される", async () => {
+  test("unsigned CAS script が無い HTML はそのまま返される", async () => {
     const plugin = await createPlugin();
     const html = "<html><body><p>no CAS</p></body></html>";
 
     const result = await callTransform(plugin, html);
 
     expect(result).toBe(html);
+  });
+
+  test("既に署名済みの application/cas+json script はパススルーされる", async () => {
+    const plugin = await createPlugin();
+    const presigned = `<!DOCTYPE html>
+<html><head><title>test</title></head>
+<body>
+<script type="application/cas+json">["eyJ.preexisting.jwt"]</script>
+</body></html>`;
+
+    const result = await callTransform(plugin, presigned);
+
+    expect(result).toBe(presigned);
+  });
+
+  test("クォート無しの type 属性も検出される", async () => {
+    const plugin = await createPlugin();
+    const html = `<!DOCTYPE html>
+<html><head><title>test</title></head>
+<body>
+<script type=${UNSIGNED_CAS_TYPE}>${JSON.stringify([sampleUca])}</script>
+</body></html>`;
+
+    const result = await callTransform(plugin, html);
+
+    expect(result).not.toContain(UNSIGNED_CAS_TYPE);
+    const cas = extractCas(result);
+    expect(cas).toHaveLength(1);
+    expect((cas[0] as string).startsWith("eyJ")).toBe(true);
+  });
+
+  test("content に <\\/script> エスケープを含む JSON が正しく署名される", async () => {
+    const plugin = await createPlugin();
+    const ucaWithScriptLike = {
+      ...sampleUca,
+      target: [
+        {
+          type: "TextTargetIntegrity",
+          cssSelector: "#main",
+          content:
+            'data:text/html,<div id="main"><\\/script>safe<\\/script></div>',
+        },
+      ],
+    };
+    // HTML ソース上では <\/script> として記述（JSON パース後は </script>）。
+    // parse5 は script-data state で literal `</script` のみを終了とみなすので、
+    // <\/script> では script 要素は終了せず、JSON 全体が取得できる。
+    const json = JSON.stringify([ucaWithScriptLike]).replace(/<\//g, "<\\/");
+    const html = `<!DOCTYPE html>
+<html><head><title>test</title></head>
+<body>
+<script type="${UNSIGNED_CAS_TYPE}">${json}</script>
+</body></html>`;
+
+    const result = await callTransform(plugin, html);
+
+    const cas = extractCas(result);
+    expect(cas).toHaveLength(1);
+    expect((cas[0] as string).startsWith("eyJ")).toBe(true);
+  });
+
+  test("複数の unsigned CAS script がそれぞれ署名される", async () => {
+    const plugin = await createPlugin();
+    const html = `<!DOCTYPE html>
+<html><head><title>test</title></head>
+<body>
+<script type="${UNSIGNED_CAS_TYPE}">${JSON.stringify([sampleUca])}</script>
+<p>middle</p>
+<script type="${UNSIGNED_CAS_TYPE}">${JSON.stringify([sampleUca])}</script>
+</body></html>`;
+
+    const result = await callTransform(plugin, html);
+
+    const signedMatches = [
+      ...result.matchAll(
+        new RegExp(
+          `<script type="${SIGNED_CAS_TYPE.replace(/\+/g, "\\+")}">`,
+          "g",
+        ),
+      ),
+    ];
+    expect(signedMatches).toHaveLength(2);
+    expect(result).toContain("<p>middle</p>");
   });
 });
 

@@ -4,6 +4,7 @@ import type {
 } from "@originator-profile/model";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
+import { parse, type DefaultTreeAdapterMap } from "parse5";
 import type { Plugin, ResolvedConfig } from "vite";
 import { parseExpiresIn, parseKey } from "./resolve-content";
 import { signCas } from "./sign-cas";
@@ -45,8 +46,69 @@ async function buildSiteProfile(
   );
 }
 
-const CAS_RE =
-  /<script\b[^>]*\btype\s*=\s*["']application\/cas\+json["'][^>]*>([\s\S]*?)<\/script>/g;
+const UNSIGNED_CAS_TYPE =
+  "application/prs.originator-profile.unsigned-cas+json";
+const SIGNED_CAS_TYPE = "application/cas+json";
+
+type Element = DefaultTreeAdapterMap["element"];
+type TextNode = DefaultTreeAdapterMap["textNode"];
+type Node = DefaultTreeAdapterMap["node"];
+
+function isElement(node: Node): node is Element {
+  return "tagName" in node;
+}
+
+function isTextNode(node: Node): node is TextNode {
+  return node.nodeName === "#text";
+}
+
+function* walkElements(node: Node): Generator<Element> {
+  if (isElement(node)) {
+    yield node;
+  }
+  if ("childNodes" in node) {
+    for (const child of node.childNodes) {
+      yield* walkElements(child);
+    }
+  }
+}
+
+function getAttr(el: Element, name: string): string | undefined {
+  return el.attrs.find((a) => a.name === name)?.value;
+}
+
+function getTextContent(el: Element): string {
+  return el.childNodes.map((c) => (isTextNode(c) ? c.value : "")).join("");
+}
+
+interface UnsignedCasMatch {
+  startOffset: number;
+  endOffset: number;
+  jsonContent: string;
+}
+
+function findUnsignedCasScripts(html: string): UnsignedCasMatch[] {
+  const doc = parse(html, { sourceCodeLocationInfo: true });
+  const matches: UnsignedCasMatch[] = [];
+  for (const el of walkElements(doc)) {
+    if (el.tagName !== "script") continue;
+    if (getAttr(el, "type") !== UNSIGNED_CAS_TYPE) continue;
+    const loc = el.sourceCodeLocation;
+    if (!loc) continue;
+    matches.push({
+      startOffset: loc.startOffset,
+      endOffset: loc.endOffset,
+      jsonContent: getTextContent(el),
+    });
+  }
+  return matches;
+}
+
+// "</" を JSON 内で "<\/" にエスケープし、署名済み CAS 文字列が偶然 </script>
+// 等を含んでも script 要素を早期終了させない。JSON では "/" のエスケープは合法。
+function escapeForScript(json: string): string {
+  return json.replace(/<\//g, "<\\/");
+}
 
 export function originatorProfile(options: OriginatorProfileOptions): Plugin {
   OriginatorProfileOptionsSchema.parse(options);
@@ -92,28 +154,30 @@ export function originatorProfile(options: OriginatorProfileOptions): Plugin {
     },
 
     async transformIndexHtml(html: string) {
-      const matches = [...html.matchAll(CAS_RE)];
+      const matches = findUnsignedCasScripts(html);
       if (matches.length === 0) return html;
       const signingCtx = { issuers, issuedAt, expiredAt };
 
       const replacements = await Promise.all(
-        matches.map(async ([fullMatch, jsonContent]) => {
-          const entries = JSON.parse(jsonContent) as Array<
+        matches.map(async (m) => {
+          const entries = JSON.parse(m.jsonContent) as Array<
             UnsignedContentAttestation & { main?: boolean }
           >;
-
           const signed = await signCas(entries, signingCtx, root, html);
-
           return {
-            from: fullMatch,
-            to: `<script type="application/cas+json">${JSON.stringify(signed)}</script>`,
+            startOffset: m.startOffset,
+            endOffset: m.endOffset,
+            replacement: `<script type="${SIGNED_CAS_TYPE}">${escapeForScript(JSON.stringify(signed))}</script>`,
           };
         }),
       );
 
+      replacements.sort((a, b) => b.startOffset - a.startOffset);
+
       let result = html;
-      for (const { from, to } of replacements) {
-        result = result.replace(from, () => to);
+      for (const { startOffset, endOffset, replacement } of replacements) {
+        result =
+          result.slice(0, startOffset) + replacement + result.slice(endOffset);
       }
       return result;
     },

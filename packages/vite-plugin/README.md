@@ -114,14 +114,14 @@ The `originators` array is passed through as-is. See the [`UnsignedWebsiteProfil
 
 ## CA Signing
 
-Embed unsigned Content Attestations in your HTML using the [embedded method](https://docs.originator-profile.org/en/opb/link-to-html/#embedded-method). During build, the plugin signs each CA, then serializes the result as a [Content Attestation Set](https://docs.originator-profile.org/en/opb/content-attestation-set/).
+Embed unsigned Content Attestations in your HTML as a `<script>` element with type `application/prs.originator-profile.unsigned-cas+json`. During build, the plugin signs each CA and replaces the script with a [Content Attestation Set](https://docs.originator-profile.org/en/opb/content-attestation-set/) using the standard `application/cas+json` type, matching the [embedded method](https://docs.originator-profile.org/en/opb/link-to-html/#embedded-method) in the spec. Any pre-signed `application/cas+json` script in the page is passed through unchanged.
 
 See the [`UnsignedContentAttestation` model](https://github.com/originator-profile/originator-profile/blob/main/packages/model/src/content-attestation/unsigned-content-attestation.ts) for the schema of each entry. The `main` property can be set on any entry to mark it as the main content attestation.
 
 **Input** (HTML):
 
 ```html
-<script type="application/cas+json">
+<script type="application/prs.originator-profile.unsigned-cas+json">
   [
     {
       "@context": [
