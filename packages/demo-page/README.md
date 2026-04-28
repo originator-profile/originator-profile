@@ -38,6 +38,7 @@ http://localhost:4173/en/ もしくは http://localhost:4173/ja/ でビルド結
 | --------------------- | --------------------------------------------------- |
 | `SIGNING_KEY_DEMO`    | `dns:demo.exp.originator-profile.org`               |
 | `SIGNING_KEY_ANOTHER` | `dns:another-originator.exp.originator-profile.org` |
+| `SIGNING_KEY_AD`      | `dns:ad.oprexpt.example`                            |
 
 ## デプロイ
 
