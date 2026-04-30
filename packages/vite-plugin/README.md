@@ -183,6 +183,10 @@ You must manually set the `integrity` attribute on each `<img>`, `<source>`, or 
 
 [`VisibleTextTargetIntegrity`](https://docs.originator-profile.org/en/opb/content-integrity-descriptor/visible-text/) computes integrity from the "as rendered" visible text (`element.innerText`), which depends on browser layout and CSS. This plugin computes integrity at build time using a DOM parser without rendering, so the result may differ from what the browser extension calculates. Use `TextTargetIntegrity` or `HtmlTargetIntegrity` for reliable build-time integrity computation.
 
+### DOM target integrity is computed against the pre-transform HTML
+
+When a DOM target (`HtmlTargetIntegrity`, `TextTargetIntegrity`, `VisibleTextTargetIntegrity`) is used without an explicit `content` field, this plugin uses the HTML page **before** the unsigned CA script is replaced with the signed `application/cas+json` Set. As a result, CSS selectors that match elements outside of the unsigned CA script tag are safe, but selectors that target the script's own content (e.g., `script[type="application/cas+json"]`) will not match the served HTML after build.
+
 ## License
 
 Apache-2.0
