@@ -56,7 +56,7 @@
         "name": "Demo Page",
         "description": "Demo Page Featuring OPS and CAS from Multiple Originators",
         "image": {
-          "id": "https://demo.exp.originator-profile.org/assets/images/favicon.ico",
+          "id": "https://demo.exp.originator-profile.org/images/favicon.ico",
           "content": "./public/images/favicon.ico"
         },
         "allowedOrigin": [
@@ -83,7 +83,7 @@
         "name": "デモページ",
         "description": "このページは複数のOPSとCASを含むデモページです。",
         "image": {
-          "id": "https://demo.exp.originator-profile.org/assets/images/favicon.ico",
+          "id": "https://demo.exp.originator-profile.org/images/favicon.ico",
           "content": "./public/images/favicon.ico"
         },
         "allowedOrigin": [
