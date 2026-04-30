@@ -1,42 +1,8 @@
-import { parseExpirationDate } from "@originator-profile/core";
 import { UnsignedWebsiteProfile, type Jwk } from "@originator-profile/model";
 import { fetchAndSetDigestSri, signWsp } from "@originator-profile/sign";
-import { addYears, getUnixTime } from "date-fns";
+import { getUnixTime } from "date-fns";
 import { BadRequestError } from "http-errors-enhanced";
-
-type WebsiteProfileTimingOptions = {
-  issuedAt?: Date | string;
-  expiredAt?: Date | string;
-};
-
-function assertValidDate(
-  value: Date,
-  fieldName: "issuedAt" | "expiredAt",
-): void {
-  if (Number.isNaN(value.getTime())) {
-    throw new BadRequestError(`${fieldName} must be a valid date.`);
-  }
-}
-
-function parseDates({
-  issuedAt: issuedAtDateOrString = new Date(),
-  expiredAt: expiredAtDateOrString = addYears(new Date(), 1),
-}: WebsiteProfileTimingOptions): {
-  issuedAt: Date;
-  expiredAt: Date;
-} {
-  const issuedAt: Date = new Date(issuedAtDateOrString);
-
-  const expiredAt: Date =
-    typeof expiredAtDateOrString === "string"
-      ? parseExpirationDate(expiredAtDateOrString)
-      : new Date(expiredAtDateOrString);
-
-  assertValidDate(issuedAt, "issuedAt");
-  assertValidDate(expiredAt, "expiredAt");
-
-  return { issuedAt, expiredAt };
-}
+import { parseDates, type TimingOptions } from "./timing-options.ts";
 
 /**
  * 未署名 Website Profile の取得
@@ -46,7 +12,7 @@ function parseDates({
  */
 export async function unsignedWsp(
   uwsp: UnsignedWebsiteProfile,
-  timingOptions: WebsiteProfileTimingOptions,
+  timingOptions: TimingOptions,
 ): Promise<UnsignedWebsiteProfile> {
   const { issuedAt, expiredAt } = parseDates(timingOptions);
 
@@ -77,7 +43,7 @@ export async function unsignedWsp(
 export async function sign(
   uwsp: UnsignedWebsiteProfile,
   privateKey: Jwk,
-  options: WebsiteProfileTimingOptions = {},
+  options: TimingOptions = {},
 ): Promise<string> {
   const { issuedAt, expiredAt } = parseDates(options);
   const payload = await unsignedWsp(uwsp, { issuedAt, expiredAt });
