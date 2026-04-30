@@ -169,7 +169,7 @@ describe("transformIndexHtml", () => {
       ],
     };
     // HTML ソース上では <\/script> として記述（JSON パース後は </script>）。
-    // parse5 は script-data state で literal `</script` のみを終了とみなすので、
+    // HTML パーサは script-data state で literal `</script` のみを終了とみなすので、
     // <\/script> では script 要素は終了せず、JSON 全体が取得できる。
     const json = JSON.stringify([ucaWithScriptLike]).replace(/<\//g, "<\\/");
     const html = `<!DOCTYPE html>

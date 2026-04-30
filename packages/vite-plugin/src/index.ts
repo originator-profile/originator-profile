@@ -4,7 +4,9 @@ import type {
 } from "@originator-profile/model";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
-import { parse, type DefaultTreeAdapterMap } from "parse5";
+import rehypeParse from "rehype-parse";
+import { unified } from "unified";
+import { visit } from "unist-util-visit";
 import type { Plugin, ResolvedConfig } from "vite";
 import { parseExpiresIn, parseKey } from "./resolve-content";
 import { signCas } from "./sign-cas";
@@ -50,36 +52,7 @@ const UNSIGNED_CAS_TYPE =
   "application/prs.originator-profile.unsigned-cas+json";
 const SIGNED_CAS_TYPE = "application/cas+json";
 
-type Element = DefaultTreeAdapterMap["element"];
-type TextNode = DefaultTreeAdapterMap["textNode"];
-type Node = DefaultTreeAdapterMap["node"];
-
-function isElement(node: Node): node is Element {
-  return "tagName" in node;
-}
-
-function isTextNode(node: Node): node is TextNode {
-  return node.nodeName === "#text";
-}
-
-function* walkElements(node: Node): Generator<Element> {
-  if (isElement(node)) {
-    yield node;
-  }
-  if ("childNodes" in node) {
-    for (const child of node.childNodes) {
-      yield* walkElements(child);
-    }
-  }
-}
-
-function getAttr(el: Element, name: string): string | undefined {
-  return el.attrs.find((a) => a.name === name)?.value;
-}
-
-function getTextContent(el: Element): string {
-  return el.childNodes.map((c) => (isTextNode(c) ? c.value : "")).join("");
-}
+const htmlParser = unified().use(rehypeParse);
 
 interface UnsignedCasMatch {
   startOffset: number;
@@ -88,19 +61,19 @@ interface UnsignedCasMatch {
 }
 
 function findUnsignedCasScripts(html: string): UnsignedCasMatch[] {
-  const doc = parse(html, { sourceCodeLocationInfo: true });
+  const tree = htmlParser.parse(html);
   const matches: UnsignedCasMatch[] = [];
-  for (const el of walkElements(doc)) {
-    if (el.tagName !== "script") continue;
-    if (getAttr(el, "type") !== UNSIGNED_CAS_TYPE) continue;
-    const loc = el.sourceCodeLocation;
-    if (!loc) continue;
-    matches.push({
-      startOffset: loc.startOffset,
-      endOffset: loc.endOffset,
-      jsonContent: getTextContent(el),
-    });
-  }
+  visit(tree, "element", (node) => {
+    if (node.tagName !== "script") return;
+    if (node.properties.type !== UNSIGNED_CAS_TYPE) return;
+    const startOffset = node.position?.start.offset;
+    const endOffset = node.position?.end.offset;
+    if (startOffset === undefined || endOffset === undefined) return;
+    const jsonContent = node.children
+      .map((c) => (c.type === "text" ? c.value : ""))
+      .join("");
+    matches.push({ startOffset, endOffset, jsonContent });
+  });
   return matches;
 }
 

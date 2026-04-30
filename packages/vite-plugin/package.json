@@ -40,7 +40,9 @@
     "date-fns": "^4.1.0",
     "mime": "^4.1.0",
     "ms": "^2.1.3",
-    "parse5": "^8.0.1",
+    "rehype-parse": "^9.0.1",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.1.0",
     "zod": "^4.3.6"
   },
   "peerDependencies": {
@@ -49,6 +51,7 @@
   "devDependencies": {
     "@originator-profile/cryptography": "workspace:*",
     "@originator-profile/tsconfig": "workspace:*",
+    "@types/hast": "^3.0.4",
     "@types/ms": "^2.1.0",
     "eslint": "^10.1.0",
     "eslint-config-originator-profile": "workspace:*",
