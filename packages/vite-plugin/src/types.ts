@@ -21,7 +21,7 @@ const ExpiresIn = z.string().refine(
 
 const SigningKey = z.union([z.string(), Jwk]);
 
-export const OriginatorProfileOptionsSchema = z.object({
+export const OriginatorProfileOptions = z.object({
   issuers: z.record(OpId, SigningKey).refine((v) => Object.keys(v).length > 0, {
     message: "At least one issuer is required",
   }),
@@ -33,12 +33,10 @@ export const OriginatorProfileOptionsSchema = z.object({
     .optional(),
 });
 
-export type OriginatorProfileOptions = z.infer<
-  typeof OriginatorProfileOptionsSchema
->;
+export type OriginatorProfileOptions = z.infer<typeof OriginatorProfileOptions>;
 
 export interface SigningContext {
-  issuers: Record<string, z.infer<typeof Jwk>>;
+  issuers: Record<string, Jwk>;
   issuedAt: Date;
   expiredAt: Date;
 }

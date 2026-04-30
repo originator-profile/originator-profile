@@ -1,7 +1,4 @@
-import type {
-  Jwk,
-  UnsignedContentAttestation,
-} from "@originator-profile/model";
+import type { UnsignedContentAttestation } from "@originator-profile/model";
 import { readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import rehypeParse from "rehype-parse";
@@ -12,40 +9,26 @@ import { parseExpiresIn, parseKey } from "./resolve-content";
 import { signCas } from "./sign-cas";
 import {
   signSiteProfile,
-  SiteProfileInputSchema,
+  SiteProfileInput,
   type SiteProfileOutput,
 } from "./sign-site-profile";
-
-export { OriginatorProfileOptionsSchema } from "./types";
-export type { OriginatorProfileOptions } from "./types";
-
+import { OriginatorProfileOptions, SigningContext } from "./types";
 export {
   fileToDataUrl,
   isLocalPath,
   parseExpiresIn,
   resolveLocalContent,
 } from "./resolve-content";
-export { signCas } from "./sign-cas";
-export { signSiteProfile, SiteProfileInputSchema } from "./sign-site-profile";
-
-import {
-  OriginatorProfileOptionsSchema,
-  type OriginatorProfileOptions,
-} from "./types";
 
 async function buildSiteProfile(
   root: string,
   wspInput: string | undefined,
-  signingCtx: { issuers: Record<string, Jwk>; issuedAt: Date; expiredAt: Date },
+  signingCtx: SigningContext,
 ): Promise<SiteProfileOutput> {
   const inputPath = resolve(root, wspInput ?? "./sp.json");
   const inputDir = dirname(inputPath);
   const input = JSON.parse(readFileSync(inputPath, "utf-8")) as unknown;
-  return signSiteProfile(
-    SiteProfileInputSchema.parse(input),
-    signingCtx,
-    inputDir,
-  );
+  return signSiteProfile(SiteProfileInput.parse(input), signingCtx, inputDir);
 }
 
 const UNSIGNED_CAS_TYPE =
@@ -84,12 +67,12 @@ function escapeForScript(json: string): string {
 }
 
 export function originatorProfile(options: OriginatorProfileOptions): Plugin {
-  OriginatorProfileOptionsSchema.parse(options);
+  OriginatorProfileOptions.parse(options);
 
   let root: string;
-  let issuers: Record<string, Jwk>;
-  let issuedAt: Date;
-  let expiredAt: Date;
+  let issuers: SigningContext["issuers"];
+  let issuedAt: SigningContext["issuedAt"];
+  let expiredAt: SigningContext["expiredAt"];
 
   return {
     name: "originator-profile",
