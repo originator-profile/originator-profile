@@ -253,6 +253,6 @@ describe("OriginatorProfileOptions validation", () => {
         issuers: { "dns:example.com": "{}" },
         expiresIn: "invalid",
       }),
-    ).toThrow("invalid_format");
+    ).toThrow("Invalid duration");
   });
 });

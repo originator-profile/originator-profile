@@ -49,7 +49,7 @@ The plugin looks up the signing key for each WSP and CA by matching its `issuer`
 
 Duration until signed credentials expire, relative to build time. Defaults to `"1y"`.
 
-Accepts values like `"1y"` (1 year), `"6m"` (6 months), or `"30d"` (30 days).
+Accepts any string supported by [`ms`](https://github.com/vercel/ms), such as `"1y"` (1 year), `"30d"` (30 days), `"12h"` (12 hours), or `"6m"` (6 minutes — note that `m` is minutes, not months).
 
 ### `wsp.input`
 

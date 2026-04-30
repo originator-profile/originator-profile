@@ -1,9 +1,23 @@
 import { Jwk, OpId } from "@originator-profile/model";
+import ms from "ms";
 import { z } from "zod";
 
-const ExpiresIn = z
-  .string()
-  .regex(/^\d+[ymd]$/, 'Must be a duration like "1y", "6m", or "30d"');
+const ExpiresIn = z.string().refine(
+  (v) => {
+    try {
+      return (
+        typeof (ms(v as Parameters<typeof ms>[0]) as number | undefined) ===
+        "number"
+      );
+    } catch {
+      return false;
+    }
+  },
+  {
+    message:
+      'Invalid duration. See https://github.com/vercel/ms for accepted formats (e.g., "1y", "30d", "12h").',
+  },
+);
 
 const SigningKey = z.union([z.string(), Jwk]);
 

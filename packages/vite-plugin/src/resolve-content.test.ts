@@ -128,14 +128,9 @@ describe("resolveLocalContent", () => {
 describe("parseExpiresIn", () => {
   const base = new Date("2025-01-01T00:00:00Z");
 
-  test("1y は1年後", () => {
+  test("1y は約1年後 (ms ベース)", () => {
     const result = parseExpiresIn("1y", base);
     expect(result.getFullYear()).toBe(2026);
-  });
-
-  test("6m は6ヶ月後", () => {
-    const result = parseExpiresIn("6m", base);
-    expect(result.getMonth()).toBe(6); // July (0-indexed)
   });
 
   test("30d は30日後", () => {
@@ -143,14 +138,20 @@ describe("parseExpiresIn", () => {
     expect(result.getDate()).toBe(31);
   });
 
+  test("12h は12時間後", () => {
+    const result = parseExpiresIn("12h", base);
+    expect(result.getUTCHours()).toBe(12);
+  });
+
+  test("6m は6分後 (ms 規約: m は分)", () => {
+    const result = parseExpiresIn("6m", base);
+    expect(result.getTime() - base.getTime()).toBe(6 * 60 * 1000);
+  });
+
   test("不正フォーマットはエラー", () => {
-    expect(() => parseExpiresIn("invalid", base)).toThrow(
-      "Invalid expiresIn format",
-    );
-    expect(() => parseExpiresIn("1x", base)).toThrow(
-      "Invalid expiresIn format",
-    );
-    expect(() => parseExpiresIn("", base)).toThrow("Invalid expiresIn format");
+    expect(() => parseExpiresIn("invalid", base)).toThrow("Invalid expiresIn");
+    expect(() => parseExpiresIn("1x", base)).toThrow("Invalid expiresIn");
+    expect(() => parseExpiresIn("", base)).toThrow("Invalid expiresIn");
   });
 });
 

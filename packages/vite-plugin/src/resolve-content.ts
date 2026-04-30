@@ -1,6 +1,7 @@
 import { Jwk as JwkSchema, type Jwk } from "@originator-profile/model";
-import { addDays, addMonths, addYears } from "date-fns";
+import { addMilliseconds } from "date-fns";
 import mime from "mime";
+import ms from "ms";
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 
@@ -32,24 +33,18 @@ export function resolveLocalContent(
 }
 
 export function parseExpiresIn(expiresIn: string, from: Date): Date {
-  const match = expiresIn.match(/^(\d+)([ymd])$/);
-  if (!match) {
+  let millis: number | undefined;
+  try {
+    millis = ms(expiresIn as Parameters<typeof ms>[0]) as number | undefined;
+  } catch {
+    millis = undefined;
+  }
+  if (typeof millis !== "number") {
     throw new Error(
-      `Invalid expiresIn format: "${expiresIn}". Use "1y", "6m", or "30d".`,
+      `Invalid expiresIn: "${expiresIn}". See https://github.com/vercel/ms for accepted formats (e.g., "1y", "30d", "12h").`,
     );
   }
-  const amount = Number(match[1]);
-  const unit = match[2];
-  switch (unit) {
-    case "y":
-      return addYears(from, amount);
-    case "m":
-      return addMonths(from, amount);
-    case "d":
-      return addDays(from, amount);
-    default:
-      throw new Error(`Unexpected unit: ${unit}`);
-  }
+  return addMilliseconds(from, millis);
 }
 
 export function parseKey(value: string | Jwk, issuer?: string): Jwk {

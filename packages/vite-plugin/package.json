@@ -39,6 +39,7 @@
     "@originator-profile/opvc": "workspace:*",
     "date-fns": "^4.1.0",
     "mime": "^4.1.0",
+    "ms": "^2.1.3",
     "parse5": "^8.0.1",
     "zod": "^4.3.6"
   },
@@ -48,6 +49,7 @@
   "devDependencies": {
     "@originator-profile/cryptography": "workspace:*",
     "@originator-profile/tsconfig": "workspace:*",
+    "@types/ms": "^2.1.0",
     "eslint": "^10.1.0",
     "eslint-config-originator-profile": "workspace:*",
     "jose": "^6.0.11",
