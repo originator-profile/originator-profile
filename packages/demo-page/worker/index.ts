@@ -1,5 +1,5 @@
 // Cloudflare Worker script
-// ブラウザの言語やアクセスしたページの言語によって、日本語/英語のページ、SPへリダイレクトする
+// ブラウザの言語やアクセスしたページの言語によって、日本語/英語のページへリダイレクトする
 import { parse } from "accept-language-parser";
 
 const LANGS = ["en", "ja"] as const;
@@ -44,13 +44,16 @@ export default {
       return Response.redirect(`${url.origin}/${lang}/`, 302);
     }
 
-    if (url.pathname === "/.well-known/sp.json") {
-      return Response.redirect(
-        `${url.origin}/.well-known/sp.${lang}.json`,
-        302,
-      );
+    const response = await fetch(request);
+    if (response.headers.get("Content-Type")?.startsWith("image/")) {
+      const headers = new Headers(response.headers);
+      headers.set("Access-Control-Allow-Origin", "*");
+      return new Response(response.body, {
+        status: response.status,
+        statusText: response.statusText,
+        headers,
+      });
     }
-
-    return fetch(request);
+    return response;
   },
 };

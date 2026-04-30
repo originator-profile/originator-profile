@@ -1,0 +1,63 @@
+{
+  "name": "@originator-profile/vite-plugin",
+  "version": "0.6.0-beta.0",
+  "license": "Apache-2.0",
+  "homepage": "https://docs.originator-profile.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/originator-profile/originator-profile.git",
+    "directory": "packages/vite-plugin"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "exports": {
+    "require": {
+      "types": "./dist/index.d.cts",
+      "default": "./dist/index.cjs"
+    },
+    "import": {
+      "types": "./dist/index.d.mts",
+      "default": "./dist/index.mjs"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "build": "pkgroll --clean-dist --target=node20",
+    "test": "vitest run",
+    "lint": "eslint --fix .",
+    "type-check": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@originator-profile/model": "workspace:*",
+    "@originator-profile/opvc": "workspace:*",
+    "date-fns": "^4.1.0",
+    "mime": "^4.1.0",
+    "ms": "^2.1.3",
+    "rehype-parse": "^9.0.1",
+    "unified": "^11.0.5",
+    "unist-util-visit": "^5.1.0",
+    "zod": "^4.3.6"
+  },
+  "peerDependencies": {
+    "vite": "^6.0.0 || ^7.0.0 || ^8.0.0"
+  },
+  "devDependencies": {
+    "@originator-profile/cryptography": "workspace:*",
+    "@originator-profile/tsconfig": "workspace:*",
+    "@types/ms": "^2.1.0",
+    "eslint": "^10.1.0",
+    "eslint-config-originator-profile": "workspace:*",
+    "jose": "^6.0.11",
+    "pkgroll": "^2.27.0",
+    "typescript": "^6.0.2",
+    "vite": "^8.0.3",
+    "vitest": "^4.1.2"
+  }
+}

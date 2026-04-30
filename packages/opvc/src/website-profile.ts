@@ -1,7 +1,8 @@
-import { parseExpirationDate } from "@originator-profile/core";
-import { UnsignedWebsiteProfile } from "@originator-profile/model";
-import { fetchAndSetDigestSri } from "@originator-profile/sign";
-import { addYears, getUnixTime } from "date-fns";
+import { UnsignedWebsiteProfile, type Jwk } from "@originator-profile/model";
+import { fetchAndSetDigestSri, signWsp } from "@originator-profile/sign";
+import { getUnixTime } from "date-fns";
+import { BadRequestError } from "http-errors-enhanced";
+import { parseDates, type TimingOptions } from "./timing-options.ts";
 
 /**
  * 未署名 Website Profile の取得
@@ -11,24 +12,17 @@ import { addYears, getUnixTime } from "date-fns";
  */
 export async function unsignedWsp(
   uwsp: UnsignedWebsiteProfile,
-  {
-    issuedAt: issuedAtDateOrString = new Date(),
-    expiredAt: expiredAtDateOrString = addYears(new Date(), 1),
-  }: {
-    issuedAt?: Date | string;
-    expiredAt?: Date | string;
-  },
+  timingOptions: TimingOptions,
 ): Promise<UnsignedWebsiteProfile> {
-  UnsignedWebsiteProfile.parse(uwsp);
+  const { issuedAt, expiredAt } = parseDates(timingOptions);
 
-  const issuedAt: Date = new Date(issuedAtDateOrString);
+  try {
+    UnsignedWebsiteProfile.parse(uwsp);
 
-  const expiredAt: Date =
-    typeof expiredAtDateOrString === "string"
-      ? parseExpirationDate(expiredAtDateOrString)
-      : expiredAtDateOrString;
-
-  await fetchAndSetDigestSri("sha256", uwsp.credentialSubject.image);
+    await fetchAndSetDigestSri("sha256", uwsp.credentialSubject.image);
+  } catch (e) {
+    throw new BadRequestError((e as Error).message);
+  }
 
   return {
     iss: uwsp.issuer,
@@ -37,4 +31,25 @@ export async function unsignedWsp(
     exp: getUnixTime(expiredAt),
     ...uwsp,
   };
+}
+
+/**
+ * Website Profile への署名
+ * @param uwsp 未署名 Website Profile オブジェクト
+ * @param privateKey プライベート鍵
+ * @throws {BadRequestError} 入力が UnsignedWebsiteProfile スキーマに適合しない場合/検証対象のコンテンツが存在しない/コンテンツにアクセスできない/Integrityの計算に失敗
+ * @return Website Profile
+ */
+export async function sign(
+  uwsp: UnsignedWebsiteProfile,
+  privateKey: Jwk,
+  options: TimingOptions = {},
+): Promise<string> {
+  const { issuedAt, expiredAt } = parseDates(options);
+  const payload = await unsignedWsp(uwsp, { issuedAt, expiredAt });
+
+  return await signWsp(payload, privateKey, {
+    issuedAt,
+    expiredAt,
+  });
 }

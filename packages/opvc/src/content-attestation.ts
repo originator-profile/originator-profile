@@ -1,4 +1,3 @@
-import { parseExpirationDate } from "@originator-profile/core";
 import {
   UnsignedContentAttestation,
   type Jwk,
@@ -9,49 +8,16 @@ import {
   signCa,
   type DocumentProvider,
 } from "@originator-profile/sign";
-import { addYears, getUnixTime } from "date-fns";
+import { getUnixTime } from "date-fns";
 import { BadRequestError } from "http-errors-enhanced";
 import type { HashAlgorithm } from "websri";
 import { documentProvider as defaultDocumentProvider } from "./document-provider.ts";
+import { parseDates, type TimingOptions } from "./timing-options.ts";
 
-type ContentAttestationTimingOptions = {
-  issuedAt?: Date | string;
-  expiredAt?: Date | string;
-};
-
-type UnsignedCaOptions = ContentAttestationTimingOptions & {
+type UnsignedCaOptions = TimingOptions & {
   integrityAlg?: HashAlgorithm;
   documentProvider?: DocumentProvider;
 };
-
-function assertValidDate(
-  value: Date,
-  fieldName: "issuedAt" | "expiredAt",
-): void {
-  if (Number.isNaN(value.getTime())) {
-    throw new BadRequestError(`${fieldName} must be a valid date.`);
-  }
-}
-
-function parseDates({
-  issuedAt: issuedAtDateOrString = new Date(),
-  expiredAt: expiredAtDateOrString = addYears(new Date(), 1),
-}: ContentAttestationTimingOptions): {
-  issuedAt: Date;
-  expiredAt: Date;
-} {
-  const issuedAt: Date = new Date(issuedAtDateOrString);
-
-  const expiredAt: Date =
-    typeof expiredAtDateOrString === "string"
-      ? parseExpirationDate(expiredAtDateOrString)
-      : new Date(expiredAtDateOrString);
-
-  assertValidDate(issuedAt, "issuedAt");
-  assertValidDate(expiredAt, "expiredAt");
-
-  return { issuedAt, expiredAt };
-}
 
 /**
  * 未署名 Content Attestation の取得
@@ -100,7 +66,7 @@ export async function unsignedCa(
 export async function sign(
   uca: UnsignedContentAttestation,
   privateKey: Jwk,
-  options: ContentAttestationTimingOptions = {},
+  options: TimingOptions = {},
 ): Promise<string> {
   const { issuedAt, expiredAt } = parseDates(options);
   const payload = await unsignedCa(uca, { issuedAt, expiredAt });

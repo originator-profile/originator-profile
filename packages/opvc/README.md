@@ -485,6 +485,19 @@ _See code: [src/commands/wsp/unsigned.ts](https://github.com/originator-profile/
 
 `@originator-profile/opvc` は TypeScript/JavaScript からも利用できます。
 
+### ローカル環境でのWebsite Profileの署名
+
+ローカルのプライベート鍵で署名する場合は `WebsiteProfile.sign()` を使います。
+
+```ts
+import { WebsiteProfile } from "@originator-profile/opvc";
+
+const jwt = await WebsiteProfile.sign(input, privateKey, {
+  issuedAt: new Date(),
+  expiredAt: "2027-03-31",
+});
+```
+
 ### ローカル環境でのContent Attestationの署名
 
 ローカルのプライベート鍵で署名する場合は `ContentAttestation.sign()` を使います。

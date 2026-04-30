@@ -1,36 +1,87 @@
 # demo-page
 
-複数のOPS/CASを含むデモページを作成します。
+[Originator Profile](https://docs.originator-profile.org/) の OPS / CAS / Site Profile を含むデモページです。Cloudflare Workers ( https://demo.exp.originator-profile.org/ ) にデプロイされます。
 
-フレームワークとして[vite](https://vitejs.dev/)を使っています。
-
-- 開発時は `pnpm dev` 後、 http://localhost:5173/ にアクセスすることでデモページを閲覧できます。
-- サイトのビルドは `pnpm build` です。
-- `pnpm preview` 後、 http://localhost:4173/en/ もしくは http://localhost:4173/ja/ にアクセスすることで、ビルドしたものを閲覧できます。
-  - `pnpm preview` では、拡張機能を利用してデモページ内のコンテンツ (CAS) の検証を行えます。  
-    ※ただし、SiteProfile の検証はできません。また、画像のリンク切れなどにより、本番環境との差異が生じる場合があります。
-- デモページは、Cloudflareにてデプロイされています( https://demo.exp.originator-profile.org/ にて閲覧できます)。
-- ./images にはデモページにて使用する画像ファイル、./public/imagaes には PA/WMPに使用した画像ファイルが格納されています。
-
-## インストール
-
-依存関係にあるパッケージのインストールを行います。
+## セットアップ
 
 ```bash
-# pnpm
 pnpm install
 ```
 
-## 手動デプロイ方法
+## 開発
 
 ```bash
-# wranglerにログインします。
+pnpm dev
+```
+
+http://localhost:5173/ にアクセスしてデモページを閲覧できます。
+
+## ビルド・プレビュー
+
+```bash
+pnpm build
+pnpm preview
+```
+
+http://localhost:4173/en/ もしくは http://localhost:4173/ja/ でビルド結果を確認できます。
+
+## 署名鍵
+
+| 環境         | 鍵の供給元                  | 説明                                 |
+| ------------ | --------------------------- | ------------------------------------ |
+| ローカル開発 | `.env.development`          | `web-ext/e2e` と共通のサンプル署名鍵 |
+| 本番ビルド   | Cloudflare Build の環境変数 | 各 issuer の本番秘密鍵               |
+
+本番用の署名鍵は Cloudflare ダッシュボードの Build 設定で環境変数として設定してください。
+
+| 環境変数名            | 対応する issuer                                     |
+| --------------------- | --------------------------------------------------- |
+| `SIGNING_KEY_DEMO`    | `dns:demo.exp.originator-profile.org`               |
+| `SIGNING_KEY_ANOTHER` | `dns:another-originator.exp.originator-profile.org` |
+| `SIGNING_KEY_AD`      | `dns:ad.oprexpt.example`                            |
+
+## デプロイ
+
+```bash
 npx wrangler login
+npx wrangler whoami  # wrangler.toml の account_id と一致することを確認
+npx wrangler deploy  # pnpm build 後に実行
+```
 
-# ログインしたアカウントを確認します（wrangler.tomlのaccount_idと一致することを確認）。
-npx wrangler whoami
+## ビルド時署名
 
-# デプロイします。
-# ※ ./dist の内容がデプロイされますので、pnpm build 後にデプロイしてください。
-npx wrangler deploy
+`@originator-profile/vite-plugin` がビルド時に以下を実行します:
+
+- `sp.json` 内の未署名 WSP を署名し `/.well-known/sp.json` に出力
+- HTML 内の `<script type="application/cas+json">` を署名済み CAS に変換
+
+### Site Profile (`sp.json` → `/.well-known/sp.json`)
+
+`sp.json` は [Site Profile](https://docs.originator-profile.org/en/opb/site-profile/) の入力ファイルです。
+
+- `originators`: 署名済み OPS（パススルー）
+- `sites`: 未署名 [UnsignedWebsiteProfile](https://github.com/originator-profile/originator-profile/blob/main/packages/model/src/unsigned-website-profile.ts) の配列（en/ja）
+
+### Content Attestation Set (`<script type="application/cas+json">`)
+
+各 HTML には未署名 [UnsignedContentAttestation](https://github.com/originator-profile/originator-profile/blob/main/packages/model/src/content-attestation/unsigned-content-attestation.ts) の配列が埋め込まれています。
+
+- `image.content`: ローカル画像パス → `digestSRI` を計算
+- `ExternalResourceTargetIntegrity.content`: ローカルファイルパス → `integrity` を計算
+- `BasicTarget`: ビルド時に HTML DOM から `integrity` を計算
+
+## プロジェクト構成
+
+```
+demo-page/
+├── en/index.html              # 英語ページ（未署名 CAS を含む）
+├── ja/index.html              # 日本語ページ（未署名 CAS を含む）
+├── sp.json                    # 未署名 Site Profile（originators + sites）
+├── public/
+│   ├── images/                # 画像アセット
+│   └── ads/                   # 広告デモ用 HTML
+├── worker/index.ts            # Cloudflare Worker（言語リダイレクト、画像 CORS）
+├── vite.config.js             # Vite 設定
+├── wrangler.toml              # Cloudflare Workers 設定
+└── .env.development           # 開発用署名鍵
 ```
