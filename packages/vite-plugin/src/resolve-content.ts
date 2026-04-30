@@ -1,28 +1,8 @@
 import { Jwk as JwkSchema, type Jwk } from "@originator-profile/model";
 import { addDays, addMonths, addYears } from "date-fns";
+import mime from "mime";
 import { readFileSync } from "node:fs";
-import { extname, resolve } from "node:path";
-
-const MEDIA_MIME: Record<string, string> = {
-  // image
-  ".avif": "image/avif",
-  ".gif": "image/gif",
-  ".ico": "image/x-icon",
-  ".jpeg": "image/jpeg",
-  ".jpg": "image/jpeg",
-  ".png": "image/png",
-  ".svg": "image/svg+xml",
-  ".webp": "image/webp",
-  // video
-  ".mp4": "video/mp4",
-  ".ogg": "video/ogg",
-  ".webm": "video/webm",
-  // audio
-  ".aac": "audio/aac",
-  ".flac": "audio/flac",
-  ".mp3": "audio/mpeg",
-  ".wav": "audio/wav",
-};
+import { resolve } from "node:path";
 
 export function isLocalPath(value: string): boolean {
   return !value.startsWith("data:") && !/^https?:\/\//.test(value);
@@ -30,9 +10,8 @@ export function isLocalPath(value: string): boolean {
 
 export function fileToDataUrl(filePath: string): string {
   const bytes = readFileSync(filePath);
-  const mime =
-    MEDIA_MIME[extname(filePath).toLowerCase()] ?? "application/octet-stream";
-  return `data:${mime};base64,${bytes.toString("base64")}`;
+  const mimeType = mime.getType(filePath) ?? "application/octet-stream";
+  return `data:${mimeType};base64,${bytes.toString("base64")}`;
 }
 
 export function resolveLocalContent(
