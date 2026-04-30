@@ -1,6 +1,5 @@
 import type {
   RawImage,
-  RawTarget,
   UnsignedContentAttestation,
 } from "@originator-profile/model";
 import { ContentAttestation } from "@originator-profile/opvc";
@@ -34,7 +33,7 @@ export async function signCas(
         baseDir,
       );
       for (const target of uca.target) {
-        resolveLocalContent(target as RawTarget, baseDir);
+        resolveLocalContent(target, baseDir);
 
         if (
           htmlDataUrl &&
@@ -42,16 +41,15 @@ export async function signCas(
           !target.integrity &&
           !target.content
         ) {
-          (target as RawTarget).content = htmlDataUrl;
+          target.content = htmlDataUrl;
         }
       }
 
       const key = resolveKey(ctx.issuers, uca.issuer);
-      const jwt = await ContentAttestation.sign(
-        uca as UnsignedContentAttestation,
-        key,
-        { issuedAt: ctx.issuedAt, expiredAt: ctx.expiredAt },
-      );
+      const jwt = await ContentAttestation.sign(uca, key, {
+        issuedAt: ctx.issuedAt,
+        expiredAt: ctx.expiredAt,
+      });
 
       return main ? { attestation: jwt, main: true as const } : jwt;
     }),
