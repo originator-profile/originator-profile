@@ -207,6 +207,34 @@ describe("signCas", () => {
     expect(target.integrity).toBe("sha256-preset");
   });
 
+  test("入力 entry オブジェクトを破壊的に変更しない", async () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "sign-cas-test-"));
+    writeFileSync(join(tempDir, "photo.png"), "fake-png-bytes");
+
+    const entry: UnsignedContentAttestation & { main?: boolean } = {
+      ...sampleUca,
+      credentialSubject: {
+        ...sampleUca.credentialSubject,
+        image: {
+          id: "https://example.com/logo.svg",
+          content: "./photo.png",
+        },
+      },
+      target: [
+        {
+          type: "HtmlTargetIntegrity",
+          cssSelector: "#main",
+        },
+      ],
+    };
+    const original = structuredClone(entry);
+    const html = '<html><body><div id="main">x</div></body></html>';
+
+    await signCas([entry], signingCtx(), tempDir, html);
+
+    expect(entry).toEqual(original);
+  });
+
   test("未登録の issuer はエラー", async () => {
     const ctx = { ...signingCtx(), issuers: {} };
 

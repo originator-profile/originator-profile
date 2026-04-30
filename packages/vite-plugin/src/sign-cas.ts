@@ -27,7 +27,7 @@ export async function signCas(
 
   return await Promise.all(
     entries.map(async (entry) => {
-      const { main, ...uca } = entry;
+      const { main, ...uca } = structuredClone(entry);
 
       resolveLocalContent(
         uca.credentialSubject.image as RawImage | undefined,

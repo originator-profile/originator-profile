@@ -150,6 +150,28 @@ describe("signSiteProfile", () => {
     );
   });
 
+  test("入力 sites の uwsp オブジェクトを破壊的に変更しない", async () => {
+    const tempDir = mkdtempSync(join(tmpdir(), "sign-sp-test-"));
+    writeFileSync(join(tempDir, "logo.svg"), "<svg></svg>");
+
+    const uwsp = {
+      ...sampleUwsp,
+      credentialSubject: {
+        ...sampleUwsp.credentialSubject,
+        image: {
+          id: "https://example.com/logo.svg",
+          content: "./logo.svg",
+        },
+      },
+    };
+    const original = structuredClone(uwsp);
+    const input = { originators: [{ core: "eyJ..." }], sites: [uwsp] };
+
+    await signSiteProfile(input, signingCtx(), tempDir);
+
+    expect(uwsp).toEqual(original);
+  });
+
   test("未登録の issuer はエラー", async () => {
     const input = { originators: [{ core: "eyJ..." }], sites: [sampleUwsp] };
     const ctx = { ...signingCtx(), issuers: {} };

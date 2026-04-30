@@ -36,7 +36,8 @@ export async function signSiteProfile(
   baseDir: string,
 ): Promise<SiteProfileOutput> {
   const signedSites = await Promise.all(
-    input.sites.map(async (uwsp: UnsignedWebsiteProfile) => {
+    input.sites.map(async (originalUwsp: UnsignedWebsiteProfile) => {
+      const uwsp = structuredClone(originalUwsp);
       resolveLocalContent(
         uwsp.credentialSubject.image as RawImage | undefined,
         baseDir,
