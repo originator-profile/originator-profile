@@ -5,7 +5,7 @@ import { mkdirSync, mkdtempSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { beforeAll, describe, expect, test } from "vitest";
-import { SiteProfileInputSchema, signSiteProfile } from "./sign-site-profile";
+import { SiteProfileInput, signSiteProfile } from "./sign-site-profile";
 
 let privateKey: Jwk;
 
@@ -138,14 +138,14 @@ describe("signSiteProfile", () => {
 
   test("originators が空の場合スキーマバリデーションエラー", () => {
     const input = { originators: [], sites: [sampleUwsp] };
-    expect(() => SiteProfileInputSchema.parse(input)).toThrow(
+    expect(() => SiteProfileInput.parse(input)).toThrow(
       "originators must not be empty",
     );
   });
 
   test("sites が空の場合スキーマバリデーションエラー", () => {
     const input = { originators: [{ core: "eyJ..." }], sites: [] };
-    expect(() => SiteProfileInputSchema.parse(input)).toThrow(
+    expect(() => SiteProfileInput.parse(input)).toThrow(
       "sites must not be empty",
     );
   });

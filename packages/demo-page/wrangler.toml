@@ -7,3 +7,9 @@ routes = [
 ]
 [assets]
 directory = "./dist"
+binding = "ASSETS"
+run_worker_first = [
+  "/images/favicon.ico",
+  "/images/favicon2.ico",
+  "/images/demo-ad-originator.png"
+]

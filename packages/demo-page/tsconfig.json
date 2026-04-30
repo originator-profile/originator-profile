@@ -1,0 +1,7 @@
+{
+  "extends": "@originator-profile/tsconfig/tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "types": ["@cloudflare/workers-types"]
+  }
+}

@@ -35,10 +35,10 @@ export default defineConfig(({ mode }) => {
     plugins: [
       originatorProfile({
         issuers: {
-          "dns:demo.exp.originator-profile.org": env.SIGNING_KEY_DEMO,
+          "dns:demo.exp.originator-profile.org": env.SIGNING_KEY_DEMO ?? "",
           "dns:another-originator.exp.originator-profile.org":
-            env.SIGNING_KEY_ANOTHER,
-          "dns:ad.oprexpt.example": env.SIGNING_KEY_AD,
+            env.SIGNING_KEY_ANOTHER ?? "",
+          "dns:ad.oprexpt.example": env.SIGNING_KEY_AD ?? "",
         },
       }),
       cloudflare(),
