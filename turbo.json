@@ -44,6 +44,10 @@
         "BASIC_AUTH_CREDENTIALS",
         "REGISTRY_OPS"
       ]
+    },
+    "demo-page#build": {
+      "dependsOn": ["@originator-profile/vite-plugin#build"],
+      "env": ["SIGNING_KEY_DEMO", "SIGNING_KEY_ANOTHER", "SIGNING_KEY_AD"]
     }
   }
 }
