@@ -47,11 +47,7 @@
     },
     "demo-page#build": {
       "dependsOn": ["@originator-profile/vite-plugin#build"],
-      "env": [
-        "SIGNING_KEY_DEMO",
-        "SIGNING_KEY_ANOTHER",
-        "SIGNING_KEY_AD"
-      ]
+      "env": ["SIGNING_KEY_DEMO", "SIGNING_KEY_ANOTHER", "SIGNING_KEY_AD"]
     }
   }
 }
