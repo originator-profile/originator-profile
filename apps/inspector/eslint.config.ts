@@ -7,7 +7,7 @@ export default [
     ignores: ["dev/**/*"],
   },
   {
-    files: ["esbuild.js", "esbuild.*.js", "postcss.config.js"],
+    files: ["esbuild.ts", "esbuild.*.ts", "postcss.config.ts"],
     languageOptions: {
       globals: {
         ...globals.node,
@@ -27,11 +27,11 @@ export default [
     files: ["e2e/**/*.ts"],
     rules: {
       "require-atomic-updates": "off",
-      "react-hooks/rules-of-hooks": "off", // NOTE: TestFixture -> use() の検出を回避
+      "react-hooks/rules-of-hooks": "off",
     },
   },
   {
-    files: ["manifest.js"],
+    files: ["manifest.ts"],
     rules: {
       "canonical/filename-match-exported": "off",
     },

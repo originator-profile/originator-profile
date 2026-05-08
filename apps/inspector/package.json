@@ -69,8 +69,8 @@
   ],
   "scripts": {
     "build": "pnpm /^build:.*/",
-    "build:chromium": "node esbuild.js",
-    "build:firefox": "node esbuild.js -t firefox-desktop",
+    "build:chromium": "node esbuild.ts",
+    "build:firefox": "node esbuild.ts -t firefox-desktop",
     "dev": "NODE_ENV=development pnpm build:chromium",
     "dev:firefox": "NODE_ENV=development pnpm build:firefox",
     "e2e": "NODE_ENV=testing run-s build:chromium e2e:en e2e:ja",

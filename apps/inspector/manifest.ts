@@ -1,4 +1,4 @@
-// @ts-check
+import type { Plugin } from "esbuild";
 import { readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import {
@@ -92,13 +92,13 @@ const firefox = {
   },
 };
 
-/**
- *
- * @param {object} arg
- * @param {string} arg.target 拡張機能のランタイム
- * @param {string} [arg.mode] ビルドモード
- */
-export default function esbuildPluginManifest({ target, mode = "production" }) {
+export default function esbuildPluginManifest({
+  target,
+  mode = "production",
+}: {
+  target: string;
+  mode?: string;
+}): Plugin {
   const targetManifest = {
     chromium,
     "firefox-desktop": firefox,
@@ -117,7 +117,6 @@ export default function esbuildPluginManifest({ target, mode = "production" }) {
 
   return {
     name: "plugin:manifest",
-    /** @param build {import("esbuild").PluginBuild} */
     setup(build) {
       const dist = build.initialOptions.outdir ?? ".";
       build.onEnd(async () => {

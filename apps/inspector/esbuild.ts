@@ -1,12 +1,18 @@
-// @ts-check
-
+import * as astro from "astro";
 import chokidar from "chokidar";
 import dotenv from "dotenv";
+import esbuild from "esbuild";
+import copy from "esbuild-copy-static-files";
+import { rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import util from "node:util";
+// @ts-expect-error: 型定義がない
+import webExt from "web-ext";
+import postcss from "./esbuild.postcss.ts";
+import manifest from "./manifest.ts";
 
-const options = /** @type {const} */ ({
+const options = {
   mode: {
     type: "string",
     default: process.env.NODE_ENV || "production",
@@ -50,7 +56,7 @@ const options = /** @type {const} */ ({
       );
     },
   },
-});
+} as const;
 
 const args = util.parseArgs({ options });
 
@@ -66,8 +72,8 @@ const artifactsDir = "web-ext-artifacts";
 const cwd = path.dirname(fileURLToPath(new URL(import.meta.url)));
 const outdir = path.join(cwd, `dist-${args.values.target}`);
 
-/** @type {ImportMeta["env"]["BASIC_AUTH_CREDENTIALS"]} */
-const credentials = process.env.BASIC_AUTH_CREDENTIALS
+const credentials: ImportMeta["env"]["BASIC_AUTH_CREDENTIALS"] = process.env
+  .BASIC_AUTH_CREDENTIALS
   ? JSON.parse(process.env.BASIC_AUTH_CREDENTIALS)
   : [];
 
@@ -92,17 +98,7 @@ if (env.REGISTRY_OPS.length === 0) {
   );
 }
 
-import * as astro from "astro";
-import esbuild from "esbuild";
-import copy from "esbuild-copy-static-files";
-import { rm } from "node:fs/promises";
-// @ts-expect-error: 型定義がない
-import webExt from "web-ext";
-import postcss from "./esbuild.postcss.js";
-import manifest from "./manifest.js";
-
-/** @type {import("esbuild").BuildOptions} */
-const buildOptions = {
+const buildOptions: esbuild.BuildOptions = {
   target: "es2018",
   entryPoints: [
     "src/main.tsx",
@@ -115,7 +111,7 @@ const buildOptions = {
   color: true,
   bundle: true,
   minify: args.values.mode === "production",
-  sourcemap: ["development", "testing"].includes(args.values.mode),
+  sourcemap: ["development", "testing"].includes(args.values.mode ?? ""),
   conditions: ["browser"],
   define: {
     "import.meta.env": JSON.stringify(env),
