@@ -4,7 +4,7 @@ import crypto from "node:crypto";
 import path from "node:path";
 import util from "node:util";
 
-const exec = util.promisify(child_process.exec);
+const execFile = util.promisify(child_process.execFile);
 
 async function globalSetup(config: FullConfig) {
   process.env.WORDPRESS_ADMIN_USER = `profile-tester-${crypto.randomInt(
@@ -13,7 +13,8 @@ async function globalSetup(config: FullConfig) {
   process.env.WORDPRESS_ADMIN_PASSWORD = crypto
     .randomBytes(32)
     .toString("base64url");
-  await exec(path.resolve(__dirname, "docker-setup.sh"));
+  const scriptPath = path.resolve(import.meta.dirname, "docker-setup.sh");
+  await execFile(scriptPath);
 
   // @wordpress/e2e-test-utils-playwright requestUtils.setupRest() で WP_BASE_URL がハードコードされており、RequestUtils.setup() で baseURL を与えても機能しないため指定
   // https://github.com/WordPress/gutenberg/blob/6d77fd28f50adb39040d27cb797b9fc3a1393ef7/packages/e2e-test-utils-playwright/src/request-utils/rest.ts#L11-L39
