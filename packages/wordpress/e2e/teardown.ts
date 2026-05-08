@@ -2,10 +2,11 @@ import child_process from "node:child_process";
 import path from "node:path";
 import util from "node:util";
 
-const exec = util.promisify(child_process.exec);
+const execFile = util.promisify(child_process.execFile);
 
 async function globalTeardown() {
-  await exec(path.resolve(import.meta.dirname, "docker-teardown.sh"));
+  const scriptPath = path.resolve(import.meta.dirname, "docker-teardown.sh");
+  await execFile(scriptPath);
 }
 
 export default globalTeardown;
