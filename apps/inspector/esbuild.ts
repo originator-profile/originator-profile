@@ -1,16 +1,8 @@
-import * as astro from "astro";
 import chokidar from "chokidar";
 import dotenv from "dotenv";
-import esbuild from "esbuild";
-import copy from "esbuild-copy-static-files";
-import { rm } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import util from "node:util";
-// @ts-expect-error: 型定義がない
-import webExt from "web-ext";
-import postcss from "./esbuild.postcss.ts";
-import manifest from "./manifest.ts";
 
 const options = {
   mode: {
@@ -98,7 +90,16 @@ if (env.REGISTRY_OPS.length === 0) {
   );
 }
 
-const buildOptions: esbuild.BuildOptions = {
+import * as astro from "astro";
+import esbuild from "esbuild";
+import copy from "esbuild-copy-static-files";
+import { rm } from "node:fs/promises";
+// @ts-expect-error: 型定義がない
+import webExt from "web-ext";
+import postcss from "./esbuild.postcss.ts";
+import manifest from "./manifest.ts";
+
+const buildOptions = {
   target: "es2018",
   entryPoints: [
     "src/main.tsx",
@@ -132,7 +133,7 @@ const buildOptions: esbuild.BuildOptions = {
       mode: args.values.mode,
     }),
   ],
-};
+} as const satisfies esbuild.BuildOptions;
 
 await rm(outdir, {
   force: true,

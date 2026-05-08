@@ -96,7 +96,9 @@ export default function esbuildPluginManifest({
   target,
   mode = "production",
 }: {
+  /** Target browser */
   target: string;
+  /** Build mode */
   mode?: string;
 }): Plugin {
   const targetManifest = {
