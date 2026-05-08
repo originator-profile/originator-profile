@@ -98,8 +98,8 @@ import copy from "esbuild-copy-static-files";
 import { rm } from "node:fs/promises";
 // @ts-expect-error: 型定義がない
 import webExt from "web-ext";
-import postcss from "./esbuild.postcss.mjs";
-import manifest from "./manifest.mjs";
+import postcss from "./esbuild.postcss.js";
+import manifest from "./manifest.js";
 
 /** @type {import("esbuild").BuildOptions} */
 const buildOptions = {

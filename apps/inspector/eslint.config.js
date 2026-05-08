@@ -7,7 +7,7 @@ export default [
     ignores: ["dev/**/*"],
   },
   {
-    files: ["esbuild.mjs", "esbuild.*.mjs", "postcss.config.mjs"],
+    files: ["esbuild.js", "esbuild.*.js", "postcss.config.js"],
     languageOptions: {
       globals: {
         ...globals.node,
@@ -31,7 +31,7 @@ export default [
     },
   },
   {
-    files: ["manifest.mjs"],
+    files: ["manifest.js"],
     rules: {
       "canonical/filename-match-exported": "off",
     },
