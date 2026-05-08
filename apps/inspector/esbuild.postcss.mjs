@@ -1,8 +1,8 @@
-const postcssrc = require("postcss-load-config");
-const postcss = require("postcss");
-const { readFile } = require("fs").promises;
+import { readFile } from "node:fs/promises";
+import postcss from "postcss";
+import postcssrc from "postcss-load-config";
 
-module.exports = {
+export default {
   name: "postcss",
   setup(build) {
     build.onLoad({ filter: /\.css$/ }, async ({ path }) => {

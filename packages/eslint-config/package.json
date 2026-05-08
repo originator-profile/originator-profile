@@ -10,8 +10,7 @@
     "directory": "packages/eslint-config"
   },
   "type": "module",
-  "main": "./eslint.config.mjs",
-  "exports": "./eslint.config.mjs",
+  "exports": "./eslint.config.js",
   "dependencies": {
     "@eslint/compat": "^2.0.3",
     "@eslint/js": "^10.0.1",

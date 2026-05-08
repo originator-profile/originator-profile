@@ -13,14 +13,8 @@
   },
   "type": "module",
   "exports": {
-    "require": {
-      "types": "./dist/index.d.cts",
-      "default": "./dist/index.cjs"
-    },
-    "import": {
-      "types": "./dist/index.d.mts",
-      "default": "./dist/index.mjs"
-    }
+    "types": "./dist/index.d.ts",
+    "default": "./dist/index.js"
   },
   "files": [
     "dist",
@@ -29,7 +23,7 @@
     "NOTICE"
   ],
   "scripts": {
-    "build": "pkgroll --clean-dist --target=node20",
+    "build": "pkgroll --clean-dist --target=node22",
     "test": "vitest run",
     "lint": "eslint --fix .",
     "type-check": "tsc --noEmit"

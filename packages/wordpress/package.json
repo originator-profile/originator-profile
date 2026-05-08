@@ -9,7 +9,7 @@
     "url": "git+https://github.com/originator-profile/originator-profile.git",
     "directory": "packages/wordpress"
   },
-  "type": "commonjs",
+  "type": "module",
   "scripts": {
     "e2e": "playwright test",
     "e2e:update": "playwright test --update-snapshots",
