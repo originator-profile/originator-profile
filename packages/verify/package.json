@@ -23,7 +23,7 @@
     "NOTICE"
   ],
   "scripts": {
-    "build": "pkgroll --clean-dist --target=node22",
+    "build": "pkgroll --clean-dist",
     "test": "vitest run",
     "e2e": "playwright test",
     "e2e:update": "playwright test --update-snapshots",

@@ -23,7 +23,7 @@
     "NOTICE"
   ],
   "scripts": {
-    "build": "pkgroll --clean-dist --target=node22",
+    "build": "pkgroll --clean-dist",
     "test": "vitest run",
     "lint": "eslint --fix .",
     "type-check": "tsc --noEmit"
