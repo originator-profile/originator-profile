@@ -1,7 +1,6 @@
 import chokidar from "chokidar";
 import dotenv from "dotenv";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import util from "node:util";
 
 const options = {
@@ -61,8 +60,7 @@ dotenv.config({ path: [".env", `.env.${args.values.mode}`] });
 
 const filename = `{name}-${args.values.target}-{version}.zip`;
 const artifactsDir = "web-ext-artifacts";
-const cwd = path.dirname(fileURLToPath(new URL(import.meta.url)));
-const outdir = path.join(cwd, `dist-${args.values.target}`);
+const outdir = path.join(import.meta.dirname, `dist-${args.values.target}`);
 
 const credentials: ImportMeta["env"]["BASIC_AUTH_CREDENTIALS"] = process.env
   .BASIC_AUTH_CREDENTIALS
