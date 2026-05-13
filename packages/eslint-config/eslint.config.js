@@ -82,7 +82,7 @@ export default [
     },
   },
   {
-    files: ["eslint.config.mjs"],
+    files: ["eslint.config.{js,ts}"],
     rules: {
       "canonical/filename-match-exported": "off",
     },

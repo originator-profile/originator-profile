@@ -7,19 +7,7 @@ export default [
     ignores: ["dev/**/*"],
   },
   {
-    files: ["postcss.config.cjs", "tailwind.config.cjs", "esbuild.*.cjs"],
-    languageOptions: {
-      globals: {
-        ...globals.node,
-      },
-    },
-    rules: {
-      "@typescript-eslint/no-var-requires": "off",
-      "@typescript-eslint/no-require-imports": "off",
-    },
-  },
-  {
-    files: ["esbuild.mjs"],
+    files: ["esbuild.ts", "esbuild.*.ts", "postcss.config.ts"],
     languageOptions: {
       globals: {
         ...globals.node,
@@ -43,7 +31,7 @@ export default [
     },
   },
   {
-    files: ["manifest.mjs"],
+    files: ["manifest.ts"],
     rules: {
       "canonical/filename-match-exported": "off",
     },

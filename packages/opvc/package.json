@@ -21,8 +21,8 @@
   ],
   "bin": "bin/run.js",
   "exports": {
-    "types": "./dist/index.d.mts",
-    "default": "./dist/index.mjs"
+    "types": "./dist/index.d.ts",
+    "default": "./dist/index.js"
   },
   "oclif": {
     "bin": "opvc",
@@ -36,7 +36,7 @@
     "build": "tsdown && oclif manifest && oclif readme",
     "lint": "eslint --fix .",
     "type-check": "tsc",
-    "test": "node --experimental-strip-types --no-warnings=ExperimentalWarning --test"
+    "test": "node --test"
   },
   "dependencies": {
     "@oclif/core": "^4.10.3",

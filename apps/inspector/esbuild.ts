@@ -1,12 +1,9 @@
-// @ts-check
-
 import chokidar from "chokidar";
 import dotenv from "dotenv";
 import path from "node:path";
-import { fileURLToPath } from "node:url";
 import util from "node:util";
 
-const options = /** @type {const} */ ({
+const options = {
   mode: {
     type: "string",
     default: process.env.NODE_ENV || "production",
@@ -50,7 +47,7 @@ const options = /** @type {const} */ ({
       );
     },
   },
-});
+} as const;
 
 const args = util.parseArgs({ options });
 
@@ -63,11 +60,10 @@ dotenv.config({ path: [".env", `.env.${args.values.mode}`] });
 
 const filename = `{name}-${args.values.target}-{version}.zip`;
 const artifactsDir = "web-ext-artifacts";
-const cwd = path.dirname(fileURLToPath(new URL(import.meta.url)));
-const outdir = path.join(cwd, `dist-${args.values.target}`);
+const outdir = path.join(import.meta.dirname, `dist-${args.values.target}`);
 
-/** @type {ImportMeta["env"]["BASIC_AUTH_CREDENTIALS"]} */
-const credentials = process.env.BASIC_AUTH_CREDENTIALS
+const credentials: ImportMeta["env"]["BASIC_AUTH_CREDENTIALS"] = process.env
+  .BASIC_AUTH_CREDENTIALS
   ? JSON.parse(process.env.BASIC_AUTH_CREDENTIALS)
   : [];
 
@@ -98,10 +94,9 @@ import copy from "esbuild-copy-static-files";
 import { rm } from "node:fs/promises";
 // @ts-expect-error: 型定義がない
 import webExt from "web-ext";
-import postcss from "./esbuild.postcss.cjs";
-import manifest from "./manifest.mjs";
+import postcss from "./esbuild.postcss.ts";
+import manifest from "./manifest.ts";
 
-/** @type {import("esbuild").BuildOptions} */
 const buildOptions = {
   target: "es2018",
   entryPoints: [
@@ -115,7 +110,7 @@ const buildOptions = {
   color: true,
   bundle: true,
   minify: args.values.mode === "production",
-  sourcemap: ["development", "testing"].includes(args.values.mode),
+  sourcemap: ["development", "testing"].includes(args.values.mode ?? ""),
   conditions: ["browser"],
   define: {
     "import.meta.env": JSON.stringify(env),
@@ -136,7 +131,7 @@ const buildOptions = {
       mode: args.values.mode,
     }),
   ],
-};
+} as const satisfies esbuild.BuildOptions;
 
 await rm(outdir, {
   force: true,

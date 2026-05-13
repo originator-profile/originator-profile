@@ -22,7 +22,10 @@ test("画像のintegrity属性に複数のSRIハッシュが含まれる", async
   editor,
 }) => {
   const content = "画像付き投稿のテスト";
-  const imagePath = path.resolve(__dirname, "../assets/ca-manager.webp");
+  const imagePath = path.resolve(
+    import.meta.dirname,
+    "../assets/ca-manager.webp",
+  );
 
   await admin.createNewPost({ content });
   await editor.insertBlock({ name: "core/image" });
