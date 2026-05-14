@@ -24,24 +24,24 @@
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
-    "@iconify/react": "^6.0.2",
+    "@iconify/react": "6.0.2",
     "@originator-profile/core": "workspace:*",
     "@originator-profile/model": "workspace:*",
     "@originator-profile/securing-mechanism": "workspace:*",
     "@originator-profile/tsconfig": "workspace:*",
     "@originator-profile/verify": "workspace:*",
-    "@types/chrome": "^0.1.38",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "dompurify": "^3.3.3",
-    "eslint": "^10.1.0",
+    "@types/chrome": "0.1.40",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "dompurify": "3.4.0",
+    "eslint": "10.2.0",
     "eslint-config-originator-profile": "workspace:*",
-    "react": "^19.2.4",
-    "swr": "^2.4.1",
+    "react": "19.2.5",
+    "swr": "2.4.1",
     "tailwind-config-originator-profile": "workspace:*",
-    "tailwind-merge": "^3.5.0",
-    "typescript": "^6.0.2",
-    "vitest": "^4.1.2"
+    "tailwind-merge": "3.5.0",
+    "typescript": "6.0.2",
+    "vitest": "4.1.4"
   },
   "peerDependencies": {
     "tailwindcss": "^4.1.7"

@@ -36,12 +36,12 @@
   },
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",
-    "date-fns": "^4.1.0",
-    "eslint": "^10.1.0",
+    "date-fns": "4.1.0",
+    "eslint": "10.2.0",
     "eslint-config-originator-profile": "workspace:*",
-    "pkgroll": "^2.27.0",
-    "typescript": "^6.0.2",
-    "vitest": "^4.1.2",
-    "websri": "^1.0.1"
+    "pkgroll": "2.27.0",
+    "typescript": "6.0.2",
+    "vitest": "4.1.4",
+    "websri": "1.0.1"
   }
 }
