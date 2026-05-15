@@ -4,8 +4,8 @@ on:
   pull_request:
     types: [opened, synchronize]
     paths-ignore:
-      - '.github/actions/claude_code_review/action.yml'
-      - '.github/workflows/claude-code-review.yml'
+      - ".github/actions/claude_code_review/action.yml"
+      - ".github/workflows/claude-code-review.yml"
 jobs:
   claude-review:
     runs-on: ubuntu-24.04
