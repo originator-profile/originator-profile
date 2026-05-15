@@ -28,6 +28,7 @@ import {
   Certificate,
   OpVerificationResult,
   OpsVerificationResult,
+  VerifiedOp,
   VerifiedOps,
 } from "./types";
 
@@ -230,7 +231,7 @@ export function OpsVerifier(
             resultOp,
           );
         }
-        return resultOp;
+        return resultOp as VerifiedOp;
       }),
     );
     if (!isVerifiedOps(resultOps)) {
