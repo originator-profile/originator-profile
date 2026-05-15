@@ -36,7 +36,6 @@
     "dompurify": "3.4.0",
     "eslint": "10.2.0",
     "eslint-config-originator-profile": "workspace:*",
-    "react": "19.2.5",
     "swr": "2.4.1",
     "tailwind-config-originator-profile": "workspace:*",
     "tailwind-merge": "3.5.0",
@@ -44,6 +43,7 @@
     "vitest": "4.1.4"
   },
   "peerDependencies": {
+    "react": "^19.2.0",
     "tailwindcss": "^4.1.7"
   }
 }
