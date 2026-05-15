@@ -3,6 +3,8 @@ name: Claude Code Review
 on:
   pull_request:
     types: [opened, synchronize]
+    paths-ignore:
+      - '.github/actions/claude_code_review/action.yml'
 jobs:
   claude-review:
     runs-on: ubuntu-24.04
