@@ -12,9 +12,7 @@ export function useLinkVerification() {
   const { data } = useSWR<LinkVerificationResult, Error>(
     [VERIFICATION_KEY, tabId],
     ([, id]: [string, number]) =>
-      fetchVerificationResult(id).catch(
-        () => ({ status: "none" }),
-      ),
+      fetchVerificationResult(id).catch(() => ({ status: "none" })),
     {
       refreshInterval: (data) => (!data || data.status === "none" ? 500 : 0),
     },

@@ -218,10 +218,7 @@ await describe("unsignedCa()", async () => {
       target: [],
     };
 
-    await assert.rejects(
-      unsignedCa(uca, {}),
-      BadRequestError,
-    );
+    await assert.rejects(unsignedCa(uca, {}), BadRequestError);
   });
 
   await test("@context に必須コンテキストが不足している場合 BadRequestError", async () => {
@@ -307,10 +304,7 @@ await describe("sign()", async () => {
       target: [],
     };
 
-    await assert.rejects(
-      sign(uca, {} as Jwk, {}),
-      BadRequestError,
-    );
+    await assert.rejects(sign(uca, {} as Jwk, {}), BadRequestError);
   });
 });
 

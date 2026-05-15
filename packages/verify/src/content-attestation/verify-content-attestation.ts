@@ -138,9 +138,7 @@ export function CaVerifier<T extends ContentAttestation>(
     if (urlResult instanceof Error) {
       return urlResult;
     }
-    await verifyImageDigestSri(
-      urlResult.doc.credentialSubject.image,
-    );
+    await verifyImageDigestSri(urlResult.doc.credentialSubject.image);
     if (urlResult.doc.target) {
       if (urlResult.doc.target.length === 0) {
         return new CaInvalid("Target is empty", urlResult);

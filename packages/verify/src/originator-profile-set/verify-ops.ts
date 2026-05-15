@@ -93,9 +93,7 @@ async function verifyAnnotations(
         return valid;
       }
 
-      await verifyImageDigestSri(
-        valid.doc.credentialSubject.image,
-      );
+      await verifyImageDigestSri(valid.doc.credentialSubject.image);
 
       return valid;
     }),
