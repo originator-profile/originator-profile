@@ -11,7 +11,6 @@ import {
 import { OpInvalid, OpsInvalid } from "./errors";
 import {
   Certificate,
-  DecodedOp,
   DecodedOps,
   OpDecodingFailure,
   OpDecodingResult,
@@ -160,7 +159,7 @@ export function decodeOps(ops: OriginatorProfileSet): OpsDecodingResult {
       core,
       annotations: validated.annotations,
       media: validated.media,
-    } as DecodedOp;
+    };
   });
   if (!isDecodedOps(resultOps)) {
     const invalidIndexes = resultOps

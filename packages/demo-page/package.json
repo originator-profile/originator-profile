@@ -18,17 +18,17 @@
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.31.2",
-    "@cloudflare/workers-types": "^4.20260430.1",
+    "@cloudflare/vite-plugin": "1.31.2",
+    "@cloudflare/workers-types": "4.20260430.1",
     "@originator-profile/tsconfig": "workspace:*",
     "@originator-profile/vite-plugin": "workspace:*",
-    "@types/accept-language-parser": "^1.5.8",
-    "eslint": "^10.1.0",
+    "@types/accept-language-parser": "1.5.8",
+    "eslint": "10.2.0",
     "eslint-config-originator-profile": "workspace:*",
-    "globals": "^17.4.0",
-    "typescript": "^6.0.2",
-    "vite": "^8.0.3",
-    "wrangler": "^4.79.0"
+    "globals": "17.5.0",
+    "typescript": "6.0.2",
+    "vite": "8.0.8",
+    "wrangler": "4.81.1"
   },
   "dependencies": {
     "accept-language-parser": "^1.5.0"

@@ -45,13 +45,13 @@
   "devDependencies": {
     "@originator-profile/cryptography": "workspace:*",
     "@originator-profile/tsconfig": "workspace:*",
-    "@types/ms": "^2.1.0",
-    "eslint": "^10.1.0",
+    "@types/ms": "2.1.0",
+    "eslint": "10.2.0",
     "eslint-config-originator-profile": "workspace:*",
-    "jose": "^6.0.11",
-    "pkgroll": "^2.27.0",
-    "typescript": "^6.0.2",
-    "vite": "^8.0.3",
-    "vitest": "^4.1.2"
+    "jose": "6.2.2",
+    "pkgroll": "2.27.0",
+    "typescript": "6.0.2",
+    "vite": "8.0.8",
+    "vitest": "4.1.4"
   }
 }

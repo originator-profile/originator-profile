@@ -13,7 +13,7 @@
   "exports": "./style.css",
   "devDependencies": {
     "@jumpu-ui/tailwindcss": "2.0.1",
-    "@tailwindcss/typography": "^0.5.19",
-    "tailwindcss": "^4.2.2"
+    "@tailwindcss/typography": "0.5.19",
+    "tailwindcss": "4.2.2"
   }
 }

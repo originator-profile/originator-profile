@@ -1,4 +1,4 @@
-FROM wordpress:6.9.4-php8.5 AS builder
+FROM wordpress:6.9.4-php8.5@sha256:a7b443c40a70df922565d843ee25019e034bf96d2f1a72df35c2ea58ee74a981 AS builder
 
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
   && php composer-setup.php --install-dir=/usr/local/bin --filename=composer \

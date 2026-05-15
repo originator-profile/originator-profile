@@ -53,12 +53,12 @@
   },
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",
-    "@types/node": "^25.5.0",
-    "eslint": "^10.1.0",
+    "@types/node": "25.6.0",
+    "eslint": "10.2.0",
     "eslint-config-originator-profile": "workspace:*",
-    "oclif": "^4.22.96",
-    "tsdown": "^0.21.7",
-    "typescript": "^6.0.2",
-    "websri": "^1.0.1"
+    "oclif": "4.23.0",
+    "tsdown": "0.21.7",
+    "typescript": "6.0.2",
+    "websri": "1.0.1"
   }
 }

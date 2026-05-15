@@ -21,9 +21,9 @@
     "eslint-plugin-react": "^7.37.5",
     "eslint-plugin-react-hooks": "^7.0.1",
     "globals": "^17.4.0",
-    "typescript-eslint": "8.58.0"
+    "typescript-eslint": "8.59.2"
   },
   "devDependencies": {
-    "@types/eslint-plugin-jsx-a11y": "^6.10.1"
+    "@types/eslint-plugin-jsx-a11y": "6.10.1"
   }
 }
