@@ -35,7 +35,7 @@ export function resolveLocalContent(
 export function parseExpiresIn(expiresIn: string, from: Date): Date {
   let millis: number | undefined;
   try {
-    millis = ms(expiresIn as Parameters<typeof ms>[0]) as number | undefined;
+    millis = ms(expiresIn as Parameters<typeof ms>[0]);
   } catch {
     millis = undefined;
   }

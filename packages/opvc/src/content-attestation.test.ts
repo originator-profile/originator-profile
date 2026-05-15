@@ -219,7 +219,7 @@ await describe("unsignedCa()", async () => {
     };
 
     await assert.rejects(
-      unsignedCa(uca as unknown as UnsignedContentAttestation, {}),
+      unsignedCa(uca, {}),
       BadRequestError,
     );
   });
@@ -308,7 +308,7 @@ await describe("sign()", async () => {
     };
 
     await assert.rejects(
-      sign(uca as unknown as UnsignedContentAttestation, {} as Jwk, {}),
+      sign(uca, {} as Jwk, {}),
       BadRequestError,
     );
   });

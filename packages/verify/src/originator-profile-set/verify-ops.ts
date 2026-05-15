@@ -6,7 +6,6 @@ import {
   OpVc,
   OriginatorProfileSet,
   WebMediaProfile,
-  type Image,
 } from "@originator-profile/model";
 import {
   JwtVcVerifier,
@@ -29,7 +28,6 @@ import {
   Certificate,
   OpVerificationResult,
   OpsVerificationResult,
-  VerifiedOp,
   VerifiedOps,
 } from "./types";
 
@@ -96,7 +94,7 @@ async function verifyAnnotations(
       }
 
       await verifyImageDigestSri(
-        valid.doc.credentialSubject.image as Image | undefined,
+        valid.doc.credentialSubject.image,
       );
 
       return valid;
@@ -234,7 +232,7 @@ export function OpsVerifier(
             resultOp,
           );
         }
-        return resultOp as VerifiedOp;
+        return resultOp;
       }),
     );
     if (!isVerifiedOps(resultOps)) {

@@ -13,7 +13,7 @@ export function useLinkVerification() {
     [VERIFICATION_KEY, tabId],
     ([, id]: [string, number]) =>
       fetchVerificationResult(id).catch(
-        () => ({ status: "none" }) as LinkVerificationResult,
+        () => ({ status: "none" }),
       ),
     {
       refreshInterval: (data) => (!data || data.status === "none" ? 500 : 0),

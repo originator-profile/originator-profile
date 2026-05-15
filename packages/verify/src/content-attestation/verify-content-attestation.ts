@@ -1,5 +1,5 @@
 import { Keys } from "@originator-profile/cryptography";
-import { ContentAttestation, type Image } from "@originator-profile/model";
+import { ContentAttestation } from "@originator-profile/model";
 import {
   JwtVcVerifier,
   VcValidateFailed,
@@ -139,7 +139,7 @@ export function CaVerifier<T extends ContentAttestation>(
       return urlResult;
     }
     await verifyImageDigestSri(
-      urlResult.doc.credentialSubject.image as Image | undefined,
+      urlResult.doc.credentialSubject.image,
     );
     if (urlResult.doc.target) {
       if (urlResult.doc.target.length === 0) {
