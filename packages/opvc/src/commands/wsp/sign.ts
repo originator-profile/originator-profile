@@ -50,8 +50,7 @@ export class WspSign extends Command {
   static summary = "Website Profile の作成";
   static description = `\
 Website Profile に署名します。
-入力が単一オブジェクトの場合は JWT を、配列の場合は
-{ "sites": ["<JWT>", ...], "originator": "<OP ID>" } を標準出力に出力します。
+入力が単一オブジェクトの場合は JWT を、配列の場合は JWT の配列を標準出力に出力します。
 配列入力時は全要素が同一の issuer / credentialSubject.id を持ち、
 @context の @language がそれぞれ異なる必要があります。`;
   static flags = {

@@ -64,11 +64,11 @@ async function buildUnsignedWsp(
   }
 
   return {
+    ...uwsp,
     iss: uwsp.issuer,
     sub: uwsp.credentialSubject.id,
     iat: getUnixTime(issuedAt),
     exp: getUnixTime(expiredAt),
-    ...uwsp,
   };
 }
 

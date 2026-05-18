@@ -433,8 +433,7 @@ DESCRIPTION
   Website Profile の作成
 
   Website Profile に署名します。
-  入力が単一オブジェクトの場合は JWT を、配列の場合は
-  { "sites": ["<JWT>", ...], "originator": "<OP ID>" } を標準出力に出力します。
+  入力が単一オブジェクトの場合は JWT を、配列の場合は JWT の配列を標準出力に出力します。
   配列入力時は全要素が同一の issuer / credentialSubject.id を持ち、
   @context の @language がそれぞれ異なる必要があります。
 
@@ -747,8 +746,8 @@ const jwt = await ContentAttestation.signByServer(input, {
 
 ### Website Profile の署名 (単一 / 多言語)
 
-`WebsiteProfile.sign()` は単一の未署名 Website Profile を JWT 文字列として署名する他、
-配列を渡すと SiteProfile の `sites` に組み込める `{ sites, originator }` 形式で返します。
+`WebsiteProfile.sign()` は単一の未署名 Website Profile を JWT 文字列として署名するほか、
+配列を渡すと JWT 文字列の配列を返します。これは SiteProfile の `sites` に直接組み込めます。
 配列入力時は全要素が同一の `issuer` / `credentialSubject.id` を持ち、
 `@context` の `@language` がそれぞれ異なる必要があります。
 
@@ -761,8 +760,8 @@ const jwt = await WebsiteProfile.sign(input, privateKey, {
   expiredAt: "2027-03-31",
 });
 
-// 多言語の場合: { sites, originator } を返します
-const { sites, originator } = await WebsiteProfile.sign(
+// 多言語の場合: JWT 文字列の配列を返します
+const sites = await WebsiteProfile.sign(
   [inputJa, inputEn],
   privateKey,
   { issuedAt: new Date(), expiredAt: "2027-03-31" },
