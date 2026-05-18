@@ -32,6 +32,12 @@ function Org(props: Props) {
     ? selectByLocale(siteProfile.sites.map((s) => s.doc))
     : undefined;
 
+  // 同一の認証種別 (certificationSystem.id) ごとにユーザーロケールに合致する PA を選択
+  const selectedAnnotations = selectByLocale(op.annotations ?? [], {
+    group: (a) => a.doc.credentialSubject.certificationSystem.id,
+    getLangSource: (a) => a.doc,
+  });
+
   const backPath = {
     pathname: props.back,
     search: queryParams.toString(),
@@ -40,7 +46,7 @@ function Org(props: Props) {
     <Template
       backPath={backPath}
       contentType={contentType ?? "ContentType_Document"}
-      certificates={op.annotations ?? []}
+      certificates={selectedAnnotations}
       ops={ops}
       wsp={selectedWsp}
       wmp={selectedWmp}
