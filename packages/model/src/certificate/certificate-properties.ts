@@ -3,6 +3,10 @@ import { Image } from "../image";
 import { OpId } from "../op-id";
 import { CertificationSystem } from "./cert-system";
 
+/**
+ * @deprecated Use {@link ProfileAnnotationProperties} instead.
+ * The CertificateProperties schema will be removed in a future version.
+ */
 export const CertificateProperties = z.object({
   id: OpId.describe("OP ID of the subject"),
   type: z.literal("CertificateProperties"),

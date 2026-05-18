@@ -14,6 +14,7 @@ export * from "./op-meta";
 export * from "./op-vc";
 export * from "./originator-profile-set";
 export * from "./page";
+export * from "./profile-annotation";
 export * from "./site-profile";
 export * from "./sri";
 export * from "./target/";
