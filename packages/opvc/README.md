@@ -761,11 +761,10 @@ const jwt = await WebsiteProfile.sign(input, privateKey, {
 });
 
 // 多言語の場合: JWT 文字列の配列を返します
-const sites = await WebsiteProfile.sign(
-  [inputJa, inputEn],
-  privateKey,
-  { issuedAt: new Date(), expiredAt: "2027-03-31" },
-);
+const sites = await WebsiteProfile.sign([inputJa, inputEn], privateKey, {
+  issuedAt: new Date(),
+  expiredAt: "2027-03-31",
+});
 ```
 
 ## Development
