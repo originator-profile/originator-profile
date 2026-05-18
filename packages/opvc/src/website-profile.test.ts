@@ -317,7 +317,7 @@ await describe("unsignedWsp() 配列入力", async () => {
   });
 });
 
-await describe("sign()", async () => {
+await describe("sign() 戻り値", async () => {
   await test("単一入力は JWT 文字列を返す", async () => {
     const jwt = await sign(baseUwsp("ja"), testPrivateKey, {});
 
