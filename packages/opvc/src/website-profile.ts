@@ -82,30 +82,25 @@ async function buildUnsignedWsp(
  * @throws {BadRequestError} 配列入力の整合性違反や入力が UnsignedWebsiteProfile スキーマに適合しない場合
  * @return 未署名 Website Profile (配列入力時は配列)
  */
-export async function unsignedWsp(
-  uwsp: UnsignedWebsiteProfile,
+export async function unsignedWsp<
+  U extends UnsignedWebsiteProfile | UnsignedWebsiteProfile[],
+>(
+  uwsp: U,
   options: TimingOptions,
-): Promise<UnsignedWebsiteProfile>;
-export async function unsignedWsp(
-  uwsp: UnsignedWebsiteProfile[],
-  options: TimingOptions,
-): Promise<UnsignedWebsiteProfile[]>;
-export async function unsignedWsp(
-  uwsp: UnsignedWebsiteProfile | UnsignedWebsiteProfile[],
-  options: TimingOptions,
-): Promise<UnsignedWebsiteProfile | UnsignedWebsiteProfile[]>;
-export async function unsignedWsp(
-  uwsp: UnsignedWebsiteProfile | UnsignedWebsiteProfile[],
-  options: TimingOptions,
-): Promise<UnsignedWebsiteProfile | UnsignedWebsiteProfile[]> {
+): Promise<U extends unknown[] ? UnsignedWebsiteProfile[] : UnsignedWebsiteProfile> {
+  type Result = U extends unknown[]
+    ? UnsignedWebsiteProfile[]
+    : UnsignedWebsiteProfile;
   const timing = parseDates(options);
 
   if (Array.isArray(uwsp)) {
     assertConsistentSet(uwsp);
-    return Promise.all(uwsp.map((item) => buildUnsignedWsp(item, timing)));
+    return Promise.all(
+      uwsp.map((item) => buildUnsignedWsp(item, timing)),
+    ) as Promise<Result>;
   }
 
-  return buildUnsignedWsp(uwsp, timing);
+  return buildUnsignedWsp(uwsp, timing) as Promise<Result>;
 }
 
 /**
@@ -118,21 +113,14 @@ export async function unsignedWsp(
  * @throws {BadRequestError} 配列入力の整合性違反や入力が UnsignedWebsiteProfile スキーマに適合しない場合
  * @return 単一入力時は JWT 文字列、配列入力時は JWT 文字列の配列
  */
-export async function sign(
-  uwsp: UnsignedWebsiteProfile,
-  privateKey: Jwk,
-  options?: TimingOptions,
-): Promise<string>;
-export async function sign(
-  uwsp: UnsignedWebsiteProfile[],
-  privateKey: Jwk,
-  options?: TimingOptions,
-): Promise<string[]>;
-export async function sign(
-  uwsp: UnsignedWebsiteProfile | UnsignedWebsiteProfile[],
+export async function sign<
+  U extends UnsignedWebsiteProfile | UnsignedWebsiteProfile[],
+>(
+  uwsp: U,
   privateKey: Jwk,
   options: TimingOptions = {},
-): Promise<string | string[]> {
+): Promise<U extends unknown[] ? string[] : string> {
+  type Result = U extends unknown[] ? string[] : string;
   const timing = parseDates(options);
 
   if (Array.isArray(uwsp)) {
@@ -142,9 +130,9 @@ export async function sign(
         const payload = await buildUnsignedWsp(item, timing);
         return signJwtVc(payload, privateKey, timing);
       }),
-    );
+    ) as Promise<Result>;
   }
 
   const payload = await buildUnsignedWsp(uwsp, timing);
-  return signJwtVc(payload, privateKey, timing);
+  return signJwtVc(payload, privateKey, timing) as Promise<Result>;
 }
