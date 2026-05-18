@@ -575,13 +575,16 @@ importers:
 
   packages/ui:
     dependencies:
+      react:
+        specifier: ^19.2.0
+        version: 19.2.6
       tailwindcss:
         specifier: ^4.1.7
         version: 4.2.2
     devDependencies:
       '@iconify/react':
         specifier: 6.0.2
-        version: 6.0.2(react@19.2.5)
+        version: 6.0.2(react@19.2.6)
       '@originator-profile/core':
         specifier: workspace:*
         version: link:../core
@@ -615,12 +618,9 @@ importers:
       eslint-config-originator-profile:
         specifier: workspace:*
         version: link:../eslint-config
-      react:
-        specifier: 19.2.5
-        version: 19.2.5
       swr:
         specifier: 2.4.1
-        version: 2.4.1(react@19.2.5)
+        version: 2.4.1(react@19.2.6)
       tailwind-config-originator-profile:
         specifier: workspace:*
         version: link:../tailwind-config
@@ -8475,10 +8475,6 @@ packages:
       react: '*'
       react-dom: '*'
 
-  react@19.2.5:
-    resolution: {integrity: sha512-llUJLzz1zTUBrskt2pwZgLq59AemifIftw4aB7JxOqf1HY2FDaGDxgwpAPVzHU1kdWabH7FauP4i1oEeer2WCA==}
-    engines: {node: '>=0.10.0'}
-
   react@19.2.6:
     resolution: {integrity: sha512-sfWGGfavi0xr8Pg0sVsyHMAOziVYKgPLNrS7ig+ivMNb3wbCBw3KxtflsGBAwD3gYQlE/AEZsTLgToRrSCjb0Q==}
     engines: {node: '>=0.10.0'}
@@ -11810,11 +11806,6 @@ snapshots:
   '@iconify/collections@1.0.682':
     dependencies:
       '@iconify/types': 2.0.0
-
-  '@iconify/react@6.0.2(react@19.2.5)':
-    dependencies:
-      '@iconify/types': 2.0.0
-      react: 19.2.5
 
   '@iconify/react@6.0.2(react@19.2.6)':
     dependencies:
@@ -19478,8 +19469,6 @@ snapshots:
       ts-easing: 0.2.0
       tslib: 2.8.1
 
-  react@19.2.5: {}
-
   react@19.2.6: {}
 
   read-package-json-fast@4.0.0:
@@ -20399,12 +20388,6 @@ snapshots:
       picocolors: 1.1.1
       sax: 1.6.0
 
-  swr@2.4.1(react@19.2.5):
-    dependencies:
-      dequal: 2.0.3
-      react: 19.2.5
-      use-sync-external-store: 1.6.0(react@19.2.5)
-
   swr@2.4.1(react@19.2.6):
     dependencies:
       dequal: 2.0.3
@@ -20953,10 +20936,6 @@ snapshots:
   use-debounce@10.1.1(react@19.2.6):
     dependencies:
       react: 19.2.6
-
-  use-sync-external-store@1.6.0(react@19.2.5):
-    dependencies:
-      react: 19.2.5
 
   use-sync-external-store@1.6.0(react@19.2.6):
     dependencies:
