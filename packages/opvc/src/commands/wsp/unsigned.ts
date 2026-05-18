@@ -84,16 +84,10 @@ $ <%= config.bin %> <%= command.id %> \\
     const input: UnsignedWebsiteProfile | UnsignedWebsiteProfile[] = JSON.parse(
       inputBuffer.toString(),
     );
-    const options = {
+    const uwsp = await unsignedWsp(input, {
       issuedAt: flags["issued-at"],
       expiredAt: flags["expired-at"],
-    };
-    const unsignedWspWithUnion = unsignedWsp as (
-      input: UnsignedWebsiteProfile | UnsignedWebsiteProfile[],
-      options: typeof options,
-    ) => ReturnType<typeof unsignedWsp>;
-
-    const uwsp = await unsignedWspWithUnion(input, options);
+    });
 
     this.logJson(uwsp);
   }

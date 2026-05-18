@@ -93,17 +93,19 @@ export async function unsignedWsp(
 export async function unsignedWsp(
   uwsp: UnsignedWebsiteProfile | UnsignedWebsiteProfile[],
   options: TimingOptions,
+): Promise<UnsignedWebsiteProfile | UnsignedWebsiteProfile[]>;
+export async function unsignedWsp(
+  uwsp: UnsignedWebsiteProfile | UnsignedWebsiteProfile[],
+  options: TimingOptions,
 ): Promise<UnsignedWebsiteProfile | UnsignedWebsiteProfile[]> {
-  const { issuedAt, expiredAt } = parseDates(options);
+  const timing = parseDates(options);
 
   if (Array.isArray(uwsp)) {
     assertConsistentSet(uwsp);
-    return Promise.all(
-      uwsp.map((item) => buildUnsignedWsp(item, { issuedAt, expiredAt })),
-    );
+    return Promise.all(uwsp.map((item) => buildUnsignedWsp(item, timing)));
   }
 
-  return buildUnsignedWsp(uwsp, { issuedAt, expiredAt });
+  return buildUnsignedWsp(uwsp, timing);
 }
 
 /**
@@ -131,17 +133,18 @@ export async function sign(
   privateKey: Jwk,
   options: TimingOptions = {},
 ): Promise<string | string[]> {
-  const { issuedAt, expiredAt } = parseDates(options);
+  const timing = parseDates(options);
 
   if (Array.isArray(uwsp)) {
-    const payloads = await unsignedWsp(uwsp, { issuedAt, expiredAt });
+    assertConsistentSet(uwsp);
     return Promise.all(
-      payloads.map((payload) =>
-        signJwtVc(payload, privateKey, { issuedAt, expiredAt }),
-      ),
+      uwsp.map(async (item) => {
+        const payload = await buildUnsignedWsp(item, timing);
+        return signJwtVc(payload, privateKey, timing);
+      }),
     );
   }
 
-  const payload = await unsignedWsp(uwsp, { issuedAt, expiredAt });
-  return signJwtVc(payload, privateKey, { issuedAt, expiredAt });
+  const payload = await buildUnsignedWsp(uwsp, timing);
+  return signJwtVc(payload, privateKey, timing);
 }

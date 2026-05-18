@@ -315,6 +315,22 @@ await describe("unsignedWsp() 配列入力", async () => {
       BadRequestError,
     );
   });
+
+  await test("配列要素に @language がない場合 BadRequestError", async () => {
+    const noLang = {
+      ...baseUwsp("ja"),
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+        "https://originator-profile.org/ns/cip/v1",
+      ],
+    } as unknown as UnsignedWebsiteProfile;
+
+    await assert.rejects(
+      unsignedWsp([baseUwsp("ja"), noLang], {}),
+      BadRequestError,
+    );
+  });
 });
 
 await describe("sign() 戻り値", async () => {
