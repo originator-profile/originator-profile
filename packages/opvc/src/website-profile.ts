@@ -87,7 +87,9 @@ export async function unsignedWsp<
 >(
   uwsp: U,
   options: TimingOptions,
-): Promise<U extends unknown[] ? UnsignedWebsiteProfile[] : UnsignedWebsiteProfile> {
+): Promise<
+  U extends unknown[] ? UnsignedWebsiteProfile[] : UnsignedWebsiteProfile
+> {
   type Result = U extends unknown[]
     ? UnsignedWebsiteProfile[]
     : UnsignedWebsiteProfile;
