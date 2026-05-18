@@ -1,5 +1,4 @@
 import {
-  type ErrorLike,
   type ErrorObject,
   deserializeError,
   isErrorLike,
@@ -47,9 +46,7 @@ export type SerializedError = ErrorObject;
 export type Serialized<T> = Exclude<T, Error> | SerializedError;
 
 export function serializeIfError<T>(o: T): Serialized<T> {
-  return isErrorLike(o)
-    ? serializeError(o as ErrorLike)
-    : (o as Exclude<T, Error>);
+  return isErrorLike(o) ? serializeError(o) : (o as Exclude<T, Error>);
 }
 
 export function deserializeIfError<T>(o: T | SerializedError): T | Error {

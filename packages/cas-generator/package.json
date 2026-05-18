@@ -19,14 +19,14 @@
   },
   "devDependencies": {
     "@jumpu-ui/tailwindcss": "2.0.1",
-    "@nuxt/icon": "2.2.1",
-    "@tailwindcss/vite": "^4.2.2",
-    "@vueuse/core": "^14.2.1",
-    "fast-glob": "^3.3.3",
-    "jose": "^6.2.2",
-    "jsdom": "^29.0.1",
-    "nuxt": "^4.4.2",
-    "openid-client": "^6.8.2",
-    "tailwindcss": "^4.2.2"
+    "@nuxt/icon": "2.2.2",
+    "@tailwindcss/vite": "4.2.2",
+    "@vueuse/core": "14.2.1",
+    "fast-glob": "3.3.3",
+    "jose": "6.2.2",
+    "jsdom": "29.0.2",
+    "nuxt": "4.4.2",
+    "openid-client": "6.8.2",
+    "tailwindcss": "4.2.2"
   }
 }

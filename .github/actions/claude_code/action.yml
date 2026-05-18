@@ -31,7 +31,7 @@ runs:
   using: composite
   steps:
     - name: Run Claude Code
-      uses: anthropics/claude-code-action@v1
+      uses: anthropics/claude-code-action@86eb26bf0139bdd75acd15ea5f00f45ee0a284c2 # v1
       with:
         claude_code_oauth_token: ${{ inputs.CLAUDE_CODE_OAUTH_TOKEN }}
         track_progress: true

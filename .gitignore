@@ -1,6 +1,13 @@
 *.log
 .astro
+.cache
+.data
 .env
+.env.*
+!.env.example
+.nitro
+.nuxt
+.output
 .phpunit.result.cache
 .turbo
 .wrangler

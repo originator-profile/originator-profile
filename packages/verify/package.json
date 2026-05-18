@@ -43,19 +43,19 @@
   },
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",
-    "@playwright/test": "^1.59.1",
-    "date-fns": "^4.1.0",
-    "eslint": "^10.1.0",
+    "@playwright/test": "1.59.1",
+    "date-fns": "4.1.0",
+    "eslint": "10.2.0",
     "eslint-config-originator-profile": "workspace:*",
-    "happy-dom": "^20.8.9",
-    "just-diff-apply": "^5.5.0",
-    "just-typeof": "^3.2.0",
-    "pkgroll": "^2.27.0",
-    "playwright": "^1.59.1",
-    "typescript": "^6.0.2",
-    "urlpattern-polyfill": "^10.1.0",
-    "vite": "^8.0.3",
-    "vitest": "^4.1.2",
-    "websri": "^1.0.1"
+    "happy-dom": "20.8.9",
+    "just-diff-apply": "5.5.0",
+    "just-typeof": "3.2.0",
+    "pkgroll": "2.27.0",
+    "playwright": "1.59.1",
+    "typescript": "6.0.2",
+    "urlpattern-polyfill": "10.1.0",
+    "vite": "8.0.8",
+    "vitest": "4.1.4",
+    "websri": "1.0.1"
   }
 }

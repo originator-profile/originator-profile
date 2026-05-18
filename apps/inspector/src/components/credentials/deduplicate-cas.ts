@@ -16,5 +16,5 @@ export function deduplicateCas<Ca extends ContentAttestation>(
         ca,
       ]),
     ).values(),
-  ) as VerifiedCas<Ca>;
+  );
 }
