@@ -28,6 +28,27 @@ const exampleWebsiteProfile = {
   },
 } satisfies UnsignedWebsiteProfile;
 
+const exampleMultilingualWebsiteProfile = [
+  {
+    ...exampleWebsiteProfile,
+    "@context": [
+      "https://www.w3.org/ns/credentials/v2",
+      "https://originator-profile.org/ns/credentials/v1",
+      "https://originator-profile.org/ns/cip/v1",
+      { "@language": "ja" },
+    ],
+  },
+  {
+    ...exampleWebsiteProfile,
+    "@context": [
+      "https://www.w3.org/ns/credentials/v2",
+      "https://originator-profile.org/ns/credentials/v1",
+      "https://originator-profile.org/ns/cip/v1",
+      { "@language": "en" },
+    ],
+  },
+] satisfies UnsignedWebsiteProfile[];
+
 export class WspUnsigned extends Command {
   static summary = "未署名 Website Profile の取得";
   static description = "標準出力に未署名 Website Profile を出力します。";
@@ -38,7 +59,11 @@ export class WspUnsigned extends Command {
       description: `\
 Website Profile の例:
 
-${JSON.stringify(exampleWebsiteProfile, null, "  ")}`,
+${JSON.stringify(exampleWebsiteProfile, null, "  ")}
+
+多言語の Website Profile (配列) の例:
+
+${JSON.stringify(exampleMultilingualWebsiteProfile, null, "  ")}`,
       required: true,
     }),
     "issued-at": Flags.string({
@@ -56,12 +81,17 @@ $ <%= config.bin %> <%= command.id %> \\
     const { flags } = await this.parse(WspUnsigned);
     const inputBuffer = await fs.readFile(flags.input);
 
-    const input: UnsignedWebsiteProfile = JSON.parse(inputBuffer.toString());
-
-    const uwsp = await unsignedWsp(input, {
+    const input: UnsignedWebsiteProfile | UnsignedWebsiteProfile[] = JSON.parse(
+      inputBuffer.toString(),
+    );
+    const options = {
       issuedAt: flags["issued-at"],
       expiredAt: flags["expired-at"],
-    });
+    };
+
+    const uwsp = Array.isArray(input)
+      ? await unsignedWsp(input, options)
+      : await unsignedWsp(input, options);
 
     this.logJson(uwsp);
   }
