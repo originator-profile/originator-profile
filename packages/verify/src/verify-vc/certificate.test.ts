@@ -45,7 +45,7 @@ const existenceCertificate = {
   },
 } as const satisfies JapaneseExistenceCertificate;
 
-const jicdaqCertificate = {
+const adQualityCertificate = {
   "@context": [
     "https://www.w3.org/ns/credentials/v2",
     "https://originator-profile.org/ns/credentials/v1",
@@ -58,19 +58,19 @@ const jicdaqCertificate = {
     id: "dns:pa-holder.example.jp",
     type: "CertificateProperties",
     description:
-      "この事業者は、広告主のブランド価値を毀損するような違法、不当なサイト、コンテンツ、アプリケーションへの広告掲載を防ぐ対策を実施しています。第三者機関（日本ABC協会）による検証を経て、本認証を取得しました。",
+      "この事業者は、広告主のブランド価値を毀損するような違法、不当なサイト、コンテンツ、アプリケーションへの広告掲載を防ぐ対策を実施しています。",
     image: {
       id: "https://example.com/certification-mark.svg",
       digestSRI: "sha256-uU0nuZNNPgilLlLX2n2r+sSE7+N6U4DukIj3rOLvzek=",
     },
-    certifier: "一般社団法人 デジタル広告品質認証機構",
-    verifier: "日本ABC協会",
+    certifier: "架空広告認証センター",
+    verifier: "架空広告監査機構",
     certificationSystem: {
       id: "urn:uuid:2a12a385-fd1c-48e6-acd8-176c0c5e95ea",
       type: "CertificationSystem",
-      name: "JICDAQ ブランドセーフティ第三者検証",
+      name: "架空広告認証センター ブランドセーフティ認証",
       description: "blah blah blah",
-      ref: "https://www.jicdaq.or.jp/",
+      ref: "https://adcert.exp.originator-profile.org/",
     },
   },
   validFrom: "2022-03-31T15:00:00Z",
@@ -121,19 +121,19 @@ describe("Certificate", () => {
     expect(result.doc).toStrictEqual(existenceCertificate);
   });
 
-  test("JICDAQ 証明書の検証に成功", async () => {
+  test("広告品質認証証明書の検証に成功", async () => {
     const { publicKey, privateKey } = await generateKey();
     const keys = LocalKeys({ keys: [publicKey] });
     const validator = VcValidator<VerifiedJwtVc<Certificate>>(Certificate);
     const verifier = JwtVcVerifier(keys, VERIFIER_ID, validator);
-    const jwt = await signJwtVc(jicdaqCertificate, privateKey, {
+    const jwt = await signJwtVc(adQualityCertificate, privateKey, {
       issuedAt,
       expiredAt,
     });
     const result = await verifier(jwt);
     expect(result).not.toBeInstanceOf(Error);
     // @ts-expect-error assert
-    expect(result.doc).toStrictEqual(jicdaqCertificate);
+    expect(result.doc).toStrictEqual(adQualityCertificate);
   });
 
   test("日本新聞協会所属証明書の検証に成功", async () => {

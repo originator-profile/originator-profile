@@ -2,6 +2,8 @@ import {
   Certificate as BasicCertificate,
   CoreProfile,
   JapaneseExistenceCertificate,
+  JapaneseExistencePA,
+  ProfileAnnotation,
   WebMediaProfile,
 } from "@originator-profile/model";
 import {
@@ -18,7 +20,11 @@ import {
   OpVerifyFailed,
 } from "./errors";
 
-export type Certificate = BasicCertificate | JapaneseExistenceCertificate;
+export type Certificate =
+  | BasicCertificate
+  | JapaneseExistenceCertificate
+  | ProfileAnnotation
+  | JapaneseExistencePA;
 
 /** Originator Profile 復号失敗 */
 export type OpDecodingFailure = {

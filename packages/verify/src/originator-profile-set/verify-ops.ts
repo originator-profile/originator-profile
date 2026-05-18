@@ -3,8 +3,10 @@ import {
   Certificate as CertificateSchema,
   CoreProfile,
   JapaneseExistenceCertificate,
+  JapaneseExistencePA,
   OpVc,
   OriginatorProfileSet,
+  ProfileAnnotation,
   WebMediaProfile,
 } from "@originator-profile/model";
 import {
@@ -81,7 +83,14 @@ async function verifyAnnotations(
       const verify = OpVerifier<Certificate>(
         paIssuerKeys,
         annotation,
-        validator?.(z.union([CertificateSchema, JapaneseExistenceCertificate])),
+        validator?.(
+          z.union([
+            JapaneseExistencePA,
+            ProfileAnnotation,
+            JapaneseExistenceCertificate,
+            CertificateSchema,
+          ]),
+        ),
       );
 
       const result = await verify(annotation.source);
