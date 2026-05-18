@@ -88,10 +88,12 @@ $ <%= config.bin %> <%= command.id %> \\
       issuedAt: flags["issued-at"],
       expiredAt: flags["expired-at"],
     };
+    const unsignedWspWithUnion = unsignedWsp as (
+      input: UnsignedWebsiteProfile | UnsignedWebsiteProfile[],
+      options: typeof options,
+    ) => ReturnType<typeof unsignedWsp>;
 
-    const uwsp = Array.isArray(input)
-      ? await unsignedWsp(input, options)
-      : await unsignedWsp(input, options);
+    const uwsp = await unsignedWspWithUnion(input, options);
 
     this.logJson(uwsp);
   }
