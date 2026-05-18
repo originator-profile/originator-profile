@@ -1,5 +1,6 @@
 import { VerifiedVc } from "@originator-profile/securing-mechanism";
 import { Certificate } from "@originator-profile/verify";
+import { getAnnotationPolicy } from "./profile-annotation";
 
 const certificationSystemIdPriorityMap: Record<string, number> = {
   "urn:uuid:def09cbd-6e8e-4c73-856d-5e00dffde643": 1, // Fictitious Organization Existence Verification Agency Existence Certificate
@@ -20,7 +21,7 @@ const getPriority = (id: string): number => {
 };
 
 /**
- * PA を certificationSystem.id の優先度順に並び替えます。
+ * PA を annotation.id (旧 certificationSystem.id) の優先度順に並び替えます。
  *
  * @param certificates - 並び替える PA の配列
  * @returns  優先度順にソートされた新しい PA の配列
@@ -32,10 +33,10 @@ export default function sortCertificates(
 ) {
   return [...certificates].sort((a, b) => {
     const priorityA = getPriority(
-      a.doc.credentialSubject.certificationSystem.id,
+      getAnnotationPolicy(a.doc.credentialSubject).id,
     );
     const priorityB = getPriority(
-      b.doc.credentialSubject.certificationSystem.id,
+      getAnnotationPolicy(b.doc.credentialSubject).id,
     );
     return priorityA - priorityB;
   });

@@ -1,10 +1,10 @@
 import { Icon } from "@iconify/react";
-import type { CertificationSystem } from "@originator-profile/model";
 import { VerifiedVc } from "@originator-profile/securing-mechanism";
 import { Certificate, VerifiedOps } from "@originator-profile/verify";
 import { twMerge } from "tailwind-merge";
 import placeholderLogoMainUrl from "../../assets/placeholder-logo-main.png";
 import { _ } from "../../utils/get-message";
+import { getAnnotationPolicy } from "../../utils/profile-annotation";
 import Image from "../Image";
 import Spinner from "../Spinner";
 import { useProfileAnnotatorWmp } from "./use-profile-annotator-wmp";
@@ -20,7 +20,7 @@ function CertificateDescription(props: { description?: string }) {
   return <p className="text-sm text-gray-600">{props.description}</p>;
 }
 
-function CertificateRef(props: Pick<CertificationSystem, "ref">) {
+function CertificateRef(props: { ref?: string }) {
   if (!props.ref) return null;
   return (
     <a
@@ -45,24 +45,19 @@ function CertificateDetailContent({
   ops,
 }: Props & Required<Pick<Props, "certificate">>) {
   const paWmp = useProfileAnnotatorWmp(ops ?? [], certificate.doc.issuer);
+  const policy = getAnnotationPolicy(certificate.doc.credentialSubject);
   return (
     <>
       <header className="flex items-center gap-3 mb-4">
         <Image
-          src={
-            certificate.doc.credentialSubject.type === "CertificateProperties"
-              ? certificate.doc.credentialSubject.image?.id
-              : undefined
-          }
+          src={certificate.doc.credentialSubject.image?.id}
           placeholderSrc={placeholderLogoMainUrl}
           alt=""
           width={60}
           height={40}
         />
         <div className="space-y-0.5 ">
-          <h2 className="text-sm text-black">
-            {certificate.doc.credentialSubject.certificationSystem.name}
-          </h2>
+          <h2 className="text-sm text-black">{policy.name}</h2>
           <p className="text-xs text-gray-600">
             {_(
               "CertificateDetail_IssuedBy",
@@ -74,14 +69,8 @@ function CertificateDetailContent({
       <CertificateDescription
         description={certificate.doc.credentialSubject.description}
       />
-      <CertificateDescription
-        description={
-          certificate.doc.credentialSubject.certificationSystem.description
-        }
-      />
-      <CertificateRef
-        ref={certificate.doc.credentialSubject.certificationSystem.ref}
-      />
+      <CertificateDescription description={policy.description} />
+      <CertificateRef ref={policy.ref} />
     </>
   );
 }

@@ -3,6 +3,7 @@ import { Certificate, VerifiedOps } from "@originator-profile/verify";
 import { twMerge } from "tailwind-merge";
 import placeholderLogoMainUrl from "../../assets/placeholder-logo-main.png";
 import { _ } from "../../utils/get-message";
+import { getAnnotationPolicy } from "../../utils/profile-annotation";
 import Image from "../Image";
 import { useProfileAnnotatorWmp } from "./use-profile-annotator-wmp";
 
@@ -30,11 +31,7 @@ export function CertificateSummary({
       onClick={handleClick}
     >
       <Image
-        src={
-          certificate.doc.credentialSubject.type === "CertificateProperties"
-            ? certificate.doc.credentialSubject.image?.id
-            : undefined
-        }
+        src={certificate.doc.credentialSubject.image?.id}
         placeholderSrc={placeholderLogoMainUrl}
         alt=""
         width={60}
@@ -42,7 +39,7 @@ export function CertificateSummary({
       />
       <span className="flex flex-col gap-2 items-start">
         <span className="text-sm">
-          {certificate.doc.credentialSubject.certificationSystem.name}
+          {getAnnotationPolicy(certificate.doc.credentialSubject).name}
         </span>
         <span className="text-xs text-gray-600">
           {_(
