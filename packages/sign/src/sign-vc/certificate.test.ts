@@ -9,10 +9,10 @@ import { decodeJwt, decodeProtectedHeader } from "jose";
 import { describe, expect, test } from "vitest";
 
 describe("Certificate", () => {
-  test("sign a JICDAQ certificate", async () => {
+  test("sign an AdvertisingQualityCertificate", async () => {
     const issuedAt = new Date();
     const expiredAt = addYears(new Date(), 10);
-    const jicdaq: Certificate = {
+    const adCert: Certificate = {
       "@context": [
         "https://www.w3.org/ns/credentials/v2",
         "https://originator-profile.org/ns/credentials/v1",
@@ -25,34 +25,34 @@ describe("Certificate", () => {
         id: "dns:pa-holder.example.jp",
         type: "CertificateProperties",
         description:
-          "この事業者は、広告主のブランド価値を毀損するような違法、不当なサイト、コンテンツ、アプリケーションへの広告掲載を防ぐ対策を実施しています。第三者機関（日本ABC協会）による検証を経て、本認証を取得しました。",
+          "この事業者は、広告主のブランド価値を毀損するような違法、不当なサイト、コンテンツ、アプリケーションへの広告掲載を防ぐ対策を実施しています。",
         image: {
           id: "https://example.com/certification-mark.svg",
           digestSRI: "sha256-Upwn7gYMuRmJlD1ZivHk876vXHzokXrwXj50VgfnMnY=",
         },
-        certifier: "一般社団法人 デジタル広告品質認証機構",
-        verifier: "日本ABC協会",
+        certifier: "架空広告認証センター",
+        verifier: "架空広告監査機構",
         certificationSystem: {
           id: "urn:uuid:2a12a385-fd1c-48e6-acd8-176c0c5e95ea",
           type: "CertificationSystem",
-          name: "JICDAQ ブランドセーフティ第三者検証",
+          name: "架空広告認証センター ブランドセーフティ認証",
           description: "blah blah blah",
-          ref: "https://www.jicdaq.or.jp/",
+          ref: "https://adcert.exp.originator-profile.org/",
         },
       },
       validFrom: "2022-03-31T15:00:00Z",
       validUntil: "2024-03-31T14:59:59Z",
     };
     const { publicKey, privateKey } = await generateKey();
-    const jwt = await signJwtVc(jicdaq, privateKey, { issuedAt, expiredAt });
+    const jwt = await signJwtVc(adCert, privateKey, { issuedAt, expiredAt });
     expect(decodeProtectedHeader(jwt).kid).toBe(publicKey.kid);
     const valid = decodeJwt(jwt);
     expect(valid).toStrictEqual({
-      iss: jicdaq.issuer,
+      iss: adCert.issuer,
       iat: getUnixTime(issuedAt),
       exp: getUnixTime(expiredAt),
-      sub: jicdaq.credentialSubject.id,
-      ...jicdaq,
+      sub: adCert.credentialSubject.id,
+      ...adCert,
     });
   });
 
