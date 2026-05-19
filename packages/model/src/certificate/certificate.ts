@@ -4,6 +4,10 @@ import { DateTimeStamp } from "../date-time-stamp";
 import { OpId } from "../op-id";
 import { CertificateProperties } from "./certificate-properties";
 
+/**
+ * @deprecated Use {@link ProfileAnnotation} instead.
+ * The Certificate schema will be removed after 2027-01-01.
+ */
 export const Certificate = z.object({
   "@context": OpCipContext,
   type: z.tuple([z.literal("VerifiableCredential"), z.literal("Certificate")]),

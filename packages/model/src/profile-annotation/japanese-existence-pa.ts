@@ -3,16 +3,12 @@ import { OpCipContext } from "../context/op-cip-context";
 import { DateTimeStamp } from "../date-time-stamp";
 import { Image } from "../image";
 import { OpId } from "../op-id";
-import { CertificationSystem } from "./cert-system";
+import { ProfileAnnotationPolicy } from "./profile-annotation-policy";
 
-/**
- * @deprecated Use {@link JapaneseExistencePAProperties} instead.
- * The legacy Certificate-based schema will be removed after 2027-01-01.
- */
-export const JapaneseExistenceCertificateProperties = z.object({
+export const JapaneseExistencePAProperties = z.object({
   id: OpId.describe("OP ID of the subject"),
   type: z.literal("JP-OrganizationExistenceCertificate"),
-  name: z.string().describe("PA name"),
+  name: z.string().optional().describe("PA name"),
   description: z.string().optional().describe("Description"),
   image: Image.optional(),
   corporateName: z.string().describe("Corporate name"),
@@ -22,24 +18,21 @@ export const JapaneseExistenceCertificateProperties = z.object({
   addressRegion: z.string().describe("Prefecture / State"),
   addressLocality: z.string().describe("City / Municipality"),
   streetAddress: z.string().describe("Street address"),
-  certificationSystem: CertificationSystem,
+  annotation: ProfileAnnotationPolicy,
 });
 
-/**
- * @deprecated Use {@link JapaneseExistencePA} instead.
- * The legacy Certificate-based schema will be removed after 2027-01-01.
- */
-export const JapaneseExistenceCertificate = z.looseObject({
+export const JapaneseExistencePA = z.looseObject({
   "@context": OpCipContext,
-  type: z.tuple([z.literal("VerifiableCredential"), z.literal("Certificate")]),
+  type: z.tuple([
+    z.literal("VerifiableCredential"),
+    z.literal("ProfileAnnotation"),
+  ]),
   issuer: OpId,
-  credentialSubject: JapaneseExistenceCertificateProperties,
+  credentialSubject: JapaneseExistencePAProperties,
   validFrom: DateTimeStamp.optional().describe(
     "Validity period start and time",
   ),
   validUntil: DateTimeStamp.optional().describe("Validity period end and time"),
 });
 
-export type JapaneseExistenceCertificate = z.infer<
-  typeof JapaneseExistenceCertificate
->;
+export type JapaneseExistencePA = z.infer<typeof JapaneseExistencePA>;

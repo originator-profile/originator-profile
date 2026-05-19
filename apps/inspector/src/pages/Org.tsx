@@ -1,4 +1,5 @@
 import { selectByLocale } from "@originator-profile/core";
+import { getAnnotationPolicy } from "@originator-profile/ui";
 import { useMemo } from "react";
 import { useParams, useSearchParams } from "react-router";
 import Loading from "../components/Loading";
@@ -46,8 +47,7 @@ function Org(props: Props) {
           JSON.stringify([
             a.issuer,
             a.credentialSubject.id,
-            // TODO: https://github.com/originator-profile/originator-profile/pull/415 実装後 `annotation.id` に要修正
-            a.credentialSubject.certificationSystem.id,
+            getAnnotationPolicy(a.credentialSubject).id,
           ]),
       },
     );

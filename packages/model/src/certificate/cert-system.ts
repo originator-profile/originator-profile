@@ -1,5 +1,9 @@
 import { z } from "zod";
 
+/**
+ * @deprecated Use {@link ProfileAnnotationPolicy} instead.
+ * The CertificationSystem will be removed after 2027-01-01.
+ */
 export const CertificationSystem = z.object({
   id: z.url().describe("Certification system ID"),
   type: z.literal("CertificationSystem"),
