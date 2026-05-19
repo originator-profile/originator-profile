@@ -32,16 +32,19 @@ function Org(props: Props) {
     ? selectByLocale(siteProfile.sites.map((s) => s.doc))
     : undefined;
 
-  const selectedAnnotations = selectByLocale(op.annotations ?? [], {
-    group: (a) =>
-      JSON.stringify([
-        a.doc.issuer,
-        a.doc.credentialSubject.id,
-        // TODO: https://github.com/originator-profile/originator-profile/pull/415 実装後 `annotation.id` に要修正
-        a.doc.credentialSubject.certificationSystem.id,
-      ]),
-    getLangSource: (a) => a.doc,
-  });
+  const annotations = op.annotations ?? [];
+  const selectedAnnotations = selectByLocale(
+    annotations.map((a) => a.doc),
+    {
+      group: (a) =>
+        JSON.stringify([
+          a.issuer,
+          a.credentialSubject.id,
+          // TODO: https://github.com/originator-profile/originator-profile/pull/415 実装後 `annotation.id` に要修正
+          a.credentialSubject.certificationSystem.id,
+        ]),
+    },
+  );
 
   const backPath = {
     pathname: props.back,

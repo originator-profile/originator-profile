@@ -1,6 +1,5 @@
 import { Icon } from "@iconify/react";
 import { WebMediaProfile, WebsiteProfile } from "@originator-profile/model";
-import { VerifiedVc } from "@originator-profile/securing-mechanism";
 import {
   CertificateDetail,
   CertificateSummary,
@@ -39,7 +38,7 @@ function ExternalLink(props: React.ComponentProps<"a">) {
 
 function ReliabilityInfo(props: {
   wmp: WebMediaProfile;
-  certificates: VerifiedVc<Certificate>[];
+  certificates: Certificate[];
   ops?: VerifiedOps;
 }) {
   const dialog = useModalDialog();
@@ -47,8 +46,9 @@ function ReliabilityInfo(props: {
     () => sortCertificates(props.certificates),
     [props.certificates],
   );
-  const [certificate, setCertificate] =
-    useState<VerifiedVc<Certificate> | null>(sortedCertificates[0] ?? null);
+  const [certificate, setCertificate] = useState<Certificate | null>(
+    sortedCertificates[0] ?? null,
+  );
   return (
     <div className="space-y-4">
       {props.wmp.credentialSubject.description && (
@@ -136,7 +136,7 @@ type Props = {
     search: string;
   };
   ops?: VerifiedOps;
-  certificates: VerifiedVc<Certificate>[];
+  certificates: Certificate[];
   contentType: string;
   wmp: WebMediaProfile;
   wsp?: WebsiteProfile;

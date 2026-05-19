@@ -1,4 +1,3 @@
-import { VerifiedVc } from "@originator-profile/securing-mechanism";
 import { Certificate } from "@originator-profile/verify";
 
 const certificationSystemIdPriorityMap: Record<string, number> = {
@@ -27,16 +26,10 @@ const getPriority = (id: string): number => {
  *
  * マップに存在しない id はすべて DEFAULT_PRIORITY で下位に並びます。
  */
-export default function sortCertificates(
-  certificates: VerifiedVc<Certificate>[],
-) {
+export default function sortCertificates(certificates: Certificate[]) {
   return [...certificates].sort((a, b) => {
-    const priorityA = getPriority(
-      a.doc.credentialSubject.certificationSystem.id,
-    );
-    const priorityB = getPriority(
-      b.doc.credentialSubject.certificationSystem.id,
-    );
+    const priorityA = getPriority(a.credentialSubject.certificationSystem.id);
+    const priorityB = getPriority(b.credentialSubject.certificationSystem.id);
     return priorityA - priorityB;
   });
 }
