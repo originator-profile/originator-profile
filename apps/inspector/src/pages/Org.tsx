@@ -1,4 +1,5 @@
 import { selectByLocale } from "@originator-profile/core";
+import { useMemo } from "react";
 import { useParams, useSearchParams } from "react-router";
 import Loading from "../components/Loading";
 import { useCredentials } from "../components/credentials";
@@ -16,21 +17,44 @@ function Org(props: Props) {
   }>();
   const { siteProfile } = useSiteProfile();
   const { ops, isLoading } = useCredentials();
-  if (isLoading) return <Loading />;
-  const op = ops?.find((op) =>
-    op.media?.some(
-      (m) =>
-        m.doc.issuer === orgIssuer && m.doc.credentialSubject.id === orgSubject,
-    ),
+  const op = useMemo(
+    () =>
+      ops?.find((op) =>
+        op.media?.some(
+          (m) =>
+            m.doc.issuer === orgIssuer &&
+            m.doc.credentialSubject.id === orgSubject,
+        ),
+      ),
+    [ops, orgIssuer, orgSubject],
   );
-  if (!op?.media) return null;
-  const selectedWmp = selectByLocale(op.media.map((m) => m.doc));
-  if (!selectedWmp) return null;
+  const selectedWmp = useMemo(
+    () => op?.media && selectByLocale(op.media.map((m) => m.doc)),
+    [op],
+  );
+  const selectedWsp = useMemo(
+    () =>
+      siteProfile?.sites && selectByLocale(siteProfile.sites.map((s) => s.doc)),
+    [siteProfile],
+  );
+  const selectedAnnotations = useMemo(() => {
+    const annotations = op?.annotations ?? [];
+    return selectByLocale(
+      annotations.map((a) => a.doc),
+      {
+        group: (a) =>
+          JSON.stringify([
+            a.issuer,
+            a.credentialSubject.id,
+            // TODO: https://github.com/originator-profile/originator-profile/pull/415 実装後 `annotation.id` に要修正
+            a.credentialSubject.certificationSystem.id,
+          ]),
+      },
+    );
+  }, [op]);
 
-  // sitesから適切なWebsiteProfileを選択
-  const selectedWsp = siteProfile?.sites
-    ? selectByLocale(siteProfile.sites.map((s) => s.doc))
-    : undefined;
+  if (isLoading) return <Loading />;
+  if (!selectedWmp) return "Not found";
 
   const backPath = {
     pathname: props.back,
@@ -40,7 +64,7 @@ function Org(props: Props) {
     <Template
       backPath={backPath}
       contentType={contentType ?? "ContentType_Document"}
-      certificates={op.annotations ?? []}
+      certificates={selectedAnnotations}
       ops={ops}
       wsp={selectedWsp}
       wmp={selectedWmp}

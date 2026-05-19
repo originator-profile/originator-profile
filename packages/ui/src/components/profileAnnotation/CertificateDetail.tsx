@@ -1,5 +1,4 @@
 import { Icon } from "@iconify/react";
-import { VerifiedVc } from "@originator-profile/securing-mechanism";
 import { Certificate, VerifiedOps } from "@originator-profile/verify";
 import { twMerge } from "tailwind-merge";
 import placeholderLogoMainUrl from "../../assets/placeholder-logo-main.png";
@@ -11,7 +10,7 @@ import { useProfileAnnotatorWmp } from "./use-profile-annotator-wmp";
 
 type Props = {
   className?: string;
-  certificate?: VerifiedVc<Certificate>;
+  certificate?: Certificate;
   ops?: VerifiedOps;
 };
 
@@ -44,13 +43,17 @@ function CertificateDetailContent({
   certificate,
   ops,
 }: Props & Required<Pick<Props, "certificate">>) {
-  const paWmp = useProfileAnnotatorWmp(ops ?? [], certificate.doc.issuer);
-  const policy = getAnnotationPolicy(certificate.doc.credentialSubject);
+  const paWmp = useProfileAnnotatorWmp(ops ?? [], certificate.issuer);
+  const policy = getAnnotationPolicy(certificate.credentialSubject);
   return (
     <>
       <header className="flex items-center gap-3 mb-4">
         <Image
-          src={certificate.doc.credentialSubject.image?.id}
+          src={
+            certificate.credentialSubject.type === "CertificateProperties"
+              ? certificate.credentialSubject.image?.id
+              : undefined
+          }
           placeholderSrc={placeholderLogoMainUrl}
           alt=""
           width={60}
@@ -61,13 +64,13 @@ function CertificateDetailContent({
           <p className="text-xs text-gray-600">
             {_(
               "CertificateDetail_IssuedBy",
-              paWmp?.credentialSubject.name ?? certificate.doc.issuer,
+              paWmp?.credentialSubject.name ?? certificate.issuer,
             )}
           </p>
         </div>
       </header>
       <CertificateDescription
-        description={certificate.doc.credentialSubject.description}
+        description={certificate.credentialSubject.description}
       />
       <CertificateDescription description={policy.description} />
       <CertificateRef ref={policy.ref} />
