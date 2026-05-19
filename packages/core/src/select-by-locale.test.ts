@@ -226,7 +226,9 @@ describe("selectByLocale", () => {
 describe("selectByLocale (group オプション)", () => {
   const certAJa = {
     "@context": ["https://www.w3.org/ns/credentials/v2", { "@language": "ja" }],
+    issuer: "did:example:issuer",
     credentialSubject: {
+      id: "did:example:subject",
       certificationSystem: { id: "urn:cert:A" },
       name: "認証A 日本語",
     },
@@ -234,7 +236,9 @@ describe("selectByLocale (group オプション)", () => {
 
   const certAEn = {
     "@context": ["https://www.w3.org/ns/credentials/v2", { "@language": "en" }],
+    issuer: "did:example:issuer",
     credentialSubject: {
+      id: "did:example:subject",
       certificationSystem: { id: "urn:cert:A" },
       name: "Certificate A English",
     },
@@ -242,7 +246,9 @@ describe("selectByLocale (group オプション)", () => {
 
   const certBJa = {
     "@context": ["https://www.w3.org/ns/credentials/v2", { "@language": "ja" }],
+    issuer: "did:example:issuer",
     credentialSubject: {
+      id: "did:example:subject",
       certificationSystem: { id: "urn:cert:B" },
       name: "認証B 日本語",
     },
@@ -250,15 +256,23 @@ describe("selectByLocale (group オプション)", () => {
 
   const certBEn = {
     "@context": ["https://www.w3.org/ns/credentials/v2", { "@language": "en" }],
+    issuer: "did:example:issuer",
     credentialSubject: {
+      id: "did:example:subject",
       certificationSystem: { id: "urn:cert:B" },
       name: "Certificate B English",
     },
   };
 
   const group = (c: {
-    credentialSubject: { certificationSystem: { id: string } };
-  }) => c.credentialSubject.certificationSystem.id;
+    issuer: string;
+    credentialSubject: { id: string; certificationSystem: { id: string } };
+  }) =>
+    JSON.stringify([
+      c.issuer,
+      c.credentialSubject.id,
+      c.credentialSubject.certificationSystem.id,
+    ]);
 
   test("空配列の場合は空配列を返す", () => {
     const result = selectByLocale([], { group });
@@ -301,7 +315,12 @@ describe("selectByLocale (group オプション)", () => {
       doc,
     }));
     const result = selectByLocale(wrapped, {
-      group: (w) => w.doc.credentialSubject.certificationSystem.id,
+      group: (w) =>
+        JSON.stringify([
+          w.doc.issuer,
+          w.doc.credentialSubject.id,
+          w.doc.credentialSubject.certificationSystem.id,
+        ]),
       getLangSource: (w) => w.doc,
     });
     expect(result).toEqual([{ doc: certAJa }, { doc: certBJa }]);
