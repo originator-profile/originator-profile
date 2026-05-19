@@ -30,22 +30,22 @@ function assertConsistentSet(uwsps: UnsignedWebsiteProfile[]): void {
   const [head] = uwsps;
   const languages = new Set<string>();
 
-  for (const uwsp of uwsps) {
+  for (const [index, uwsp] of uwsps.entries()) {
     if (uwsp.issuer !== head.issuer) {
       throw new BadRequestError(
-        "All UnsignedWebsiteProfile entries must share the same issuer.",
+        `UnsignedWebsiteProfile entries must share the same issuer (entries[${index}] differs from entries[0]).`,
       );
     }
     if (uwsp.credentialSubject.id !== head.credentialSubject.id) {
       throw new BadRequestError(
-        "All UnsignedWebsiteProfile entries must share the same credentialSubject.id.",
+        `UnsignedWebsiteProfile entries must share the same credentialSubject.id (entries[${index}] differs from entries[0]).`,
       );
     }
 
     const language = extractLanguage(uwsp);
     if (languages.has(language)) {
       throw new BadRequestError(
-        `Duplicate @language "${language}" in UnsignedWebsiteProfile set.`,
+        `Duplicate @language "${language}" at entries[${index}].`,
       );
     }
     languages.add(language);
