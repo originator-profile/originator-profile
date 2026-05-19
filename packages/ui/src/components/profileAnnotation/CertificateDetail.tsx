@@ -1,6 +1,5 @@
 import { Icon } from "@iconify/react";
 import type { CertificationSystem } from "@originator-profile/model";
-import { VerifiedVc } from "@originator-profile/securing-mechanism";
 import { Certificate, VerifiedOps } from "@originator-profile/verify";
 import { twMerge } from "tailwind-merge";
 import placeholderLogoMainUrl from "../../assets/placeholder-logo-main.png";
@@ -11,7 +10,7 @@ import { useProfileAnnotatorWmp } from "./use-profile-annotator-wmp";
 
 type Props = {
   className?: string;
-  certificate?: VerifiedVc<Certificate>;
+  certificate?: Certificate;
   ops?: VerifiedOps;
 };
 
@@ -44,14 +43,14 @@ function CertificateDetailContent({
   certificate,
   ops,
 }: Props & Required<Pick<Props, "certificate">>) {
-  const paWmp = useProfileAnnotatorWmp(ops ?? [], certificate.doc.issuer);
+  const paWmp = useProfileAnnotatorWmp(ops ?? [], certificate.issuer);
   return (
     <>
       <header className="flex items-center gap-3 mb-4">
         <Image
           src={
-            certificate.doc.credentialSubject.type === "CertificateProperties"
-              ? certificate.doc.credentialSubject.image?.id
+            certificate.credentialSubject.type === "CertificateProperties"
+              ? certificate.credentialSubject.image?.id
               : undefined
           }
           placeholderSrc={placeholderLogoMainUrl}
@@ -61,26 +60,26 @@ function CertificateDetailContent({
         />
         <div className="space-y-0.5 ">
           <h2 className="text-sm text-black">
-            {certificate.doc.credentialSubject.certificationSystem.name}
+            {certificate.credentialSubject.certificationSystem.name}
           </h2>
           <p className="text-xs text-gray-600">
             {_(
               "CertificateDetail_IssuedBy",
-              paWmp?.credentialSubject.name ?? certificate.doc.issuer,
+              paWmp?.credentialSubject.name ?? certificate.issuer,
             )}
           </p>
         </div>
       </header>
       <CertificateDescription
-        description={certificate.doc.credentialSubject.description}
+        description={certificate.credentialSubject.description}
       />
       <CertificateDescription
         description={
-          certificate.doc.credentialSubject.certificationSystem.description
+          certificate.credentialSubject.certificationSystem.description
         }
       />
       <CertificateRef
-        ref={certificate.doc.credentialSubject.certificationSystem.ref}
+        ref={certificate.credentialSubject.certificationSystem.ref}
       />
     </>
   );

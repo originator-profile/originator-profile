@@ -1,4 +1,3 @@
-import { VerifiedVc } from "@originator-profile/securing-mechanism";
 import { Certificate, VerifiedOps } from "@originator-profile/verify";
 import { twMerge } from "tailwind-merge";
 import placeholderLogoMainUrl from "../../assets/placeholder-logo-main.png";
@@ -8,8 +7,8 @@ import { useProfileAnnotatorWmp } from "./use-profile-annotator-wmp";
 
 type Props = {
   className?: string;
-  certificate: VerifiedVc<Certificate>;
-  onClick: (certificate: VerifiedVc<Certificate>) => void;
+  certificate: Certificate;
+  onClick: (certificate: Certificate) => void;
   ops?: VerifiedOps;
 };
 
@@ -20,7 +19,7 @@ export function CertificateSummary({
   onClick,
 }: Props) {
   const handleClick = () => onClick(certificate);
-  const paWmp = useProfileAnnotatorWmp(ops ?? [], certificate.doc.issuer);
+  const paWmp = useProfileAnnotatorWmp(ops ?? [], certificate.issuer);
   return (
     <button
       className={twMerge(
@@ -31,8 +30,8 @@ export function CertificateSummary({
     >
       <Image
         src={
-          certificate.doc.credentialSubject.type === "CertificateProperties"
-            ? certificate.doc.credentialSubject.image?.id
+          certificate.credentialSubject.type === "CertificateProperties"
+            ? certificate.credentialSubject.image?.id
             : undefined
         }
         placeholderSrc={placeholderLogoMainUrl}
@@ -42,12 +41,12 @@ export function CertificateSummary({
       />
       <span className="flex flex-col gap-2 items-start">
         <span className="text-sm">
-          {certificate.doc.credentialSubject.certificationSystem.name}
+          {certificate.credentialSubject.certificationSystem.name}
         </span>
         <span className="text-xs text-gray-600">
           {_(
             "CertificateSummary_IssuedBy",
-            paWmp?.credentialSubject.name ?? certificate.doc.issuer,
+            paWmp?.credentialSubject.name ?? certificate.issuer,
           )}
         </span>
       </span>

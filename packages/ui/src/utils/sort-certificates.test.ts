@@ -1,40 +1,28 @@
-import { VerifiedVc } from "@originator-profile/securing-mechanism";
 import { Certificate } from "@originator-profile/verify";
 import { describe, expect, test } from "vitest";
 import sortCertificates from "./sort-certificates";
 
-const makeCertificate = (id: string): VerifiedVc<Certificate> => ({
-  doc: {
-    "@context": [
-      "https://www.w3.org/ns/credentials/v2",
-      "https://originator-profile.org/ns/credentials/v1",
-      "https://originator-profile.org/ns/cip/v1",
-      {
-        "@language": "ja",
-      },
-    ],
-    type: ["VerifiableCredential", "Certificate"],
-    issuer: "dns:localhost",
-    credentialSubject: {
-      id: "dns:localhost",
-      type: "CertificateProperties",
-      description: "Example Certificate",
-      certificationSystem: {
-        id: id,
-        type: "CertificationSystem",
-        name: "Example Certification System",
-        description: "Example Certification System Description",
-      },
+const makeCertificate = (id: string): Certificate => ({
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://originator-profile.org/ns/credentials/v1",
+    "https://originator-profile.org/ns/cip/v1",
+    {
+      "@language": "ja",
     },
-  },
-  source: "test",
-  validated: false,
-  verificationKey: {
-    crv: "P-256",
-    kid: "jJYs5_ILgUc8180L-pBPxBpgA3QC7eZu9wKOkh9mYPU",
-    kty: "EC",
-    x: "ypAlUjo5O5soUNHk3mlRyfw6ujxqjfD_HMQt7XH-rSg",
-    y: "1cmv9lmZvL0XAERNxvrT2kZkC4Uwu5i1Or1O-4ixJuE",
+  ],
+  type: ["VerifiableCredential", "Certificate"],
+  issuer: "dns:localhost",
+  credentialSubject: {
+    id: "dns:localhost",
+    type: "CertificateProperties",
+    description: "Example Certificate",
+    certificationSystem: {
+      id: id,
+      type: "CertificationSystem",
+      name: "Example Certification System",
+      description: "Example Certification System Description",
+    },
   },
 });
 
@@ -47,7 +35,7 @@ describe("sortCertificates", () => {
     ];
     const result = sortCertificates(input);
     expect(
-      result.map((c) => c.doc.credentialSubject.certificationSystem.id),
+      result.map((c) => c.credentialSubject.certificationSystem.id),
     ).toEqual([
       "urn:uuid:def09cbd-6e8e-4c73-856d-5e00dffde643",
       "urn:uuid:203a2553-f1a8-40ba-9df0-4e508aa8511d",
@@ -63,7 +51,7 @@ describe("sortCertificates", () => {
     ];
     const result = sortCertificates(input);
     expect(
-      result.map((c) => c.doc.credentialSubject.certificationSystem.id),
+      result.map((c) => c.credentialSubject.certificationSystem.id),
     ).toEqual([
       "urn:uuid:8029ece0-b327-4a7e-b586-3e442cb82d92",
       "urn:uuid:85c92abe-4518-42bb-855d-dffeabfe4a38",

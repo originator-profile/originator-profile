@@ -222,3 +222,90 @@ describe("selectByLocale", () => {
     });
   });
 });
+
+describe("selectByLocale (group オプション)", () => {
+  const certAJa = {
+    "@context": ["https://www.w3.org/ns/credentials/v2", { "@language": "ja" }],
+    issuer: "did:example:issuer",
+    credentialSubject: {
+      id: "did:example:subject",
+      certificationSystem: { id: "urn:cert:A" },
+      name: "認証A 日本語",
+    },
+  };
+
+  const certAEn = {
+    "@context": ["https://www.w3.org/ns/credentials/v2", { "@language": "en" }],
+    issuer: "did:example:issuer",
+    credentialSubject: {
+      id: "did:example:subject",
+      certificationSystem: { id: "urn:cert:A" },
+      name: "Certificate A English",
+    },
+  };
+
+  const certBJa = {
+    "@context": ["https://www.w3.org/ns/credentials/v2", { "@language": "ja" }],
+    issuer: "did:example:issuer",
+    credentialSubject: {
+      id: "did:example:subject",
+      certificationSystem: { id: "urn:cert:B" },
+      name: "認証B 日本語",
+    },
+  };
+
+  const certBEn = {
+    "@context": ["https://www.w3.org/ns/credentials/v2", { "@language": "en" }],
+    issuer: "did:example:issuer",
+    credentialSubject: {
+      id: "did:example:subject",
+      certificationSystem: { id: "urn:cert:B" },
+      name: "Certificate B English",
+    },
+  };
+
+  const group = (c: {
+    issuer: string;
+    credentialSubject: { id: string; certificationSystem: { id: string } };
+  }) =>
+    JSON.stringify([
+      c.issuer,
+      c.credentialSubject.id,
+      c.credentialSubject.certificationSystem.id,
+    ]);
+
+  test("空配列の場合は空配列を返す", () => {
+    const result = selectByLocale([], { group });
+    expect(result).toEqual([]);
+  });
+
+  test("同じグループの言語違いVCから、ユーザーロケールに合致するVCのみを返す", () => {
+    vi.stubGlobal("navigator", { language: "ja-JP" });
+    const result = selectByLocale([certAEn, certAJa, certBEn, certBJa], {
+      group,
+    });
+    expect(result).toEqual([certAJa, certBJa]);
+  });
+
+  test("英語ロケールでは英語版のみを返す", () => {
+    vi.stubGlobal("navigator", { language: "en-US" });
+    const result = selectByLocale([certAEn, certAJa, certBEn, certBJa], {
+      group,
+    });
+    expect(result).toEqual([certAEn, certBEn]);
+  });
+
+  test("グループは入力配列での出現順を保持する", () => {
+    vi.stubGlobal("navigator", { language: "ja-JP" });
+    const result = selectByLocale([certBEn, certAEn, certBJa, certAJa], {
+      group,
+    });
+    expect(result).toEqual([certBJa, certAJa]);
+  });
+
+  test("1グループに1要素しかない場合はその要素を返す", () => {
+    vi.stubGlobal("navigator", { language: "ja-JP" });
+    const result = selectByLocale([certAEn, certBJa], { group });
+    expect(result).toEqual([certAEn, certBJa]);
+  });
+});
