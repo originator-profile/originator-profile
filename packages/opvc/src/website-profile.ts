@@ -63,6 +63,9 @@ async function buildUnsignedWsp(
     throw new BadRequestError((e as Error).message);
   }
 
+  // iss/sub/iat/exp は unsignedWsp 単体呼び出しの戻り値で必要となる。
+  // sign 経路では signJwtVc 内の setIssuer/setSubject/setIssuedAt/setExpirationTime
+  // により同値で上書きされるため動作には影響しない。
   return {
     ...uwsp,
     iss: uwsp.issuer,
