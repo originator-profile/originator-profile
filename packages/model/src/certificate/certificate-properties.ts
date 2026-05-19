@@ -5,7 +5,7 @@ import { CertificationSystem } from "./cert-system";
 
 /**
  * @deprecated Use {@link ProfileAnnotationProperties} instead.
- * The CertificateProperties schema will be removed in a future version.
+ * The CertificateProperties schema will be removed after 2027-01-01.
  */
 export const CertificateProperties = z.object({
   id: OpId.describe("OP ID of the subject"),

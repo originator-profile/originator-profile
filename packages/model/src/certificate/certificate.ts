@@ -6,7 +6,7 @@ import { CertificateProperties } from "./certificate-properties";
 
 /**
  * @deprecated Use {@link ProfileAnnotation} instead.
- * The Certificate schema will be removed in a future version.
+ * The Certificate schema will be removed after 2027-01-01.
  */
 export const Certificate = z.object({
   "@context": OpCipContext,

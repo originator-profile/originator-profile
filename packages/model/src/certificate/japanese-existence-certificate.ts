@@ -7,7 +7,7 @@ import { CertificationSystem } from "./cert-system";
 
 /**
  * @deprecated Use {@link JapaneseExistencePAProperties} instead.
- * The legacy Certificate-based schema will be removed in a future version.
+ * The legacy Certificate-based schema will be removed after 2027-01-01.
  */
 export const JapaneseExistenceCertificateProperties = z.object({
   id: OpId.describe("OP ID of the subject"),
@@ -27,7 +27,7 @@ export const JapaneseExistenceCertificateProperties = z.object({
 
 /**
  * @deprecated Use {@link JapaneseExistencePA} instead.
- * The legacy Certificate-based schema will be removed in a future version.
+ * The legacy Certificate-based schema will be removed after 2027-01-01.
  */
 export const JapaneseExistenceCertificate = z.looseObject({
   "@context": OpCipContext,
