@@ -5,6 +5,9 @@ import { getUnixTime } from "date-fns";
 import { BadRequestError } from "http-errors-enhanced";
 import { parseDates, type TimingOptions } from "./timing-options.ts";
 
+// assertConsistentSet は buildUnsignedWsp 内の UnsignedWebsiteProfile.parse より
+// 前に走るため、@language の存在を fail-fast で確認する。
+// 詳細な構造検証は parse 側が担う。
 function extractLanguage(uwsp: UnsignedWebsiteProfile): string {
   const tail = uwsp["@context"].at(-1);
   if (
