@@ -32,9 +32,14 @@ function Org(props: Props) {
     ? selectByLocale(siteProfile.sites.map((s) => s.doc))
     : undefined;
 
-  // 同一の認証種別 (certificationSystem.id) ごとにユーザーロケールに合致する PA を選択
   const selectedAnnotations = selectByLocale(op.annotations ?? [], {
-    group: (a) => a.doc.credentialSubject.certificationSystem.id,
+    group: (a) =>
+      JSON.stringify([
+        a.doc.issuer,
+        a.doc.credentialSubject.id,
+        // TODO: https://github.com/originator-profile/originator-profile/pull/415 実装後 `annotation.id` に要修正
+        a.doc.credentialSubject.certificationSystem.id,
+      ]),
     getLangSource: (a) => a.doc,
   });
 
