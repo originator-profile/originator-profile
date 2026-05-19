@@ -1,15 +1,10 @@
 import { basicFilter, lookup } from "bcp-47-match";
 
-type LangSource = { "@context": unknown };
-
-/** デフォルトの言語コンテキスト取得関数: アイテム自身が @context を持つと仮定 */
-const defaultGetLangSource = <T>(item: T) => item as unknown as LangSource;
-
 /**
  * @context から @language タグを取得
  */
-function getLanguageTag(langSource: LangSource): string | undefined {
-  const context = langSource["@context"];
+function getLanguageTag<T>(source: T): string | undefined {
+  const context = (source as { "@context": unknown })["@context"];
   if (!Array.isArray(context)) return undefined;
 
   for (const item of context) {
@@ -23,14 +18,14 @@ function getLanguageTag(langSource: LangSource): string | undefined {
 /**
  * VCリストから言語タグとアイテムのマッピングを構築
  */
-function buildTagMap<T>(
-  items: T[],
-  getLangSource: (item: T) => LangSource,
-): { tagToItem: Map<string, T>; tags: string[] } {
+function buildTagMap<T>(items: T[]): {
+  tagToItem: Map<string, T>;
+  tags: string[];
+} {
   const tagToItem = new Map<string, T>();
   const tags: string[] = [];
   for (const item of items) {
-    const tag = getLanguageTag(getLangSource(item));
+    const tag = getLanguageTag(item);
     if (tag && !tagToItem.has(tag)) {
       tagToItem.set(tag, item);
       tags.push(tag);
@@ -56,14 +51,11 @@ function findBestMatch(
 /**
  * 単一グループからユーザーロケールに合致する 1 件を選択
  */
-function selectOne<T>(
-  items: T[],
-  getLangSource: (item: T) => LangSource,
-): T | undefined {
+function selectOne<T>(items: T[]): T | undefined {
   if (items.length === 0) return undefined;
   if (items.length === 1) return items[0];
 
-  const { tagToItem, tags } = buildTagMap(items, getLangSource);
+  const { tagToItem, tags } = buildTagMap(items);
   const userLocale =
     typeof navigator !== "undefined" ? navigator.language : "en";
 
@@ -84,25 +76,6 @@ function selectOne<T>(
   return items[0];
 }
 
-type SelectByLocaleOptions<T> = {
-  /**
-   * @context を持つオブジェクトを取り出すアクセサ
-   *
-   * VerifiedVc など `.doc` 配下に @context を持つラッパー型を扱う際に指定します
-   * 省略時はアイテム自身が @context を持つものとして扱われます
-   */
-  getLangSource?: (item: T) => LangSource;
-  /**
-   * 同一キーとみなすグループキーを取得する関数
-   *
-   * 指定するとアイテムをキー単位にグループ化し、各グループからユーザーロケールに
-   * 合致する1件ずつを選択した配列を返します
-   *
-   * 同一の認証種別など、複数言語版が存在しうる VC 群を扱う場合に利用します
-   */
-  group?: (item: T) => string;
-};
-
 /**
  * ユーザーロケールに基づいて VC を選択
  *
@@ -118,29 +91,34 @@ type SelectByLocaleOptions<T> = {
  * @param options 選択オプション
  * @returns `group` なしの場合は選択された 1 件 (または undefined)、`group` ありの場合は配列
  */
-export function selectByLocale<T extends LangSource>(items: T[]): T | undefined;
+export function selectByLocale<T>(items: T[]): T | undefined;
 export function selectByLocale<T>(
   items: T[],
-  options: SelectByLocaleOptions<T> & { group: (item: T) => string },
+  options: { group: (item: T) => string },
 ): T[];
 export function selectByLocale<T>(
   items: T[],
-  options: SelectByLocaleOptions<T> & { group?: undefined },
-): T | undefined;
-export function selectByLocale<T>(
-  items: T[],
-  options: SelectByLocaleOptions<T> = {},
+  options: {
+    /**
+     * 同一キーとみなすグループキーを取得する関数
+     *
+     * 指定するとアイテムをキー単位にグループ化し、各グループからユーザーロケールに
+     * 合致する1件ずつを選択した配列を返します
+     *
+     * 同一の認証種別など、複数言語版が存在しうる VC 群を扱う場合に利用します
+     */
+    group?: (item: T) => string;
+  } = {},
 ): T | T[] | undefined {
-  const getLangSource = options.getLangSource ?? defaultGetLangSource;
-
   if (options.group) {
     return Map.groupBy(items, options.group)
       .values()
       .flatMap((group) => {
-        const selected = selectOne(group, getLangSource);
+        const selected = selectOne(group);
         return selected ? [selected] : [];
       })
       .toArray();
   }
-  return selectOne(items, getLangSource);
+
+  return selectOne(items);
 }

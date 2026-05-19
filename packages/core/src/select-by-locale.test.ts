@@ -308,42 +308,4 @@ describe("selectByLocale (group オプション)", () => {
     const result = selectByLocale([certAEn, certBJa], { group });
     expect(result).toEqual([certAEn, certBJa]);
   });
-
-  test("getLangSource とともにラッパー型からもグループ化選択できる", () => {
-    vi.stubGlobal("navigator", { language: "ja-JP" });
-    const wrapped = [certAEn, certAJa, certBEn, certBJa].map((doc) => ({
-      doc,
-    }));
-    const result = selectByLocale(wrapped, {
-      group: (w) =>
-        JSON.stringify([
-          w.doc.issuer,
-          w.doc.credentialSubject.id,
-          w.doc.credentialSubject.certificationSystem.id,
-        ]),
-      getLangSource: (w) => w.doc,
-    });
-    expect(result).toEqual([{ doc: certAJa }, { doc: certBJa }]);
-  });
-});
-
-describe("selectByLocale (getLangSource アクセサ)", () => {
-  test("ラッパー型 (e.g. VerifiedVc) からも選択できる", () => {
-    const vcJa = {
-      "@context": [
-        "https://www.w3.org/ns/credentials/v2",
-        { "@language": "ja" },
-      ],
-    };
-    const vcEn = {
-      "@context": [
-        "https://www.w3.org/ns/credentials/v2",
-        { "@language": "en" },
-      ],
-    };
-    vi.stubGlobal("navigator", { language: "ja-JP" });
-    const wrapped = [vcEn, vcJa].map((doc) => ({ doc }));
-    const result = selectByLocale(wrapped, { getLangSource: (w) => w.doc });
-    expect(result).toEqual({ doc: vcJa });
-  });
 });
