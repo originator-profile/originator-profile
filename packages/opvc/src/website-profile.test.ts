@@ -343,7 +343,7 @@ await describe("sign() 戻り値", async () => {
     assert.equal(payload.sub, "https://example.com");
   });
 
-  await test("配列入力はJWT 文字列の配列を返す", async () => {
+  await test("配列入力は JWT 文字列の配列を返す", async () => {
     const result = await sign(
       [baseUwsp("ja"), baseUwsp("en")],
       testPrivateKey,
