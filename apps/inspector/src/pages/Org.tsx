@@ -46,8 +46,9 @@ function Org(props: Props) {
           JSON.stringify([
             a.issuer,
             a.credentialSubject.id,
-            // TODO: https://github.com/originator-profile/originator-profile/pull/415 実装後 `annotation.id` に要修正
-            a.credentialSubject.certificationSystem.id,
+            "annotation" in a.credentialSubject
+              ? a.credentialSubject.annotation.id
+              : a.credentialSubject.certificationSystem.id,
           ]),
       },
     );
