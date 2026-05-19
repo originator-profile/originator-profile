@@ -1,11 +1,11 @@
 import { z } from "zod";
-import { OpCipContext } from "../context/op-cip-context";
+import { OpContextHead } from "../context/op-context-head";
 import { DateTimeStamp } from "../date-time-stamp";
 import { OpId } from "../op-id";
 import { ProfileAnnotationProperties } from "./profile-annotation-properties";
 
 export const ProfileAnnotation = z.looseObject({
-  "@context": OpCipContext,
+  "@context": OpContextHead,
   type: z.tuple([
     z.literal("VerifiableCredential"),
     z.literal("ProfileAnnotation"),
