@@ -29,12 +29,8 @@ const getPriority = (id: string): number => {
  */
 export default function sortCertificates(certificates: Certificate[]) {
   return [...certificates].sort((a, b) => {
-    const priorityA = getPriority(
-      getAnnotationPolicy(a.credentialSubject).id,
-    );
-    const priorityB = getPriority(
-      getAnnotationPolicy(b.credentialSubject).id,
-    );
+    const priorityA = getPriority(getAnnotationPolicy(a.credentialSubject).id);
+    const priorityB = getPriority(getAnnotationPolicy(b.credentialSubject).id);
     return priorityA - priorityB;
   });
 }
