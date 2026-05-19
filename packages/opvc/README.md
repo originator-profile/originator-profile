@@ -34,6 +34,7 @@ opvc
 * [`opvc help [COMMAND]`](#opvc-help-command)
 * [`opvc key-gen`](#opvc-key-gen)
 * [`opvc sign`](#opvc-sign)
+* [`opvc wsp:sign`](#opvc-wspsign)
 * [`opvc wsp:unsigned`](#opvc-wspunsigned)
 
 ## `opvc ca:sign`
@@ -414,6 +415,144 @@ FLAG DESCRIPTIONS
 
 _See code: [src/commands/sign.ts](https://github.com/originator-profile/originator-profile/blob/v0.6.0-beta.0/packages/opvc/src/commands/sign.ts)_
 
+## `opvc wsp:sign`
+
+Website Profile の作成
+
+```
+USAGE
+  $ opvc wsp:sign -i <value> --input <filepath> [--issued-at <value>] [--expired-at <value>]
+
+FLAGS
+  -i, --identity=<value>    (required) プライベート鍵のファイルパス
+      --expired-at=<value>  有効期限 (ISO 8601)
+      --input=<filepath>    (required) 入力ファイルのパス (JSON 形式)
+      --issued-at=<value>   発行日時 (ISO 8601)
+
+DESCRIPTION
+  Website Profile の作成
+
+  Website Profile に署名します。
+  入力が単一オブジェクトの場合は JWT を、配列の場合は JWT の配列を標準出力に出力します。
+  配列入力時は全要素が同一の issuer / credentialSubject.id を持ち、
+  @context の @language がそれぞれ異なる必要があります。
+
+EXAMPLES
+  $ opvc wsp:sign \
+      -i account-key.example.priv.json \
+      --input website-profile.example.json
+
+  $ opvc wsp:sign \
+      -i account-key.example.priv.json \
+      --input website-profile.multilingual.example.json
+
+FLAG DESCRIPTIONS
+  -i, --identity=<value>  プライベート鍵のファイルパス
+
+    プライベート鍵のファイルパスを渡してください。プライベート鍵は JWK 形式か、PEM base64 でエンコードされた PKCS #8
+    形式にしてください。
+
+  --expired-at=<value>  有効期限 (ISO 8601)
+
+    日付のみの場合、その日の 24:00:00.000 より前まで有効、それ以外の場合、期限切れとなる日付・時刻・秒を指定します。
+
+  --input=<filepath>  入力ファイルのパス (JSON 形式)
+
+    Website Profile (WSP) の例:
+
+    {
+    "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://originator-profile.org/ns/credentials/v1",
+    "https://originator-profile.org/ns/cip/v1",
+    {
+    "@language": "ja"
+    }
+    ],
+    "type": [
+    "VerifiableCredential",
+    "WebsiteProfile"
+    ],
+    "issuer": "dns:example.com",
+    "credentialSubject": {
+    "id": "https://media.example.com/",
+    "type": "WebSite",
+    "name": "<Webサイトのタイトル>",
+    "description": "<Webサイトの説明>",
+    "image": {
+    "id": "https://media.example.com/image.png",
+    "digestSRI": "sha256-Upwn7gYMuRmJlD1ZivHk876vXHzokXrwXj50VgfnMnY="
+    },
+    "allowedOrigin": [
+    "https://media.example.com"
+    ]
+    }
+    }
+
+    多言語 Website Profile (配列) の例:
+
+    [
+    {
+    "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://originator-profile.org/ns/credentials/v1",
+    "https://originator-profile.org/ns/cip/v1",
+    {
+    "@language": "ja"
+    }
+    ],
+    "type": [
+    "VerifiableCredential",
+    "WebsiteProfile"
+    ],
+    "issuer": "dns:example.com",
+    "credentialSubject": {
+    "id": "https://media.example.com/",
+    "type": "WebSite",
+    "name": "<Webサイトのタイトル>",
+    "description": "<Webサイトの説明>",
+    "image": {
+    "id": "https://media.example.com/image.png",
+    "digestSRI": "sha256-Upwn7gYMuRmJlD1ZivHk876vXHzokXrwXj50VgfnMnY="
+    },
+    "allowedOrigin": [
+    "https://media.example.com"
+    ]
+    }
+    },
+    {
+    "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://originator-profile.org/ns/credentials/v1",
+    "https://originator-profile.org/ns/cip/v1",
+    {
+    "@language": "en"
+    }
+    ],
+    "type": [
+    "VerifiableCredential",
+    "WebsiteProfile"
+    ],
+    "issuer": "dns:example.com",
+    "credentialSubject": {
+    "id": "https://media.example.com/",
+    "type": "WebSite",
+    "name": "<Website title>",
+    "description": "<Website description>",
+    "image": {
+    "id": "https://media.example.com/image.png",
+    "digestSRI": "sha256-Upwn7gYMuRmJlD1ZivHk876vXHzokXrwXj50VgfnMnY="
+    },
+    "allowedOrigin": [
+    "https://media.example.com"
+    ]
+    }
+    }
+    ]
+```
+
+_See code: [src/commands/wsp/sign.ts](https://github.com/originator-profile/originator-profile/blob/v0.6.0-beta.0/packages/opvc/src/commands/wsp/sign.ts)_
+
 ## `opvc wsp:unsigned`
 
 未署名 Website Profile の取得
@@ -475,6 +614,71 @@ FLAG DESCRIPTIONS
     ]
     }
     }
+
+    多言語の Website Profile (配列) の例:
+
+    [
+    {
+    "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://originator-profile.org/ns/credentials/v1",
+    "https://originator-profile.org/ns/cip/v1",
+    {
+    "@language": "ja"
+    }
+    ],
+    "type": [
+    "VerifiableCredential",
+    "WebsiteProfile"
+    ],
+    "issuer": "<OP ID>",
+    "credentialSubject": {
+    "id": "<Web サイトのオリジン (形式: https://<ホスト名>)>",
+    "type": "WebSite",
+    "name": "<Web サイトの名称>",
+    "description": "<Web サイトの説明>",
+    "image": {
+    "id": "<サムネイル画像URL>",
+    "content": [
+    "<コンテンツ (data:// 形式URL)>"
+    ]
+    },
+    "allowedOrigin": [
+    "<Web サイトのオリジン (形式: https://<ホスト名>)>"
+    ]
+    }
+    },
+    {
+    "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://originator-profile.org/ns/credentials/v1",
+    "https://originator-profile.org/ns/cip/v1",
+    {
+    "@language": "en"
+    }
+    ],
+    "type": [
+    "VerifiableCredential",
+    "WebsiteProfile"
+    ],
+    "issuer": "<OP ID>",
+    "credentialSubject": {
+    "id": "<Web サイトのオリジン (形式: https://<ホスト名>)>",
+    "type": "WebSite",
+    "name": "<Web サイトの名称>",
+    "description": "<Web サイトの説明>",
+    "image": {
+    "id": "<サムネイル画像URL>",
+    "content": [
+    "<コンテンツ (data:// 形式URL)>"
+    ]
+    },
+    "allowedOrigin": [
+    "<Web サイトのオリジン (形式: https://<ホスト名>)>"
+    ]
+    }
+    }
+    ]
 ```
 
 _See code: [src/commands/wsp/unsigned.ts](https://github.com/originator-profile/originator-profile/blob/v0.6.0-beta.0/packages/opvc/src/commands/wsp/unsigned.ts)_
@@ -535,6 +739,29 @@ import { ContentAttestation } from "@originator-profile/opvc";
 const jwt = await ContentAttestation.signByServer(input, {
   endpoint: "https://example.com/ca",
   accessToken: process.env.CA_SERVER_ACCESS_TOKEN!,
+  issuedAt: new Date(),
+  expiredAt: "2027-03-31",
+});
+```
+
+### Website Profile の署名 (単一 / 多言語)
+
+`WebsiteProfile.sign()` は単一の未署名 Website Profile を JWT 文字列として署名するほか、
+配列を渡すと JWT 文字列の配列を返します。これは SiteProfile の `sites` に直接組み込めます。
+配列入力時は全要素が同一の `issuer` / `credentialSubject.id` を持ち、
+`@context` の `@language` がそれぞれ異なる必要があります。
+
+```ts
+import { WebsiteProfile } from "@originator-profile/opvc";
+
+// 単一の場合: JWT 文字列を返します
+const jwt = await WebsiteProfile.sign(input, privateKey, {
+  issuedAt: new Date(),
+  expiredAt: "2027-03-31",
+});
+
+// 多言語の場合: JWT 文字列の配列を返します
+const sites = await WebsiteProfile.sign([inputJa, inputEn], privateKey, {
   issuedAt: new Date(),
   expiredAt: "2027-03-31",
 });

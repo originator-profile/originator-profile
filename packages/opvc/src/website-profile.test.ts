@@ -1,23 +1,27 @@
+import { generateKey } from "@originator-profile/cryptography";
 import type { Jwk, UnsignedWebsiteProfile } from "@originator-profile/model";
 import { BadRequestError } from "http-errors-enhanced";
+import { decodeJwt } from "jose";
 import assert from "node:assert/strict";
 import { describe, test } from "node:test";
 import { sign, unsignedWsp } from "./website-profile.ts";
 
-function createUnsignedWebsiteProfile(): UnsignedWebsiteProfile {
+const { privateKey: testPrivateKey } = await generateKey();
+
+function baseUwsp(language: string): UnsignedWebsiteProfile {
   return {
     "@context": [
       "https://www.w3.org/ns/credentials/v2",
       "https://originator-profile.org/ns/credentials/v1",
       "https://originator-profile.org/ns/cip/v1",
-      { "@language": "ja" },
+      { "@language": language },
     ],
     type: ["VerifiableCredential", "WebsiteProfile"],
     issuer: "dns:example.com",
     credentialSubject: {
       id: "https://example.com",
       type: "WebSite",
-      name: "Example",
+      name: `Example ${language}`,
       image: {
         id: "https://example.com/image.png",
         content: [
@@ -28,6 +32,8 @@ function createUnsignedWebsiteProfile(): UnsignedWebsiteProfile {
     },
   };
 }
+
+const createUnsignedWebsiteProfile = () => baseUwsp("ja-JP");
 
 await describe("unsignedWsp()", async () => {
   await test("有効な UnsignedWebsiteProfile を受け付ける", async () => {
@@ -261,5 +267,98 @@ await describe("sign()", async () => {
       sign(uwsp as unknown as UnsignedWebsiteProfile, {} as Jwk, {}),
       BadRequestError,
     );
+  });
+});
+
+await describe("unsignedWsp() 配列入力", async () => {
+  await test("多言語の配列を受け付け、各要素に iss/sub/iat/exp が付与される", async () => {
+    const uwsps = [baseUwsp("ja"), baseUwsp("en")];
+
+    const result = await unsignedWsp(uwsps, {});
+
+    assert.equal(result.length, 2);
+    for (const item of result) {
+      assert.equal(item.iss, "dns:example.com");
+      assert.equal(item.sub, "https://example.com");
+      assert.ok(item.iat);
+      assert.ok(item.exp);
+    }
+    assert.notEqual(
+      (result[0]["@context"].at(-1) as { "@language": string })["@language"],
+      (result[1]["@context"].at(-1) as { "@language": string })["@language"],
+    );
+  });
+
+  await test("空配列の場合 BadRequestError", async () => {
+    await assert.rejects(unsignedWsp([], {}), BadRequestError);
+  });
+
+  await test("issuer が要素間で異なる場合 BadRequestError", async () => {
+    const ja = baseUwsp("ja");
+    const en = baseUwsp("en");
+    en.issuer = "dns:another.example.com";
+
+    await assert.rejects(unsignedWsp([ja, en], {}), BadRequestError);
+  });
+
+  await test("credentialSubject.id が要素間で異なる場合 BadRequestError", async () => {
+    const ja = baseUwsp("ja");
+    const en = baseUwsp("en");
+    en.credentialSubject.id = "https://another.example.com";
+
+    await assert.rejects(unsignedWsp([ja, en], {}), BadRequestError);
+  });
+
+  await test("@language が重複する場合 BadRequestError", async () => {
+    await assert.rejects(
+      unsignedWsp([baseUwsp("ja"), baseUwsp("ja")], {}),
+      BadRequestError,
+    );
+  });
+
+  await test("配列要素に @language がない場合 BadRequestError", async () => {
+    const noLang = {
+      ...baseUwsp("ja"),
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+        "https://originator-profile.org/ns/cip/v1",
+      ],
+    } as unknown as UnsignedWebsiteProfile;
+
+    await assert.rejects(
+      unsignedWsp([baseUwsp("ja"), noLang], {}),
+      BadRequestError,
+    );
+  });
+});
+
+await describe("sign() 戻り値", async () => {
+  await test("単一入力は JWT 文字列を返す", async () => {
+    const jwt = await sign(baseUwsp("ja"), testPrivateKey, {});
+
+    assert.equal(typeof jwt, "string");
+    const payload = decodeJwt(jwt);
+    assert.equal(payload.iss, "dns:example.com");
+    assert.equal(payload.sub, "https://example.com");
+  });
+
+  await test("配列入力は JWT 文字列の配列を返す", async () => {
+    const result = await sign(
+      [baseUwsp("ja"), baseUwsp("en")],
+      testPrivateKey,
+      {},
+    );
+
+    assert.equal(result.length, 2);
+
+    const [jaPayload, enPayload] = result.map((jwt) => decodeJwt(jwt));
+    assert.equal(jaPayload.iss, "dns:example.com");
+    assert.equal(enPayload.iss, "dns:example.com");
+
+    const jaContext = (jaPayload as { "@context": unknown[] })["@context"];
+    const enContext = (enPayload as { "@context": unknown[] })["@context"];
+    assert.deepEqual(jaContext.at(-1), { "@language": "ja" });
+    assert.deepEqual(enContext.at(-1), { "@language": "en" });
   });
 });
