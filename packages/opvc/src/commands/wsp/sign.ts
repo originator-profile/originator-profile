@@ -1,5 +1,8 @@
 import { Command, Flags } from "@oclif/core";
-import type { UnsignedWebsiteProfile } from "@originator-profile/model";
+import type {
+  UnsignedWebsiteProfile,
+  UnsignedWebsiteProfileSet,
+} from "@originator-profile/model";
 import fs from "node:fs/promises";
 import { expirationDate, privateKey } from "../../flags.ts";
 import { sign } from "../../website-profile.ts";
@@ -44,7 +47,7 @@ const exampleMultilingualWebsiteProfile = [
       description: "<Website description>",
     },
   },
-] satisfies UnsignedWebsiteProfile[];
+] satisfies UnsignedWebsiteProfileSet;
 
 export class WspSign extends Command {
   static summary = "Website Profile の作成";
@@ -90,9 +93,8 @@ $ <%= config.bin %> <%= command.id %> \\
     const { flags } = await this.parse(WspSign);
     const inputBuffer = await fs.readFile(flags.input);
 
-    const input: UnsignedWebsiteProfile | UnsignedWebsiteProfile[] = JSON.parse(
-      inputBuffer.toString(),
-    );
+    const input: UnsignedWebsiteProfile | UnsignedWebsiteProfileSet =
+      JSON.parse(inputBuffer.toString());
 
     if (Array.isArray(input)) {
       const result = await sign(input, flags.identity, {

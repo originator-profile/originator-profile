@@ -1,82 +1,16 @@
-import { type Jwk, UnsignedWebsiteProfile } from "@originator-profile/model";
-import { signJwtVc } from "@originator-profile/securing-mechanism";
-import { fetchAndSetDigestSri } from "@originator-profile/sign";
+import {
+  type Jwk,
+  UnsignedWebsiteProfile,
+  UnsignedWebsiteProfileSet,
+} from "@originator-profile/model";
+import {
+  fetchAndSetDigestSri,
+  signWsp,
+  UnsignedWebsiteProfileInput,
+} from "@originator-profile/sign";
 import { getUnixTime } from "date-fns";
 import { BadRequestError } from "http-errors-enhanced";
 import { parseDates, type TimingOptions } from "./timing-options.ts";
-
-// assertConsistentSet は buildUnsignedWsp 内の UnsignedWebsiteProfile.parse より
-// 前に走るため、@language の存在を fail-fast で確認する。
-// 詳細な構造検証は parse 側が担う。
-function extractLanguage(uwsp: UnsignedWebsiteProfile): string {
-  const tail = uwsp["@context"].at(-1);
-  if (
-    tail === undefined ||
-    typeof tail !== "object" ||
-    !("@language" in tail) ||
-    typeof tail["@language"] !== "string"
-  ) {
-    throw new BadRequestError(
-      "Each UnsignedWebsiteProfile must declare @language in @context.",
-    );
-  }
-  return tail["@language"];
-}
-
-function assertConsistentSet(uwsps: UnsignedWebsiteProfile[]): void {
-  if (uwsps.length === 0) {
-    throw new BadRequestError(
-      "At least one UnsignedWebsiteProfile is required.",
-    );
-  }
-
-  const [head] = uwsps;
-  const languages = new Set<string>();
-
-  for (const [index, uwsp] of uwsps.entries()) {
-    if (uwsp.issuer !== head.issuer) {
-      throw new BadRequestError(
-        `UnsignedWebsiteProfile entries must share the same issuer (entries[${index}] differs from entries[0]).`,
-      );
-    }
-    if (uwsp.credentialSubject.id !== head.credentialSubject.id) {
-      throw new BadRequestError(
-        `UnsignedWebsiteProfile entries must share the same credentialSubject.id (entries[${index}] differs from entries[0]).`,
-      );
-    }
-
-    const language = extractLanguage(uwsp);
-    if (languages.has(language)) {
-      throw new BadRequestError(
-        `Duplicate @language "${language}" at entries[${index}].`,
-      );
-    }
-    languages.add(language);
-  }
-}
-
-async function buildUnsignedWsp(
-  uwsp: UnsignedWebsiteProfile,
-  { issuedAt, expiredAt }: { issuedAt: Date; expiredAt: Date },
-): Promise<UnsignedWebsiteProfile> {
-  try {
-    UnsignedWebsiteProfile.parse(uwsp);
-    await fetchAndSetDigestSri("sha256", uwsp.credentialSubject.image);
-  } catch (e) {
-    throw new BadRequestError((e as Error).message);
-  }
-
-  // iss/sub/iat/exp は unsignedWsp 単体呼び出しの戻り値で必要となる。
-  // sign 経路では signJwtVc 内の setIssuer/setSubject/setIssuedAt/setExpirationTime
-  // により同値で上書きされるため動作には影響しない。
-  return {
-    ...uwsp,
-    iss: uwsp.issuer,
-    sub: uwsp.credentialSubject.id,
-    iat: getUnixTime(issuedAt),
-    exp: getUnixTime(expiredAt),
-  };
-}
 
 /**
  * 未署名 Website Profile の取得
@@ -88,27 +22,37 @@ async function buildUnsignedWsp(
  * @throws {BadRequestError} 配列入力の整合性違反や入力が UnsignedWebsiteProfile スキーマに適合しない場合
  * @return 未署名 Website Profile (配列入力時は配列)
  */
-export async function unsignedWsp<
-  U extends UnsignedWebsiteProfile | UnsignedWebsiteProfile[],
->(
+export async function unsignedWsp<U extends UnsignedWebsiteProfileInput>(
   uwsp: U,
   options: TimingOptions,
 ): Promise<
-  U extends unknown[] ? UnsignedWebsiteProfile[] : UnsignedWebsiteProfile
+  U extends unknown[] ? UnsignedWebsiteProfileSet : UnsignedWebsiteProfile
 > {
   type Result = U extends unknown[]
-    ? UnsignedWebsiteProfile[]
+    ? UnsignedWebsiteProfileSet
     : UnsignedWebsiteProfile;
   const timing = parseDates(options);
-
-  if (Array.isArray(uwsp)) {
-    assertConsistentSet(uwsp);
-    return Promise.all(
-      uwsp.map((item) => buildUnsignedWsp(item, timing)),
-    ) as Promise<Result>;
+  async function build(u: UnsignedWebsiteProfile) {
+    await fetchAndSetDigestSri("sha256", u.credentialSubject.image);
+    return {
+      ...u,
+      iss: u.issuer,
+      sub: u.credentialSubject.id,
+      iat: getUnixTime(timing.issuedAt),
+      exp: getUnixTime(timing.expiredAt),
+    } as UnsignedWebsiteProfile;
   }
-
-  return buildUnsignedWsp(uwsp, timing) as Promise<Result>;
+  try {
+    UnsignedWebsiteProfileInput.parse(uwsp);
+    if (Array.isArray(uwsp)) {
+      const us = await Promise.all(uwsp.map(build));
+      return us as Result;
+    }
+    const u = await build(uwsp);
+    return u as Result;
+  } catch (e) {
+    throw new BadRequestError((e as Error).message, { cause: e });
+  }
 }
 
 /**
@@ -121,26 +65,15 @@ export async function unsignedWsp<
  * @throws {BadRequestError} 配列入力の整合性違反や入力が UnsignedWebsiteProfile スキーマに適合しない場合
  * @return 単一入力時は JWT 文字列、配列入力時は JWT 文字列の配列
  */
-export async function sign<
-  U extends UnsignedWebsiteProfile | UnsignedWebsiteProfile[],
->(
+export async function sign<U extends UnsignedWebsiteProfileInput>(
   uwsp: U,
   privateKey: Jwk,
   options: TimingOptions = {},
 ): Promise<U extends unknown[] ? string[] : string> {
-  type Result = U extends unknown[] ? string[] : string;
   const timing = parseDates(options);
-
-  if (Array.isArray(uwsp)) {
-    assertConsistentSet(uwsp);
-    return Promise.all(
-      uwsp.map(async (item) => {
-        const payload = await buildUnsignedWsp(item, timing);
-        return signJwtVc(payload, privateKey, timing);
-      }),
-    ) as Promise<Result>;
+  try {
+    return await signWsp(uwsp, privateKey, timing);
+  } catch (e) {
+    throw new BadRequestError((e as Error).message, { cause: e });
   }
-
-  const payload = await buildUnsignedWsp(uwsp, timing);
-  return signJwtVc(payload, privateKey, timing) as Promise<Result>;
 }
