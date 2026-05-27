@@ -164,5 +164,7 @@ test("signWsp() returns an array of JWTs when given an array of UWSPs", async ()
 test("signWsp() throws Error when given an empty array", async () => {
   const expiredAt = addYears(new Date(), 10);
   const { privateKey } = await generateKey();
-  await expect(signWsp([], privateKey, { expiredAt })).rejects.toThrow(/At least one UnsignedWebsiteProfile is required/);
+  await expect(signWsp([], privateKey, { expiredAt })).rejects.toThrow(
+    /At least one UnsignedWebsiteProfile is required/,
+  );
 });
