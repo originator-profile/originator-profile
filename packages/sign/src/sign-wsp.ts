@@ -1,6 +1,11 @@
-import type { Jwk, UnsignedWebsiteProfile } from "@originator-profile/model";
+import {
+  type Jwk,
+  UnsignedWebsiteProfile,
+  UnsignedWebsiteProfileSet,
+} from "@originator-profile/model";
 import { signJwtVc } from "@originator-profile/securing-mechanism";
 import type { HashAlgorithm } from "websri";
+import { z } from "zod";
 import { fetchAndSetDigestSri } from "./integrity/";
 
 type SignWspOptions = {
@@ -9,6 +14,15 @@ type SignWspOptions = {
   expiredAt: Date;
   integrityAlg?: HashAlgorithm;
 };
+
+export const UnsignedWebsiteProfileInput = z.union([
+  UnsignedWebsiteProfile,
+  UnsignedWebsiteProfileSet,
+]);
+
+export type UnsignedWebsiteProfileInput = z.infer<
+  typeof UnsignedWebsiteProfileInput
+>;
 
 /**
  * Website Profile への署名
@@ -21,7 +35,7 @@ type SignWspOptions = {
  * @throws {Error} 配列が空 (未署名 Website Profile が存在しない) の場合
  */
 export async function signWsp<
-  U extends UnsignedWebsiteProfile | UnsignedWebsiteProfile[],
+  U extends UnsignedWebsiteProfile | UnsignedWebsiteProfileSet,
 >(
   uwsp: U,
   privateKey: Jwk,
@@ -33,9 +47,7 @@ export async function signWsp<
   }: SignWspOptions,
 ): Promise<U extends unknown[] ? string[] : string> {
   type Result = U extends unknown[] ? string[] : string;
-  if (Array.isArray(uwsp) && uwsp.length === 0) {
-    throw new Error("At least one UnsignedWebsiteProfile is required.");
-  }
+  UnsignedWebsiteProfileInput.parse(uwsp);
   async function sign(item: UnsignedWebsiteProfile): Promise<string> {
     await fetchAndSetDigestSri(integrityAlg, item.credentialSubject.image);
     return await signJwtVc(item, privateKey, { alg, issuedAt, expiredAt });

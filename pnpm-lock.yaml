@@ -446,9 +446,6 @@ importers:
       websri:
         specifier: 1.0.1
         version: 1.0.1
-      zod:
-        specifier: 4.4.3
-        version: 4.4.3
 
   packages/presentation:
     dependencies:
@@ -557,6 +554,9 @@ importers:
       websri:
         specifier: 1.0.1
         version: 1.0.1
+      zod:
+        specifier: 4.4.3
+        version: 4.4.3
 
   packages/tailwind-config:
     devDependencies:

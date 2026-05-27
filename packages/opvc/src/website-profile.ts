@@ -1,54 +1,16 @@
-import { type Jwk, UnsignedWebsiteProfile } from "@originator-profile/model";
-import { fetchAndSetDigestSri, signWsp } from "@originator-profile/sign";
+import {
+  type Jwk,
+  UnsignedWebsiteProfile,
+  UnsignedWebsiteProfileSet,
+} from "@originator-profile/model";
+import {
+  fetchAndSetDigestSri,
+  signWsp,
+  UnsignedWebsiteProfileInput,
+} from "@originator-profile/sign";
 import { getUnixTime } from "date-fns";
 import { BadRequestError } from "http-errors-enhanced";
-import { z } from "zod";
 import { parseDates, type TimingOptions } from "./timing-options.ts";
-
-const UnsignedWebsiteProfileInput = z.union([
-  UnsignedWebsiteProfile,
-  z.array(UnsignedWebsiteProfile),
-]);
-
-type UnsignedWebsiteProfileInput = z.infer<typeof UnsignedWebsiteProfileInput>;
-
-// 詳細な構造検証は UnsignedWebsiteProfile.parse が担う
-function extractLanguage(uwsp: UnsignedWebsiteProfile): string {
-  const tail = uwsp["@context"].at(-1);
-  return (tail as { "@language": string })["@language"];
-}
-
-function assertConsistentSet(uwsps: UnsignedWebsiteProfile[]): void {
-  if (uwsps.length === 0) {
-    throw new BadRequestError(
-      "At least one UnsignedWebsiteProfile is required.",
-    );
-  }
-
-  const [head] = uwsps;
-  const languages = new Set<string>();
-
-  for (const [index, uwsp] of uwsps.entries()) {
-    if (uwsp.issuer !== head.issuer) {
-      throw new BadRequestError(
-        `UnsignedWebsiteProfile entries must share the same issuer (entries[${index}] differs from entries[0]).`,
-      );
-    }
-    if (uwsp.credentialSubject.id !== head.credentialSubject.id) {
-      throw new BadRequestError(
-        `UnsignedWebsiteProfile entries must share the same credentialSubject.id (entries[${index}] differs from entries[0]).`,
-      );
-    }
-
-    const language = extractLanguage(uwsp);
-    if (languages.has(language)) {
-      throw new BadRequestError(
-        `Duplicate @language "${language}" at entries[${index}].`,
-      );
-    }
-    languages.add(language);
-  }
-}
 
 /**
  * 未署名 Website Profile の取得
@@ -64,10 +26,10 @@ export async function unsignedWsp<U extends UnsignedWebsiteProfileInput>(
   uwsp: U,
   options: TimingOptions,
 ): Promise<
-  U extends unknown[] ? UnsignedWebsiteProfile[] : UnsignedWebsiteProfile
+  U extends unknown[] ? UnsignedWebsiteProfileSet : UnsignedWebsiteProfile
 > {
   type Result = U extends unknown[]
-    ? UnsignedWebsiteProfile[]
+    ? UnsignedWebsiteProfileSet
     : UnsignedWebsiteProfile;
   const timing = parseDates(options);
   async function build(u: UnsignedWebsiteProfile) {
@@ -83,7 +45,6 @@ export async function unsignedWsp<U extends UnsignedWebsiteProfileInput>(
   try {
     UnsignedWebsiteProfileInput.parse(uwsp);
     if (Array.isArray(uwsp)) {
-      assertConsistentSet(uwsp);
       const us = await Promise.all(uwsp.map(build));
       return us as Result;
     }
@@ -111,10 +72,6 @@ export async function sign<U extends UnsignedWebsiteProfileInput>(
 ): Promise<U extends unknown[] ? string[] : string> {
   const timing = parseDates(options);
   try {
-    UnsignedWebsiteProfileInput.parse(uwsp);
-    if (Array.isArray(uwsp)) {
-      assertConsistentSet(uwsp);
-    }
     return await signWsp(uwsp, privateKey, timing);
   } catch (e) {
     throw new BadRequestError((e as Error).message, { cause: e });
