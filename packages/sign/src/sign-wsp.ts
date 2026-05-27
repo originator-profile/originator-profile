@@ -32,7 +32,7 @@ export type UnsignedWebsiteProfileInput = z.infer<
  * @param uwsp 未署名 Website Profile オブジェクト (単一または配列)
  * @param privateKey プライベート鍵
  * @return JWT でエンコードされた Website Profile (配列入力時は配列)
- * @throws {Error} 配列が空 (未署名 Website Profile が存在しない) の場合
+ * @throws {Error} UnsignedWebsiteProfile(Set) スキーマに適合しない場合
  */
 export async function signWsp<
   U extends UnsignedWebsiteProfile | UnsignedWebsiteProfileSet,
