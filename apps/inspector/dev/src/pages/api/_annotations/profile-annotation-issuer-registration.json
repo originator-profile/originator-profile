@@ -1,0 +1,27 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://originator-profile.org/ns/credentials/v1",
+    "https://originator-profile.org/ns/cip/v1",
+    {
+      "@language": "ja-JP"
+    }
+  ],
+  "type": ["VerifiableCredential", "ProfileAnnotation"],
+  "issuer": "dns:localhost",
+  "credentialSubject": {
+    "id": "dns:localhost",
+    "type": "ProfileAnnotationIssuerRegistration",
+    "name": "Profile Annotation Issuer 登録証",
+    "description": "組織実在性証明書の発行を認められた Profile Annotation Issuer です。",
+    "annotationIssuerName": "架空組織実在性検証局",
+    "annotationScheme": ["urn:uuid:def09cbd-6e8e-4c73-856d-5e00dffde643"],
+    "annotation": {
+      "id": "urn:uuid:5927e1da-e422-47c8-a5b8-efa6f5a45dd7",
+      "type": "ProfileAnnotationPolicy",
+      "name": "OP レジストリ Profile Annotation Issuer 登録制度",
+      "description": "OP レジストリが運営する Profile Annotation Issuer の登録制度です。登録要件を満たした組織に対して Profile Annotation Issuer PA を発行します。",
+      "ref": "https://op-registry.example.org/profile-annotation-issuer-registration"
+    }
+  }
+}

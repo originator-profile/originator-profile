@@ -1,5 +1,8 @@
 import { selectByLocale } from "@originator-profile/core";
-import { getAnnotationPolicy } from "@originator-profile/ui";
+import {
+  getAnnotationPolicy,
+  isDisplayableProfileAnnotation,
+} from "@originator-profile/ui";
 import { useMemo } from "react";
 import { useParams, useSearchParams } from "react-router";
 import Loading from "../components/Loading";
@@ -41,7 +44,7 @@ function Org(props: Props) {
   const selectedAnnotations = useMemo(() => {
     const annotations = op?.annotations ?? [];
     return selectByLocale(
-      annotations.map((a) => a.doc),
+      annotations.map((a) => a.doc).filter(isDisplayableProfileAnnotation),
       {
         group: (a) =>
           JSON.stringify([
