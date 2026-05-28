@@ -1,27 +1,36 @@
+import { globSync } from "node:fs";
+import path from "node:path";
 import { sign, writeJson } from "./_utils";
+
+export const prerender = false;
 
 export async function POST(): Promise<Response> {
   const {
     0: core,
-    1: annotation,
-    2: mediaJa,
-    3: mediaEn,
-    4: siteJa,
-    5: siteEn,
+    1: mediaJa,
+    2: mediaEn,
+    3: siteJa,
+    4: siteEn,
   } = await Promise.all([
     sign("_core.json"),
-    sign("_annotation.json"),
     sign("_media.json"),
     sign("_media-en.json"),
     sign("_site.json"),
     sign("_site-en.json"),
   ]);
+  const annotations = await Promise.all(
+    globSync(path.join(import.meta.dirname, "_annotations/*.json")).map(
+      async (annotationPath) => {
+        return await sign(annotationPath);
+      },
+    ),
+  );
 
   await writeJson("../../../public/.well-known/sp.json", {
     originators: [
       {
         core,
-        annotations: [annotation],
+        annotations,
         media: [mediaJa, mediaEn],
       },
     ],
