@@ -4,6 +4,7 @@ import {
   JapaneseExistenceCertificate,
   JapaneseExistencePA,
   ProfileAnnotation,
+  ProfileAnnotationIssuerRegistration,
   WebMediaProfile,
 } from "@originator-profile/model";
 import {
@@ -20,11 +21,13 @@ import {
   OpVerifyFailed,
 } from "./errors";
 
+/** @deprecated Profile Annotation とその派生として整理する可能性あるため "Certificate" の利用は非推奨 */
 export type Certificate =
   | BasicCertificate
   | JapaneseExistenceCertificate
   | ProfileAnnotation
-  | JapaneseExistencePA;
+  | JapaneseExistencePA
+  | ProfileAnnotationIssuerRegistration;
 
 /** Originator Profile 復号失敗 */
 export type OpDecodingFailure = {
