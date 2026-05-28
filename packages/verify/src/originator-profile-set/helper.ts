@@ -1,4 +1,4 @@
-import { generateKey } from "@originator-profile/cryptography";
+import { generateKey, type Keys } from "@originator-profile/cryptography";
 import { CoreProfile, OriginatorProfileSet } from "@originator-profile/model";
 import { signJwtVc } from "@originator-profile/securing-mechanism";
 import { signCp } from "@originator-profile/sign";
@@ -16,6 +16,15 @@ const issuedAt = fromUnixTime(getUnixTime(new Date()));
 const expiredAt = addYears(issuedAt, 10);
 export const signOptions = { issuedAt, expiredAt };
 export const verifyResult = VerifyResultFactory(issuedAt, expiredAt);
+
+/**
+ * OpsVerifier に渡すオプションを生成するテストヘルパー。
+ * REGISTRY_OPS と Core Profile の発行者が同じ前提のテストで利用する。
+ */
+export const opsVerifierOptions = (issuer: string | string[], keys: Keys) => ({
+  core: { issuer, keys },
+  profileAnnotationIssuerRegistration: { issuer },
+});
 
 /**
  * OPS テスト用の共通フィクスチャを生成する

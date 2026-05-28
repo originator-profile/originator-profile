@@ -29,8 +29,10 @@ export async function verifyOps(
       ...page.ops,
       ...frames.flatMap((frame) => frame.ops),
     ],
-    keys,
-    issuer,
+    {
+      core: { issuer, keys },
+      profileAnnotationIssuerRegistration: { issuer },
+    },
   );
   const verifiedOps = await opsVerifier();
 

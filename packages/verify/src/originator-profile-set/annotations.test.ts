@@ -13,7 +13,12 @@ import {
 } from "vitest";
 import { certificate, cp, opId, patch, wmp } from "../helper";
 import { OpsInvalid, OpsVerifyFailed } from "./errors";
-import { buildOpsFixture, signOptions, verifyResult } from "./helper";
+import {
+  buildOpsFixture,
+  opsVerifierOptions,
+  signOptions,
+  verifyResult,
+} from "./helper";
 import type { VerifiedOps } from "./types";
 import { OpsVerifier } from "./verify-ops";
 
@@ -51,8 +56,10 @@ describe("Profile Annotation の検証", async () => {
     const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
     const verify = OpsVerifier(
       ops,
-      LocalKeys({ keys: [authority.publicKey] }),
+      opsVerifierOptions(
         opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
 
@@ -114,8 +121,10 @@ describe("Profile Annotation の検証", async () => {
     const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
     const verify = OpsVerifier(
       ops,
-      LocalKeys({ keys: [authority.publicKey] }),
+      opsVerifierOptions(
         opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
 
@@ -159,8 +168,10 @@ describe("Profile Annotation の検証", async () => {
     const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
     const verify = OpsVerifier(
       ops,
-      LocalKeys({ keys: [authority.publicKey] }),
+      opsVerifierOptions(
         opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
 
@@ -211,8 +222,10 @@ describe("Profile Annotation の検証", async () => {
       ];
       const verify = OpsVerifier(
         ops,
-        LocalKeys({ keys: [authority.publicKey] }),
-        opId.authority,
+        opsVerifierOptions(
+          opId.authority,
+          LocalKeys({ keys: [authority.publicKey] }),
+        ),
       );
       const resultOps = await verify();
 
@@ -266,8 +279,10 @@ describe("Profile Annotation の検証", async () => {
       ];
       const verify = OpsVerifier(
         ops,
-        LocalKeys({ keys: [authority.publicKey] }),
-        opId.authority,
+        opsVerifierOptions(
+          opId.authority,
+          LocalKeys({ keys: [authority.publicKey] }),
+        ),
       );
       const resultOps = await verify();
 
@@ -314,8 +329,10 @@ describe("Profile Annotation の検証", async () => {
     const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
     const verify = OpsVerifier(
       ops,
-      LocalKeys({ keys: [authority.publicKey] }),
+      opsVerifierOptions(
         opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
     expect(resultOps).instanceOf(OpsVerifyFailed);
@@ -342,8 +359,10 @@ describe("Profile Annotation の検証", async () => {
     const ops: OriginatorProfileSet = [authorityOp, certifierOp, originatorOp];
     const verify = OpsVerifier(
       ops,
-      LocalKeys({ keys: [authority.publicKey] }),
+      opsVerifierOptions(
         opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
     expect(resultOps).instanceOf(OpsVerifyFailed);
@@ -381,8 +400,10 @@ describe("Profile Annotation の検証", async () => {
             media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
           },
         ],
-        LocalKeys({ keys: [authority.publicKey] }),
-        opId.authority,
+        opsVerifierOptions(
+          opId.authority,
+          LocalKeys({ keys: [authority.publicKey] }),
+        ),
       )();
 
       expect(result).not.instanceOf(OpsInvalid);
@@ -420,8 +441,10 @@ describe("Profile Annotation の検証", async () => {
             media: [await signJwtVc(wmp, authority.privateKey, signOptions)],
           },
         ],
-        LocalKeys({ keys: [authority.publicKey] }),
-        opId.authority,
+        opsVerifierOptions(
+          opId.authority,
+          LocalKeys({ keys: [authority.publicKey] }),
+        ),
       )();
 
       expect(result).not.instanceOf(OpsInvalid);

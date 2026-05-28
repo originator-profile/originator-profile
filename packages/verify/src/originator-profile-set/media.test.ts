@@ -24,7 +24,7 @@ import {
   OpsVerifyFailed,
   OpVerifyFailed,
 } from "./errors";
-import { buildOpsFixture, signOptions } from "./helper";
+import { buildOpsFixture, opsVerifierOptions, signOptions } from "./helper";
 import { OpsVerifier } from "./verify-ops";
 
 describe("Web Media Profile の検証", async () => {
@@ -78,8 +78,10 @@ describe("Web Media Profile の検証", async () => {
 
     const verify = OpsVerifier(
       multiMediaOps,
-      LocalKeys({ keys: [authority.publicKey] }),
+      opsVerifierOptions(
         opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
 
@@ -139,8 +141,10 @@ describe("Web Media Profile の検証", async () => {
 
     const verify = OpsVerifier(
       multiMediaOps,
-      LocalKeys({ keys: [authority.publicKey] }),
+      opsVerifierOptions(
         opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
 
@@ -181,8 +185,10 @@ describe("Web Media Profile の検証", async () => {
 
     const verify = OpsVerifier(
       multiMediaOps,
-      LocalKeys({ keys: [authority.publicKey] }),
+      opsVerifierOptions(
         opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
 
@@ -226,8 +232,10 @@ describe("Web Media Profile の検証", async () => {
             ],
           },
         ],
-        LocalKeys({ keys: [authority.publicKey] }),
-        opId.authority,
+        opsVerifierOptions(
+          opId.authority,
+          LocalKeys({ keys: [authority.publicKey] }),
+        ),
       )();
 
       expect(result).not.instanceOf(OpsInvalid);
@@ -267,8 +275,10 @@ describe("Web Media Profile の検証", async () => {
             ],
           },
         ],
-        LocalKeys({ keys: [authority.publicKey] }),
-        opId.authority,
+        opsVerifierOptions(
+          opId.authority,
+          LocalKeys({ keys: [authority.publicKey] }),
+        ),
       )();
 
       expect(result).not.instanceOf(OpsInvalid);

@@ -14,7 +14,12 @@ import {
   OpsVerifyFailed,
   OpVerifyFailed,
 } from "./errors";
-import { buildOpsFixture, signOptions, verifyResult } from "./helper";
+import {
+  buildOpsFixture,
+  opsVerifierOptions,
+  signOptions,
+  verifyResult,
+} from "./helper";
 import { OpsVerifier } from "./verify-ops";
 
 describe("OPSの検証", async () => {
@@ -32,8 +37,10 @@ describe("OPSの検証", async () => {
   test("OPSの検証に成功", async () => {
     const verify = OpsVerifier(
       ops,
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
+      opsVerifierOptions(
+        opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
 
@@ -86,8 +93,10 @@ describe("OPSの検証", async () => {
     ]);
     const verify = OpsVerifier(
       evilOps,
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
+      opsVerifierOptions(
+        opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
 
@@ -140,8 +149,10 @@ describe("OPSの検証", async () => {
     ]);
     const verify = OpsVerifier(
       evilOps,
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
+      opsVerifierOptions(
+        opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
 
@@ -199,8 +210,10 @@ describe("OPSの検証", async () => {
     ]);
     const verify = OpsVerifier(
       evilOps,
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
+      opsVerifierOptions(
+        opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
 
@@ -258,8 +271,10 @@ describe("OPSの検証", async () => {
     ]);
     const verify = OpsVerifier(
       evilOps,
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
+      opsVerifierOptions(
+        opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
 
@@ -321,8 +336,10 @@ describe("OPSの検証", async () => {
     ]);
     const verify = OpsVerifier(
       invalidOps,
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
+      opsVerifierOptions(
+        opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
 
@@ -363,8 +380,10 @@ describe("OPSの検証", async () => {
     ]);
     const verify = OpsVerifier(
       evilOps,
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
+      opsVerifierOptions(
+        opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
 
@@ -387,8 +406,10 @@ describe("OPSの検証", async () => {
   test("CP発行者のOPがOPSに存在しなくても検証に成功", async () => {
     const verify = OpsVerifier(
       [certifierOp],
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
+      opsVerifierOptions(
+        opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
 
@@ -411,8 +432,10 @@ describe("OPSの検証", async () => {
     const invalidOps: OriginatorProfileSet = [authorityOp, originatorOp];
     const verify = OpsVerifier(
       invalidOps,
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
+      opsVerifierOptions(
+        opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
 
@@ -443,8 +466,10 @@ describe("OPSの検証", async () => {
     const invalidOps: OriginatorProfileSet = [certifierOp, originatorOp];
     const verify = OpsVerifier(
       invalidOps,
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
+      opsVerifierOptions(
+        opId.authority,
+        LocalKeys({ keys: [authority.publicKey] }),
+      ),
     );
     const resultOps = await verify();
 

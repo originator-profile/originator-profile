@@ -77,7 +77,11 @@ export function SpVerifier(
   validator?: typeof VcValidator,
 ) {
   async function verify(): Promise<SpVerificationResult> {
-    const verifyOps = OpsVerifier(sp.originators, keys, issuer, validator);
+    const verifyOps = OpsVerifier(sp.originators, {
+      core: { issuer, keys },
+      profileAnnotationIssuerRegistration: { issuer },
+      validator,
+    });
     const opsVerified = await verifyOps();
     if (opsVerified instanceof OpsInvalid) {
       return new SiteProfileInvalid("Originator Profile Set invalid", {

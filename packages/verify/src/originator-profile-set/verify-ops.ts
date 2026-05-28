@@ -5,6 +5,7 @@ import {
   VcValidator,
 } from "@originator-profile/securing-mechanism";
 import { getMappedKeys } from "../keys";
+import { verifyAnnotationIssuerRegistration } from "./annotation-issuer-registration";
 import { verifyAnnotations } from "./annotations";
 import { decodeOps } from "./decode-ops";
 import { OpsInvalid, OpsVerifyFailed, OpVerifyFailed } from "./errors";
@@ -51,24 +52,38 @@ function generateErrorDetails<T extends CredentialMetadata>(
 const isVerifiedOps = (ops: OpVerificationResult[]): ops is VerifiedOps =>
   ops.every((op) => !(op instanceof OpVerifyFailed));
 
+export type OpsVerifierOptions = {
+  /** Core Profile に関する検証オプション */
+  core: {
+    /** Core Profile の発行者 (OP ID) */
+    issuer: string | string[];
+    /** Core Profile の発行者の検証鍵 */
+    keys: Keys;
+  };
+  /** Profile Annotation Issuer 登録証 PA に関する検証オプション */
+  profileAnnotationIssuerRegistration: {
+    /** 登録証 PA の発行者として認める OP ID (= REGISTRY_OPS の issuer) */
+    issuer: string | string[];
+  };
+  /** バリデーター */
+  validator?: typeof VcValidator;
+};
+
 /**
  * Originator Profile Set の検証者の作成
  * @param ops Originator Profile Set
- * @param keys Core Profile の発行者の検証鍵
- * @param issuer Core Profile の発行者
- * @param validator バリデーター
+ * @param options Core Profile / Profile Annotation Issuer 登録証 PA の発行者・鍵・バリデーターなど、検証時に使うオプション
  * @returns 検証者
  */
 export function OpsVerifier(
   ops: OriginatorProfileSet,
-  keys: Keys,
-  issuer: string | string[],
-  validator?: typeof VcValidator,
+  options: OpsVerifierOptions,
 ) {
+  const { validator } = options;
   const decoded = decodeOps(ops);
   const verifyCp = JwtVcVerifier<CoreProfile>(
-    keys,
-    issuer,
+    options.core.keys,
+    options.core.issuer,
     validator?.(CoreProfile),
   );
 
@@ -135,6 +150,10 @@ export function OpsVerifier(
 
       return new OpsVerifyFailed(msg, resultOps);
     }
+    verifyAnnotationIssuerRegistration(
+      resultOps,
+      options.profileAnnotationIssuerRegistration.issuer,
+    );
     return resultOps;
   }
   return verify;

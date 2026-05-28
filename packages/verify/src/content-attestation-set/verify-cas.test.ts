@@ -86,11 +86,13 @@ describe("CASの検証", async () => {
   test("CASの検証に成功", async () => {
     const ca = await signCa(articleUca, originator.privateKey, signOptions);
     const cas: ContentAttestationSet = [ca];
-    const verifyOp = OpsVerifier(
-      ops,
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
-    );
+    const verifyOp = OpsVerifier(ops, {
+      core: {
+        issuer: opId.authority,
+        keys: LocalKeys({ keys: [authority.publicKey] }),
+      },
+      profileAnnotationIssuerRegistration: { issuer: opId.authority },
+    });
     const verifiedOps = await verifyOp();
     expect(verifiedOps).not.instanceof(OpsInvalid);
     expect(verifiedOps).not.instanceof(OpsVerifyFailed);
@@ -137,11 +139,13 @@ describe("CASの検証", async () => {
       signOptions,
     );
     const invalidCas: ContentAttestationSet = [invalidCa];
-    const verifyOp = OpsVerifier(
-      ops,
-      LocalKeys({ keys: [authority.publicKey] }),
-      opId.authority,
-    );
+    const verifyOp = OpsVerifier(ops, {
+      core: {
+        issuer: opId.authority,
+        keys: LocalKeys({ keys: [authority.publicKey] }),
+      },
+      profileAnnotationIssuerRegistration: { issuer: opId.authority },
+    });
     const verifiedOps = await verifyOp();
     expect(verifiedOps).not.instanceof(OpsInvalid);
     expect(verifiedOps).not.instanceof(OpsVerifyFailed);
