@@ -3,6 +3,7 @@ import {
   JapaneseExistenceCertificate,
   JapaneseExistencePA,
   ProfileAnnotation,
+  ProfileAnnotationIssuerRegistration,
 } from "@originator-profile/model";
 import {
   UnverifiedJwtVc,
@@ -50,8 +51,10 @@ export async function verifyAnnotations(
         paIssuerKeys,
         annotation,
         validator?.(
+          // TODO: Profile Annotation とその派生のスキーマとして整理
           z.union([
             JapaneseExistencePA,
+            ProfileAnnotationIssuerRegistration,
             ProfileAnnotation,
             JapaneseExistenceCertificate,
             CertificateSchema,
