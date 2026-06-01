@@ -17,3 +17,15 @@ export function getAnnotationPolicy(
     ? credentialSubject.annotation
     : credentialSubject.certificationSystem;
 }
+
+/**
+ * Profile Annotation Issuer 登録証 PA は inspector に表示しない。
+ * 後方互換性のために非表示のままとしている。
+ */
+export function isDisplayableProfileAnnotation(
+  certificate: Certificate,
+): boolean {
+  return (
+    certificate.credentialSubject.type !== "ProfileAnnotationIssuerRegistration"
+  );
+}

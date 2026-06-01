@@ -1,140 +1,20 @@
-import { Keys, LocalKeys } from "@originator-profile/cryptography";
-import {
-  Certificate as CertificateSchema,
-  CoreProfile,
-  JapaneseExistenceCertificate,
-  JapaneseExistencePA,
-  OpVc,
-  OriginatorProfileSet,
-  ProfileAnnotation,
-  WebMediaProfile,
-} from "@originator-profile/model";
+import { Keys } from "@originator-profile/cryptography";
+import { CoreProfile, OriginatorProfileSet } from "@originator-profile/model";
 import {
   JwtVcVerifier,
-  UnverifiedJwtVc,
   VcValidator,
-  VerifiedJwtVc,
 } from "@originator-profile/securing-mechanism";
-import { z } from "zod";
-import { verifyImageDigestSri } from "../integrity";
-import { getMappedKeys, type MappedKeys } from "../keys";
+import { getMappedKeys } from "../keys";
+import { verifyAnnotations } from "./annotations";
 import { decodeOps } from "./decode-ops";
-import {
-  CertificateExpired,
-  CoreProfileNotFound,
-  OpVerifyFailed,
-  OpsInvalid,
-  OpsVerifyFailed,
-} from "./errors";
-import {
-  Certificate,
-  OpVerificationResult,
+import { OpsInvalid, OpsVerifyFailed, OpVerifyFailed } from "./errors";
+import { verifyMedia } from "./media";
+import type {
   OpsVerificationResult,
+  OpVerificationResult,
   VerifiedOp,
   VerifiedOps,
 } from "./types";
-
-/** OP (CP を除く) 署名検証者 */
-function OpVerifier<T extends OpVc>(
-  paOrWmpIssuerKeys: MappedKeys,
-  vc: UnverifiedJwtVc<T>,
-  validator?: VcValidator<VerifiedJwtVc<T>>,
-): JwtVcVerifier<T> | (() => Promise<CoreProfileNotFound<T>>) {
-  const issuer = vc.doc.issuer;
-  const jwks = paOrWmpIssuerKeys[issuer];
-  if (!jwks) {
-    return async () =>
-      new CoreProfileNotFound(`Missing Core Profile (${issuer})`, vc);
-  }
-  const cpKeys = LocalKeys(jwks);
-  return JwtVcVerifier<T>(cpKeys, issuer, validator);
-}
-
-function validateCertificateExpiry<T extends Certificate>(
-  verifiedVc: VerifiedJwtVc<T>,
-): VerifiedJwtVc<T> | CertificateExpired<T> {
-  const now = new Date();
-  const validFrom = verifiedVc.doc.validFrom
-    ? new Date(verifiedVc.doc.validFrom)
-    : null;
-  const validUntil = verifiedVc.doc.validUntil
-    ? new Date(verifiedVc.doc.validUntil)
-    : null;
-
-  if (validFrom && now < validFrom) {
-    return new CertificateExpired("Certificate not yet valid", verifiedVc);
-  }
-  if (validUntil && now > validUntil) {
-    return new CertificateExpired("Certificate expired", verifiedVc);
-  }
-
-  return verifiedVc;
-}
-
-/** annotations プロパティの署名検証 */
-async function verifyAnnotations(
-  paIssuerKeys: MappedKeys,
-  annotations?: UnverifiedJwtVc<Certificate>[],
-  validator?: typeof VcValidator,
-) {
-  if (!annotations) return;
-  return await Promise.all(
-    annotations.map(async (annotation) => {
-      const verify = OpVerifier<Certificate>(
-        paIssuerKeys,
-        annotation,
-        validator?.(
-          z.union([
-            JapaneseExistencePA,
-            ProfileAnnotation,
-            JapaneseExistenceCertificate,
-            CertificateSchema,
-          ]),
-        ),
-      );
-
-      const result = await verify(annotation.source);
-      if (result instanceof Error) {
-        return result;
-      }
-
-      const valid = validateCertificateExpiry(result);
-      if (valid instanceof CertificateExpired) {
-        return valid;
-      }
-
-      await verifyImageDigestSri(valid.doc.credentialSubject.image);
-
-      return valid;
-    }),
-  );
-}
-
-/** media プロパティの署名検証 */
-async function verifyMedia(
-  wmpIssuerKeys: MappedKeys,
-  media?: UnverifiedJwtVc<WebMediaProfile>[],
-  validator?: typeof VcValidator,
-) {
-  if (!media) return;
-  return await Promise.all(
-    media.map(async (m) => {
-      const verify = OpVerifier<WebMediaProfile>(
-        wmpIssuerKeys,
-        m,
-        validator?.(WebMediaProfile),
-      );
-      const result = await verify(m.source);
-      if (result instanceof Error) {
-        return result;
-      }
-
-      await verifyImageDigestSri(result.doc.credentialSubject.logo);
-
-      return result;
-    }),
-  );
-}
 
 type CredentialMetadata = {
   doc: {
