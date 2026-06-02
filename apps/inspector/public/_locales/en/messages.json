@@ -3,7 +3,7 @@
     "message": "OP Inspector"
   },
   "extensionDescription": {
-    "message": "OP Inspector is a tool for visualizing and verifying content digitized with OP technology, including who created it and what kind of entity they are."
+    "message": "A tool to visualize and verify content digitized with OP technology, including who created it and what kind of entity they are."
   },
   "CaFilter_All": {
     "message": "All"
