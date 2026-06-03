@@ -4,18 +4,7 @@ Originator Profile (OP) 仕様に準拠した Verifiable Credential (VC) を作�
 
 ## Installation
 
-### From source
-
-```sh
-git clone https://github.com/originator-profile/originator-profile.git
-cd originator-profile/packages/opvc
-pnpm install
-pnpm build
-npm i -g .
-opvc
-```
-
-### Using `npx` / `npm`
+You can install it using `npx` or `npm`.
 
 ```sh
 # npx
@@ -25,6 +14,9 @@ npx -y @originator-profile/opvc
 npm i -g @originator-profile/opvc
 opvc
 ```
+
+> [!NOTE]
+> When using `npx`, replace `opvc` in the following documentation with `npx @originator-profile/opvc`.
 
 ## Commands
 
