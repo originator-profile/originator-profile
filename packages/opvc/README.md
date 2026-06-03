@@ -10,6 +10,7 @@ Originator Profile (OP) 仕様に準拠した Verifiable Credential (VC) を作�
 git clone https://github.com/originator-profile/originator-profile.git
 cd originator-profile/packages/opvc
 pnpm install
+pnpm build
 npm i -g .
 opvc
 ```
