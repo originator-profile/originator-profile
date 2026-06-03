@@ -16,7 +16,7 @@ opvc
 ```
 
 > [!NOTE]
-> When using `npx`, replace `opvc` in the following documentation with `npx @originator-profile/opvc`.
+> When using `npx`, replace `opvc` in the following documentation with `npx @originator-profile/opvc`. (for example: `opvc help ...` becomes `npx @originator-profile/opvc help ...`)
 
 ## Commands
 
