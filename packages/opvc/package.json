@@ -27,6 +27,7 @@
   "oclif": {
     "bin": "opvc",
     "commands": "dist/commands",
+    "helpClass": "./dist/help",
     "repositoryPrefix": "<%- repo %>/blob/v<%- version %>/packages/opvc/<%- commandPath %>",
     "plugins": [
       "@oclif/plugin-help"
@@ -49,7 +50,8 @@
     "date-fns": "^4.1.0",
     "http-errors-enhanced": "^4.0.2",
     "jose": "^6.2.2",
-    "jsdom": "^29.0.1"
+    "jsdom": "^29.0.1",
+    "wrap-ansi": "^9.0.2"
   },
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",
