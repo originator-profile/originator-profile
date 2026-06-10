@@ -3,7 +3,7 @@
     "message": "OP Inspector"
   },
   "extensionDescription": {
-    "message": "A tool to visualize and verify content digitized with OP technology, including who created it and what kind of entity they are."
+    "message": "OP Inspector is a dev debug tool to verify Originator Profile info, proving authenticity and credibility of information originators."
   },
   "CaFilter_All": {
     "message": "All"
