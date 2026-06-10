@@ -3,7 +3,7 @@
     "message": "OP Inspector"
   },
   "extensionDescription": {
-    "message": "コンテンツの作成者やそれがどのような者かなど、OP 技術でデジタル化された内容を可視化・確認するツールです。"
+    "message": "OP Inspectorはインターネット上の情報（コンテンツ等）の発信者の真正性・信頼性を示すOriginator Profile情報を確認するための開発者向けデバッグツールです。"
   },
   "CaFilter_All": {
     "message": "すべて"
