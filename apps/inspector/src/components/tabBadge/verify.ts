@@ -1,6 +1,7 @@
 import { deserializeIfError } from "@originator-profile/core";
 import { SpVerifier, VerifiedSp } from "@originator-profile/verify";
 import { getRegistryKeys } from "../../utils/get-registry-keys";
+import { fetchTabCredentials } from "../credentials";
 import type { SupportedVerifiedCas } from "../credentials/types";
 import { verifyAllCredentials } from "../credentials/verify-credentials";
 import { siteProfileMessenger } from "../siteProfile/events";
@@ -64,10 +65,13 @@ export async function verifyTabCredentials(tabId: number): Promise<{
   count: number;
 } | null> {
   try {
-    const siteProfile = await fetchVerifiedSiteProfile(tabId);
-    const result = await verifyAllCredentials(tabId, siteProfile);
+    const [siteProfile, { frames, ...page }] = await Promise.all([
+      fetchVerifiedSiteProfile(tabId),
+      fetchTabCredentials(tabId),
+    ]);
+    const result = await verifyAllCredentials(tabId, page, frames, siteProfile);
 
-    if (!result.verify) return null;
+    if (result instanceof Error) return null;
 
     return {
       verifiedCas: result.cas,

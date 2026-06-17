@@ -2,7 +2,7 @@ import { VerifiedOps, VerifiedSp } from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
 import { useSiteProfile } from "../siteProfile";
-import { fetchVerificationResult } from "./messaging";
+import { fetchTabCredentials, fetchVerificationResult } from "./messaging";
 import type { FramesVerifiedCas, SupportedVerifiedCas } from "./types";
 import { verifyAllCredentials } from "./verify-credentials";
 
@@ -26,17 +26,18 @@ async function fetchVerifiedCredentials([, tabId, sp]: [
   tabId: number,
   sp?: VerifiedSp,
 ]): Promise<FetchVerifiedCredentialsResult> {
-  const result = await verifyAllCredentials(tabId, sp);
+  const { frames, ...page } = await fetchTabCredentials(tabId);
+  const result = await verifyAllCredentials(tabId, page, frames, sp);
 
-  if (!result.verify) {
-    throw result.error;
+  if (result instanceof Error) {
+    throw result;
   }
 
   return {
     ops: result.ops,
     cas: result.cas,
-    origin: result.page.origin,
-    url: result.page.url,
+    origin: page.origin,
+    url: page.url,
     framesCas: result.casResults.map(({ result: cas, frame }) => ({
       cas: cas as SupportedVerifiedCas,
       url: frame.url,
