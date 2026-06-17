@@ -1,16 +1,8 @@
 import { deserializeIfError } from "@originator-profile/core";
-import {
-  CasVerifyFailed,
-  OpsInvalid,
-  OpsVerifyFailed,
-  SpVerifier,
-  VerifiedSp,
-} from "@originator-profile/verify";
+import { SpVerifier, VerifiedSp } from "@originator-profile/verify";
 import { getRegistryKeys } from "../../utils/get-registry-keys";
-import { deduplicateCas } from "../credentials/deduplicate-cas";
-import { fetchTabCredentials } from "../credentials/messaging";
 import type { SupportedVerifiedCas } from "../credentials/types";
-import { verifyFramesCas, verifyOps } from "../credentials/verify-credentials";
+import { verifyAllCredentials } from "../credentials/verify-credentials";
 import { siteProfileMessenger } from "../siteProfile/events";
 
 /**
@@ -72,38 +64,14 @@ export async function verifyTabCredentials(tabId: number): Promise<{
   count: number;
 } | null> {
   try {
-    // Site ProfileとCredentialsを並行取得
-    const [siteProfile, { frames, ...page }] = await Promise.all([
-      fetchVerifiedSiteProfile(tabId),
-      fetchTabCredentials(tabId),
-    ]);
+    const siteProfile = await fetchVerifiedSiteProfile(tabId);
+    const result = await verifyAllCredentials(tabId, siteProfile);
 
-    // OPS 検証
-    const verifiedOps = await verifyOps(page, frames, siteProfile);
-    if (
-      verifiedOps instanceof OpsInvalid ||
-      verifiedOps instanceof OpsVerifyFailed
-    ) {
-      return null;
-    }
-
-    // CAS 検証
-    const casResults = await verifyFramesCas(
-      tabId,
-      [page, ...frames],
-      verifiedOps,
-    );
-    if (casResults.some(({ result }) => result instanceof CasVerifyFailed)) {
-      return null;
-    }
-
-    const allVerifiedCas = deduplicateCas(
-      casResults.flatMap(({ result }) => result as SupportedVerifiedCas),
-    );
+    if (!result.verify) return null;
 
     return {
-      verifiedCas: allVerifiedCas,
-      count: allVerifiedCas.length,
+      verifiedCas: result.cas,
+      count: result.cas.length,
     };
   } catch (error) {
     console.error(

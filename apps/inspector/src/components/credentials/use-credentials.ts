@@ -1,17 +1,10 @@
-import {
-  CasVerifyFailed,
-  OpsInvalid,
-  OpsVerifyFailed,
-  VerifiedOps,
-  VerifiedSp,
-} from "@originator-profile/verify";
+import { VerifiedOps, VerifiedSp } from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
 import { useSiteProfile } from "../siteProfile";
-import { deduplicateCas } from "./deduplicate-cas";
-import { fetchTabCredentials, fetchVerificationResult } from "./messaging";
+import { fetchVerificationResult } from "./messaging";
 import type { FramesVerifiedCas, SupportedVerifiedCas } from "./types";
-import { verifyFramesCas, verifyOps } from "./verify-credentials";
+import { verifyAllCredentials } from "./verify-credentials";
 
 const CREDENTIALS_KEY = "credentials";
 
@@ -33,38 +26,19 @@ async function fetchVerifiedCredentials([, tabId, sp]: [
   tabId: number,
   sp?: VerifiedSp,
 ]): Promise<FetchVerifiedCredentialsResult> {
-  const { frames, ...page } = await fetchTabCredentials(tabId);
+  const result = await verifyAllCredentials(tabId, sp);
 
-  // OPS 検証
-  const verifiedOps = await verifyOps(page, frames, sp);
-  if (
-    verifiedOps instanceof OpsInvalid ||
-    verifiedOps instanceof OpsVerifyFailed
-  ) {
-    throw verifiedOps;
-  }
-
-  // CAS 検証
-  const casResults = await verifyFramesCas(
-    tabId,
-    [page, ...frames],
-    verifiedOps,
-  );
-  for (const { result } of casResults) {
-    if (result instanceof CasVerifyFailed) {
-      throw result;
-    }
+  if (!result.verify) {
+    throw result.error;
   }
 
   return {
-    ops: verifiedOps,
-    cas: deduplicateCas(
-      casResults.flatMap(({ result }) => result as SupportedVerifiedCas),
-    ),
-    origin: page.origin,
-    url: page.url,
-    framesCas: casResults.map(({ result, frame }) => ({
-      cas: result as SupportedVerifiedCas,
+    ops: result.ops,
+    cas: result.cas,
+    origin: result.page.origin,
+    url: result.page.url,
+    framesCas: result.casResults.map(({ result: cas, frame }) => ({
+      cas: cas as SupportedVerifiedCas,
       url: frame.url,
       origin: frame.origin,
       frameId: frame.frameId,
