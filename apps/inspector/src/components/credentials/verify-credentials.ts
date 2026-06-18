@@ -9,8 +9,14 @@ import {
   verifyCas,
 } from "@originator-profile/verify";
 import { getRegistryKeys } from "../../utils/get-registry-keys";
+import { deduplicateCas } from "./deduplicate-cas";
 import { FrameIntegrityVerifier } from "./messaging";
-import type { SupportedCa, SupportedVerifiedCas } from "./types";
+import type {
+  FrameCredentials,
+  SupportedCa,
+  SupportedVerifiedCas,
+  TabCredentials,
+} from "./types";
 
 /**
  * OPSを検証する。
@@ -72,4 +78,51 @@ export async function verifyFramesCas<F extends FrameCasInput>(
       ).then((result) => ({ result, frame })),
     ),
   );
+}
+
+/**
+ * タブ内のクレデンシャルを検証する共通関数
+ * @param tabId タブID
+ * @param page ページ
+ * @param frames フレームのリスト
+ * @param siteProfile Site Profile
+ * @returns
+ *    - 成功時: { ops, cas, casResults }
+ *    - 失敗時: 検証失敗した結果
+ */
+export async function verifyAllCredentials(
+  tabId: number,
+  page: Omit<TabCredentials, "frames">,
+  frames: FrameCredentials[],
+  siteProfile?: VerifiedSp | null,
+) {
+  // OPS 検証
+  const verifiedOps = await verifyOps(page, frames, siteProfile);
+  if (
+    verifiedOps instanceof OpsInvalid ||
+    verifiedOps instanceof OpsVerifyFailed
+  ) {
+    return verifiedOps;
+  }
+
+  // CAS 検証
+  const casResults = await verifyFramesCas(
+    tabId,
+    [page, ...frames],
+    verifiedOps,
+  );
+  const failedCas = casResults.find(
+    ({ result }) => result instanceof CasVerifyFailed,
+  );
+  if (failedCas) {
+    return failedCas.result as CasVerifyFailed;
+  }
+
+  return {
+    ops: verifiedOps,
+    cas: deduplicateCas(
+      casResults.flatMap(({ result }) => result as SupportedVerifiedCas),
+    ),
+    casResults,
+  };
 }
