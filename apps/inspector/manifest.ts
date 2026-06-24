@@ -79,10 +79,6 @@ const firefox = {
         required: ["none"],
       },
     },
-    gecko_android: {
-      id: "inspector@originator-profile.org",
-      strict_min_version: "120.0",
-    },
   },
   background: {
     page: "background.html",
