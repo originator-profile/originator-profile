@@ -21,7 +21,7 @@ function App() {
       "select",
       ({ sender, data }) => {
         document.location.hash = buildPublUrl(
-          sender.tab.id,
+          sender.tab?.id,
           data.activeCa.attestation.doc,
         );
       },

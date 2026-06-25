@@ -56,6 +56,17 @@ jobs:
         run: pnpm publish --recursive --tag=beta --publish-branch "${CURRENT_BRANCH}"
         env:
           CURRENT_BRANCH: ${{ github.ref_name }}
+      - if: github.event.inputs.release_type == 'release'
+        name: Submit OP Inspector
+        run: pnpm --dir=apps/inspector run submit
+        env:
+          CHROME_EXTENSION_ID: ${{ secrets.CHROME_EXTENSION_ID }}
+          CHROME_CLIENT_ID: ${{ secrets.CHROME_CLIENT_ID }}
+          CHROME_CLIENT_SECRET: ${{ secrets.CHROME_CLIENT_SECRET }}
+          CHROME_REFRESH_TOKEN: ${{ secrets.CHROME_REFRESH_TOKEN }}
+          FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
+          FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
+          FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
       - if: github.ref == 'refs/heads/main' && github.event.inputs.release_type == 'release' && github.event.inputs.version != 'prerelease'
         name: Next Release
         run: |
