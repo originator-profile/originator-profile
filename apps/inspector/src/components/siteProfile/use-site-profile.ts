@@ -1,8 +1,7 @@
 import { SpVerifier, VerifiedSp } from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
-import { getRegistryKeys } from "../../utils/get-registry-keys";
-import { loadRegistryOps } from "../../utils/load-registry-ops";
+import { getRegistryKeys, registryOps } from "../../utils/registry-ops";
 import { fetchTabSiteProfile } from "./messaging";
 
 const key = "site-profile";
@@ -11,11 +10,8 @@ async function fetchVerifiedSiteProfile([, tabId]: [
   _: typeof key,
   tabId: number,
 ]): Promise<VerifiedSp> {
-  const [data, [issuer, verificationKey], registryOps] = await Promise.all([
-    fetchTabSiteProfile(tabId),
-    getRegistryKeys(),
-    loadRegistryOps(),
-  ]);
+  const data = await fetchTabSiteProfile(tabId);
+  const [issuer, verificationKey] = getRegistryKeys();
 
   const verifySp = SpVerifier(
     {
