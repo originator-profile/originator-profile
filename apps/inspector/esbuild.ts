@@ -67,13 +67,13 @@ const credentials: ImportMeta["env"]["BASIC_AUTH_CREDENTIALS"] = process.env
   ? JSON.parse(process.env.BASIC_AUTH_CREDENTIALS)
   : [];
 
+const registryOps: { core: string; annotations?: string[]; media?: string }[] =
+  process.env.REGISTRY_OPS ? JSON.parse(process.env.REGISTRY_OPS) : [];
+
 const env = {
   MODE: args.values.mode,
   BASIC_AUTH: process.env.BASIC_AUTH === "true",
   BASIC_AUTH_CREDENTIALS: process.env.BASIC_AUTH === "true" ? credentials : [],
-  REGISTRY_OPS: process.env.REGISTRY_OPS
-    ? JSON.parse(process.env.REGISTRY_OPS)
-    : [],
 };
 
 if (env.BASIC_AUTH && env.BASIC_AUTH_CREDENTIALS.length === 0) {
@@ -82,7 +82,7 @@ if (env.BASIC_AUTH && env.BASIC_AUTH_CREDENTIALS.length === 0) {
   );
 }
 
-if (env.REGISTRY_OPS.length === 0) {
+if (registryOps.length === 0) {
   console.warn(
     "REGISTRY_OPS is empty. Please set REGISTRY_OPS environment variable.",
   );
@@ -91,7 +91,7 @@ if (env.REGISTRY_OPS.length === 0) {
 import * as astro from "astro";
 import esbuild from "esbuild";
 import copy from "esbuild-copy-static-files";
-import { rm } from "node:fs/promises";
+import { rm, writeFile } from "node:fs/promises";
 // @ts-expect-error: 型定義がない
 import webExt from "web-ext";
 import postcss from "./esbuild.postcss.ts";
@@ -109,7 +109,8 @@ const buildOptions = {
   outdir,
   color: true,
   bundle: true,
-  minify: args.values.mode === "production",
+  minifySyntax: args.values.mode === "production",
+  minifyWhitespace: args.values.mode === "production",
   sourcemap: ["development", "testing"].includes(args.values.mode ?? ""),
   conditions: ["browser"],
   define: {
@@ -130,6 +131,18 @@ const buildOptions = {
       target: args.values.target,
       mode: args.values.mode,
     }),
+    {
+      name: "registry-ops",
+      setup(build) {
+        build.onEnd(async () => {
+          const dist = build.initialOptions.outdir ?? ".";
+          await writeFile(
+            path.join(dist, "registry-ops.json"),
+            JSON.stringify(registryOps, null, 2),
+          );
+        });
+      },
+    },
   ],
 } as const satisfies esbuild.BuildOptions;
 
