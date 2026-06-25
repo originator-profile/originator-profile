@@ -34,10 +34,7 @@ async function fetchVerifiedSiteProfile(
     const verifySp = SpVerifier(
       {
         ...parsed.result,
-        originators: [
-          ...registryOps,
-          ...parsed.result.originators,
-        ],
+        originators: [...registryOps, ...parsed.result.originators],
       },
       keys,
       issuer,

@@ -20,10 +20,7 @@ async function fetchVerifiedSiteProfile([, tabId]: [
   const verifySp = SpVerifier(
     {
       ...data.result,
-      originators: [
-        ...registryOps,
-        ...data.result.originators,
-      ],
+      originators: [...registryOps, ...data.result.originators],
     },
     verificationKey,
     issuer,

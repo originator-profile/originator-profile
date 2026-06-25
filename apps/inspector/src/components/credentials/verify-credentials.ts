@@ -34,11 +34,7 @@ export async function verifyOps(
     loadRegistryOps(),
   ]);
   const opsVerifier = OpsVerifier(
-    [
-      ...registryOps,
-      ...page.ops,
-      ...frames.flatMap((frame) => frame.ops),
-    ],
+    [...registryOps, ...page.ops, ...frames.flatMap((frame) => frame.ops)],
     keys,
     issuer,
   );
