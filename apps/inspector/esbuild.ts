@@ -129,6 +129,19 @@ const buildOptions = {
       target: args.values.target,
       mode: args.values.mode,
     }),
+    {
+      // OPS（VC/JWT）はコードへバンドルせず、別ファイルとして配置する
+      name: "registry-ops",
+      setup(build) {
+        build.onEnd(async () => {
+          const dist = build.initialOptions.outdir ?? ".";
+          await writeFile(
+            path.join(dist, "registry-ops.json"),
+            JSON.stringify(registryOps, null, 2),
+          );
+        });
+      },
+    },
   ],
 } as const satisfies esbuild.BuildOptions;
 
@@ -136,11 +149,6 @@ await rm(outdir, {
   force: true,
   recursive: true,
 });
-
-await writeFile(
-  path.join(import.meta.dirname, "src/utils/registry-ops.generated.json"),
-  JSON.stringify(registryOps, null, 2),
-);
 
 await esbuild.build(buildOptions);
 

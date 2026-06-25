@@ -8,7 +8,7 @@ import {
   type VerifiedSp,
   verifyCas,
 } from "@originator-profile/verify";
-import { getRegistryKeys, registryOps } from "../../utils/registry-ops";
+import { getRegistryKeys, getRegistryOps } from "../../utils/registry-ops";
 import { deduplicateCas } from "./deduplicate-cas";
 import { FrameIntegrityVerifier } from "./messaging";
 import type {
@@ -28,7 +28,10 @@ export async function verifyOps(
   frames: { ops: Parameters<typeof OpsVerifier>[0] }[],
   siteProfile?: VerifiedSp | null,
 ): ReturnType<ReturnType<typeof OpsVerifier>> {
-  const [issuer, keys] = getRegistryKeys();
+  const [[issuer, keys], registryOps] = await Promise.all([
+    getRegistryKeys(),
+    getRegistryOps(),
+  ]);
   const opsVerifier = OpsVerifier(
     [...registryOps, ...page.ops, ...frames.flatMap((frame) => frame.ops)],
     keys,
