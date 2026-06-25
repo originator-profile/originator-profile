@@ -71,13 +71,14 @@ const credentials = process.env.BASIC_AUTH_CREDENTIALS
   ? JSON.parse(process.env.BASIC_AUTH_CREDENTIALS)
   : [];
 
+const registryOps = process.env.REGISTRY_OPS
+  ? JSON.parse(process.env.REGISTRY_OPS)
+  : [];
+
 const env = {
   MODE: args.values.mode,
   BASIC_AUTH: process.env.BASIC_AUTH === "true",
   BASIC_AUTH_CREDENTIALS: process.env.BASIC_AUTH === "true" ? credentials : [],
-  REGISTRY_OPS: process.env.REGISTRY_OPS
-    ? JSON.parse(process.env.REGISTRY_OPS)
-    : [],
 };
 
 if (env.BASIC_AUTH && env.BASIC_AUTH_CREDENTIALS.length === 0) {
@@ -86,7 +87,7 @@ if (env.BASIC_AUTH && env.BASIC_AUTH_CREDENTIALS.length === 0) {
   );
 }
 
-if (env.REGISTRY_OPS.length === 0) {
+if (registryOps.length === 0) {
   console.warn(
     "REGISTRY_OPS is empty. Please set REGISTRY_OPS environment variable.",
   );
@@ -95,7 +96,7 @@ if (env.REGISTRY_OPS.length === 0) {
 import * as astro from "astro";
 import esbuild from "esbuild";
 import copy from "esbuild-copy-static-files";
-import { rm } from "node:fs/promises";
+import { rm, writeFile } from "node:fs/promises";
 // @ts-expect-error: 型定義がない
 import webExt from "web-ext";
 import postcss from "./esbuild.postcss.cjs";
@@ -135,6 +136,20 @@ const buildOptions = {
       target: args.values.target,
       mode: args.values.mode,
     }),
+    {
+      // OPS（VC/JWT）はコードへバンドルせず、拡張機能ルートへ別ファイルとして
+      // 配置し、実行時に chrome.runtime.getURL 経由で読み込む（難読化ポリシー対応）
+      name: "plugin:registry-ops",
+      setup(build) {
+        const dist = build.initialOptions.outdir ?? ".";
+        build.onEnd(async () => {
+          await writeFile(
+            path.join(dist, "registry-ops.json"),
+            JSON.stringify(registryOps),
+          );
+        });
+      },
+    },
   ],
 };
 

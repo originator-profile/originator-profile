@@ -6,7 +6,7 @@ import {
   SpVerifier,
   VerifiedSp,
 } from "@originator-profile/verify";
-import { getRegistryKeys } from "../../utils/get-registry-keys";
+import { getRegistryOps } from "../../utils/registry-ops";
 import { deduplicateCas } from "../credentials/deduplicate-cas";
 import { fetchTabCredentials } from "../credentials/messaging";
 import type { SupportedVerifiedCas } from "../credentials/types";
@@ -33,17 +33,18 @@ async function fetchVerifiedSiteProfile(
       return null;
     }
 
-    const [issuer, keys] = getRegistryKeys();
+    const {
+      ops: registryOps,
+      keys: [cpIssuer, verificationKeys],
+    } = await getRegistryOps();
+
     const verifySp = SpVerifier(
       {
         ...parsed.result,
-        originators: [
-          ...import.meta.env.REGISTRY_OPS,
-          ...parsed.result.originators,
-        ],
+        originators: [...registryOps, ...parsed.result.originators],
       },
-      keys,
-      issuer,
+      verificationKeys,
+      cpIssuer,
       parsed.origin,
     );
 
