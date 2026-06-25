@@ -8,7 +8,7 @@ import {
   type VerifiedSp,
   verifyCas,
 } from "@originator-profile/verify";
-import { getRegistryKeys, getRegistryOps } from "../../utils/registry-ops";
+import { getCpIssuerKeys, getCpIssuerOps } from "../../utils/cp-issuer-ops";
 import { deduplicateCas } from "./deduplicate-cas";
 import { FrameIntegrityVerifier } from "./messaging";
 import type {
@@ -20,7 +20,7 @@ import type {
 
 /**
  * OPSを検証する。
- * REGISTRY_OPSとページ・フレームのOPSを結合して検証し、
+ * CP_ISSUER_OPSとページ・フレームのOPSを結合して検証し、
  * Site Profile由来のOriginatorsを追加する。
  */
 export async function verifyOps(
@@ -28,12 +28,12 @@ export async function verifyOps(
   frames: { ops: Parameters<typeof OpsVerifier>[0] }[],
   siteProfile?: VerifiedSp | null,
 ): ReturnType<ReturnType<typeof OpsVerifier>> {
-  const [[issuer, keys], registryOps] = await Promise.all([
-    getRegistryKeys(),
-    getRegistryOps(),
+  const [[issuer, keys], cpIssuerOps] = await Promise.all([
+    getCpIssuerKeys(),
+    getCpIssuerOps(),
   ]);
   const opsVerifier = OpsVerifier(
-    [...registryOps, ...page.ops, ...frames.flatMap((frame) => frame.ops)],
+    [...cpIssuerOps, ...page.ops, ...frames.flatMap((frame) => frame.ops)],
     keys,
     issuer,
   );

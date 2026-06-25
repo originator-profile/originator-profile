@@ -67,8 +67,10 @@ const credentials: ImportMeta["env"]["BASIC_AUTH_CREDENTIALS"] = process.env
   ? JSON.parse(process.env.BASIC_AUTH_CREDENTIALS)
   : [];
 
-const registryOps: { core: string; annotations?: string[]; media?: string }[] =
-  process.env.REGISTRY_OPS ? JSON.parse(process.env.REGISTRY_OPS) : [];
+// 後方互換: 旧環境変数 REGISTRY_OPS も受け付ける（CP_ISSUER_OPS を優先）
+const cpIssuerOpsRaw = process.env.CP_ISSUER_OPS ?? process.env.REGISTRY_OPS;
+const cpIssuerOps: { core: string; annotations?: string[]; media?: string }[] =
+  cpIssuerOpsRaw ? JSON.parse(cpIssuerOpsRaw) : [];
 
 const env = {
   MODE: args.values.mode,
@@ -82,9 +84,9 @@ if (env.BASIC_AUTH && env.BASIC_AUTH_CREDENTIALS.length === 0) {
   );
 }
 
-if (registryOps.length === 0) {
+if (cpIssuerOps.length === 0) {
   console.warn(
-    "REGISTRY_OPS is empty. Please set REGISTRY_OPS environment variable.",
+    "CP_ISSUER_OPS is empty. Please set CP_ISSUER_OPS (or legacy REGISTRY_OPS) environment variable.",
   );
 }
 
@@ -109,6 +111,8 @@ const buildOptions = {
   outdir,
   color: true,
   bundle: true,
+  minifySyntax: args.values.mode === "production",
+  minifyWhitespace: args.values.mode === "production",
   sourcemap: ["development", "testing"].includes(args.values.mode ?? ""),
   conditions: ["browser"],
   define: {
@@ -131,13 +135,13 @@ const buildOptions = {
     }),
     {
       // OPS（VC/JWT）はコードへバンドルせず、別ファイルとして配置する
-      name: "registry-ops",
+      name: "cp-issuer-ops",
       setup(build) {
         build.onEnd(async () => {
           const dist = build.initialOptions.outdir ?? ".";
           await writeFile(
-            path.join(dist, "registry-ops.json"),
-            JSON.stringify(registryOps, null, 2),
+            path.join(dist, "cp-issuer-ops.json"),
+            JSON.stringify(cpIssuerOps, null, 2),
           );
         });
       },

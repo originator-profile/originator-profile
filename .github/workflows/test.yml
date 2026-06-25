@@ -36,6 +36,6 @@ jobs:
         with:
           NODE_ENV: testing
           BASIC_AUTH_CREDENTIALS: ${{ secrets.BASIC_AUTH_CREDENTIALS }}
-          REGISTRY_OPS: ${{ secrets.REGISTRY_OPS }}
+          CP_ISSUER_OPS: ${{ secrets.CP_ISSUER_OPS }}
       - name: End-to-End Test
         uses: "./.github/actions/e2e"

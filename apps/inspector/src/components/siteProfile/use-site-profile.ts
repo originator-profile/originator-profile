@@ -1,7 +1,7 @@
 import { SpVerifier, VerifiedSp } from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
-import { getRegistryKeys, getRegistryOps } from "../../utils/registry-ops";
+import { getCpIssuerKeys, getCpIssuerOps } from "../../utils/cp-issuer-ops";
 import { fetchTabSiteProfile } from "./messaging";
 
 const key = "site-profile";
@@ -10,16 +10,16 @@ async function fetchVerifiedSiteProfile([, tabId]: [
   _: typeof key,
   tabId: number,
 ]): Promise<VerifiedSp> {
-  const [data, [issuer, verificationKey], registryOps] = await Promise.all([
+  const [data, [issuer, verificationKey], cpIssuerOps] = await Promise.all([
     fetchTabSiteProfile(tabId),
-    getRegistryKeys(),
-    getRegistryOps(),
+    getCpIssuerKeys(),
+    getCpIssuerOps(),
   ]);
 
   const verifySp = SpVerifier(
     {
       ...data.result,
-      originators: [...registryOps, ...data.result.originators],
+      originators: [...cpIssuerOps, ...data.result.originators],
     },
     verificationKey,
     issuer,

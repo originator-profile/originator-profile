@@ -46,7 +46,7 @@ $ pnpm dev --registry-url=https://oprexpt.originator-profile.org/ --url=https://
 
 - `BASIC_AUTH`: レジストリ API の Basic 認証 (形式: `true` or `false`)
 - `BASIC_AUTH_CREDENTIALS`: Basic 認証の認証情報 (形式: JSON)
-- `REGISTRY_OPS`: Core Profile 発行者の Originator Profile Set
+- `CP_ISSUER_OPS`: Core Profile Issuer (Core Profile 発行者) の Originator Profile Set
 
 ## 認証情報
 
@@ -74,9 +74,9 @@ $ pnpm dev --registry-url=https://oprexpt.originator-profile.org/ --url=https://
 $ BASIC_AUTH_CREDENTIALS=$(cat credentials.json) pnpm build
 ```
 
-## Originator ProfileレジストリのOPを同梱する
+## Core Profile Issuer の OP を同梱する
 
-拡張機能をビルドする際、環境変数 `REGISTRY_OPS` があれば、その内容をレジストリのOPとして同梱し、検証に使用します。
+拡張機能をビルドする際、環境変数 `CP_ISSUER_OPS` があれば、その内容を CP Issuer の OP として同梱し、検証に使用します。
 
 形式:
 
@@ -93,7 +93,7 @@ $ BASIC_AUTH_CREDENTIALS=$(cat credentials.json) pnpm build
 実行例:
 
 ```
-$ REGISTRY_OPS=$(cat registry-ops.json) pnpm build
+$ CP_ISSUER_OPS=$(cat cp-issuer-ops.json) pnpm build
 ```
 
 ## npm スクリプト

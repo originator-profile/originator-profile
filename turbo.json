@@ -42,7 +42,7 @@
         "NODE_ENV",
         "BASIC_AUTH",
         "BASIC_AUTH_CREDENTIALS",
-        "REGISTRY_OPS"
+        "CP_ISSUER_OPS"
       ]
     },
     "demo-page#build": {

@@ -12,7 +12,7 @@ inputs:
   BASIC_AUTH_CREDENTIALS:
     description: レジストリ API の Basic 認証情報 (JSON 文字列)
     required: true
-  REGISTRY_OPS:
+  CP_ISSUER_OPS:
     description: Originator Profile Set
     required: true
 outputs:
@@ -31,7 +31,7 @@ runs:
         NODE_ENV: ${{ inputs.NODE_ENV }}
         BASIC_AUTH: ${{ inputs.BASIC_AUTH }}
         BASIC_AUTH_CREDENTIALS: ${{ inputs.BASIC_AUTH_CREDENTIALS }}
-        REGISTRY_OPS: ${{ inputs.REGISTRY_OPS }}
+        CP_ISSUER_OPS: ${{ inputs.CP_ISSUER_OPS }}
     - id: upload
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
       with:

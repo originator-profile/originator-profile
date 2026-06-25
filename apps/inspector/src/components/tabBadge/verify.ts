@@ -1,6 +1,6 @@
 import { deserializeIfError } from "@originator-profile/core";
 import { SpVerifier, VerifiedSp } from "@originator-profile/verify";
-import { getRegistryKeys, getRegistryOps } from "../../utils/registry-ops";
+import { getCpIssuerKeys, getCpIssuerOps } from "../../utils/cp-issuer-ops";
 import { fetchTabCredentials } from "../credentials";
 import type { SupportedVerifiedCas } from "../credentials/types";
 import { verifyAllCredentials } from "../credentials/verify-credentials";
@@ -26,14 +26,14 @@ async function fetchVerifiedSiteProfile(
       return null;
     }
 
-    const [[issuer, keys], registryOps] = await Promise.all([
-      getRegistryKeys(),
-      getRegistryOps(),
+    const [[issuer, keys], cpIssuerOps] = await Promise.all([
+      getCpIssuerKeys(),
+      getCpIssuerOps(),
     ]);
     const verifySp = SpVerifier(
       {
         ...parsed.result,
-        originators: [...registryOps, ...parsed.result.originators],
+        originators: [...cpIssuerOps, ...parsed.result.originators],
       },
       keys,
       issuer,

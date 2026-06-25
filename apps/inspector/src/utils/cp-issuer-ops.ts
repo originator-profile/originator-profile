@@ -7,14 +7,14 @@ import {
 } from "@originator-profile/verify";
 
 /**
- * OP レジストリの OPS は VC（JWT）を含むため、コードへバンドルせず
- * 拡張機能内の registry-ops.json として配置し、実行時に読み込む。
+ * Core Profile Issuer の OPS は VC（JWT）が難読化として誤検出される可能性あるので外部化
+ * 拡張機能内の cp-issuer-ops.json として配置し、実行時に読み込む。
  */
 let cache: Promise<{ ops: OriginatorProfileSet; keys: TupledKeys }> | undefined;
 
 function load() {
   cache ??= (async () => {
-    const url = chrome.runtime.getURL("registry-ops.json");
+    const url = chrome.runtime.getURL("cp-issuer-ops.json");
     const ops = (await fetch(url).then((res) =>
       res.json(),
     )) as OriginatorProfileSet;
@@ -29,16 +29,16 @@ function load() {
 }
 
 /**
- * OP レジストリの OPS を取得する
+ * Core Profile Issuer の OPS を取得
  */
-export async function getRegistryOps(): Promise<OriginatorProfileSet> {
+export async function getCpIssuerOps(): Promise<OriginatorProfileSet> {
   return (await load()).ops;
 }
 
 /**
- * OP レジストリの JWKS を取得する
- * @returns レジストリの Issuer, JWKS のタプル
+ * Core Profile Issuer の JWKS を取得
+ * @returns Core Profile Issuer の Issuer, JWKS のタプル
  */
-export async function getRegistryKeys(): Promise<TupledKeys> {
+export async function getCpIssuerKeys(): Promise<TupledKeys> {
   return (await load()).keys;
 }
