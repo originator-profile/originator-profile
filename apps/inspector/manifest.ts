@@ -103,7 +103,6 @@ export default function esbuildPluginManifest({
   const targetManifest = {
     chromium,
     "firefox-desktop": firefox,
-    "firefox-android": firefox,
   }[target];
 
   if (!targetManifest) {
