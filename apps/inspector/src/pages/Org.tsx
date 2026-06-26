@@ -1,8 +1,6 @@
 import { selectByLocale } from "@originator-profile/core";
-import {
-  getAnnotationPolicy,
-  isDisplayableProfileAnnotation,
-} from "@originator-profile/ui";
+import { isDisplayableProfileAnnotation } from "@originator-profile/ui";
+import { getAnnotationPolicy } from "@originator-profile/verify";
 import { useMemo } from "react";
 import { useParams, useSearchParams } from "react-router";
 import Loading from "../components/Loading";
@@ -50,7 +48,7 @@ function Org(props: Props) {
           JSON.stringify([
             a.issuer,
             a.credentialSubject.id,
-            getAnnotationPolicy(a.credentialSubject).id,
+            getAnnotationPolicy(a).id,
           ]),
       },
     );

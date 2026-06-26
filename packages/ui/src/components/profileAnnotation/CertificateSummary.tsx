@@ -1,8 +1,11 @@
-import { Certificate, VerifiedOps } from "@originator-profile/verify";
+import {
+  Certificate,
+  getAnnotationPolicy,
+  VerifiedOps,
+} from "@originator-profile/verify";
 import { twMerge } from "tailwind-merge";
 import placeholderLogoMainUrl from "../../assets/placeholder-logo-main.png";
 import { _ } from "../../utils/get-message";
-import { getAnnotationPolicy } from "../../utils/profile-annotation";
 import Image from "../Image";
 import { useProfileAnnotatorWmp } from "./use-profile-annotator-wmp";
 
@@ -41,9 +44,7 @@ export function CertificateSummary({
         height={40}
       />
       <span className="flex flex-col gap-2 items-start">
-        <span className="text-sm">
-          {getAnnotationPolicy(certificate.credentialSubject).name}
-        </span>
+        <span className="text-sm">{getAnnotationPolicy(certificate).name}</span>
         <span className="text-xs text-gray-600">
           {_(
             "CertificateSummary_IssuedBy",

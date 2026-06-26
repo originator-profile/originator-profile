@@ -1,5 +1,4 @@
-import { Certificate } from "@originator-profile/verify";
-import { getAnnotationPolicy } from "./profile-annotation";
+import { Certificate, getAnnotationPolicy } from "@originator-profile/verify";
 
 const certificationSystemIdPriorityMap: Record<string, number> = {
   "urn:uuid:def09cbd-6e8e-4c73-856d-5e00dffde643": 1, // Fictitious Organization Existence Verification Agency Existence Certificate
@@ -29,8 +28,8 @@ const getPriority = (id: string): number => {
  */
 export default function sortCertificates(certificates: Certificate[]) {
   return [...certificates].sort((a, b) => {
-    const priorityA = getPriority(getAnnotationPolicy(a.credentialSubject).id);
-    const priorityB = getPriority(getAnnotationPolicy(b.credentialSubject).id);
+    const priorityA = getPriority(getAnnotationPolicy(a).id);
+    const priorityB = getPriority(getAnnotationPolicy(b).id);
     return priorityA - priorityB;
   });
 }
