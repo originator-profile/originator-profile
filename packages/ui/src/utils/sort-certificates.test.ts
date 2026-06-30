@@ -1,6 +1,5 @@
-import { Certificate } from "@originator-profile/verify";
+import { Certificate, getAnnotationPolicy } from "@originator-profile/verify";
 import { describe, expect, test } from "vitest";
-import { getAnnotationPolicy } from "./profile-annotation";
 import sortCertificates from "./sort-certificates";
 
 const makeCertificate = (id: string): Certificate => ({
@@ -58,9 +57,7 @@ describe("sortCertificates", () => {
       makeCertificate("urn:uuid:203a2553-f1a8-40ba-9df0-4e508aa8511d"),
     ];
     const result = sortCertificates(input);
-    expect(
-      result.map((c) => getAnnotationPolicy(c.credentialSubject).id),
-    ).toEqual([
+    expect(result.map((c) => getAnnotationPolicy(c).id)).toEqual([
       "urn:uuid:def09cbd-6e8e-4c73-856d-5e00dffde643",
       "urn:uuid:203a2553-f1a8-40ba-9df0-4e508aa8511d",
       "urn:uuid:2dbf9afe-af9c-4c6a-b6df-70a9565fec5e",
@@ -74,9 +71,7 @@ describe("sortCertificates", () => {
       makeCertificate("urn:uuid:85c92abe-4518-42bb-855d-dffeabfe4a38"),
     ];
     const result = sortCertificates(input);
-    expect(
-      result.map((c) => getAnnotationPolicy(c.credentialSubject).id),
-    ).toEqual([
+    expect(result.map((c) => getAnnotationPolicy(c).id)).toEqual([
       "urn:uuid:8029ece0-b327-4a7e-b586-3e442cb82d92",
       "urn:uuid:85c92abe-4518-42bb-855d-dffeabfe4a38",
       "unknown",
@@ -95,9 +90,7 @@ describe("sortCertificates", () => {
       makeProfileAnnotation("urn:uuid:203a2553-f1a8-40ba-9df0-4e508aa8511d"),
     ];
     const result = sortCertificates(input);
-    expect(
-      result.map((c) => getAnnotationPolicy(c.credentialSubject).id),
-    ).toEqual([
+    expect(result.map((c) => getAnnotationPolicy(c).id)).toEqual([
       "urn:uuid:def09cbd-6e8e-4c73-856d-5e00dffde643",
       "urn:uuid:203a2553-f1a8-40ba-9df0-4e508aa8511d",
       "urn:uuid:8029ece0-b327-4a7e-b586-3e442cb82d92",
@@ -111,9 +104,7 @@ describe("sortCertificates", () => {
       makeCertificate("urn:uuid:2dbf9afe-af9c-4c6a-b6df-70a9565fec5e"),
     ];
     const result = sortCertificates(input);
-    expect(
-      result.map((c) => getAnnotationPolicy(c.credentialSubject).id),
-    ).toEqual([
+    expect(result.map((c) => getAnnotationPolicy(c).id)).toEqual([
       "urn:uuid:def09cbd-6e8e-4c73-856d-5e00dffde643",
       "urn:uuid:2dbf9afe-af9c-4c6a-b6df-70a9565fec5e",
       "urn:uuid:8029ece0-b327-4a7e-b586-3e442cb82d92",

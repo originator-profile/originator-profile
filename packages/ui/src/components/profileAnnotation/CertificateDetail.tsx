@@ -1,9 +1,12 @@
 import { Icon } from "@iconify/react";
-import { Certificate, VerifiedOps } from "@originator-profile/verify";
+import {
+  Certificate,
+  getAnnotationPolicy,
+  VerifiedOps,
+} from "@originator-profile/verify";
 import { twMerge } from "tailwind-merge";
 import placeholderLogoMainUrl from "../../assets/placeholder-logo-main.png";
 import { _ } from "../../utils/get-message";
-import { getAnnotationPolicy } from "../../utils/profile-annotation";
 import Image from "../Image";
 import Spinner from "../Spinner";
 import { useProfileAnnotatorWmp } from "./use-profile-annotator-wmp";
@@ -44,7 +47,7 @@ function CertificateDetailContent({
   ops,
 }: Props & Required<Pick<Props, "certificate">>) {
   const paWmp = useProfileAnnotatorWmp(ops ?? [], certificate.issuer);
-  const policy = getAnnotationPolicy(certificate.credentialSubject);
+  const policy = getAnnotationPolicy(certificate);
   return (
     <>
       <header className="flex items-center gap-3 mb-4">
