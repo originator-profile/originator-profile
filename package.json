@@ -9,7 +9,7 @@
   "type": "module",
   "scripts": {
     "build": "turbo run build",
-    "version": "node --run=build && git add packages/*/README.md",
+    "version": "node --run=build && node scripts/update-readme-environments.ts && git add apps/*/README.md packages/*/README.md",
     "dev": "turbo run dev --parallel --env-mode=loose",
     "e2e": "turbo run e2e --concurrency=1 --filter=!@originator-profile/wordpress",
     "e2e:update": "turbo run e2e:update --concurrency=1 --filter=!@originator-profile/wordpress",
