@@ -96,8 +96,8 @@ function reportUnauthorizedAnnotation({
     return;
   }
 
-  const policyId = getAnnotationPolicy(doc).id;
-  const isAllowed = policy.get(profileAnnotationIssuer)?.has(policyId);
+  const policyId = getAnnotationPolicy(doc)?.id;
+  const isAllowed = policyId && policy.get(profileAnnotationIssuer)?.has(policyId);
   if (!isAllowed) {
     console.error(
       `Profile Annotation Issuer is not registered for this annotation scheme (${location} issuer: ${profileAnnotationIssuer}, scheme: ${policyId ?? "unknown"})`,
