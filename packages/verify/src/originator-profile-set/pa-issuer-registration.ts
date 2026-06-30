@@ -100,7 +100,7 @@ function reportUnauthorizedAnnotation({
   const isAllowed =
     policyId && policy.get(profileAnnotationIssuer)?.has(policyId);
   if (!isAllowed) {
-    console.error(
+    console.warn(
       `Profile Annotation Issuer is not registered for this annotation scheme (${location} issuer: ${profileAnnotationIssuer}, scheme: ${policyId ?? "unknown"})`,
     );
   }
@@ -111,7 +111,7 @@ function reportUnauthorizedAnnotation({
  *
  * 各 Profile Annotation の発行者が、Core Profile Issuer から発行された登録証 PA によって、その PA が準拠する 認証制度（Profile Annotation Policy）の発行を認可されているかを検証
  *
- * (2027年まで) 後方互換性のため、認可を確認できない場合も検証は失敗させず console.error に留める。
+ * (2027年まで) 後方互換性のため、認可を確認できない場合も検証は失敗させず console.warn に留める。
  *
  * @param verifiedOps 検証済み Originator Profile Set
  * @param cpIssuer 基底となる Core Profile Issuer の OP ID

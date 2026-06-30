@@ -24,14 +24,14 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
   const { authority, certifier, certifierCp, authorityOp, certifierOp, ops } =
     await buildOpsFixture();
 
-  let errorSpy: MockInstance;
+  let warnSpy: MockInstance;
 
   beforeEach(() => {
-    errorSpy = vi.spyOn(console, "error").mockImplementation(() => {});
+    warnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
   });
 
   afterEach(() => {
-    errorSpy.mockRestore();
+    warnSpy.mockRestore();
   });
 
   /** 認可判定に用いる Profile Annotation Policy ID */
@@ -123,7 +123,7 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
 
   const NOT_REGISTERED = "Profile Annotation Issuer is not registered";
 
-  test("登録のない PA は console.error で警告される (2027年まで)", async () => {
+  test("登録のない PA は console.warn で警告される (2027年まで)", async () => {
     const target: OriginatorProfileSet = [
       authorityOp,
       certifierOp,
@@ -134,7 +134,7 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
 
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
-    expect(errorSpy).toHaveBeenCalledWith(
+    expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining(NOT_REGISTERED),
     );
   });
@@ -150,7 +150,9 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
 
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
-    expect(errorSpy).not.toHaveBeenCalled();
+    expect(warnSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining(NOT_REGISTERED),
+    );
   });
 
   test("登録証に含まれない場合は警告される", async () => {
@@ -164,7 +166,29 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
 
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
-    expect(errorSpy).toHaveBeenCalledWith(
+    expect(warnSpy).toHaveBeenCalledWith(
+      expect.stringContaining(NOT_REGISTERED),
+    );
+  });
+
+  test("非 CP issuer の登録証 PA は免除されず警告される", async () => {
+    const target: OriginatorProfileSet = [
+      authorityOp,
+      // certifier 自身が発行した登録証 PA (issuer=certifier)。CP issuer の認可は無い
+      // （検証鍵はこの OP 自身の Core Profile から解決されるため certifierOp は不要）
+      await certifierOpWithRegistration(
+        { ...buildRegistration([POLICY_ID]), issuer: opId.certifier },
+        certifier.privateKey,
+      ),
+    ];
+
+    const result = await OpsVerifier(target, keys, opId.authority)();
+
+    expect(result).not.instanceOf(OpsInvalid);
+    expect(result).not.instanceOf(OpsVerifyFailed);
+    // isProfileAnnotationIssuerRegistration だが issuer が CP issuer でないため
+    // 免除を受けず認可チェックに落ち、警告される
+    expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining(NOT_REGISTERED),
     );
   });
@@ -196,7 +220,9 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
 
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
-    expect(errorSpy).not.toHaveBeenCalled();
+    expect(warnSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining(NOT_REGISTERED),
+    );
   });
 
   test("非推奨 Certificate は認可ゲートの対象外", async () => {
@@ -204,7 +230,9 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
 
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
-    expect(errorSpy).not.toHaveBeenCalled();
+    expect(warnSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining(NOT_REGISTERED),
+    );
   });
 
   test("OP レジストリが認可した発行者は登録証 PA 発行可能", async () => {
@@ -226,7 +254,39 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
 
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
-    expect(errorSpy).not.toHaveBeenCalled();
+    expect(warnSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining(NOT_REGISTERED),
+    );
+  });
+
+  test("認可の連鎖は再帰しない: CP→certifier 認可済みでも certifier 発行登録証は下流 PA を認可しない", async () => {
+    const target: OriginatorProfileSet = [
+      authorityOp,
+      // ① CP issuer が certifier に登録制度を認可（certifier は登録証 PA を発行可能になる）
+      await certifierOpWithRegistration(
+        buildRegistration([REGISTRATION_POLICY_ID]),
+      ),
+      // ② certifier 自身が POLICY_ID を付与する登録証 PA を発行（issuer=certifier）
+      await certifierOpWithRegistration(
+        { ...buildRegistration([POLICY_ID]), issuer: opId.certifier },
+        certifier.privateKey,
+      ),
+      // ③ certifier 発行の通常 PA（policy=POLICY_ID）を originator が保有
+      await originatorOpWithPa(),
+    ];
+
+    const result = await OpsVerifier(target, keys, opId.authority)();
+
+    expect(result).not.instanceOf(OpsInvalid);
+    expect(result).not.instanceOf(OpsVerifyFailed);
+
+    // ①②の登録証 PA は警告されず、③の通常 PA「のみ」警告される（連鎖は伝播しない）
+    const notRegisteredWarnings = warnSpy.mock.calls.filter(
+      ([message]) =>
+        typeof message === "string" && message.includes(NOT_REGISTERED),
+    );
+    expect(notRegisteredWarnings).toHaveLength(1);
+    expect(notRegisteredWarnings[0]?.[0]).toContain("OP[3]");
   });
 
   test("Core Profile Issuer が発行した登録証 PA は基底となる", async () => {
@@ -239,7 +299,9 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
 
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
-    expect(errorSpy).not.toHaveBeenCalled();
+    expect(warnSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining(NOT_REGISTERED),
+    );
   });
 
   test("Core Profile Issuer が自己宛に発行した登録証は基底となる", async () => {
@@ -261,6 +323,8 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
 
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
-    expect(errorSpy).not.toHaveBeenCalled();
+    expect(warnSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining(NOT_REGISTERED),
+    );
   });
 });
