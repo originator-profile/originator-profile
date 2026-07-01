@@ -189,7 +189,7 @@ if (list) {
 Outdated:
 ${list}
 
-Run `node scripts/${basename(import.meta.url)}`
+Run \`node scripts/${basename(import.meta.url)}`,
     );
     process.exit(1);
   }
