@@ -1,4 +1,4 @@
-import { CommandHelp, Help } from "@oclif/core/help";
+import { CommandHelp, Help as OclifHelp } from "@oclif/core/help";
 import wrapAnsi from "wrap-ansi";
 
 class IndentPreservingCommandHelp extends CommandHelp {
@@ -13,6 +13,6 @@ class IndentPreservingCommandHelp extends CommandHelp {
   }
 }
 
-export default class CustomHelp extends Help {
+export default class Help extends OclifHelp {
   CommandHelpClass = IndentPreservingCommandHelp;
 }
