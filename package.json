@@ -30,6 +30,7 @@
     "@lerna-lite/version": "4.11.5",
     "@types/jsdom": "28.0.1",
     "astro": "6.2.2",
+    "js-yaml": "5.2.0",
     "npm-run-all2": "8.0.4",
     "prettier": "3.8.2",
     "prettier-plugin-organize-imports": "4.3.0",
