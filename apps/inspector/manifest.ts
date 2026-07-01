@@ -61,6 +61,7 @@ const base = {
 
 const chromium = {
   ...base,
+  minimum_chrome_version: "114",
   permissions: [...base.permissions, "sidePanel"],
   version_name: pkg.version,
   background: {
