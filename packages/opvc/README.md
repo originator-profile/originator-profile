@@ -69,50 +69,50 @@ FLAG DESCRIPTIONS
     Article Content Attestation の例:
 
     {
-    "@context": [
-    "https://www.w3.org/ns/credentials/v2",
-    "https://originator-profile.org/ns/credentials/v1",
-    "https://originator-profile.org/ns/cip/v1",
-    {
-    "@language": "ja"
-    }
-    ],
-    "type": [
-    "VerifiableCredential",
-    "ContentAttestation"
-    ],
-    "issuer": "dns:example.com",
-    "credentialSubject": {
-    "id": "urn:uuid:78550fa7-f846-4e0f-ad5c-8d34461cb95b",
-    "type": "Article",
-    "headline": "<Webページのタイトル>",
-    "image": {
-    "id": "<サムネイル画像URL>",
-    "content": [
-    "<コンテンツ (data:// 形式URL)>"
-    ]
-    },
-    "description": "<Webページの説明>",
-    "author": [
-    "山田花子"
-    ],
-    "editor": [
-    "山田太郎"
-    ],
-    "datePublished": "2023-07-04T19:14:00Z",
-    "dateModified": "2023-07-04T19:14:00Z",
-    "genre": "Arts & Entertainment"
-    },
-    "allowedUrl": "https://media.example.com/articles/2024-06-30",
-    "target": [
-    {
-    "type": "<Target Integrityの種別>",
-    "content": [
-    "<コンテンツ本体 (text/html or URL)>"
-    ],
-    "cssSelector": "<CSS セレクター (optional)>"
-    }
-    ]
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+        "https://originator-profile.org/ns/cip/v1",
+        {
+          "@language": "ja"
+        }
+      ],
+      "type": [
+        "VerifiableCredential",
+        "ContentAttestation"
+      ],
+      "issuer": "dns:example.com",
+      "credentialSubject": {
+        "id": "urn:uuid:78550fa7-f846-4e0f-ad5c-8d34461cb95b",
+        "type": "Article",
+        "headline": "<Webページのタイトル>",
+        "image": {
+          "id": "<サムネイル画像URL>",
+          "content": [
+            "<コンテンツ (data:// 形式URL)>"
+          ]
+        },
+        "description": "<Webページの説明>",
+        "author": [
+          "山田花子"
+        ],
+        "editor": [
+          "山田太郎"
+        ],
+        "datePublished": "2023-07-04T19:14:00Z",
+        "dateModified": "2023-07-04T19:14:00Z",
+        "genre": "Arts & Entertainment"
+      },
+      "allowedUrl": "https://media.example.com/articles/2024-06-30",
+      "target": [
+        {
+          "type": "<Target Integrityの種別>",
+          "content": [
+            "<コンテンツ本体 (text/html or URL)>"
+          ],
+          "cssSelector": "<CSS セレクター (optional)>"
+        }
+      ]
     }
 ```
 
@@ -154,50 +154,50 @@ FLAG DESCRIPTIONS
     Article Content Attestation の例:
 
     {
-    "@context": [
-    "https://www.w3.org/ns/credentials/v2",
-    "https://originator-profile.org/ns/credentials/v1",
-    "https://originator-profile.org/ns/cip/v1",
-    {
-    "@language": "<言語・地域コード>"
-    }
-    ],
-    "type": [
-    "VerifiableCredential",
-    "ContentAttestation"
-    ],
-    "issuer": "<OP ID>",
-    "credentialSubject": {
-    "id": "<CA ID>",
-    "type": "Article",
-    "headline": "<コンテンツのタイトル>",
-    "description": "<コンテンツの説明>",
-    "image": {
-    "id": "<サムネイル画像URL>",
-    "content": [
-    "<コンテンツ (data:// 形式URL)>"
-    ]
-    },
-    "datePublished": "<公開日時>",
-    "dateModified": "<最終更新日時>",
-    "author": [
-    "<著者名>"
-    ],
-    "editor": [
-    "<編集者名>"
-    ],
-    "genre": "<ジャンル>"
-    },
-    "allowedUrl": "<CAの使用を許可するWebページのURL Pattern>",
-    "target": [
-    {
-    "type": "<Target Integrityの種別>",
-    "content": [
-    "<コンテンツ本体 (text/html or URL)>"
-    ],
-    "cssSelector": "<CSS セレクター (optional)>"
-    }
-    ]
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+        "https://originator-profile.org/ns/cip/v1",
+        {
+          "@language": "<言語・地域コード>"
+        }
+      ],
+      "type": [
+        "VerifiableCredential",
+        "ContentAttestation"
+      ],
+      "issuer": "<OP ID>",
+      "credentialSubject": {
+        "id": "<CA ID>",
+        "type": "Article",
+        "headline": "<コンテンツのタイトル>",
+        "description": "<コンテンツの説明>",
+        "image": {
+          "id": "<サムネイル画像URL>",
+          "content": [
+            "<コンテンツ (data:// 形式URL)>"
+          ]
+        },
+        "datePublished": "<公開日時>",
+        "dateModified": "<最終更新日時>",
+        "author": [
+          "<著者名>"
+        ],
+        "editor": [
+          "<編集者名>"
+        ],
+        "genre": "<ジャンル>"
+      },
+      "allowedUrl": "<CAの使用を許可するWebページのURL Pattern>",
+      "target": [
+        {
+          "type": "<Target Integrityの種別>",
+          "content": [
+            "<コンテンツ本体 (text/html or URL)>"
+          ],
+          "cssSelector": "<CSS セレクター (optional)>"
+        }
+      ]
     }
 ```
 
@@ -296,113 +296,113 @@ FLAG DESCRIPTIONS
     コアプロファイル (CP) の例:
 
     {
-    "@context": [
-    "https://www.w3.org/ns/credentials/v2",
-    "https://originator-profile.org/ns/credentials/v1"
-    ],
-    "type": [
-    "VerifiableCredential",
-    "CoreProfile"
-    ],
-    "issuer": "dns:example.org",
-    "credentialSubject": {
-    "id": "dns:example.jp",
-    "type": "Core",
-    "jwks": {
-    "keys": [
-    {
-    "kid": "LIstkoCvByn4jk8oZPvigQkzTzO9UwnGnE-VMlkZvYQ",
-    "kty": "EC",
-    "crv": "P-256",
-    "x": "QiVI-I-3gv-17KN0RFLHKh5Vj71vc75eSOkyMsxFxbE",
-    "y": "bEzRDEy41bihcTnpSILImSVymTQl9BQZq36QpCpJQnI"
-    }
-    ]
-    }
-    }
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1"
+      ],
+      "type": [
+        "VerifiableCredential",
+        "CoreProfile"
+      ],
+      "issuer": "dns:example.org",
+      "credentialSubject": {
+        "id": "dns:example.jp",
+        "type": "Core",
+        "jwks": {
+          "keys": [
+            {
+              "kid": "LIstkoCvByn4jk8oZPvigQkzTzO9UwnGnE-VMlkZvYQ",
+              "kty": "EC",
+              "crv": "P-256",
+              "x": "QiVI-I-3gv-17KN0RFLHKh5Vj71vc75eSOkyMsxFxbE",
+              "y": "bEzRDEy41bihcTnpSILImSVymTQl9BQZq36QpCpJQnI"
+            }
+          ]
+        }
+      }
     }
 
     ウェブメディアプロファイル (WMP) の例:
 
     {
-    "@context": [
-    "https://www.w3.org/ns/credentials/v2",
-    "https://originator-profile.org/ns/credentials/v1",
-    "https://originator-profile.org/ns/cip/v1",
-    {
-    "@language": "ja"
-    }
-    ],
-    "type": [
-    "VerifiableCredential",
-    "WebMediaProfile"
-    ],
-    "issuer": "dns:wmp-issuer.example.org",
-    "credentialSubject": {
-    "id": "dns:wmp-holder.example.jp",
-    "type": "OnlineBusiness",
-    "url": "https://www.wmp-holder.example.jp/",
-    "name": "○○メディア (※開発用サンプル)",
-    "logo": {
-    "id": "https://www.wmp-holder.example.jp/image.png",
-    "digestSRI": "sha256-Upwn7gYMuRmJlD1ZivHk876vXHzokXrwXj50VgfnMnY="
-    },
-    "email": "contact@wmp-holder.example.jp",
-    "telephone": "0000000000",
-    "contactPoint": {
-    "id": "https://wmp-holder.example.jp/contact",
-    "name": "お問い合わせ"
-    },
-    "informationTransmissionPolicy": {
-    "id": "https://wmp-holder.example.jp/statement",
-    "name": "情報発信ポリシー"
-    },
-    "publishingPrinciple": {
-    "id": "https://wmp-holder.example.jp/editorial-guidelines",
-    "name": "編集ガイドライン"
-    },
-    "privacyPolicy": {
-    "id": "https://wmp-holder.example.jp/privacy",
-    "name": "プライバシーポリシー"
-    },
-    "description": [
-    {
-    "encodingFormat": "text/plain",
-    "text": "この文章はこの Web メディアに関する補足情報です。"
-    }
-    ]
-    }
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+        "https://originator-profile.org/ns/cip/v1",
+        {
+          "@language": "ja"
+        }
+      ],
+      "type": [
+        "VerifiableCredential",
+        "WebMediaProfile"
+      ],
+      "issuer": "dns:wmp-issuer.example.org",
+      "credentialSubject": {
+        "id": "dns:wmp-holder.example.jp",
+        "type": "OnlineBusiness",
+        "url": "https://www.wmp-holder.example.jp/",
+        "name": "○○メディア (※開発用サンプル)",
+        "logo": {
+          "id": "https://www.wmp-holder.example.jp/image.png",
+          "digestSRI": "sha256-Upwn7gYMuRmJlD1ZivHk876vXHzokXrwXj50VgfnMnY="
+        },
+        "email": "contact@wmp-holder.example.jp",
+        "telephone": "0000000000",
+        "contactPoint": {
+          "id": "https://wmp-holder.example.jp/contact",
+          "name": "お問い合わせ"
+        },
+        "informationTransmissionPolicy": {
+          "id": "https://wmp-holder.example.jp/statement",
+          "name": "情報発信ポリシー"
+        },
+        "publishingPrinciple": {
+          "id": "https://wmp-holder.example.jp/editorial-guidelines",
+          "name": "編集ガイドライン"
+        },
+        "privacyPolicy": {
+          "id": "https://wmp-holder.example.jp/privacy",
+          "name": "プライバシーポリシー"
+        },
+        "description": [
+          {
+            "encodingFormat": "text/plain",
+            "text": "この文章はこの Web メディアに関する補足情報です。"
+          }
+        ]
+      }
     }
 
     Website Profile (WSP) の例:
 
     {
-    "@context": [
-    "https://www.w3.org/ns/credentials/v2",
-    "https://originator-profile.org/ns/credentials/v1",
-    "https://originator-profile.org/ns/cip/v1",
-    {
-    "@language": "ja"
-    }
-    ],
-    "type": [
-    "VerifiableCredential",
-    "WebsiteProfile"
-    ],
-    "issuer": "dns:example.com",
-    "credentialSubject": {
-    "id": "https://media.example.com/",
-    "type": "WebSite",
-    "name": "<Webサイトのタイトル>",
-    "description": "<Webサイトの説明>",
-    "image": {
-    "id": "https://media.example.com/image.png",
-    "digestSRI": "sha256-Upwn7gYMuRmJlD1ZivHk876vXHzokXrwXj50VgfnMnY="
-    },
-    "allowedOrigin": [
-    "https://media.example.com"
-    ]
-    }
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+        "https://originator-profile.org/ns/cip/v1",
+        {
+          "@language": "ja"
+        }
+      ],
+      "type": [
+        "VerifiableCredential",
+        "WebsiteProfile"
+      ],
+      "issuer": "dns:example.com",
+      "credentialSubject": {
+        "id": "https://media.example.com/",
+        "type": "WebSite",
+        "name": "<Webサイトのタイトル>",
+        "description": "<Webサイトの説明>",
+        "image": {
+          "id": "https://media.example.com/image.png",
+          "digestSRI": "sha256-Upwn7gYMuRmJlD1ZivHk876vXHzokXrwXj50VgfnMnY="
+        },
+        "allowedOrigin": [
+          "https://media.example.com"
+        ]
+      }
     }
 ```
 
@@ -454,93 +454,93 @@ FLAG DESCRIPTIONS
     Website Profile (WSP) の例:
 
     {
-    "@context": [
-    "https://www.w3.org/ns/credentials/v2",
-    "https://originator-profile.org/ns/credentials/v1",
-    "https://originator-profile.org/ns/cip/v1",
-    {
-    "@language": "ja"
-    }
-    ],
-    "type": [
-    "VerifiableCredential",
-    "WebsiteProfile"
-    ],
-    "issuer": "dns:example.com",
-    "credentialSubject": {
-    "id": "https://media.example.com/",
-    "type": "WebSite",
-    "name": "<Webサイトのタイトル>",
-    "description": "<Webサイトの説明>",
-    "image": {
-    "id": "https://media.example.com/image.png",
-    "digestSRI": "sha256-Upwn7gYMuRmJlD1ZivHk876vXHzokXrwXj50VgfnMnY="
-    },
-    "allowedOrigin": [
-    "https://media.example.com"
-    ]
-    }
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+        "https://originator-profile.org/ns/cip/v1",
+        {
+          "@language": "ja"
+        }
+      ],
+      "type": [
+        "VerifiableCredential",
+        "WebsiteProfile"
+      ],
+      "issuer": "dns:example.com",
+      "credentialSubject": {
+        "id": "https://media.example.com/",
+        "type": "WebSite",
+        "name": "<Webサイトのタイトル>",
+        "description": "<Webサイトの説明>",
+        "image": {
+          "id": "https://media.example.com/image.png",
+          "digestSRI": "sha256-Upwn7gYMuRmJlD1ZivHk876vXHzokXrwXj50VgfnMnY="
+        },
+        "allowedOrigin": [
+          "https://media.example.com"
+        ]
+      }
     }
 
     多言語 Website Profile (配列) の例:
 
     [
-    {
-    "@context": [
-    "https://www.w3.org/ns/credentials/v2",
-    "https://originator-profile.org/ns/credentials/v1",
-    "https://originator-profile.org/ns/cip/v1",
-    {
-    "@language": "ja"
-    }
-    ],
-    "type": [
-    "VerifiableCredential",
-    "WebsiteProfile"
-    ],
-    "issuer": "dns:example.com",
-    "credentialSubject": {
-    "id": "https://media.example.com/",
-    "type": "WebSite",
-    "name": "<Webサイトのタイトル>",
-    "description": "<Webサイトの説明>",
-    "image": {
-    "id": "https://media.example.com/image.png",
-    "digestSRI": "sha256-Upwn7gYMuRmJlD1ZivHk876vXHzokXrwXj50VgfnMnY="
-    },
-    "allowedOrigin": [
-    "https://media.example.com"
-    ]
-    }
-    },
-    {
-    "@context": [
-    "https://www.w3.org/ns/credentials/v2",
-    "https://originator-profile.org/ns/credentials/v1",
-    "https://originator-profile.org/ns/cip/v1",
-    {
-    "@language": "en"
-    }
-    ],
-    "type": [
-    "VerifiableCredential",
-    "WebsiteProfile"
-    ],
-    "issuer": "dns:example.com",
-    "credentialSubject": {
-    "id": "https://media.example.com/",
-    "type": "WebSite",
-    "name": "<Website title>",
-    "description": "<Website description>",
-    "image": {
-    "id": "https://media.example.com/image.png",
-    "digestSRI": "sha256-Upwn7gYMuRmJlD1ZivHk876vXHzokXrwXj50VgfnMnY="
-    },
-    "allowedOrigin": [
-    "https://media.example.com"
-    ]
-    }
-    }
+      {
+        "@context": [
+          "https://www.w3.org/ns/credentials/v2",
+          "https://originator-profile.org/ns/credentials/v1",
+          "https://originator-profile.org/ns/cip/v1",
+          {
+            "@language": "ja"
+          }
+        ],
+        "type": [
+          "VerifiableCredential",
+          "WebsiteProfile"
+        ],
+        "issuer": "dns:example.com",
+        "credentialSubject": {
+          "id": "https://media.example.com/",
+          "type": "WebSite",
+          "name": "<Webサイトのタイトル>",
+          "description": "<Webサイトの説明>",
+          "image": {
+            "id": "https://media.example.com/image.png",
+            "digestSRI": "sha256-Upwn7gYMuRmJlD1ZivHk876vXHzokXrwXj50VgfnMnY="
+          },
+          "allowedOrigin": [
+            "https://media.example.com"
+          ]
+        }
+      },
+      {
+        "@context": [
+          "https://www.w3.org/ns/credentials/v2",
+          "https://originator-profile.org/ns/credentials/v1",
+          "https://originator-profile.org/ns/cip/v1",
+          {
+            "@language": "en"
+          }
+        ],
+        "type": [
+          "VerifiableCredential",
+          "WebsiteProfile"
+        ],
+        "issuer": "dns:example.com",
+        "credentialSubject": {
+          "id": "https://media.example.com/",
+          "type": "WebSite",
+          "name": "<Website title>",
+          "description": "<Website description>",
+          "image": {
+            "id": "https://media.example.com/image.png",
+            "digestSRI": "sha256-Upwn7gYMuRmJlD1ZivHk876vXHzokXrwXj50VgfnMnY="
+          },
+          "allowedOrigin": [
+            "https://media.example.com"
+          ]
+        }
+      }
     ]
 ```
 
@@ -578,99 +578,99 @@ FLAG DESCRIPTIONS
     Website Profile の例:
 
     {
-    "@context": [
-    "https://www.w3.org/ns/credentials/v2",
-    "https://originator-profile.org/ns/credentials/v1",
-    "https://originator-profile.org/ns/cip/v1",
-    {
-    "@language": "<言語・地域コード>"
-    }
-    ],
-    "type": [
-    "VerifiableCredential",
-    "WebsiteProfile"
-    ],
-    "issuer": "<OP ID>",
-    "credentialSubject": {
-    "id": "<Web サイトのオリジン (形式: https://<ホスト名>)>",
-    "type": "WebSite",
-    "name": "<Web サイトの名称>",
-    "description": "<Web サイトの説明>",
-    "image": {
-    "id": "<サムネイル画像URL>",
-    "content": [
-    "<コンテンツ (data:// 形式URL)>"
-    ]
-    },
-    "allowedOrigin": [
-    "<Web サイトのオリジン (形式: https://<ホスト名>)>"
-    ]
-    }
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+        "https://originator-profile.org/ns/cip/v1",
+        {
+          "@language": "<言語・地域コード>"
+        }
+      ],
+      "type": [
+        "VerifiableCredential",
+        "WebsiteProfile"
+      ],
+      "issuer": "<OP ID>",
+      "credentialSubject": {
+        "id": "<Web サイトのオリジン (形式: https://<ホスト名>)>",
+        "type": "WebSite",
+        "name": "<Web サイトの名称>",
+        "description": "<Web サイトの説明>",
+        "image": {
+          "id": "<サムネイル画像URL>",
+          "content": [
+            "<コンテンツ (data:// 形式URL)>"
+          ]
+        },
+        "allowedOrigin": [
+          "<Web サイトのオリジン (形式: https://<ホスト名>)>"
+        ]
+      }
     }
 
     多言語の Website Profile (配列) の例:
 
     [
-    {
-    "@context": [
-    "https://www.w3.org/ns/credentials/v2",
-    "https://originator-profile.org/ns/credentials/v1",
-    "https://originator-profile.org/ns/cip/v1",
-    {
-    "@language": "ja"
-    }
-    ],
-    "type": [
-    "VerifiableCredential",
-    "WebsiteProfile"
-    ],
-    "issuer": "<OP ID>",
-    "credentialSubject": {
-    "id": "<Web サイトのオリジン (形式: https://<ホスト名>)>",
-    "type": "WebSite",
-    "name": "<Web サイトの名称>",
-    "description": "<Web サイトの説明>",
-    "image": {
-    "id": "<サムネイル画像URL>",
-    "content": [
-    "<コンテンツ (data:// 形式URL)>"
-    ]
-    },
-    "allowedOrigin": [
-    "<Web サイトのオリジン (形式: https://<ホスト名>)>"
-    ]
-    }
-    },
-    {
-    "@context": [
-    "https://www.w3.org/ns/credentials/v2",
-    "https://originator-profile.org/ns/credentials/v1",
-    "https://originator-profile.org/ns/cip/v1",
-    {
-    "@language": "en"
-    }
-    ],
-    "type": [
-    "VerifiableCredential",
-    "WebsiteProfile"
-    ],
-    "issuer": "<OP ID>",
-    "credentialSubject": {
-    "id": "<Web サイトのオリジン (形式: https://<ホスト名>)>",
-    "type": "WebSite",
-    "name": "<Web サイトの名称>",
-    "description": "<Web サイトの説明>",
-    "image": {
-    "id": "<サムネイル画像URL>",
-    "content": [
-    "<コンテンツ (data:// 形式URL)>"
-    ]
-    },
-    "allowedOrigin": [
-    "<Web サイトのオリジン (形式: https://<ホスト名>)>"
-    ]
-    }
-    }
+      {
+        "@context": [
+          "https://www.w3.org/ns/credentials/v2",
+          "https://originator-profile.org/ns/credentials/v1",
+          "https://originator-profile.org/ns/cip/v1",
+          {
+            "@language": "ja"
+          }
+        ],
+        "type": [
+          "VerifiableCredential",
+          "WebsiteProfile"
+        ],
+        "issuer": "<OP ID>",
+        "credentialSubject": {
+          "id": "<Web サイトのオリジン (形式: https://<ホスト名>)>",
+          "type": "WebSite",
+          "name": "<Web サイトの名称>",
+          "description": "<Web サイトの説明>",
+          "image": {
+            "id": "<サムネイル画像URL>",
+            "content": [
+              "<コンテンツ (data:// 形式URL)>"
+            ]
+          },
+          "allowedOrigin": [
+            "<Web サイトのオリジン (形式: https://<ホスト名>)>"
+          ]
+        }
+      },
+      {
+        "@context": [
+          "https://www.w3.org/ns/credentials/v2",
+          "https://originator-profile.org/ns/credentials/v1",
+          "https://originator-profile.org/ns/cip/v1",
+          {
+            "@language": "en"
+          }
+        ],
+        "type": [
+          "VerifiableCredential",
+          "WebsiteProfile"
+        ],
+        "issuer": "<OP ID>",
+        "credentialSubject": {
+          "id": "<Web サイトのオリジン (形式: https://<ホスト名>)>",
+          "type": "WebSite",
+          "name": "<Web サイトの名称>",
+          "description": "<Web サイトの説明>",
+          "image": {
+            "id": "<サムネイル画像URL>",
+            "content": [
+              "<コンテンツ (data:// 形式URL)>"
+            ]
+          },
+          "allowedOrigin": [
+            "<Web サイトのオリジン (形式: https://<ホスト名>)>"
+          ]
+        }
+      }
     ]
 ```
 
