@@ -78,6 +78,7 @@ function deriveFromManifests(dir: string): EnvMap {
   let chrome: string | undefined;
   let sidePanel = false;
   let firefox: string | undefined;
+  let sidebarAction = false;
   let firefoxAndroid: string | undefined;
 
   for (const name of readdirSafe(dir)) {
@@ -85,10 +86,11 @@ function deriveFromManifests(dir: string): EnvMap {
     const content = readSafe(path.join(dir, name, "manifest.json"));
     if (!content) continue;
     const m = JSON.parse(content);
-    manifestVersion ??= m.manifest_version;
+    manifestVersion ??= m.manifest_version && `Manifest V${m.manifest_version}`;
     chrome ??= m.minimum_chrome_version;
     sidePanel ||= Boolean(m.side_panel);
     firefox ??= m.browser_specific_settings?.gecko?.strict_min_version;
+    sidebarAction ||= Boolean(m.sidebar_action);
     firefoxAndroid ??=
       m.browser_specific_settings?.gecko_android?.strict_min_version;
   }
@@ -96,13 +98,19 @@ function deriveFromManifests(dir: string): EnvMap {
   const trim = (v: string) => v.replace(/\.0$/, "");
   const out: EnvMap = {};
   if (chrome) {
-    const features = [
-      "Manifest V" + manifestVersion,
-      sidePanel && "Side Panel API",
-    ].filter(Boolean);
+    const features = [manifestVersion, sidePanel && "Side Panel API"].filter(
+      Boolean,
+    );
     out["Google Chrome (Chromium)"] = `${chrome}+ (${features.join(", ")})`;
   }
-  if (firefox) out["Mozilla Firefox (desktop)"] = `${trim(firefox)}+`;
+  if (firefox) {
+    const features = [
+      manifestVersion,
+      sidebarAction && "Sidebar Action API",
+    ].filter(Boolean);
+    out["Mozilla Firefox (desktop)"] =
+      `${trim(firefox)}+ (${features.join(", ")})`;
+  }
   if (firefoxAndroid) out["Firefox for Android"] = `${trim(firefoxAndroid)}+`;
   return out;
 }

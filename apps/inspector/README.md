@@ -12,7 +12,7 @@ OP Inspectorはインターネット上の情報（コンテンツ等）の発�
 ### Verified
 
 - Google Chrome (Chromium): 114+ (Manifest V3, Side Panel API)
-- Mozilla Firefox (desktop): 140+
+- Mozilla Firefox (desktop): 140+ (Manifest V3, Sidebar Action API)
 
 ### Development
 
