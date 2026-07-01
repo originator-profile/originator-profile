@@ -74,7 +74,7 @@ function deriveFromDockerfile(dir: string): EnvMap {
 }
 
 function deriveFromManifests(dir: string): EnvMap {
-  let manifestVersion: number | undefined;
+  let manifestVersion: string | undefined;
   let chrome: string | undefined;
   let sidePanel = false;
   let firefox: string | undefined;
