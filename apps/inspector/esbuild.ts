@@ -16,7 +16,7 @@ const options = {
     short: "t",
     default: "chromium",
     toString() {
-      return `chromium|firefox-desktop|firefox-android (default: ${this.default})`;
+      return `chromium|firefox-desktop (default: ${this.default})`;
     },
   },
   url: {

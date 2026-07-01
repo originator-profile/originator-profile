@@ -75,14 +75,10 @@ const firefox = {
   browser_specific_settings: {
     gecko: {
       id: "inspector@originator-profile.org",
-      strict_min_version: "115.0",
+      strict_min_version: "140",
       data_collection_permissions: {
         required: ["none"],
       },
-    },
-    gecko_android: {
-      id: "inspector@originator-profile.org",
-      strict_min_version: "120.0",
     },
   },
   background: {
@@ -108,7 +104,6 @@ export default function esbuildPluginManifest({
   const targetManifest = {
     chromium,
     "firefox-desktop": firefox,
-    "firefox-android": firefox,
   }[target];
 
   if (!targetManifest) {

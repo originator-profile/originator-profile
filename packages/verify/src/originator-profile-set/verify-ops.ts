@@ -9,6 +9,7 @@ import { verifyAnnotations } from "./annotations";
 import { decodeOps } from "./decode-ops";
 import { OpsInvalid, OpsVerifyFailed, OpVerifyFailed } from "./errors";
 import { verifyMedia } from "./media";
+import { verifyAnnotationIssuerRegistration } from "./pa-issuer-registration";
 import type {
   OpsVerificationResult,
   OpVerificationResult,
@@ -135,7 +136,8 @@ export function OpsVerifier(
 
       return new OpsVerifyFailed(msg, resultOps);
     }
-    return resultOps;
+
+    return verifyAnnotationIssuerRegistration(resultOps, issuer);
   }
   return verify;
 }
