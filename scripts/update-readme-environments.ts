@@ -3,7 +3,7 @@
 /**
  * Generates the "Environment" section of each package README.
  *
- * Sources (per package, with the repo root as fallback):
+ * Sources (per package, with the repo root as fallback for package.json):
  *   - `engines.node` and `packageManager` -> Development
  *   - `Dockerfile` (first `FROM`) base image -> Verified
  *   - `dist-<target>/manifest.json` (build output) browser / manifest support -> Verified
