@@ -8,15 +8,15 @@ type Props = { back: string };
 function DetailInfo(props: Props) {
   const {
     siteProfile,
-    error: sp_error,
-    warnings: sp_warnings,
+    error: spError,
+    warnings: spWarnings,
   } = useSiteProfile();
   const {
     ops,
     cas,
     framesCas,
-    error: credentials_error,
-    warnings: credentials_warnings,
+    error: credentialsError,
+    warnings: credentialsWarnings,
   } = useCredentials();
   const [queryParams] = useSearchParams();
   const backPath = {
@@ -29,8 +29,8 @@ function DetailInfo(props: Props) {
       ops={ops}
       cas={cas}
       framesCas={framesCas}
-      errors={[sp_error, credentials_error].filter((x) => x !== undefined)}
-      warnings={[...(sp_warnings ?? []), ...(credentials_warnings ?? [])]}
+      errors={[spError, credentialsError].filter((x) => x !== undefined)}
+      warnings={[...(spWarnings ?? []), ...(credentialsWarnings ?? [])]}
       backPath={backPath}
     />
   );
