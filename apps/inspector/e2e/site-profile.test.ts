@@ -98,3 +98,24 @@ test("Site Profile を取得検証できるが、有効期限が近く、詳細�
       .first(),
   ).toBeVisible();
 });
+
+test("詳細情報画面に検証中の警告ログが表示される", async ({
+  context,
+  page,
+  validSiteProfile,
+  credentialsMissingPage,
+}) => {
+  await validSiteProfile(
+    { privateKey, publicKey },
+    credentialsMissingPage.issuer,
+  );
+  await page.goto(credentialsMissingPage.endpoint);
+  const ext = await sidepanel(context);
+  await expect(ext?.getByTestId("site-profile")).toBeVisible();
+
+  await gotoDetailPage(ext);
+  // フィクスチャの WSP image には digestSRI が無いため警告が表示される
+  await expect(ext.getByTestId("verification-warnings")).toContainText(
+    "digestSRI is missing",
+  );
+});

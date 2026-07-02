@@ -21,6 +21,7 @@ import {
 import { VerifiedOps } from "../originator-profile-set/types";
 import { OpsVerifier } from "../originator-profile-set/verify-ops";
 import { verifyAllowedOrigin } from "../verify-allowed-origin";
+import type { WarnHandler } from "../warn";
 import { SpVerificationResult } from "./types";
 import { SiteProfileInvalid, SiteProfileVerifyFailed } from "./verify-errors";
 
@@ -66,6 +67,7 @@ const decodeWebsiteProfiles = (
  * @param origin 提示するWebサイトを識別するための RFC 6454 オリジン
  * @param verifyOrigin WSPが提示されたWebサイトのorigin引数との一致性検証の可否 (デフォルト: 有効)
  * @param validator バリデーター
+ * @param warn 警告ハンドラー (デフォルト: `console.warn`)
  * @returns 検証者
  */
 export function SpVerifier(
@@ -75,9 +77,16 @@ export function SpVerifier(
   origin: URL["origin"],
   verifyOrigin = true,
   validator?: typeof VcValidator,
+  warn?: WarnHandler,
 ) {
   async function verify(): Promise<SpVerificationResult> {
-    const verifyOps = OpsVerifier(sp.originators, keys, issuer, validator);
+    const verifyOps = OpsVerifier(
+      sp.originators,
+      keys,
+      issuer,
+      validator,
+      warn,
+    );
     const opsVerified = await verifyOps();
     if (opsVerified instanceof OpsInvalid) {
       return new SiteProfileInvalid("Originator Profile Set invalid", {
@@ -138,7 +147,11 @@ export function SpVerifier(
           }
         }
 
-        await verifyImageDigestSri(verified.doc.credentialSubject.image);
+        await verifyImageDigestSri(
+          verified.doc.credentialSubject.image,
+          undefined,
+          warn,
+        );
 
         return verified;
       }),

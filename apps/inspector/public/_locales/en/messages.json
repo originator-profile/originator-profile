@@ -359,6 +359,9 @@
   "DetailInfo_SourceAdOrganization": {
     "message": "Source Ad Organization"
   },
+  "DetailInfo_Warnings": {
+    "message": "Warnings"
+  },
   "Link_OriginatorProfile": {
     "message": "Learn more about Originator Profile (external site)"
   },

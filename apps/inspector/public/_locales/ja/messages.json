@@ -359,6 +359,9 @@
   "DetailInfo_SourceAdOrganization": {
     "message": "リンク元広告の組織"
   },
+  "DetailInfo_Warnings": {
+    "message": "警告"
+  },
   "Link_OriginatorProfile": {
     "message": "Originator Profile についてより詳しく（外部サイト）"
   },

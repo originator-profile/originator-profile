@@ -13,6 +13,7 @@ import {
 import { z } from "zod";
 import { verifyImageDigestSri } from "../integrity";
 import { type MappedKeys } from "../keys";
+import type { WarnHandler } from "../warn";
 import { CertificateExpired } from "./errors";
 import { OpVerifier } from "./op-verifier";
 import type { Certificate } from "./types";
@@ -43,6 +44,7 @@ export async function verifyAnnotations(
   paIssuerKeys: MappedKeys,
   annotations?: UnverifiedJwtVc<Certificate>[],
   validator?: typeof VcValidator,
+  warn?: WarnHandler,
 ) {
   if (!annotations) return;
   return await Promise.all(
@@ -72,7 +74,11 @@ export async function verifyAnnotations(
         return valid;
       }
 
-      await verifyImageDigestSri(valid.doc.credentialSubject.image);
+      await verifyImageDigestSri(
+        valid.doc.credentialSubject.image,
+        undefined,
+        warn,
+      );
 
       return valid;
     }),

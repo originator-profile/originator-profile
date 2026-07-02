@@ -168,4 +168,16 @@ describe("verifyImageDigestSri", () => {
     await verifyImageDigestSri(undefined, fetcher);
     expect(warnSpy).not.toHaveBeenCalled();
   });
+
+  test("warn ハンドラーを指定した場合、console.warn の代わりに警告を受け取る", async () => {
+    const warnings: string[] = [];
+    await verifyImageDigestSri(
+      { id: "https://example.org/image.png" },
+      fetcher,
+      (message) => warnings.push(message),
+    );
+
+    expect(warnings).toEqual([expect.stringContaining("digestSRI is missing")]);
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
 });
