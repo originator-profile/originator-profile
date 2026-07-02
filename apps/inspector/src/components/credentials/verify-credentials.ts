@@ -39,8 +39,7 @@ export async function verifyOps(
     [...registryOps, ...page.ops, ...frames.flatMap((frame) => frame.ops)],
     verificationKeys,
     cpIssuer,
-    undefined,
-    warn,
+    { warn },
   );
   const verifiedOps = await opsVerifier();
 

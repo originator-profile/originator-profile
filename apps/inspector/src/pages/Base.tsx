@@ -124,10 +124,7 @@ function Base() {
     return <Loading />;
   }
 
-  if (
-    isSpVerifyError(spError) ||
-    isCredentialsVerifyError(credentialsError)
-  ) {
+  if (isSpVerifyError(spError) || isCredentialsVerifyError(credentialsError)) {
     return <Prohibition tabId={tabId} />;
   }
 

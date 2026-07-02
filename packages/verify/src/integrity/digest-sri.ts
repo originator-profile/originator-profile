@@ -48,9 +48,14 @@ export async function verifyDigestSri(
  */
 export async function verifyImageDigestSri(
   value: Image | undefined,
-  fetcher = fetch,
-  warn: WarnHandler = console.warn,
+  options: {
+    /** コンテンツの取得に用いる fetch 実装 */
+    fetcher?: typeof fetch;
+    /** 警告ハンドラー (デフォルト: `console.warn`) */
+    warn?: WarnHandler;
+  } = {},
 ): Promise<void> {
+  const { fetcher = fetch, warn = console.warn } = options;
   if (!value) return;
 
   if (!value.digestSRI) {

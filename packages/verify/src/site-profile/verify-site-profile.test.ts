@@ -162,8 +162,7 @@ describe("Site Profileの検証", async () => {
       LocalKeys({ keys: [authority.publicKey] }),
       opId.authority,
       "https://originator.example.org",
-      true,
-      VcValidator,
+      { validator: VcValidator },
     );
     const resultSp = await verify();
 
@@ -228,7 +227,7 @@ describe("Site Profileの検証", async () => {
       LocalKeys({ keys: [authority.publicKey] }),
       opId.authority,
       "https://not-exisiting.example.org",
-      false,
+      { verifyOrigin: false },
     );
     const resultSp = await verify();
 
@@ -304,8 +303,7 @@ describe("Site Profileの検証", async () => {
       LocalKeys({ keys: [authority.publicKey] }),
       opId.authority,
       "https://originator.example.org",
-      true,
-      VcValidator,
+      { validator: VcValidator },
     );
     const resultSp = await verify();
 

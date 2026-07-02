@@ -43,9 +43,14 @@ function validateCertificateExpiry<T extends Certificate>(
 export async function verifyAnnotations(
   paIssuerKeys: MappedKeys,
   annotations?: UnverifiedJwtVc<Certificate>[],
-  validator?: typeof VcValidator,
-  warn?: WarnHandler,
+  options: {
+    /** バリデーター */
+    validator?: typeof VcValidator;
+    /** 警告ハンドラー (デフォルト: `console.warn`) */
+    warn?: WarnHandler;
+  } = {},
 ) {
+  const { validator, warn } = options;
   if (!annotations) return;
   return await Promise.all(
     annotations.map(async (annotation) => {
@@ -74,11 +79,7 @@ export async function verifyAnnotations(
         return valid;
       }
 
-      await verifyImageDigestSri(
-        valid.doc.credentialSubject.image,
-        undefined,
-        warn,
-      );
+      await verifyImageDigestSri(valid.doc.credentialSubject.image, { warn });
 
       return valid;
     }),

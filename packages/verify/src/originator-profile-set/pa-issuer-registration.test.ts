@@ -312,13 +312,9 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     ];
 
     const warnings: string[] = [];
-    const result = await OpsVerifier(
-      target,
-      keys,
-      opId.authority,
-      undefined,
-      (message) => warnings.push(message),
-    )();
+    const result = await OpsVerifier(target, keys, opId.authority, {
+      warn: (message) => warnings.push(message),
+    })();
 
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);

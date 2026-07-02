@@ -40,9 +40,7 @@ async function fetchVerifiedSiteProfile([, tabId]: [
     verificationKeys,
     cpIssuer,
     data.origin,
-    undefined,
-    undefined,
-    warn,
+    { warn },
   );
 
   const verifiedSp = await verifySp();

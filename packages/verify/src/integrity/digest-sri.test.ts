@@ -136,7 +136,7 @@ describe("verifyImageDigestSri", () => {
   test("digestSRI 検証に成功した場合、warn を出さない", async () => {
     await verifyImageDigestSri(
       { id: content.id, digestSRI: content.digestSRI },
-      fetcher,
+      { fetcher },
     );
 
     expect(warnSpy).not.toHaveBeenCalled();
@@ -145,7 +145,7 @@ describe("verifyImageDigestSri", () => {
   test("digestSRI 検証に失敗した場合、warn を出す", async () => {
     await verifyImageDigestSri(
       { id: content.id, digestSRI: content.digestSRI },
-      async () => new Response("wrong content"),
+      { fetcher: async () => new Response("wrong content") },
     );
 
     expect(warnSpy).toHaveBeenCalledWith(
@@ -156,7 +156,7 @@ describe("verifyImageDigestSri", () => {
   test("digestSRI が存在しない場合、warn を出す", async () => {
     await verifyImageDigestSri(
       { id: "https://example.org/image.png" },
-      fetcher,
+      { fetcher },
     );
 
     expect(warnSpy).toHaveBeenCalledWith(
@@ -165,7 +165,7 @@ describe("verifyImageDigestSri", () => {
   });
 
   test("undefined の場合、何もしない", async () => {
-    await verifyImageDigestSri(undefined, fetcher);
+    await verifyImageDigestSri(undefined, { fetcher });
     expect(warnSpy).not.toHaveBeenCalled();
   });
 
@@ -173,8 +173,7 @@ describe("verifyImageDigestSri", () => {
     const warnings: string[] = [];
     await verifyImageDigestSri(
       { id: "https://example.org/image.png" },
-      fetcher,
-      (message) => warnings.push(message),
+      { fetcher, warn: (message) => warnings.push(message) },
     );
 
     expect(warnings).toEqual([expect.stringContaining("digestSRI is missing")]);
