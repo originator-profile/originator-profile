@@ -1,6 +1,6 @@
 # @originator-profile/vite-plugin
 
-[![npm version](https://img.shields.io/npm/v/@originator-profile/vite-plugin)](https://www.npmjs.com/package/@originator-profile/vite-plugin)
+[![npm version](https://img.shields.io/npm/v/@originator-profile/vite-plugin)](https://www.npmjs.com/package/@originator-profile/vite-plugin) [![jsDocs.io](https://img.shields.io/badge/jsDocs.io-reference-blue)](https://www.jsdocs.io/package/@originator-profile/vite-plugin)
 
 Vite plugin that signs [Website Profiles](https://docs.originator-profile.org/en/opb/site-profile/) (WSP) and [Content Attestations](https://docs.originator-profile.org/en/opb/content-attestation/) (CA) at build time.
 

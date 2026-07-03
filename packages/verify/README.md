@@ -1,5 +1,7 @@
 # Profile Verify
 
+[![npm version](https://img.shields.io/npm/v/@originator-profile/verify)](https://www.npmjs.com/package/@originator-profile/verify) [![jsDocs.io](https://img.shields.io/badge/jsDocs.io-reference-blue)](https://www.jsdocs.io/package/@originator-profile/verify)
+
 署名を検証するためのパッケージです。
 
 <!-- prettier-ignore-start -->
