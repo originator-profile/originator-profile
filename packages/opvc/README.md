@@ -1,5 +1,7 @@
 # opvc - Originator Profile Verifiable Credential command line tool
 
+[![npm version](https://img.shields.io/npm/v/@originator-profile/opvc)](https://www.npmjs.com/package/@originator-profile/opvc) [![jsDocs.io](https://img.shields.io/badge/jsDocs.io-reference-blue)](https://www.jsdocs.io/package/@originator-profile/opvc)
+
 Originator Profile (OP) 仕様に準拠した Verifiable Credential (VC) を作成・管理するためのツールです。
 
 <!-- prettier-ignore-start -->
