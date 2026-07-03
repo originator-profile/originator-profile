@@ -1,7 +1,7 @@
 {
   "name": "@originator-profile/inspector",
   "description": "OP Inspector is a dev debug tool to verify Originator Profile info, proving authenticity and credibility of information originators.",
-  "version": "0.6.0-beta.2",
+  "version": "0.6.0",
   "license": "Apache-2.0",
   "private": true,
   "homepage": "https://docs.originator-profile.org",
