@@ -21,6 +21,7 @@ import {
 import { VerifiedOps } from "../originator-profile-set/types";
 import { OpsVerifier } from "../originator-profile-set/verify-ops";
 import { verifyAllowedOrigin } from "../verify-allowed-origin";
+import type { WarnHandler } from "../warn";
 import { SpVerificationResult } from "./types";
 import { SiteProfileInvalid, SiteProfileVerifyFailed } from "./verify-errors";
 
@@ -64,8 +65,7 @@ const decodeWebsiteProfiles = (
  * @param keys Core Profile の発行者の検証鍵
  * @param issuer Core Profile の発行者
  * @param origin 提示するWebサイトを識別するための RFC 6454 オリジン
- * @param verifyOrigin WSPが提示されたWebサイトのorigin引数との一致性検証の可否 (デフォルト: 有効)
- * @param validator バリデーター
+ * @param options オリジン検証の可否・バリデーター・警告ハンドラー
  * @returns 検証者
  */
 export function SpVerifier(
@@ -73,11 +73,21 @@ export function SpVerifier(
   keys: Keys,
   issuer: string | string[],
   origin: URL["origin"],
-  verifyOrigin = true,
-  validator?: typeof VcValidator,
+  options: {
+    /** WSPが提示されたWebサイトのorigin引数との一致性検証の可否 (デフォルト: 有効) */
+    verifyOrigin?: boolean;
+    /** バリデーター */
+    validator?: typeof VcValidator;
+    /** 警告ハンドラー (デフォルト: `console.warn`) */
+    warn?: WarnHandler;
+  } = {},
 ) {
+  const { verifyOrigin = true, validator, warn } = options;
   async function verify(): Promise<SpVerificationResult> {
-    const verifyOps = OpsVerifier(sp.originators, keys, issuer, validator);
+    const verifyOps = OpsVerifier(sp.originators, keys, issuer, {
+      validator,
+      warn,
+    });
     const opsVerified = await verifyOps();
     if (opsVerified instanceof OpsInvalid) {
       return new SiteProfileInvalid("Originator Profile Set invalid", {
@@ -138,7 +148,9 @@ export function SpVerifier(
           }
         }
 
-        await verifyImageDigestSri(verified.doc.credentialSubject.image);
+        await verifyImageDigestSri(verified.doc.credentialSubject.image, {
+          warn,
+        });
 
         return verified;
       }),

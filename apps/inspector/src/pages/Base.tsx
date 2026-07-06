@@ -72,47 +72,47 @@ function Prohibition({ tabId }: { tabId: number }) {
 
 function isLoading({
   siteProfile,
-  sp_error,
+  spError,
   ops,
   cas,
-  credentials_error,
+  credentialsError,
 }: {
   siteProfile?: VerifiedSp;
-  sp_error?: Error;
+  spError?: Error;
   ops?: VerifiedOps;
   cas?: VerifiedCas;
-  credentials_error?: Error;
+  credentialsError?: Error;
 }) {
-  return (!siteProfile && !sp_error) || (!ops && !cas && !credentials_error);
+  return (!siteProfile && !spError) || (!ops && !cas && !credentialsError);
 }
 
-function isSpVerifyError(sp_error?: Error) {
-  if (!sp_error) {
+function isSpVerifyError(spError?: Error) {
+  if (!spError) {
     return false;
   }
 
   return (
-    "code" in sp_error &&
-    (sp_error.code === SiteProfileVerifyFailed.code ||
-      sp_error.code === SiteProfileInvalid.code)
+    "code" in spError &&
+    (spError.code === SiteProfileVerifyFailed.code ||
+      spError.code === SiteProfileInvalid.code)
   );
 }
 
-function isCredentialsVerifyError(credentials_error?: Error) {
-  if (!credentials_error) {
+function isCredentialsVerifyError(credentialsError?: Error) {
+  if (!credentialsError) {
     return false;
   }
 
   return (
-    "code" in credentials_error &&
-    (credentials_error.code === OpsVerifyFailed.code ||
-      credentials_error.code === CasVerifyFailed.code)
+    "code" in credentialsError &&
+    (credentialsError.code === OpsVerifyFailed.code ||
+      credentialsError.code === CasVerifyFailed.code)
   );
 }
 
 function Base() {
-  const { tabId, siteProfile, error: sp_error } = useSiteProfile();
-  const { ops, cas, framesCas, error: credentials_error } = useCredentials();
+  const { tabId, siteProfile, error: spError } = useSiteProfile();
+  const { ops, cas, framesCas, error: credentialsError } = useCredentials();
   useFrameCasLocationProvider(tabId, framesCas ?? []);
 
   const title = [_("Base_ContentsInformation"), origin]
@@ -120,14 +120,11 @@ function Base() {
     .join(" ― ");
   useTitle(formatBuildModeTitle(import.meta.env.MODE, title));
 
-  if (isLoading({ siteProfile, sp_error, ops, cas, credentials_error })) {
+  if (isLoading({ siteProfile, spError, ops, cas, credentialsError })) {
     return <Loading />;
   }
 
-  if (
-    isSpVerifyError(sp_error) ||
-    isCredentialsVerifyError(credentials_error)
-  ) {
+  if (isSpVerifyError(spError) || isCredentialsVerifyError(credentialsError)) {
     return <Prohibition tabId={tabId} />;
   }
 
@@ -136,7 +133,7 @@ function Base() {
     return <Redirect tabId={tabId} ops={ops} framesCas={framesCas} />;
   }
 
-  const errors = [sp_error, credentials_error].filter(
+  const errors = [spError, credentialsError].filter(
     (
       error,
     ): error is

@@ -6,8 +6,18 @@ import Template from "../templates/DetailInfo";
 type Props = { back: string };
 
 function DetailInfo(props: Props) {
-  const { siteProfile, error: sp_error } = useSiteProfile();
-  const { ops, cas, framesCas, error: credentials_error } = useCredentials();
+  const {
+    siteProfile,
+    error: spError,
+    warnings: spWarnings,
+  } = useSiteProfile();
+  const {
+    ops,
+    cas,
+    framesCas,
+    error: credentialsError,
+    warnings: credentialsWarnings,
+  } = useCredentials();
   const [queryParams] = useSearchParams();
   const backPath = {
     pathname: props.back,
@@ -19,7 +29,8 @@ function DetailInfo(props: Props) {
       ops={ops}
       cas={cas}
       framesCas={framesCas}
-      errors={[sp_error, credentials_error].filter((x) => x !== undefined)}
+      errors={[spError, credentialsError].filter((x) => x !== undefined)}
+      warnings={[...(spWarnings ?? []), ...(credentialsWarnings ?? [])]}
       backPath={backPath}
     />
   );

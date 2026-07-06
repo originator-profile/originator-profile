@@ -4,6 +4,7 @@ import {
   type DigestSriResult,
 } from "@originator-profile/sign";
 import { IntegrityMetadataSet } from "websri";
+import type { WarnHandler } from "../warn";
 
 const WARN_SUFFIX = `This will become an error after 2027. See: https://docs.originator-profile.org/en/opb/context/#the-image-datatype`;
 
@@ -43,16 +44,22 @@ export async function verifyDigestSri(
 
 /**
  * Image の digestSRI を検証する。
- * 後方互換性の観点で、2027年までは検証失敗時に console.warn のみで処理を中断しない。
+ * 後方互換性の観点で、2027年までは検証失敗時に warn のみで処理を中断しない。
  */
 export async function verifyImageDigestSri(
   value: Image | undefined,
-  fetcher = fetch,
+  options: {
+    /** コンテンツの取得に用いる fetch 実装 */
+    fetcher?: typeof fetch;
+    /** 警告ハンドラー (デフォルト: `console.warn`) */
+    warn?: WarnHandler;
+  } = {},
 ): Promise<void> {
+  const { fetcher = fetch, warn = console.warn } = options;
   if (!value) return;
 
   if (!value.digestSRI) {
-    console.warn(`digestSRI is missing. ${WARN_SUFFIX}`);
+    warn(`digestSRI is missing. ${WARN_SUFFIX}`);
     return;
   }
 
@@ -61,6 +68,6 @@ export async function verifyImageDigestSri(
     fetcher,
   );
   if (!valid) {
-    console.warn(`digestSRI verification failed. ${WARN_SUFFIX}`);
+    warn(`digestSRI verification failed. ${WARN_SUFFIX}`);
   }
 }

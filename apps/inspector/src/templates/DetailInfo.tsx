@@ -1,3 +1,4 @@
+import { Icon } from "@iconify/react";
 import { stringifyWithError } from "@originator-profile/core";
 import {
   _,
@@ -22,6 +23,7 @@ type DetailInfoProps = {
   cas?: SupportedVerifiedCas;
   framesCas?: FrameVerifiedCas[];
   errors: Error[];
+  warnings?: string[];
   backPath: {
     pathname: string;
     search: string;
@@ -34,6 +36,7 @@ function DetailInfo({
   cas,
   framesCas,
   errors,
+  warnings = [],
   backPath,
 }: DetailInfoProps) {
   const linkVerification = useLinkVerification();
@@ -79,6 +82,29 @@ function DetailInfo({
           <h2 className="pl-4 mb-4 text-sm font-bold text-gray-700">
             {_("DetailInfo")}
           </h2>
+          {warnings.length > 0 && (
+            <div className="pl-4 mb-8" data-testid="verification-warnings">
+              <h3 className="mb-4 text-sm font-bold text-gray-700">
+                {_("DetailInfo_Warnings")}
+              </h3>
+              <ul>
+                {warnings.map((warning, index) => (
+                  <li
+                    key={index}
+                    className="flex items-start mb-2 text-sm text-gray-700"
+                  >
+                    <Icon
+                      icon="ic:round-warning"
+                      className="size-5 mr-1 shrink-0 text-caution"
+                    />
+                    <span className="whitespace-pre-wrap break-all">
+                      {warning}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
           <JsonView
             className="pl-4 mb-8 overflow-auto"
             value={JSON.parse(

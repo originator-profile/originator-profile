@@ -304,6 +304,26 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     );
   });
 
+  test("warn ハンドラーを指定した場合、console.warn の代わりに警告を受け取る", async () => {
+    const target: OriginatorProfileSet = [
+      authorityOp,
+      certifierOp,
+      await originatorOpWithPa(),
+    ];
+
+    const warnings: string[] = [];
+    const result = await OpsVerifier(target, keys, opId.authority, {
+      warn: (message) => warnings.push(message),
+    })();
+
+    expect(result).not.instanceOf(OpsInvalid);
+    expect(result).not.instanceOf(OpsVerifyFailed);
+    expect(warnings).toEqual(
+      expect.arrayContaining([expect.stringContaining(NOT_REGISTERED)]),
+    );
+    expect(warnSpy).not.toHaveBeenCalled();
+  });
+
   test("Core Profile Issuer が自己宛に発行した登録証は基底となる", async () => {
     const target: OriginatorProfileSet = [
       {

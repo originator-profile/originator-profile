@@ -13,6 +13,7 @@ import {
 import { z } from "zod";
 import { verifyImageDigestSri } from "../integrity";
 import { type MappedKeys } from "../keys";
+import type { WarnHandler } from "../warn";
 import { CertificateExpired } from "./errors";
 import { OpVerifier } from "./op-verifier";
 import type { Certificate } from "./types";
@@ -42,8 +43,14 @@ function validateCertificateExpiry<T extends Certificate>(
 export async function verifyAnnotations(
   paIssuerKeys: MappedKeys,
   annotations?: UnverifiedJwtVc<Certificate>[],
-  validator?: typeof VcValidator,
+  options: {
+    /** バリデーター */
+    validator?: typeof VcValidator;
+    /** 警告ハンドラー (デフォルト: `console.warn`) */
+    warn?: WarnHandler;
+  } = {},
 ) {
+  const { validator, warn } = options;
   if (!annotations) return;
   return await Promise.all(
     annotations.map(async (annotation) => {
@@ -72,7 +79,7 @@ export async function verifyAnnotations(
         return valid;
       }
 
-      await verifyImageDigestSri(valid.doc.credentialSubject.image);
+      await verifyImageDigestSri(valid.doc.credentialSubject.image, { warn });
 
       return valid;
     }),

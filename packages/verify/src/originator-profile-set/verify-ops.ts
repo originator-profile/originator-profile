@@ -5,6 +5,7 @@ import {
   VcValidator,
 } from "@originator-profile/securing-mechanism";
 import { getMappedKeys } from "../keys";
+import type { WarnHandler } from "../warn";
 import { verifyAnnotations } from "./annotations";
 import { decodeOps } from "./decode-ops";
 import { OpsInvalid, OpsVerifyFailed, OpVerifyFailed } from "./errors";
@@ -57,15 +58,21 @@ const isVerifiedOps = (ops: OpVerificationResult[]): ops is VerifiedOps =>
  * @param ops Originator Profile Set
  * @param keys Core Profile の発行者の検証鍵
  * @param issuer Core Profile の発行者
- * @param validator バリデーター
+ * @param options バリデーターと警告ハンドラー
  * @returns 検証者
  */
 export function OpsVerifier(
   ops: OriginatorProfileSet,
   keys: Keys,
   issuer: string | string[],
-  validator?: typeof VcValidator,
+  options: {
+    /** バリデーター */
+    validator?: typeof VcValidator;
+    /** 警告ハンドラー (デフォルト: `console.warn`) */
+    warn?: WarnHandler;
+  } = {},
 ) {
+  const { validator, warn } = options;
   const decoded = decodeOps(ops);
   const verifyCp = JwtVcVerifier<CoreProfile>(
     keys,
@@ -88,9 +95,12 @@ export function OpsVerifier(
         const annotations = await verifyAnnotations(
           paOrWmpIssuerKeys,
           op.annotations,
-          validator,
+          { validator, warn },
         );
-        const media = await verifyMedia(paOrWmpIssuerKeys, op.media, validator);
+        const media = await verifyMedia(paOrWmpIssuerKeys, op.media, {
+          validator,
+          warn,
+        });
         const resultOp = { core, annotations, media };
 
         if (core instanceof Error) {
@@ -137,7 +147,7 @@ export function OpsVerifier(
       return new OpsVerifyFailed(msg, resultOps);
     }
 
-    return verifyAnnotationIssuerRegistration(resultOps, issuer);
+    return verifyAnnotationIssuerRegistration(resultOps, issuer, warn);
   }
   return verify;
 }
