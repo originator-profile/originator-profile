@@ -14,7 +14,13 @@ export const UnsignedContentAttestation = z.looseObject({
       error: `type must include "ContentAttestation"`,
     }),
   issuer: OpId,
-  credentialSubject: subject,
+  credentialSubject: subject.extend({
+    id: subject.shape.id
+      .describe(
+        "CA ID. Omit to mint a new CA (the ID is assigned at signing time); provide the ID of an existing CA to sign it.",
+      )
+      .optional(),
+  }),
   allowedUrl: AllowedUrl.optional(),
   allowedOrigin: AllowedOrigin.optional(),
   target: z.array(RawTarget).min(1),

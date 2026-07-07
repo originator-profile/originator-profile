@@ -428,6 +428,33 @@ await describe("signByServer()", async () => {
     assert.strictEqual(body.expiredAt, expiredAt.toISOString());
   });
 
+  await test("credentialSubject.id が未指定なら fill せず sub なしで送信する", async () => {
+    endpointResponse = async () =>
+      new Response(JSON.stringify(["jwt-1"]), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+
+    const uca = createUnsignedContentAttestation();
+    delete uca.credentialSubject.id;
+
+    await signByServer(uca, {
+      endpoint,
+      accessToken: "test-access-token",
+    });
+
+    const requestBody = request?.init?.body;
+    if (typeof requestBody !== "string") {
+      throw new TypeError("Expected request body to be a JSON string.");
+    }
+    const body = JSON.parse(requestBody) as {
+      sub?: string;
+      credentialSubject: { id?: string };
+    };
+    assert.strictEqual(body.sub, undefined);
+    assert.strictEqual(body.credentialSubject.id, undefined);
+  });
+
   await test("CA server が文字列 JWT を直接返した場合はそのまま返す", async () => {
     endpointResponse = async () =>
       new Response("jwt-direct", {
