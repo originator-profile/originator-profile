@@ -19,9 +19,9 @@ type UnsignedCaOptions = TimingOptions & {
   documentProvider?: DocumentProvider;
   /**
    * 入力に credentialSubject.id が無い場合に urn:uuid を採番するか。
-   * @default false
+   * @default true
    */
-  assignId?: true;
+  assignId?: boolean;
 };
 
 /**
