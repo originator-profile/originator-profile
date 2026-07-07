@@ -36,5 +36,16 @@ export async function signCa(
   await fetchAndSetDigestSri(integrityAlg, uca.credentialSubject.image);
   await fetchAndSetTargetIntegrity(integrityAlg, uca, documentProvider);
 
-  return await signJwtVc(uca, privateKey, { alg, issuedAt, expiredAt });
+  const { id } = uca.credentialSubject;
+  if (id === undefined) {
+    throw new Error(
+      "credentialSubject.id is required to sign a Content Attestation.",
+    );
+  }
+
+  return await signJwtVc(
+    { ...uca, credentialSubject: { ...uca.credentialSubject, id } },
+    privateKey,
+    { alg, issuedAt, expiredAt },
+  );
 }

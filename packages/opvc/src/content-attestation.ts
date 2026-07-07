@@ -17,6 +17,11 @@ import { parseDates, type TimingOptions } from "./timing-options.ts";
 type UnsignedCaOptions = TimingOptions & {
   integrityAlg?: HashAlgorithm;
   documentProvider?: DocumentProvider;
+  /**
+   * 入力に credentialSubject.id が無い場合に urn:uuid を採番するか。
+   * @default true
+   */
+  assignId?: boolean;
 };
 
 /**
@@ -30,11 +35,14 @@ export async function unsignedCa(
   {
     integrityAlg = "sha256",
     documentProvider = defaultDocumentProvider,
+    assignId = true,
     ...timingOptions
   }: UnsignedCaOptions,
 ): Promise<UnsignedContentAttestation> {
   const { issuedAt, expiredAt } = parseDates(timingOptions);
-  uca.credentialSubject.id ??= `urn:uuid:${crypto.randomUUID()}`;
+  if (assignId) {
+    uca.credentialSubject.id ??= `urn:uuid:${crypto.randomUUID()}`;
+  }
 
   try {
     UnsignedContentAttestation.parse(uca);
@@ -98,7 +106,12 @@ export async function signByServer(
   },
 ): Promise<string> {
   const { issuedAt, expiredAt } = parseDates(options);
-  const payload = await unsignedCa(uca, { ...options, issuedAt, expiredAt });
+  const payload = await unsignedCa(uca, {
+    ...options,
+    issuedAt,
+    expiredAt,
+    assignId: false,
+  });
 
   const response = await fetch(endpoint, {
     method: "POST",
