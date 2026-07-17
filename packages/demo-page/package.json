@@ -14,7 +14,7 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "lint": "eslint --fix .",
+    "lint": "oxlint --fix .",
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
@@ -23,9 +23,9 @@
     "@originator-profile/tsconfig": "workspace:*",
     "@originator-profile/vite-plugin": "workspace:*",
     "@types/accept-language-parser": "1.5.8",
-    "eslint": "10.2.0",
-    "eslint-config-originator-profile": "workspace:*",
     "globals": "17.5.0",
+    "oxlint": "^1.73.0",
+    "oxlint-tsgolint": "^0.24.0",
     "typescript": "6.0.2",
     "vite": "8.0.8",
     "wrangler": "4.81.1"

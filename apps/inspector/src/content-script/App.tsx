@@ -84,8 +84,8 @@ function App() {
 
   // NOTE: dialog ロールが非対話的要素とみなされる
   // see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/issues/932
-  /* eslint jsx-a11y/no-noninteractive-element-interactions: "off" */
   return (
+    /* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */
     <dialog
       className="block w-screen h-screen bg-transparent transition-opacity duration-300 ease-in-out opacity-0 open:opacity-100 z-[calc(infinity)] overflow-hidden"
       onClick={handleClose}

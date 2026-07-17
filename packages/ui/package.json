@@ -19,7 +19,7 @@
     }
   },
   "scripts": {
-    "lint": "eslint --fix .",
+    "lint": "oxlint --fix .",
     "test": "vitest run",
     "type-check": "tsc --noEmit"
   },
@@ -34,8 +34,8 @@
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "dompurify": "3.4.0",
-    "eslint": "10.2.0",
-    "eslint-config-originator-profile": "workspace:*",
+    "oxlint": "^1.73.0",
+    "oxlint-tsgolint": "^0.24.0",
     "swr": "2.4.1",
     "tailwind-config-originator-profile": "workspace:*",
     "tailwind-merge": "3.5.0",

@@ -156,9 +156,11 @@ export function ModalDialog(props: ModalDialogProps) {
 
   return (
     <div
+      /* oxlint-disable-next-line react/react-compiler */
       ref={props.dialogRef}
       aria-modal
       aria-hidden
+      /* oxlint-disable-next-line react/react-compiler */
       {...(typeof props.children === "function"
         ? { "aria-labelledby": titleId, "aria-describedby": descriptionId }
         : null)}
@@ -186,14 +188,17 @@ export function ModalDialog(props: ModalDialogProps) {
           "max-w-full",
           "transition-transform",
           "z-1",
+          /* oxlint-disable-next-line react/react-compiler */
           props.className,
         )}
         tabIndex={0}
       >
+        {/* oxlint-disable react/react-compiler */}
         {typeof props.children === "function"
           ? props.children({ titleId, descriptionId })
           : props.children}
       </div>
+      {/* oxlint-enable react/react-compiler */}
       <div
         role="button"
         onClick={() => props.onClose()}

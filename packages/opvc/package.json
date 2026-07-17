@@ -35,7 +35,7 @@
   },
   "scripts": {
     "build": "tsdown && oclif manifest && oclif readme",
-    "lint": "eslint --fix .",
+    "lint": "oxlint --fix .",
     "type-check": "tsc",
     "test": "node --test"
   },
@@ -56,9 +56,9 @@
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",
     "@types/node": "25.6.0",
-    "eslint": "10.2.0",
-    "eslint-config-originator-profile": "workspace:*",
     "oclif": "4.23.0",
+    "oxlint": "^1.73.0",
+    "oxlint-tsgolint": "^0.24.0",
     "tsdown": "0.21.7",
     "typescript": "6.0.2",
     "websri": "1.0.1"

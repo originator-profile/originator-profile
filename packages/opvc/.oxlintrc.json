@@ -1,0 +1,14 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": ["../../.oxlintrc.json"],
+  "overrides": [
+    {
+      "files": ["src/**/*.test.ts"],
+      "rules": {
+        "vitest/no-import-node-test": "off",
+        "no-await-in-loop": "off"
+      },
+      "plugins": ["vitest"]
+    }
+  ]
+}
