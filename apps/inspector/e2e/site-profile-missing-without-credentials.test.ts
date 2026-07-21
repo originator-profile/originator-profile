@@ -17,9 +17,7 @@ test("OPS / CAS 未設置かつSiteProfileの取得の失敗した場合非サ�
   const ext = await sidepanel(context);
   await expect(ext.getByTestId("p-elm-unsupported-message")).toBeVisible();
   await expect(
-    ext.getByText(
-      "このWebページの発信者は\nサイト運営者にお問い合わせください",
-    ),
+    ext.getByText("このWebページの発信者は未検証です。\nご注意ください"),
   ).toHaveCount(1);
 
   await gotoDetailPage(ext);

@@ -111,7 +111,7 @@
     "message": "組織の信頼性情報と出版物の流通経路の取得に失敗しました"
   },
   "Unsupported_ContactSiteOperator": {
-    "message": "このWebページの発信者は\nサイト運営者にお問い合わせください"
+    "message": "このWebページの発信者は未検証です。\nご注意ください"
   },
   "Unsupported_FollowingCausesConsidered": {
     "message": "以下のような原因が考えられます"

@@ -28,9 +28,7 @@ test("Site Profile と CAS が取得できない場合Unsuportedが表示され�
   const ext = await sidepanel(context);
   await expect(ext?.getByTestId("p-elm-unsupported-message")).toBeVisible();
   await expect(
-    ext.getByText(
-      "このWebページの発信者は\nサイト運営者にお問い合わせください",
-    ),
+    ext.getByText("このWebページの発信者は未検証です。\nご注意ください"),
   ).toHaveCount(1);
   await gotoDetailPage(ext);
   await expectStatus(ext, "site-profile", "cancel");
