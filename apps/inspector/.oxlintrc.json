@@ -1,0 +1,36 @@
+{
+  "$schema": "./node_modules/oxlint/configuration_schema.json",
+  "extends": ["../../.oxlintrc.json"],
+  "ignorePatterns": ["dev/**/*"],
+  "overrides": [
+    {
+      "files": ["esbuild.ts", "esbuild.*.ts", "postcss.config.ts"],
+      "env": {
+        "node": true
+      }
+    },
+    {
+      "files": ["**/*.tsx"],
+      "rules": {
+        "unicorn/filename-case": [
+          "error",
+          {
+            "case": "pascalCase"
+          }
+        ]
+      }
+    },
+    {
+      "files": ["e2e/**/*.ts"],
+      "rules": {
+        "react/rules-of-hooks": "off"
+      }
+    },
+    {
+      "files": ["manifest.ts", "main.tsx", "iframe.tsx"],
+      "rules": {
+        "unicorn/filename-case": "off"
+      }
+    }
+  ]
+}

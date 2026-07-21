@@ -2,5 +2,6 @@
   "extends": "@originator-profile/tsconfig/tsconfig.json",
   "compilerOptions": {
     "resolveJsonModule": true
-  }
+  },
+  "exclude": ["dist", "playwright-report", "node_modules"]
 }

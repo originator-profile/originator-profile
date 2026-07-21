@@ -27,7 +27,7 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "e2e:update": "playwright test --update-snapshots",
-    "lint": "eslint --fix .",
+    "lint": "oxlint --fix .",
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
@@ -45,11 +45,11 @@
     "@originator-profile/tsconfig": "workspace:*",
     "@playwright/test": "1.59.1",
     "date-fns": "4.1.0",
-    "eslint": "10.2.0",
-    "eslint-config-originator-profile": "workspace:*",
     "happy-dom": "20.8.9",
     "just-diff-apply": "5.5.0",
     "just-typeof": "3.2.0",
+    "oxlint": "^1.73.0",
+    "oxlint-tsgolint": "^0.24.0",
     "pkgroll": "2.27.0",
     "playwright": "1.59.1",
     "typescript": "6.0.2",

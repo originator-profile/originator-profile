@@ -25,7 +25,7 @@
   "scripts": {
     "build": "pkgroll --clean-dist",
     "test": "vitest run",
-    "lint": "eslint --fix .",
+    "lint": "oxlint --fix .",
     "type-check": "tsc --noEmit"
   },
   "devDependencies": {
@@ -33,8 +33,8 @@
     "@originator-profile/tsconfig": "workspace:*",
     "bcp-47-match": "2.0.3",
     "date-fns": "4.1.0",
-    "eslint": "10.2.0",
-    "eslint-config-originator-profile": "workspace:*",
+    "oxlint": "^1.73.0",
+    "oxlint-tsgolint": "^0.24.0",
     "pkgroll": "2.27.0",
     "serialize-error": "13.0.1",
     "typescript": "6.0.2",
