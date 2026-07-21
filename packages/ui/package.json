@@ -38,7 +38,6 @@
     "swr": "2.4.1",
     "tailwind-config-originator-profile": "workspace:*",
     "tailwind-merge": "3.5.0",
-    "typescript": "6.0.2",
     "vitest": "4.1.4"
   },
   "peerDependencies": {
