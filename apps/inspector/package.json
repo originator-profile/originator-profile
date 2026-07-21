@@ -82,7 +82,6 @@
     "e2e:en:update": "LC_ALL=en_US.UTF-8 playwright test --project=en --update-snapshots",
     "test": "vitest run",
     "lint": "oxlint --fix .",
-    "type-check": "tsc --noEmit",
     "presubmit": "git -C ../.. archive --format=zip --output=apps/inspector/web-ext-artifacts/sources.zip HEAD",
     "submit": "wxt submit --chrome-zip web-ext-artifacts/op_inspector-chromium-*.zip --firefox-zip web-ext-artifacts/op_inspector-firefox-desktop-*.zip --firefox-sources-zip web-ext-artifacts/sources.zip"
   }

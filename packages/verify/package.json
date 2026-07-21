@@ -27,8 +27,7 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "e2e:update": "playwright test --update-snapshots",
-    "lint": "oxlint --fix .",
-    "type-check": "tsc --noEmit"
+    "lint": "oxlint --fix ."
   },
   "dependencies": {
     "@originator-profile/core": "workspace:*",
