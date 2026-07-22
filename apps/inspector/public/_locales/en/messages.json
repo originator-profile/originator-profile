@@ -110,7 +110,7 @@
   "Unsupported_ReliabilityInformationRetrievalFailed": {
     "message": "Failed to retrieve organization reliability information and publication distribution channel"
   },
-  "Unsupported_ContactSiteOperator": {
+  "Unsupported_NotVerified": {
     "message": "The originator of this web page is unverified. Please exercise caution"
   },
   "Unsupported_FollowingCausesConsidered": {

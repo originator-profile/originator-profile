@@ -40,7 +40,7 @@ function Unsupported({ errors }: Props) {
         <article className="mb-12 max-w-sm mx-auto">
           <div className="flex flex-col items-center justify-center gap-2 mb-4">
             <h1 className="whitespace-pre-line text-lg text-center font-bold">
-              {_("Unsupported_ContactSiteOperator")}
+              {_("Unsupported_NotVerified")}
             </h1>
             {hasLinkVerification && (
               <p className="flex items-center flex-col gap-4 mt-2 mb-2">
