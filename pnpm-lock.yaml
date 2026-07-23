@@ -51,6 +51,27 @@ importers:
       '@astrojs/check':
         specifier: 0.9.8
         version: 0.9.8(prettier@3.8.2)(typescript@6.0.2)
+      '@iconify-icons/fa6-solid':
+        specifier: ^1.2.13
+        version: 1.2.13
+      '@iconify-icons/gg':
+        specifier: ^1.2.4
+        version: 1.2.4
+      '@iconify-icons/ic':
+        specifier: ^1.2.13
+        version: 1.2.13
+      '@iconify-icons/ion':
+        specifier: ^1.2.10
+        version: 1.2.10
+      '@iconify-icons/material-symbols':
+        specifier: ^1.2.58
+        version: 1.2.58
+      '@iconify-icons/mdi':
+        specifier: ^1.2.48
+        version: 1.2.48
+      '@iconify-icons/solar':
+        specifier: ^1.2.3
+        version: 1.2.3
       '@iconify/react':
         specifier: 6.0.2
         version: 6.0.2(react@19.2.8)
@@ -2127,6 +2148,27 @@ packages:
   '@humanwhocodes/retry@0.4.3':
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
+
+  '@iconify-icons/fa6-solid@1.2.13':
+    resolution: {integrity: sha512-paVSBuF9goqpv+M46OuMLGMbFivXHPIzKkKHogGIcKpXzr16mvYkvZDcZaCCkk7kB+JGFttHMGw6aZM/FuDyAQ==}
+
+  '@iconify-icons/gg@1.2.4':
+    resolution: {integrity: sha512-ZHvDSmuHRl9BOTNzSKKqbcldEkXQZPcCKAtlJhEp+/9ddfWyPP/QofGjzvgBKHFLRG08xjelZnzNFsU6gbagcw==}
+
+  '@iconify-icons/ic@1.2.13':
+    resolution: {integrity: sha512-9Y3DLark8PYGtsHuWqbYxo2xAquL9vFQBZKRkpHuntyQJxBDLsfm3OO8mRbj2EmaAQR65pecH77DqQaLnN7yJQ==}
+
+  '@iconify-icons/ion@1.2.10':
+    resolution: {integrity: sha512-ukeAC13er0rGUF4BOK5oS9GnuDpg2vuAuWonkGNyU17UGKciK1g/NgGy/WzeD//uTNlgyU0py39iKBF7WXUOYg==}
+
+  '@iconify-icons/material-symbols@1.2.58':
+    resolution: {integrity: sha512-v0ZfPXlmDcDPCejxhg5h2eHCEHClrpn+i44Ev766vkzPIEFRdgT+YK942KzyqBpH0RhKJfel4OZdL1DY1oa5Qg==}
+
+  '@iconify-icons/mdi@1.2.48':
+    resolution: {integrity: sha512-51bfNoRLhYDfxSu0Nyi/uRVq6q/tP4TyEc0vvuNwImrXpxrRJUAWJF2A36CfBkXm3hO9IBlph/CD/XNDJKgG6w==}
+
+  '@iconify-icons/solar@1.2.3':
+    resolution: {integrity: sha512-yGLhu8oggEEGI63UG7y24+mzNytp+0pIc9+7AYRBlYzaQuThqVmAYj4d79Gif+pIrLfv+y+d0HFl9miQAPUj/Q==}
 
   '@iconify/collections@1.0.715':
     resolution: {integrity: sha512-4EP9EOD9qx/Ybu+FtepdxL49FV1mFKsPuLTl06ccwvP5lZyErzTy5CODamEnsnKsYr+8jle2DdlDxqzVBok9hQ==}
@@ -11912,6 +11954,34 @@ snapshots:
   '@humanwhocodes/module-importer@1.0.1': {}
 
   '@humanwhocodes/retry@0.4.3': {}
+
+  '@iconify-icons/fa6-solid@1.2.13':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-icons/gg@1.2.4':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-icons/ic@1.2.13':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-icons/ion@1.2.10':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-icons/material-symbols@1.2.58':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-icons/mdi@1.2.48':
+    dependencies:
+      '@iconify/types': 2.0.0
+
+  '@iconify-icons/solar@1.2.3':
+    dependencies:
+      '@iconify/types': 2.0.0
 
   '@iconify/collections@1.0.715':
     dependencies:
