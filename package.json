@@ -34,7 +34,7 @@
     "npm-run-all2": "8.0.4",
     "prettier": "3.8.2",
     "prettier-plugin-organize-imports": "4.3.0",
-    "turbo": "2.9.12",
+    "turbo": "2.9.14",
     "typedoc": "0.28.19"
   },
   "engines": {
