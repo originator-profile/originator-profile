@@ -9,6 +9,7 @@
   "type": "module",
   "scripts": {
     "build": "turbo run build",
+    "build-for-amo": "pnpm --dir=apps/inspector run build-for-amo",
     "version": "node --run=build && node scripts/update-readme-environments.ts && git add apps/*/README.md packages/*/README.md",
     "dev": "turbo run dev --parallel --env-mode=loose",
     "e2e": "turbo run e2e --concurrency=1 --filter=!@originator-profile/wordpress",
@@ -33,7 +34,7 @@
     "npm-run-all2": "8.0.4",
     "prettier": "3.8.2",
     "prettier-plugin-organize-imports": "4.3.0",
-    "turbo": "2.9.12",
+    "turbo": "2.9.14",
     "typedoc": "0.28.19"
   },
   "engines": {
