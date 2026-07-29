@@ -36,7 +36,6 @@
   "scripts": {
     "build": "tsdown && oclif manifest && oclif readme",
     "lint": "oxlint --fix .",
-    "type-check": "tsc",
     "test": "node --test"
   },
   "dependencies": {

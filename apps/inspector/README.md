@@ -139,6 +139,8 @@ $ REGISTRY_OPS=$(cat registry-ops.json) pnpm build
 - `pnpm e2e:update`: Visual Regression Testのベースライン画像を更新します。CIと環境の差分があるため、GitHub Actions（"Update VRT Baselines" ワークフロー）での実行を推奨します。
   - `pnpm e2e:ja:update`: 日本語UIのベースライン画像のみ更新
   - `pnpm e2e:en:update`: 英語UIのベースライン画像のみ更新（※現状、英語UIのVRTテストは未実装です。日本語UIのみVRTテストが実装されています）
+- `pnpm build-for-amo`: [addons.mozilla.org](https://addons.mozilla.org/) への提出に必要な成果物一式（Firefox 向けビルドと、審査でコードの照合に使われるソースコード一式の zip）を `web-ext-artifacts/` に生成します。
+- `pnpm submit`: ビルド済みの成果物を Chrome ウェブストアおよび AMO に提出します（`FIREFOX_JWT_ISSUER` 等の認証情報が必要です）。
 
 ## ドキュメント
 
