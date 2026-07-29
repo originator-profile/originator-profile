@@ -174,9 +174,6 @@ importers:
       typed-url-params:
         specifier: 1.0.1
         version: 1.0.1
-      typescript:
-        specifier: 6.0.2
-        version: 6.0.2
       use-debounce:
         specifier: 10.1.1
         version: 10.1.1(react@19.2.6)
@@ -317,9 +314,6 @@ importers:
       oxlint-tsgolint:
         specifier: ^0.24.0
         version: 0.24.0
-      typescript:
-        specifier: 6.0.2
-        version: 6.0.2
       vite:
         specifier: 8.0.16
         version: 8.0.16(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.3)
@@ -602,9 +596,6 @@ importers:
       tailwind-merge:
         specifier: 3.5.0
         version: 3.5.0
-      typescript:
-        specifier: 6.0.2
-        version: 6.0.2
       vitest:
         specifier: 4.1.4
         version: 4.1.4(@types/node@25.6.0)(happy-dom@20.8.9)(jsdom@29.0.2)(msw@2.13.2(@types/node@25.6.0)(typescript@6.0.2))(vite@8.0.16(@types/node@25.6.0)(esbuild@0.27.7)(jiti@2.6.1)(terser@5.44.1)(yaml@2.8.3))

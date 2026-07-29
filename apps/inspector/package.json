@@ -59,7 +59,6 @@
     "tailwind-merge": "3.5.0",
     "tailwindcss": "4.2.2",
     "typed-url-params": "1.0.1",
-    "typescript": "6.0.2",
     "use-debounce": "10.1.1",
     "vitest": "4.1.4",
     "web-ext": "10.1.0",
@@ -82,7 +81,6 @@
     "e2e:en:update": "LC_ALL=en_US.UTF-8 playwright test --project=en --update-snapshots",
     "test": "vitest run",
     "lint": "oxlint --fix .",
-    "type-check": "tsc --noEmit",
     "build-for-amo": "run-s build:firefox presubmit",
     "presubmit": "git -C ../.. archive --format=zip --output=apps/inspector/web-ext-artifacts/sources.zip HEAD",
     "submit": "wxt submit --chrome-zip web-ext-artifacts/op_inspector-chromium-*.zip --firefox-zip web-ext-artifacts/op_inspector-firefox-desktop-*.zip --firefox-sources-zip web-ext-artifacts/sources.zip"

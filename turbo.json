@@ -32,10 +32,6 @@
       "dependsOn": ["build"],
       "outputs": []
     },
-    "type-check": {
-      "dependsOn": ["build"],
-      "outputs": []
-    },
     "@originator-profile/inspector#build": {
       "dependsOn": ["^build"],
       "env": [
