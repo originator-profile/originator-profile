@@ -107,9 +107,9 @@ function withAbsoluteResolveDir(plugin: esbuild.Plugin): esbuild.Plugin {
   return {
     name: plugin.name,
     setup(build) {
-      const { onLoad } = build;
+      const originalOnLoad = build.onLoad.bind(build);
       build.onLoad = (options, callback) => {
-        onLoad(options, async (args) => {
+        originalOnLoad(options, async (args) => {
           const result = await callback(args);
           if (result?.resolveDir && !path.isAbsolute(result.resolveDir)) {
             return {
@@ -120,7 +120,7 @@ function withAbsoluteResolveDir(plugin: esbuild.Plugin): esbuild.Plugin {
           return result;
         });
       };
-      plugin.setup(build);
+      return plugin.setup(build);
     },
   };
 }
