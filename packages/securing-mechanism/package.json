@@ -25,8 +25,7 @@
   "scripts": {
     "build": "pkgroll --clean-dist",
     "test": "vitest run",
-    "lint": "oxlint --fix .",
-    "type-check": "tsc --noEmit"
+    "lint": "oxlint --fix ."
   },
   "dependencies": {
     "@originator-profile/cryptography": "workspace:*",

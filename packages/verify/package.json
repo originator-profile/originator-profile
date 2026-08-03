@@ -27,8 +27,7 @@
     "test": "vitest run",
     "e2e": "playwright test",
     "e2e:update": "playwright test --update-snapshots",
-    "lint": "oxlint --fix .",
-    "type-check": "tsc --noEmit"
+    "lint": "oxlint --fix ."
   },
   "dependencies": {
     "@originator-profile/core": "workspace:*",
@@ -54,7 +53,7 @@
     "playwright": "1.59.1",
     "typescript": "6.0.2",
     "urlpattern-polyfill": "10.1.0",
-    "vite": "8.0.8",
+    "vite": "8.0.16",
     "vitest": "4.1.4",
     "websri": "1.0.1"
   }
