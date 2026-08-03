@@ -1,8 +1,8 @@
-import { Icon } from "@iconify/react";
 import { WebMediaProfile } from "@originator-profile/model";
 import { Image, _ } from "@originator-profile/ui";
 import logomarkUrl from "@originator-profile/ui/src/assets/logomark.svg";
 import placeholderLogoMainUrl from "@originator-profile/ui/src/assets/placeholder-logo-main.png";
+import IconGgCheckO from "~icons/gg/check-o";
 
 type Props = {
   wmp: WebMediaProfile;
@@ -27,19 +27,19 @@ function WebMediaProfileSummary({ wmp }: Props) {
         <div className="flex flex-row flex-wrap gap-1">
           {wmp.credentialSubject.informationTransmissionPolicy && (
             <p className="jumpu-tag rounded-full px-2 text-xs text-gray-600">
-              <Icon className="inline mr-1" icon="gg:check-o" />
+              <IconGgCheckO className="inline mr-1" />
               {_("WebMediaProfileSummary_InformationTransmissionPolicy")}
             </p>
           )}
           {wmp.credentialSubject.publishingPrinciple && (
             <p className="jumpu-tag rounded-full px-2 text-xs text-gray-600">
-              <Icon className="inline mr-1" icon="gg:check-o" />
+              <IconGgCheckO className="inline mr-1" />
               {_("WebMediaProfileSummary_EditorialGuidelines")}
             </p>
           )}
           {wmp.credentialSubject.privacyPolicy && (
             <p className="jumpu-tag rounded-full px-2 text-xs text-gray-600">
-              <Icon className="inline mr-1" icon="gg:check-o" />
+              <IconGgCheckO className="inline mr-1" />
               {_("WebMediaProfileSummary_PrivacyPolicy")}
             </p>
           )}

@@ -1,8 +1,9 @@
-import { Icon } from "@iconify/react";
 import { Header, _ } from "@originator-profile/ui";
 import { useNavigate, useParams } from "react-router";
 import { useSWRConfig } from "swr";
 import { twMerge } from "tailwind-merge";
+import IconMdiEllipsisVertical from "~icons/mdi/ellipsis-vertical";
+import IconMdiRefresh from "~icons/mdi/refresh";
 import { buildDetailUrl, routes } from "../utils/routes";
 import { matchTabCacheKey } from "./activeTab/match-tab-cache-key";
 import { Menu, MenuButton, MenuItem, useMenuButton } from "./Menu";
@@ -57,7 +58,7 @@ function GlobalHeader({ className, children }: Props) {
           title={_("GlobalHeader_Reload")}
           aria-label={_("GlobalHeader_Reload")}
         >
-          <Icon icon="mdi:refresh" className="w-5 h-5 text-gray-700" />
+          <IconMdiRefresh className="w-5 h-5 text-gray-700" />
         </button>
         <MenuButton
           data-testid="global-header-menu-button"
@@ -67,10 +68,7 @@ function GlobalHeader({ className, children }: Props) {
           onKeyDown={handleButtonKeyDown}
           {...buttonProps}
         >
-          <Icon
-            icon="mdi:ellipsis-vertical"
-            className="w-5 h-5 text-gray-700"
-          />
+          <IconMdiEllipsisVertical className="w-5 h-5 text-gray-700" />
         </MenuButton>
 
         {isOpen && (

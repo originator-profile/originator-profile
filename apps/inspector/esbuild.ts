@@ -92,10 +92,38 @@ import * as astro from "astro";
 import esbuild from "esbuild";
 import copy from "esbuild-copy-static-files";
 import { rm, writeFile } from "node:fs/promises";
+import Icons from "unplugin-icons/esbuild";
 // @ts-expect-error: 型定義がない
 import webExt from "web-ext";
 import postcss from "./esbuild.postcss.ts";
 import manifest from "./manifest.ts";
+
+// unplugin-icons が生成する `~icons/{collection}/{icon}` 仮想モジュールは、
+// unplugin の esbuild アダプタ内部で `path.dirname(仮想パス)` を resolveDir として
+// 返すため、実在しない相対パスになり react / react/jsx-runtime の解決に失敗する
+// (esbuild は絶対パスの resolveDir のみ node_modules を辿れる)。
+// そのため、resolveDir が相対パスの場合はビルドの作業ディレクトリに補正する。
+function withAbsoluteResolveDir(plugin: esbuild.Plugin): esbuild.Plugin {
+  return {
+    name: plugin.name,
+    setup(build) {
+      const { onLoad } = build;
+      build.onLoad = (options, callback) => {
+        onLoad(options, async (args) => {
+          const result = await callback(args);
+          if (result?.resolveDir && !path.isAbsolute(result.resolveDir)) {
+            return {
+              ...result,
+              resolveDir: build.initialOptions.absWorkingDir ?? process.cwd(),
+            };
+          }
+          return result;
+        });
+      };
+      plugin.setup(build);
+    },
+  };
+}
 
 const buildOptions = {
   target: "es2018",
@@ -125,6 +153,18 @@ const buildOptions = {
       src: "public",
       dest: outdir,
     }),
+    // @iconify/react の addIcon() による手動登録を廃止し、
+    // `~icons/{collection}/{icon}` import からビルド時にローカルの
+    // @iconify-json/* パッケージを解決してコンポーネント化する。
+    // scale: 1 は @iconify/react の既定サイズ(1em)と揃えるための指定
+    // (unplugin-icons の既定値は 1.2)。
+    withAbsoluteResolveDir(
+      Icons({
+        compiler: "jsx",
+        jsx: "react",
+        scale: 1,
+      }),
+    ),
     postcss,
     manifest({
       target: args.values.target,

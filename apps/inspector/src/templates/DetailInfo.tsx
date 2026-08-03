@@ -1,4 +1,3 @@
-import { Icon } from "@iconify/react";
 import { stringifyWithError } from "@originator-profile/core";
 import {
   _,
@@ -9,6 +8,7 @@ import {
 } from "@originator-profile/ui";
 import type { VerifiedOps, VerifiedSp } from "@originator-profile/verify";
 import JsonView from "@uiw/react-json-view";
+import IconIcRoundWarning from "~icons/ic/round-warning";
 import BackHeader from "../components/BackHeader";
 import CheckList from "../components/CheckList";
 import type {
@@ -93,10 +93,7 @@ function DetailInfo({
                     key={index}
                     className="flex items-start mb-2 text-sm text-gray-700"
                   >
-                    <Icon
-                      icon="ic:round-warning"
-                      className="size-5 mr-1 shrink-0 text-caution"
-                    />
+                    <IconIcRoundWarning className="size-5 mr-1 shrink-0 text-caution" />
                     <span className="whitespace-pre-wrap break-all">
                       {warning}
                     </span>

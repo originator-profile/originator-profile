@@ -6,7 +6,6 @@ import { activeTabMessenger } from "./components/activeTab/events";
 import { overlayExtensionMessenger } from "./components/overlay/extension-events";
 import "./style.css";
 import "./utils/cors-basic-auth";
-import "./utils/setup-icons";
 
 // サイドパネルが非表示になったとき、アクティブタブのオーバーレイを解除する。
 // React のライフサイクルに依存せず、サイドパネルが存在する限り有効。

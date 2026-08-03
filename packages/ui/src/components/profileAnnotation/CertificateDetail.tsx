@@ -1,10 +1,10 @@
-import { Icon } from "@iconify/react";
 import {
   Certificate,
   getAnnotationPolicy,
   VerifiedOps,
 } from "@originator-profile/verify";
 import { twMerge } from "tailwind-merge";
+import IconFa6SolidArrowRight from "~icons/fa6-solid/arrow-right";
 import placeholderLogoMainUrl from "../../assets/placeholder-logo-main.png";
 import { _ } from "../../utils/get-message";
 import Image from "../Image";
@@ -39,7 +39,7 @@ function CertificateRef(props: { ref?: string }) {
         {/* oxlint-disable-next-line react/react-compiler */}
         <span className="text-sm">{props.ref}</span>
       </span>
-      <Icon className="text-sm text-gray-500" icon="fa6-solid:arrow-right" />
+      <IconFa6SolidArrowRight className="text-sm text-gray-500" />
     </a>
   );
 }

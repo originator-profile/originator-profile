@@ -1,4 +1,3 @@
-import { Icon } from "@iconify/react";
 import { stringifyWithError } from "@originator-profile/core";
 import { _, ExternalLink } from "@originator-profile/ui";
 import {
@@ -24,6 +23,10 @@ import JsonView from "@uiw/react-json-view";
 import get from "just-safe-get";
 import React from "react";
 import { twMerge } from "tailwind-merge";
+import IconIcRoundCancel from "~icons/ic/round-cancel";
+import IconIcRoundCheck from "~icons/ic/round-check";
+import IconIcRoundWarning from "~icons/ic/round-warning";
+import IconSolarAltArrowRightBold from "~icons/solar/alt-arrow-right-bold";
 import { SupportedVerifiedCas } from "./credentials";
 
 interface CodedError extends Error {
@@ -148,10 +151,7 @@ function MultipleValidity({
         {isExpiredSoon(period.expiredAt) ? (
           <span className="flex" title="The certificate is about to expire">
             Common Validity Period
-            <Icon
-              icon="ic:round-warning"
-              className="size-4 ml-1 text-caution"
-            />
+            <IconIcRoundWarning className="size-4 ml-1 text-caution" />
           </span>
         ) : (
           "Common Validity Period"
@@ -214,25 +214,21 @@ function DisplayStatus({
   icon: "check" | "cancel" | "null";
 }) {
   const iconMap = {
-    check: { icon: "ic:round-check", color: "text-success" },
-    cancel: { icon: "ic:round-cancel", color: "text-danger" },
-    null: { icon: "ic:round-warning", color: "text-caution" },
+    check: { Icon: IconIcRoundCheck, color: "text-success" },
+    cancel: { Icon: IconIcRoundCancel, color: "text-danger" },
+    null: { Icon: IconIcRoundWarning, color: "text-caution" },
   } as const;
 
-  const { icon: iconName, color } = iconMap[icon];
+  const { Icon: StatusIcon, color } = iconMap[icon];
 
   return (
     <summary
       {...(testId ? { "data-testid": `result-${testId}` } : {})}
       className="flex items-center text-base cursor-pointer"
     >
-      <Icon
-        icon="solar:alt-arrow-right-bold"
-        className="size-5 transition-transform icon"
-      />
-      <Icon
+      <IconSolarAltArrowRightBold className="size-5 transition-transform icon" />
+      <StatusIcon
         data-testid={`status-${icon}`}
-        icon={iconName}
         className={twMerge("size-5 ml-1", color)}
       />
       <span className="ml-1">{label}</span>
@@ -300,8 +296,7 @@ function DisplayResults({
             {isExpiredSoon(expiredAt) ? (
               <span className="flex" title="The certificate is about to expire">
                 Validity Period
-                <Icon
-                  icon="ic:round-warning"
+                <IconIcRoundWarning
                   className="size-4 ml-1 text-caution"
                   data-testid="caution-validity-period"
                 />

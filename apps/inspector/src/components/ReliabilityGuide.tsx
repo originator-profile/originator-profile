@@ -1,6 +1,6 @@
-import { Icon } from "@iconify/react";
 import { ModalDialog, _, useModalDialog } from "@originator-profile/ui";
 import { twMerge } from "tailwind-merge";
+import IconMaterialSymbolsHelp from "~icons/material-symbols/help";
 import LinkVerification from "./LinkVerification";
 
 type Props = {
@@ -28,7 +28,7 @@ export default function ReliabilityGuide(props: Props) {
         className="text-xs text-primary-700 px-3 py-2 inline-flex items-center gap-1 hover:bg-primary-100 rounded-full"
         onClick={dialog.open}
       >
-        <Icon className="inline w-3 h-3 mr-1" icon="material-symbols:help" />
+        <IconMaterialSymbolsHelp className="inline w-3 h-3 mr-1" />
         {_("ReliabilityGuide_AboutReliabilityInformation")}
       </button>
       <ModalDialog

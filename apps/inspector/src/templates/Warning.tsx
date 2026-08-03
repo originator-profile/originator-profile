@@ -1,5 +1,5 @@
-import { Icon } from "@iconify/react";
 import { _ } from "@originator-profile/ui";
+import IconFa6SolidTriangleExclamation from "~icons/fa6-solid/triangle-exclamation";
 
 type Props = {
   sourceOrg: string | undefined;
@@ -23,10 +23,7 @@ function Warning({
   return (
     <div className="min-h-screen bg-gray-100 flex flex-col items-center justify-center p-4">
       <div className="bg-white p-8 rounded-lg shadow-md max-w-md w-full text-center">
-        <Icon
-          className="mb-4 w-16 h-16 mx-auto text-red-500"
-          icon="fa6-solid:triangle-exclamation"
-        />
+        <IconFa6SolidTriangleExclamation className="mb-4 w-16 h-16 mx-auto text-red-500" />
         <h1 className="text-xl font-bold text-gray-800 mb-2">
           {_("Warning_Title")}
         </h1>
