@@ -103,10 +103,13 @@ import manifest from "./manifest.ts";
 // 返すため、実在しない相対パスになり react / react/jsx-runtime の解決に失敗する
 // (esbuild は絶対パスの resolveDir のみ node_modules を辿れる)。
 // そのため、resolveDir が相対パスの場合はビルドの作業ディレクトリに補正する。
+// build.onLoad の差し替えは対象プラグインの setup() 実行中のみに限定し、
+// 完了後は元に戻すことで、後続に登録される他のプラグイン(postcss, manifest 等)の
+// onLoad には影響を与えないようにする。
 function withAbsoluteResolveDir(plugin: esbuild.Plugin): esbuild.Plugin {
   return {
     name: plugin.name,
-    setup(build) {
+    async setup(build) {
       const originalOnLoad = build.onLoad.bind(build);
       build.onLoad = (options, callback) => {
         originalOnLoad(options, async (args) => {
@@ -120,7 +123,11 @@ function withAbsoluteResolveDir(plugin: esbuild.Plugin): esbuild.Plugin {
           return result;
         });
       };
-      return plugin.setup(build);
+      try {
+        await plugin.setup(build);
+      } finally {
+        build.onLoad = originalOnLoad;
+      }
     },
   };
 }
@@ -153,9 +160,6 @@ const buildOptions = {
       src: "public",
       dest: outdir,
     }),
-    // @iconify/react の addIcon() による手動登録を廃止し、
-    // `~icons/{collection}/{icon}` import からビルド時にローカルの
-    // @iconify-json/* パッケージを解決してコンポーネント化する。
     // scale: 1 は @iconify/react の既定サイズ(1em)と揃えるための指定
     // (unplugin-icons の既定値は 1.2)。
     withAbsoluteResolveDir(
