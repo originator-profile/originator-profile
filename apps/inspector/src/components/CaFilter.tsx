@@ -1,8 +1,8 @@
 import { _ } from "@originator-profile/ui";
 import { useMemo } from "react";
 import { twMerge } from "tailwind-merge";
-import IconFa6SolidCheck from "~icons/fa6-solid/check";
-import IconIonFilter from "~icons/ion/filter";
+import IconFa6SolidCheck from "@iconify-react/fa6-solid/check";
+import IconIonFilter from "@iconify-react/ion/filter";
 import { Menu, MenuButton, MenuItem, useMenuButton } from "./Menu";
 import { listCas } from "./credentials";
 import type { SupportedVerifiedCas } from "./credentials/types";
@@ -70,7 +70,7 @@ function CaFilter({ caListType, setCaListType, cas }: Props) {
         onKeyDown={handleButtonKeyDown}
         {...buttonProps}
       >
-        <IconIonFilter />
+        <IconIonFilter height="1em" />
       </MenuButton>
 
       <Menu
@@ -96,7 +96,9 @@ function CaFilter({ caListType, setCaListType, cas }: Props) {
               className={twMerge("h-8 text-xs", isSelected && "cursor-default")}
             >
               <div className="flex items-center w-full">
-                {isSelected && <IconFa6SolidCheck className="mx-2 absolute" />}
+                {isSelected && (
+                  <IconFa6SolidCheck className="mx-2 absolute" height="1em" />
+                )}
                 <p className="ml-8">{option.title}</p>
               </div>
             </MenuItem>

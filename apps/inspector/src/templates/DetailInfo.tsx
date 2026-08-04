@@ -8,7 +8,7 @@ import {
 } from "@originator-profile/ui";
 import type { VerifiedOps, VerifiedSp } from "@originator-profile/verify";
 import JsonView from "@uiw/react-json-view";
-import IconIcRoundWarning from "~icons/ic/round-warning";
+import IconIcRoundWarning from "@iconify-react/ic/round-warning";
 import BackHeader from "../components/BackHeader";
 import CheckList from "../components/CheckList";
 import type {

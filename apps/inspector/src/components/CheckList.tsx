@@ -23,10 +23,10 @@ import JsonView from "@uiw/react-json-view";
 import get from "just-safe-get";
 import React from "react";
 import { twMerge } from "tailwind-merge";
-import IconIcRoundCancel from "~icons/ic/round-cancel";
-import IconIcRoundCheck from "~icons/ic/round-check";
-import IconIcRoundWarning from "~icons/ic/round-warning";
-import IconSolarAltArrowRightBold from "~icons/solar/alt-arrow-right-bold";
+import IconIcRoundCancel from "@iconify-react/ic/round-cancel";
+import IconIcRoundCheck from "@iconify-react/ic/round-check";
+import IconIcRoundWarning from "@iconify-react/ic/round-warning";
+import IconSolarAltArrowRightBold from "@iconify-react/solar/alt-arrow-right-bold";
 import { SupportedVerifiedCas } from "./credentials";
 
 interface CodedError extends Error {

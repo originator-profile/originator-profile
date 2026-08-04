@@ -23,14 +23,12 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@iconify-json/fa6-solid": "1.2.4",
+    "@iconify-react/fa6-solid": "^1.0.2",
     "@originator-profile/core": "workspace:*",
     "@originator-profile/model": "workspace:*",
     "@originator-profile/securing-mechanism": "workspace:*",
     "@originator-profile/tsconfig": "workspace:*",
     "@originator-profile/verify": "workspace:*",
-    "@svgr/core": "8.1.0",
-    "@svgr/plugin-jsx": "8.1.0",
     "@types/chrome": "0.1.40",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
@@ -40,7 +38,6 @@
     "swr": "2.4.1",
     "tailwind-config-originator-profile": "workspace:*",
     "tailwind-merge": "3.5.0",
-    "unplugin-icons": "23.0.1",
     "vitest": "4.1.4"
   },
   "peerDependencies": {

@@ -1,6 +1,6 @@
 {
   "extends": "@originator-profile/tsconfig/tsconfig.json",
   "compilerOptions": {
-    "types": ["*", "unplugin-icons/types/react"]
+    "types": ["*"]
   }
 }

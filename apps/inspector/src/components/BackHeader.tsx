@@ -1,6 +1,6 @@
 import { _, Header } from "@originator-profile/ui";
 import { Link } from "react-router";
-import IconFa6SolidChevronLeft from "~icons/fa6-solid/chevron-left";
+import IconFa6SolidChevronLeft from "@iconify-react/fa6-solid/chevron-left";
 
 type Props = Parameters<typeof Link>[0];
 
@@ -12,7 +12,7 @@ function BackHeader({ className, children, ...props }: Props) {
         className="jumpu-icon-button shrink-0 group"
         aria-describedby="tooltip-back"
       >
-        <IconFa6SolidChevronLeft className="text-lg text-gray-700" />
+        <IconFa6SolidChevronLeft className="text-lg text-gray-700" height="1em" />
         <span
           id="tooltip-back"
           role="tooltip"
