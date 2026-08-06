@@ -1,10 +1,10 @@
+import IconFa6SolidArrowRight from "@iconify-react/fa6-solid/arrow-right";
 import {
   Certificate,
   getAnnotationPolicy,
   VerifiedOps,
 } from "@originator-profile/verify";
 import { twMerge } from "tailwind-merge";
-import IconFa6SolidArrowRight from "@iconify-react/fa6-solid/arrow-right";
 import placeholderLogoMainUrl from "../../assets/placeholder-logo-main.png";
 import { _ } from "../../utils/get-message";
 import Image from "../Image";

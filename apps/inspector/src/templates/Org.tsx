@@ -1,3 +1,4 @@
+import IconFa6SolidArrowUpRightFromSquare from "@iconify-react/fa6-solid/arrow-up-right-from-square";
 import { WebMediaProfile, WebsiteProfile } from "@originator-profile/model";
 import {
   CertificateDetail,
@@ -11,7 +12,6 @@ import {
 import { Certificate, VerifiedOps } from "@originator-profile/verify";
 import { useMemo, useState } from "react";
 import { twMerge } from "tailwind-merge";
-import IconFa6SolidArrowUpRightFromSquare from "@iconify-react/fa6-solid/arrow-up-right-from-square";
 import BackHeader from "../components/BackHeader";
 import ReliabilityGuide from "../components/ReliabilityGuide";
 import WebMediaProfileSummary from "../components/WebMediaProfileSummary";

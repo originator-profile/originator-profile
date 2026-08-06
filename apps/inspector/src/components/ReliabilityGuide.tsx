@@ -1,6 +1,6 @@
+import IconMaterialSymbolsHelp from "@iconify-react/material-symbols/help";
 import { ModalDialog, _, useModalDialog } from "@originator-profile/ui";
 import { twMerge } from "tailwind-merge";
-import IconMaterialSymbolsHelp from "@iconify-react/material-symbols/help";
 import LinkVerification from "./LinkVerification";
 
 type Props = {
