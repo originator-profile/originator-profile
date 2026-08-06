@@ -52,25 +52,25 @@ importers:
         specifier: 0.9.8
         version: 0.9.8(prettier@3.8.2)(typescript@6.0.2)
       '@iconify-react/fa6-solid':
-        specifier: ^1.0.2
+        specifier: 1.0.2
         version: 1.0.2(react@19.2.8)
       '@iconify-react/gg':
-        specifier: ^1.0.2
+        specifier: 1.0.2
         version: 1.0.2(react@19.2.8)
       '@iconify-react/ic':
-        specifier: ^1.0.2
+        specifier: 1.0.2
         version: 1.0.2(react@19.2.8)
       '@iconify-react/ion':
-        specifier: ^1.0.3
+        specifier: 1.0.3
         version: 1.0.3(react@19.2.8)
       '@iconify-react/material-symbols':
-        specifier: ^1.0.30
+        specifier: 1.0.30
         version: 1.0.30(react@19.2.8)
       '@iconify-react/mdi':
-        specifier: ^1.0.2
+        specifier: 1.0.2
         version: 1.0.2(react@19.2.8)
       '@iconify-react/solar':
-        specifier: ^1.0.2
+        specifier: 1.0.2
         version: 1.0.2(react@19.2.8)
       '@originator-profile/core':
         specifier: workspace:*
@@ -570,7 +570,7 @@ importers:
         version: 4.2.2
     devDependencies:
       '@iconify-react/fa6-solid':
-        specifier: ^1.0.2
+        specifier: 1.0.2
         version: 1.0.2(react@19.2.8)
       '@originator-profile/core':
         specifier: workspace:*

@@ -23,7 +23,7 @@
     "test": "vitest run"
   },
   "devDependencies": {
-    "@iconify-react/fa6-solid": "^1.0.2",
+    "@iconify-react/fa6-solid": "1.0.2",
     "@originator-profile/core": "workspace:*",
     "@originator-profile/model": "workspace:*",
     "@originator-profile/securing-mechanism": "workspace:*",
