@@ -1,3 +1,1 @@
-{
-  "extends": "@originator-profile/tsconfig/tsconfig.json"
-}
+{ "extends": "@originator-profile/tsconfig/tsconfig.json" }
