@@ -1,6 +1,3 @@
 {
-  "extends": "@originator-profile/tsconfig/tsconfig.json",
-  "compilerOptions": {
-    "types": ["*"]
-  }
+  "extends": "@originator-profile/tsconfig/tsconfig.json"
 }
