@@ -51,7 +51,7 @@
     "playwright": "1.59.1",
     "postcss": "8.5.12",
     "postcss-load-config": "6.0.1",
-    "react-router": "7.15.1",
+    "react-router": "7.18.2",
     "react-use": "17.6.0",
     "simple-tree-utils": "3.3.0",
     "swr": "2.4.1",
