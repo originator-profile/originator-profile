@@ -39,7 +39,7 @@
     "chokidar": "5.0.0",
     "date-fns": "4.1.0",
     "dotenv": "17.4.2",
-    "esbuild": "0.27.7",
+    "esbuild": "0.28.1",
     "esbuild-copy-static-files": "0.1.0",
     "globals": "17.5.0",
     "happy-dom": "20.8.9",
