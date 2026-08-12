@@ -399,6 +399,20 @@ Pro版では、画像がCDN経由で変換され、URLが変化する場合が�
 
 **回避策**： 一度記事を非公開にすることで、メタデータがクリアされます。その後再度公開することで UUID を指定しない新規登録となり、正常に登録されます。
 
+### 他の投稿に添付済みの画像を再利用した場合、Integrityが生成されないことがある
+
+WordPressの `get_attached_media()` は、`post_parent`（画像がどの投稿にアップロードされたか）が対象の投稿と一致する添付ファイルのみを返します。
+
+そのため、画像ブロックの「メディアライブラリ」タブから、既に他の投稿にアップロード済みの画像を選択して挿入した場合、その画像は `get_attached_media()` で取得されず、Integrityメタデータ（`_profile_attachment_integrity`）が生成されないことがあります。この場合、該当する画像は CA の署名対象（External Resource）に含まれません。
+
+**確認方法**: ログ出力を有効にすると、署名対象から除外された画像のURLが記録されます。
+
+```
+Post ID <投稿ID>, page <ページ番号>: image(s) missing integrity, excluded from signing (possibly not returned by get_attached_media()): <画像URL>, ...
+```
+
+**回避策**: 該当する画像をメディアライブラリから直接アップロードし直すことで、その投稿に添付され、Integrityメタデータが生成されます。
+
 ## 開発ガイド
 
 開発用 WordPress サーバーを利用して動作を確認できます。
