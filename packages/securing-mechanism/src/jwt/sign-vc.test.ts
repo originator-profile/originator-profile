@@ -11,6 +11,7 @@ import {
 } from "@originator-profile/model";
 import { addYears, getUnixTime } from "date-fns";
 import { decodeJwt, decodeProtectedHeader, exportJWK, jwtVerify } from "jose";
+import { generateKeyPairSync } from "node:crypto";
 import { describe, expect, test } from "vitest";
 import { signJwtVc } from "./sign-vc";
 import type { JwtSigner } from "./signer";
@@ -321,6 +322,27 @@ describe("signer", () => {
       true,
       ["sign", "verify"],
     );
+    const expectedKid = await createThumbprint(await exportJWK(publicKey));
+
+    const jwt = await signJwtVc(wsp, privateKey, { issuedAt, expiredAt });
+    expect(decodeProtectedHeader(jwt).kid).toBe(expectedKid);
+
+    const { payload } = await jwtVerify(jwt, publicKey);
+    expect(payload).toStrictEqual({
+      iss: wsp.issuer,
+      iat: getUnixTime(issuedAt),
+      exp: getUnixTime(expiredAt),
+      sub: wsp.credentialSubject.id,
+      ...wsp,
+    });
+  });
+
+  test("KeyObject (Node) の場合、公開鍵の thumbprint から kid を自動導出する", async () => {
+    const issuedAt = new Date();
+    const expiredAt = addYears(new Date(), 10);
+    const { privateKey, publicKey } = generateKeyPairSync("ec", {
+      namedCurve: "P-256",
+    });
     const expectedKid = await createThumbprint(await exportJWK(publicKey));
 
     const jwt = await signJwtVc(wsp, privateKey, { issuedAt, expiredAt });

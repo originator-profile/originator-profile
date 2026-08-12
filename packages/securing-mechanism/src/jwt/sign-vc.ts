@@ -13,19 +13,17 @@ function isJwk(keyMaterial: KeyMaterial): keyMaterial is Jwk {
   return "kty" in keyMaterial;
 }
 
-async function resolveKid(
-  keyMaterial: KeyMaterial,
-  alg: string,
-): Promise<string> {
+async function resolveKid(keyMaterial: KeyMaterial): Promise<string> {
   if (isJwk(keyMaterial)) {
-    return keyMaterial.kid ?? (await createThumbprint(keyMaterial, alg));
+    return keyMaterial.kid ?? (await createThumbprint(keyMaterial));
   }
   try {
     const jwk = await exportJWK(keyMaterial);
-    return await createThumbprint(jwk, alg);
-  } catch {
+    return await createThumbprint(jwk);
+  } catch (e) {
     throw new Error(
       "Could not derive kid from the key (it may be non-extractable). Specify options.kid explicitly.",
+      { cause: e },
     );
   }
 }
@@ -43,7 +41,7 @@ async function resolveAlgAndKid(
     return { alg: signer.alg, kid: options.kid ?? signer.kid };
   }
   const alg = options.alg ?? "ES256";
-  return { alg, kid: options.kid ?? (await resolveKid(signer, alg)) };
+  return { alg, kid: options.kid ?? (await resolveKid(signer)) };
 }
 
 /**
