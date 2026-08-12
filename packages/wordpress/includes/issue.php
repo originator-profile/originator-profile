@@ -300,6 +300,11 @@ function create_uca_list( \WP_Post $post, string $issuer_id, ?string $uuid = nul
 		$html               = content_to_html( $content, \get_option( 'profile_ca_target_html', PROFILE_DEFAULT_CA_TARGET_HTML ), $title );
 		$external_resources = external_resources_from_html( $html, '//*[contains(@class, "wp-block-image")]//img[@integrity]' );
 
+		$images_without_integrity = find_images_without_integrity( $html );
+		if ( ! empty( $images_without_integrity ) ) {
+			debug( "Post ID {$post->ID}, page {$page}: image(s) missing integrity, excluded from signing (possibly not returned by get_attached_media()): " . implode( ', ', $images_without_integrity ) );
+		}
+
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
 			require_once ABSPATH . 'wp-admin/includes/file.php';
 
@@ -392,6 +397,29 @@ function external_resources_from_html( string $html, string $xpath_query ): arra
 	}
 
 	return $resources;
+}
+
+/**
+ * 署名対象HTMLの中で、Integrityが付与されていない画像のsrc一覧を取得
+ *
+ * 他の投稿に添付済みの画像を再利用した場合など、get_attached_media() で取得できない画像は
+ * Integrityメタデータが生成されないため、この一覧に含まれる。
+ *
+ * @param string $html HTML
+ * @return array<string> Integrityが付与されていない画像のsrc一覧
+ */
+function find_images_without_integrity( string $html ): array {
+	$document = new \DOMDocument();
+	$document->loadHTML( $html );
+	$xpath    = new \DOMXpath( $document );
+	$elements = $xpath->query( '//*[contains(@class, "wp-block-image")]//img[not(@integrity)]' );
+
+	$images = array();
+	foreach ( $elements as $element ) {
+		array_push( $images, $element->getAttribute( 'src' ) );
+	}
+
+	return $images;
 }
 
 /**
@@ -502,6 +530,7 @@ function request_ca( string $endpoint, string $admin_secret, string $method = 'P
 			$args['headers']['authorization'] = 'Basic ' . \sodium_bin2base64( $admin_secret, SODIUM_BASE64_VARIANT_ORIGINAL );
 			break;
 	}
+	debug( "Requesting CA server endpoint: {$endpoint} with method: {$method}" );
 	$res = \wp_remote_request( $endpoint, $args );
 	if ( \is_wp_error( $res ) ) {
 		$error_message = $res->get_error_message();
