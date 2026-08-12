@@ -302,7 +302,7 @@ function create_uca_list( \WP_Post $post, string $issuer_id, ?string $uuid = nul
 
 		$images_without_integrity = find_images_without_integrity( $html );
 		if ( ! empty( $images_without_integrity ) ) {
-			debug( "Post ID {$post->ID}, page {$page}: image(s) missing integrity, excluded from signing (possibly not returned by get_attached_media()): " . implode( ', ', $images_without_integrity ) );
+			debug( "Post ID {$post->ID}, page {$page}: image(s) with missing or invalid integrity (possibly not returned by get_attached_media(), or hash could not be computed): " . implode( ', ', $images_without_integrity ) );
 		}
 
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
@@ -400,23 +400,26 @@ function external_resources_from_html( string $html, string $xpath_query ): arra
 }
 
 /**
- * 署名対象HTMLの中で、Integrityが付与されていない画像のsrc一覧を取得
+ * 署名対象HTMLの中で、Integrityが付与されていない、または壊れている画像のsrc一覧を取得
  *
  * 他の投稿に添付済みの画像を再利用した場合など、get_attached_media() で取得できない画像は
- * Integrityメタデータが生成されないため、この一覧に含まれる。
+ * Integrityメタデータが生成されない、または壊れた値のまま残ることがあるため、この一覧に含まれる。
  *
  * @param string $html HTML
- * @return array<string> Integrityが付与されていない画像のsrc一覧
+ * @return array<string> Integrityが付与されていない、または壊れている画像のsrc一覧
  */
 function find_images_without_integrity( string $html ): array {
 	$document = new \DOMDocument();
 	$document->loadHTML( $html );
 	$xpath    = new \DOMXpath( $document );
-	$elements = $xpath->query( '//*[contains(@class, "wp-block-image")]//img[not(@integrity)]' );
+	$elements = $xpath->query( '//*[contains(@class, "wp-block-image")]//img' );
 
 	$images = array();
 	foreach ( $elements as $element ) {
-		array_push( $images, $element->getAttribute( 'src' ) );
+		$integrity = $element->getAttribute( 'integrity' );
+		if ( '' === $integrity || preg_match( '/\bsha\d+-(?=\s|$)/', $integrity ) ) {
+			array_push( $images, $element->getAttribute( 'src' ) );
+		}
 	}
 
 	return $images;

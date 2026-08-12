@@ -96,4 +96,17 @@ EOD;
 
 		$this->assertSame( array(), find_images_without_integrity( $html ) );
 	}
+
+	public function test_find_images_without_integrity関数はハッシュ部分が空のintegrity値を検出する() {
+		$html = <<<'EOD'
+<div class="wp-block-post-content">
+<figure class="wp-block-image size-full"><img src="https://example.com/a.png" integrity="sha256-" /></figure>
+</div>
+EOD;
+
+		$this->assertSame(
+			array( 'https://example.com/a.png' ),
+			find_images_without_integrity( $html )
+		);
+	}
 }
