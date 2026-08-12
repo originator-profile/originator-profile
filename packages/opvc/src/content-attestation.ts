@@ -1,14 +1,14 @@
 import { UnsignedContentAttestation } from "@originator-profile/model";
+import type {
+  JwtSigner,
+  KeyMaterial,
+} from "@originator-profile/securing-mechanism";
 import {
   fetchAndSetDigestSri,
   fetchAndSetTargetIntegrity,
   signCa,
   type DocumentProvider,
 } from "@originator-profile/sign";
-import type {
-  JwtSigner,
-  KeyMaterial,
-} from "@originator-profile/securing-mechanism";
 import { getUnixTime } from "date-fns";
 import { BadRequestError } from "http-errors-enhanced";
 import type { HashAlgorithm } from "websri";

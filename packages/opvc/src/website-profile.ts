@@ -2,15 +2,15 @@ import {
   UnsignedWebsiteProfile,
   UnsignedWebsiteProfileSet,
 } from "@originator-profile/model";
+import type {
+  JwtSigner,
+  KeyMaterial,
+} from "@originator-profile/securing-mechanism";
 import {
   fetchAndSetDigestSri,
   signWsp,
   UnsignedWebsiteProfileInput,
 } from "@originator-profile/sign";
-import type {
-  JwtSigner,
-  KeyMaterial,
-} from "@originator-profile/securing-mechanism";
 import { getUnixTime } from "date-fns";
 import { BadRequestError } from "http-errors-enhanced";
 import { parseDates, type TimingOptions } from "./timing-options.ts";
