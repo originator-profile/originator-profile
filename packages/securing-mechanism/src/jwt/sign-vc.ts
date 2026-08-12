@@ -25,7 +25,7 @@ async function resolveKid(
     return await createThumbprint(jwk, alg);
   } catch {
     throw new Error(
-      "kid を鍵から自動導出できませんでした (non-extractable な鍵の可能性があります)。options.kid を明示的に指定してください。",
+      "Could not derive kid from the key (it may be non-extractable). Specify options.kid explicitly.",
     );
   }
 }
@@ -37,7 +37,7 @@ async function resolveAlgAndKid(
   if (isJwtSigner(signer)) {
     if (options.alg !== undefined && options.alg !== signer.alg) {
       throw new Error(
-        `options.alg ("${options.alg}") は signer.alg ("${signer.alg}") と一致している必要があります。`,
+        `options.alg ("${options.alg}") must match signer.alg ("${signer.alg}").`,
       );
     }
     return { alg: signer.alg, kid: options.kid ?? signer.kid };
