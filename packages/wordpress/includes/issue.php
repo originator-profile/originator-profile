@@ -409,17 +409,24 @@ function external_resources_from_html( string $html, string $xpath_query ): arra
  * @return array<string> Integrityが付与されていない、または壊れている画像のsrc一覧
  */
 function find_images_without_integrity( string $html ): array {
+	$xpath_query = '//*[contains(@class, "wp-block-image")]//img';
+
 	$document = new \DOMDocument();
 	$document->loadHTML( $html );
 	$xpath    = new \DOMXpath( $document );
-	$elements = $xpath->query( '//*[contains(@class, "wp-block-image")]//img' );
+	$elements = $xpath->query( $xpath_query );
 
 	$images = array();
-	foreach ( $elements as $element ) {
-		$integrity = $element->getAttribute( 'integrity' );
-		if ( '' === $integrity || preg_match( '/\bsha\d+-(?=\s|$)/', $integrity ) ) {
-			array_push( $images, $element->getAttribute( 'src' ) );
+
+	if ( $elements ) {
+		foreach ( $elements as $element ) {
+			$integrity = $element->getAttribute( 'integrity' );
+			if ( '' === $integrity || preg_match( '/\bsha\d+-(?=\s|$)/', $integrity ) ) {
+				array_push( $images, $element->getAttribute( 'src' ) );
+			}
 		}
+	} else {
+		debug( "No images found matching Xpath query: {$xpath_query}" );
 	}
 
 	return $images;
