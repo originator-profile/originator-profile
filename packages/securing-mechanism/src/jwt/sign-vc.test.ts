@@ -1,4 +1,4 @@
-import { generateKey } from "@originator-profile/cryptography";
+import { createThumbprint, generateKey } from "@originator-profile/cryptography";
 import {
   AdvertisementCA,
   AdvertorialCA,
@@ -7,9 +7,10 @@ import {
   WebsiteProfile,
 } from "@originator-profile/model";
 import { addYears, getUnixTime } from "date-fns";
-import { decodeJwt, decodeProtectedHeader } from "jose";
+import { decodeJwt, decodeProtectedHeader, exportJWK, jwtVerify } from "jose";
 import { describe, expect, test } from "vitest";
 import { signJwtVc } from "./sign-vc";
+import type { JwtSigner } from "./signer";
 
 test("signJwtVc() returns valid Website Profile", async () => {
   const issuedAt = new Date();
@@ -283,5 +284,138 @@ describe("CA", () => {
       sub: ca.credentialSubject.id,
       ...ca,
     });
+  });
+});
+
+describe("signer", () => {
+  const wsp: WebsiteProfile = {
+    "@context": [
+      "https://www.w3.org/ns/credentials/v2",
+      "https://originator-profile.org/ns/credentials/v1",
+      "https://originator-profile.org/ns/cip/v1",
+      { "@language": "ja" },
+    ],
+    type: ["VerifiableCredential", "WebsiteProfile"],
+    issuer: "dns:example.com",
+    credentialSubject: {
+      id: "https://media.example.com/",
+      type: "WebSite",
+      name: "<Webサイトのタイトル>",
+      description: "<Webサイトの説明>",
+      image: {
+        id: "https://media.example.com/image.png",
+        digestSRI: "sha256-Upwn7gYMuRmJlD1ZivHk876vXHzokXrwXj50VgfnMnY=",
+      },
+      allowedOrigin: ["https://media.example.com"],
+    },
+  };
+
+  test("extractable な CryptoKey の場合、公開鍵の thumbprint から kid を自動導出する", async () => {
+    const issuedAt = new Date();
+    const expiredAt = addYears(new Date(), 10);
+    const { privateKey, publicKey } = await crypto.subtle.generateKey(
+      { name: "ECDSA", namedCurve: "P-256" },
+      true,
+      ["sign", "verify"],
+    );
+    const expectedKid = await createThumbprint(await exportJWK(publicKey));
+
+    const jwt = await signJwtVc(wsp, privateKey, { issuedAt, expiredAt });
+    expect(decodeProtectedHeader(jwt).kid).toBe(expectedKid);
+
+    const { payload } = await jwtVerify(jwt, publicKey);
+    expect(payload).toStrictEqual({
+      iss: wsp.issuer,
+      iat: getUnixTime(issuedAt),
+      exp: getUnixTime(expiredAt),
+      sub: wsp.credentialSubject.id,
+      ...wsp,
+    });
+  });
+
+  test("non-extractable な CryptoKey で kid 未指定の場合はエラーになる", async () => {
+    const issuedAt = new Date();
+    const expiredAt = addYears(new Date(), 10);
+    const { privateKey } = await crypto.subtle.generateKey(
+      { name: "ECDSA", namedCurve: "P-256" },
+      false,
+      ["sign", "verify"],
+    );
+
+    await expect(
+      signJwtVc(wsp, privateKey, { issuedAt, expiredAt }),
+    ).rejects.toThrow(/kid/);
+  });
+
+  test("non-extractable な CryptoKey でも options.kid を指定すれば署名できる", async () => {
+    const issuedAt = new Date();
+    const expiredAt = addYears(new Date(), 10);
+    const { privateKey, publicKey } = await crypto.subtle.generateKey(
+      { name: "ECDSA", namedCurve: "P-256" },
+      false,
+      ["sign", "verify"],
+    );
+
+    const jwt = await signJwtVc(wsp, privateKey, {
+      issuedAt,
+      expiredAt,
+      kid: "hsm-key-1",
+    });
+    expect(decodeProtectedHeader(jwt).kid).toBe("hsm-key-1");
+    await expect(jwtVerify(jwt, publicKey)).resolves.toBeDefined();
+  });
+
+  test("JwtSigner を渡すと Compact JWS を手組みし、jose で検証可能な JWT を返す", async () => {
+    const issuedAt = new Date();
+    const expiredAt = addYears(new Date(), 10);
+    const { privateKey, publicKey } = await crypto.subtle.generateKey(
+      { name: "ECDSA", namedCurve: "P-256" },
+      false,
+      ["sign", "verify"],
+    );
+
+    const signer: JwtSigner = {
+      alg: "ES256",
+      kid: "kms-key-1",
+      sign: async (signingInput) =>
+        new Uint8Array(
+          await crypto.subtle.sign(
+            { name: "ECDSA", hash: "SHA-256" },
+            privateKey,
+            signingInput as BufferSource,
+          ),
+        ),
+    };
+
+    const jwt = await signJwtVc(wsp, signer, { issuedAt, expiredAt });
+    expect(decodeProtectedHeader(jwt)).toStrictEqual({
+      alg: "ES256",
+      kid: "kms-key-1",
+      typ: "vc+jwt",
+      cty: "vc",
+    });
+
+    const { payload } = await jwtVerify(jwt, publicKey);
+    expect(payload).toStrictEqual({
+      iss: wsp.issuer,
+      iat: getUnixTime(issuedAt),
+      exp: getUnixTime(expiredAt),
+      sub: wsp.credentialSubject.id,
+      ...wsp,
+    });
+  });
+
+  test("JwtSigner の alg と options.alg が矛盾するとエラーになる", async () => {
+    const issuedAt = new Date();
+    const expiredAt = addYears(new Date(), 10);
+    const signer: JwtSigner = {
+      alg: "ES256",
+      kid: "kms-key-1",
+      sign: async () => new Uint8Array(),
+    };
+
+    await expect(
+      signJwtVc(wsp, signer, { issuedAt, expiredAt, alg: "RS256" }),
+    ).rejects.toThrow(/alg/);
   });
 });

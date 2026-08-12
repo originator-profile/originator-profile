@@ -1,44 +1,90 @@
 import { createThumbprint } from "@originator-profile/cryptography";
-import { Jwk } from "@originator-profile/model";
+import type { Jwk } from "@originator-profile/model";
 import { getUnixTime } from "date-fns";
-import { importJWK, SignJWT } from "jose";
+import { base64url, exportJWK, importJWK, SignJWT } from "jose";
+import { isJwtSigner, type JwtSigner, type KeyMaterial } from "./signer";
 
 type SignableVc = {
   issuer: string;
   credentialSubject: { id: string };
 };
 
+function isJwk(keyMaterial: KeyMaterial): keyMaterial is Jwk {
+  return "kty" in keyMaterial;
+}
+
+async function resolveKid(
+  keyMaterial: KeyMaterial,
+  alg: string,
+): Promise<string> {
+  if (isJwk(keyMaterial)) {
+    return keyMaterial.kid ?? (await createThumbprint(keyMaterial, alg));
+  }
+  try {
+    const jwk = await exportJWK(keyMaterial);
+    return await createThumbprint(jwk, alg);
+  } catch {
+    throw new Error(
+      "kid を鍵から自動導出できませんでした (non-extractable な鍵の可能性があります)。options.kid を明示的に指定してください。",
+    );
+  }
+}
+
 /**
  * VC への署名
  * @param vc VC オブジェクト
- * @param privateKey プライベートキー
+ * @param signer プライベートキー (Jwk/CryptoKey/KeyObject)、または HSM・KMS・WebAuthn等の外部署名者 (JwtSigner)
  * @return JWT でエンコードされた VC
  */
 export async function signJwtVc<T extends SignableVc>(
   vc: T,
-  privateKey: Jwk,
+  signer: KeyMaterial | JwtSigner,
   options: {
     alg?: string;
+    kid?: string;
     issuedAt: Date;
     expiredAt: Date;
   },
 ): Promise<string> {
   const payload = vc;
-  const { alg = "ES256", issuedAt, expiredAt } = options;
-  const header = {
-    alg,
-    kid: privateKey.kid ?? (await createThumbprint(privateKey, alg)),
-    typ: "vc+jwt",
-    cty: "vc",
-  };
+  const { issuedAt, expiredAt } = options;
 
-  const privateKeyImported = await importJWK(privateKey, alg);
+  if (isJwtSigner(signer)) {
+    if (options.alg !== undefined && options.alg !== signer.alg) {
+      throw new Error(
+        `options.alg ("${options.alg}") は signer.alg ("${signer.alg}") と一致している必要があります。`,
+      );
+    }
+    const alg = signer.alg;
+    const kid = options.kid ?? signer.kid;
+    const header = { alg, kid, typ: "vc+jwt", cty: "vc" };
+    const claims = {
+      ...payload,
+      iss: vc.issuer,
+      sub: vc.credentialSubject.id,
+      iat: getUnixTime(issuedAt),
+      exp: getUnixTime(expiredAt),
+    };
+    const encodedHeader = base64url.encode(JSON.stringify(header));
+    const encodedPayload = base64url.encode(JSON.stringify(claims));
+    const signingInput = new TextEncoder().encode(
+      `${encodedHeader}.${encodedPayload}`,
+    );
+    const signature = await signer.sign(signingInput);
+    return `${encodedHeader}.${encodedPayload}.${base64url.encode(signature)}`;
+  }
+
+  const { alg = "ES256" } = options;
+  const kid = options.kid ?? (await resolveKid(signer, alg));
+  const header = { alg, kid, typ: "vc+jwt", cty: "vc" };
+  const key = isJwk(signer) ? await importJWK(signer, alg) : signer;
+
   const jwt = await new SignJWT(payload)
     .setProtectedHeader(header)
     .setIssuer(vc.issuer)
     .setSubject(vc.credentialSubject.id)
     .setIssuedAt(getUnixTime(issuedAt))
     .setExpirationTime(getUnixTime(expiredAt))
-    .sign(privateKeyImported);
+    .sign(key);
   return jwt;
 }
