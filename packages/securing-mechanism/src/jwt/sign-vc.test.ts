@@ -1,4 +1,7 @@
-import { createThumbprint, generateKey } from "@originator-profile/cryptography";
+import {
+  createThumbprint,
+  generateKey,
+} from "@originator-profile/cryptography";
 import {
   AdvertisementCA,
   AdvertorialCA,

@@ -1,5 +1,5 @@
-import type { CryptoKey, KeyObject } from "jose";
 import type { Jwk } from "@originator-profile/model";
+import type { CryptoKey, KeyObject } from "jose";
 
 /**
  * 鍵材料を外部に渡さない不透明な署名者
@@ -23,6 +23,8 @@ export type JwtSigner = {
 export type KeyMaterial = Jwk | CryptoKey | KeyObject;
 
 /** signer が JwtSigner (不透明な署名者) かどうかを判定する */
-export function isJwtSigner(signer: KeyMaterial | JwtSigner): signer is JwtSigner {
+export function isJwtSigner(
+  signer: KeyMaterial | JwtSigner,
+): signer is JwtSigner {
   return "sign" in signer && typeof signer.sign === "function";
 }
