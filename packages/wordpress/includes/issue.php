@@ -3,6 +3,9 @@
 
 namespace Profile\Issue;
 
+/** 画像ブロック(wp-block-image クラス)配下の img 要素を選択する XPath */
+const WP_BLOCK_IMAGE_XPATH = '//*[contains(@class, "wp-block-image")]//img';
+
 require_once __DIR__ . '/class-uca.php';
 use Profile\Uca\Uca;
 
@@ -298,7 +301,7 @@ function create_uca_list( \WP_Post $post, string $issuer_id, ?string $uuid = nul
 
 		$content            = \apply_filters( 'the_content', $content );
 		$html               = content_to_html( $content, \get_option( 'profile_ca_target_html', PROFILE_DEFAULT_CA_TARGET_HTML ), $title );
-		$external_resources = external_resources_from_html( $html, '//*[contains(@class, "wp-block-image")]//img[@integrity]' );
+		$external_resources = external_resources_from_html( $html, WP_BLOCK_IMAGE_XPATH . '[@integrity]' );
 
 		$images_without_integrity = find_images_without_integrity( $html );
 		if ( ! empty( $images_without_integrity ) ) {
@@ -409,12 +412,10 @@ function external_resources_from_html( string $html, string $xpath_query ): arra
  * @return array<string> Integrityが付与されていない、または壊れている画像のsrc一覧
  */
 function find_images_without_integrity( string $html ): array {
-	$xpath_query = '//*[contains(@class, "wp-block-image")]//img';
-
 	$document = new \DOMDocument();
 	$document->loadHTML( $html );
 	$xpath    = new \DOMXpath( $document );
-	$elements = $xpath->query( $xpath_query );
+	$elements = $xpath->query( WP_BLOCK_IMAGE_XPATH );
 
 	$images = array();
 
@@ -426,7 +427,7 @@ function find_images_without_integrity( string $html ): array {
 			}
 		}
 	} else {
-		debug( "No images found matching Xpath query: {$xpath_query}" );
+		debug( 'No images found matching Xpath query: ' . WP_BLOCK_IMAGE_XPATH );
 	}
 
 	return $images;
