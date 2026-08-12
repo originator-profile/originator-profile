@@ -26,5 +26,7 @@ export type KeyMaterial = Jwk | CryptoKey | KeyObject;
 export function isJwtSigner(
   signer: KeyMaterial | JwtSigner,
 ): signer is JwtSigner {
-  return "sign" in signer && typeof signer.sign === "function";
+  return (
+    !("kty" in signer) && "sign" in signer && typeof signer.sign === "function"
+  );
 }

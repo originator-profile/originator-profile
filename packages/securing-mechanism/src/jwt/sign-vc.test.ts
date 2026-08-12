@@ -408,6 +408,37 @@ describe("signer", () => {
     });
   });
 
+  test("JwtSigner を渡しても options.kid を指定すれば優先される", async () => {
+    const issuedAt = new Date();
+    const expiredAt = addYears(new Date(), 10);
+    const { privateKey, publicKey } = await crypto.subtle.generateKey(
+      { name: "ECDSA", namedCurve: "P-256" },
+      false,
+      ["sign", "verify"],
+    );
+
+    const signer: JwtSigner = {
+      alg: "ES256",
+      kid: "kms-key-1",
+      sign: async (signingInput) =>
+        new Uint8Array(
+          await crypto.subtle.sign(
+            { name: "ECDSA", hash: "SHA-256" },
+            privateKey,
+            signingInput as BufferSource,
+          ),
+        ),
+    };
+
+    const jwt = await signJwtVc(wsp, signer, {
+      issuedAt,
+      expiredAt,
+      kid: "override-kid",
+    });
+    expect(decodeProtectedHeader(jwt).kid).toBe("override-kid");
+    await expect(jwtVerify(jwt, publicKey)).resolves.toBeDefined();
+  });
+
   test("JwtSigner の alg と options.alg が矛盾するとエラーになる", async () => {
     const issuedAt = new Date();
     const expiredAt = addYears(new Date(), 10);
@@ -420,5 +451,35 @@ describe("signer", () => {
     await expect(
       signJwtVc(wsp, signer, { issuedAt, expiredAt, alg: "RS256" }),
     ).rejects.toThrow(/alg/);
+  });
+
+  test("JwtSigner の alg と options.alg が一致していればエラーにならない", async () => {
+    const issuedAt = new Date();
+    const expiredAt = addYears(new Date(), 10);
+    const { privateKey, publicKey } = await crypto.subtle.generateKey(
+      { name: "ECDSA", namedCurve: "P-256" },
+      false,
+      ["sign", "verify"],
+    );
+
+    const signer: JwtSigner = {
+      alg: "ES256",
+      kid: "kms-key-1",
+      sign: async (signingInput) =>
+        new Uint8Array(
+          await crypto.subtle.sign(
+            { name: "ECDSA", hash: "SHA-256" },
+            privateKey,
+            signingInput as BufferSource,
+          ),
+        ),
+    };
+
+    const jwt = await signJwtVc(wsp, signer, {
+      issuedAt,
+      expiredAt,
+      alg: "ES256",
+    });
+    await expect(jwtVerify(jwt, publicKey)).resolves.toBeDefined();
   });
 });

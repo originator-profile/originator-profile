@@ -62,14 +62,13 @@ export async function signJwtVc<T extends SignableVc>(
     expiredAt: Date;
   },
 ): Promise<string> {
-  const payload = vc;
   const { issuedAt, expiredAt } = options;
   const { alg, kid } = await resolveAlgAndKid(signer, options);
   const header = { alg, kid, typ: "vc+jwt", cty: "vc" };
 
   if (isJwtSigner(signer)) {
     const claims = {
-      ...payload,
+      ...vc,
       iss: vc.issuer,
       sub: vc.credentialSubject.id,
       iat: getUnixTime(issuedAt),
@@ -85,7 +84,7 @@ export async function signJwtVc<T extends SignableVc>(
   }
 
   const key = isJwk(signer) ? await importJWK(signer, alg) : signer;
-  return await new SignJWT(payload)
+  return await new SignJWT(vc)
     .setProtectedHeader(header)
     .setIssuer(vc.issuer)
     .setSubject(vc.credentialSubject.id)
