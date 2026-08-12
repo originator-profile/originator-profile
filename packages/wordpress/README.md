@@ -399,16 +399,18 @@ Pro版では、画像がCDN経由で変換され、URLが変化する場合が�
 
 **回避策**： 一度記事を非公開にすることで、メタデータがクリアされます。その後再度公開することで UUID を指定しない新規登録となり、正常に登録されます。
 
-### 他の投稿に添付済みの画像を再利用した場合、Integrityが生成されないことがある
+### 他の投稿に添付済みの画像を再利用した場合、Integrityが正しく付与されないことがある
 
 WordPressの `get_attached_media()` は、`post_parent`（画像がどの投稿にアップロードされたか）が対象の投稿と一致する添付ファイルのみを返します。
 
 そのため、画像ブロックの「メディアライブラリ」タブから、既に他の投稿にアップロード済みの画像を選択して挿入した場合、その画像は `get_attached_media()` で取得されず、Integrityメタデータ（`_profile_attachment_integrity`）が生成されないことがあります。この場合、該当する画像は CA の署名対象（External Resource）に含まれません。
 
-**確認方法**: ログ出力を有効にすると、署名対象から除外された画像のURLが記録されます。
+また、画像をアップロードした時点でIntegrityメタデータの計算自体には成功していても、何らかの理由で値が壊れた状態（例: `integrity="sha256-"` のようにハッシュ部分が空）で保存されている場合、`get_attached_media()` で再取得・再検証されない限りその状態が残り続け、CA検証エラー（`ERR_CONTENT_ATTESTATION_SET_VERIFY_FAILED`）の原因になることがあります。
+
+**確認方法**: ログ出力を有効にすると、Integrityが欠落または不正な状態の画像のURLが記録されます。
 
 ```
-Post ID <投稿ID>, page <ページ番号>: image(s) missing integrity, excluded from signing (possibly not returned by get_attached_media()): <画像URL>, ...
+Post ID <投稿ID>, page <ページ番号>: image(s) with missing or invalid integrity (possibly not returned by get_attached_media(), or hash could not be computed): <画像URL>, ...
 ```
 
 **回避策**: 該当する画像をメディアライブラリから直接アップロードし直すことで、その投稿に添付され、Integrityメタデータが生成されます。
