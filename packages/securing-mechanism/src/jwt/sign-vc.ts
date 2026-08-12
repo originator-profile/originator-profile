@@ -30,6 +30,22 @@ async function resolveKid(
   }
 }
 
+async function resolveAlgAndKid(
+  signer: KeyMaterial | JwtSigner,
+  options: { alg?: string; kid?: string },
+): Promise<{ alg: string; kid: string }> {
+  if (isJwtSigner(signer)) {
+    if (options.alg !== undefined && options.alg !== signer.alg) {
+      throw new Error(
+        `options.alg ("${options.alg}") は signer.alg ("${signer.alg}") と一致している必要があります。`,
+      );
+    }
+    return { alg: signer.alg, kid: options.kid ?? signer.kid };
+  }
+  const alg = options.alg ?? "ES256";
+  return { alg, kid: options.kid ?? (await resolveKid(signer, alg)) };
+}
+
 /**
  * VC への署名
  * @param vc VC オブジェクト
@@ -48,16 +64,10 @@ export async function signJwtVc<T extends SignableVc>(
 ): Promise<string> {
   const payload = vc;
   const { issuedAt, expiredAt } = options;
+  const { alg, kid } = await resolveAlgAndKid(signer, options);
+  const header = { alg, kid, typ: "vc+jwt", cty: "vc" };
 
   if (isJwtSigner(signer)) {
-    if (options.alg !== undefined && options.alg !== signer.alg) {
-      throw new Error(
-        `options.alg ("${options.alg}") は signer.alg ("${signer.alg}") と一致している必要があります。`,
-      );
-    }
-    const alg = signer.alg;
-    const kid = options.kid ?? signer.kid;
-    const header = { alg, kid, typ: "vc+jwt", cty: "vc" };
     const claims = {
       ...payload,
       iss: vc.issuer,
@@ -74,17 +84,12 @@ export async function signJwtVc<T extends SignableVc>(
     return `${encodedHeader}.${encodedPayload}.${base64url.encode(signature)}`;
   }
 
-  const { alg = "ES256" } = options;
-  const kid = options.kid ?? (await resolveKid(signer, alg));
-  const header = { alg, kid, typ: "vc+jwt", cty: "vc" };
   const key = isJwk(signer) ? await importJWK(signer, alg) : signer;
-
-  const jwt = await new SignJWT(payload)
+  return await new SignJWT(payload)
     .setProtectedHeader(header)
     .setIssuer(vc.issuer)
     .setSubject(vc.credentialSubject.id)
     .setIssuedAt(getUnixTime(issuedAt))
     .setExpirationTime(getUnixTime(expiredAt))
     .sign(key);
-  return jwt;
 }
