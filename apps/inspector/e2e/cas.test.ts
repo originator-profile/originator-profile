@@ -30,6 +30,7 @@ test("Content Attestation Set の表示が正常に行えたか", async ({
   await page.goto(credentialsPage.endpoint);
   const ext = await sidepanel(context);
   await expect(ext?.getByTestId("cas")).toBeVisible();
+  await expect(ext?.getByTestId("site-profile-missing")).toBeVisible();
 
   await gotoDetailPage(ext);
   await expectStatus(ext, "content-attestation-set", "check");

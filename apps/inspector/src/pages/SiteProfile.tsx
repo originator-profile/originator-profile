@@ -1,4 +1,5 @@
 import { selectByLocale } from "@originator-profile/core";
+import { _ } from "@originator-profile/ui";
 import { useSearchParams } from "react-router";
 import GlobalHeader from "../components/GlobalHeader";
 import Loading from "../components/Loading";
@@ -8,16 +9,35 @@ import {
 } from "../components/siteProfile";
 import { routes } from "../utils/routes";
 
+function MissingSiteProfile() {
+  return (
+    <>
+      <GlobalHeader className="sticky top-0 z-11" />
+      <div className="bg-gray-50 p-4">
+        <h1
+          className="text-base text-center mb-6"
+          data-testid="site-profile-missing"
+        >
+          {_("SiteProfile_Missing")}
+        </h1>
+        <p className="whitespace-pre-line test-xs text-gray-700 text center leading-5">
+          {_("SiteProfile_Missing_Detail")}
+        </p>
+      </div>
+    </>
+  );
+}
+
 export default function SiteProfile() {
   const [queryParams] = useSearchParams();
   const { siteProfile, isLoading } = useSiteProfile();
   if (isLoading) return <Loading />;
   // Credential での CaSelector 部分とスタッキングコンテキストで下に重なってしまうため z-11 に設定
-  if (!siteProfile) return <GlobalHeader className="sticky top-0 z-11" />;
+  if (!siteProfile) return <MissingSiteProfile />;
 
   // sitesから適切なWebsiteProfileを選択
   const selectedWsp = selectByLocale(siteProfile.sites.map((s) => s.doc));
-  if (!selectedWsp) return <GlobalHeader className="sticky top-0 z-11" />;
+  if (!selectedWsp) return <MissingSiteProfile />;
 
   // 選択されたWebsiteProfileの発行者に対応するOriginatorを検索
   const op = siteProfile.originators.find((originator) =>
