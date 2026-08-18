@@ -1,0 +1,39 @@
+{
+  "name": "@originator-profile/ca-client",
+  "version": "0.7.0-beta.1",
+  "license": "Apache-2.0",
+  "private": true,
+  "homepage": "https://docs.originator-profile.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/originator-profile/originator-profile.git",
+    "directory": "packages/ca-client"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "type": "module",
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "default": "./dist/index.js"
+  },
+  "files": [
+    "dist",
+    "README.md",
+    "LICENSE",
+    "NOTICE"
+  ],
+  "scripts": {
+    "build": "pkgroll --clean-dist",
+    "test": "vitest run",
+    "lint": "oxlint --fix ."
+  },
+  "devDependencies": {
+    "@originator-profile/tsconfig": "workspace:*",
+    "oxlint": "^1.73.0",
+    "oxlint-tsgolint": "^0.24.0",
+    "pkgroll": "2.27.0",
+    "typescript": "6.0.2",
+    "vitest": "4.1.4"
+  }
+}

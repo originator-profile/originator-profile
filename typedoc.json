@@ -12,6 +12,7 @@
     "packages/sign",
     "packages/ui",
     "packages/opvc",
-    "packages/verify"
+    "packages/verify",
+    "packages/ca-client"
   ]
 }
