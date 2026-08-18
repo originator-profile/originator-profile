@@ -25,6 +25,4 @@ CAS 運用 SDK。CA サーバーとの連携、CAS ファイルの読み書き�
 
 ## Public API
 
-- `createCaClient` — CA クライアントの生成
-- `writeCasFile` — CAS ファイルの書き込み
-- `detectDrift` — HTML と CAS の整合性比較
+TODO
