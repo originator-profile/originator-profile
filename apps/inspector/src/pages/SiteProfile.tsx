@@ -21,7 +21,7 @@ function MissingSiteProfile() {
           {_("SiteProfile_Missing")}
         </h1>
         <p className="whitespace-pre-line text-xs text-gray-700 text-center leading-5">
-          {_("SiteProfile_Missing_Detail")}
+          {_("SiteProfile_Missing_Reason")}
         </p>
       </div>
     </>

@@ -515,7 +515,7 @@
   "SiteProfile_Missing": {
     "message": "サイトプロファイルが見つかりませんでした"
   },
-  "SiteProfile_Missing_Detail": {
+  "SiteProfile_Missing_Reason": {
     "message": "サイトプロファイルを取得できなかった可能性があります。サイトの安全性を否定するものではありません。"
   }
 }
