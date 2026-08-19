@@ -10,10 +10,13 @@ const jwtVcDecoder = JwtVcDecoder();
 export const decodeCasVc = (token: string): Record<string, unknown> => {
   const decoded = jwtVcDecoder(token);
   if (decoded instanceof VcDecodeFailed) {
-    throw new CaClientError(`Invalid CAS: failed to decode JWT: ${decoded.message}`, {
-      code: CaClientErrorCode.Validation,
-      cause: decoded,
-    });
+    throw new CaClientError(
+      `Invalid CAS: failed to decode JWT: ${decoded.message}`,
+      {
+        code: CaClientErrorCode.Validation,
+        cause: decoded,
+      },
+    );
   }
   return decoded.doc;
 };

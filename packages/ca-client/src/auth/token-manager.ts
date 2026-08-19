@@ -18,10 +18,7 @@ export interface TokenOperations {
 
 const DEFAULT_TTL_SECONDS = 3600;
 
-const resolveExpiresAt = (
-  response: CcspTokenResponse,
-  now: number,
-): number => {
+const resolveExpiresAt = (response: CcspTokenResponse, now: number): number => {
   if (typeof response.expires_in === "number" && response.expires_in > 0) {
     return now + response.expires_in;
   }

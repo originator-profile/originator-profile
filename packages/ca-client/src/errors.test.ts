@@ -1,9 +1,5 @@
 import { expect, test } from "vitest";
-import {
-  CaClientError,
-  CaClientErrorCode,
-  isUnauthorized,
-} from "./errors";
+import { CaClientError, CaClientErrorCode, isUnauthorized } from "./errors";
 
 test("isUnauthorized: is true only for CA HTTP 401", () => {
   expect(

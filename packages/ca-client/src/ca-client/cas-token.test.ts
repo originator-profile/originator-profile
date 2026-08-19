@@ -6,18 +6,18 @@ import {
 
 test("parseCasTokenFromFileContent: returns the first JWT in the array", () => {
   const token = "header.payload.signature";
-  expect(parseCasTokenFromFileContent(JSON.stringify([token]), "test.cas.json")).toBe(
-    token,
-  );
+  expect(
+    parseCasTokenFromFileContent(JSON.stringify([token]), "test.cas.json"),
+  ).toBe(token);
 });
 
 test("parseCasTokenFromFileContent: throws on invalid format", () => {
   expect(() =>
     parseCasTokenFromFileContent(JSON.stringify({ notArray: true }), "x"),
   ).toThrow(/Invalid CAS: invalid file format/);
-  expect(() => parseCasTokenFromFileContent("{invalid", "src.cas.json")).toThrow(
-    /Invalid CAS: failed to parse JSON in src\.cas\.json/,
-  );
+  expect(() =>
+    parseCasTokenFromFileContent("{invalid", "src.cas.json"),
+  ).toThrow(/Invalid CAS: failed to parse JSON in src\.cas\.json/);
 });
 
 test("jwtPayloadToUnsignedCa: builds an unsigned CA from the payload", () => {

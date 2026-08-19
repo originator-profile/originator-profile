@@ -28,10 +28,13 @@ test("signByServer: refreshes and retries once on 401", async () => {
   const sign: CaServerSign = async (_uca, { accessToken }) => {
     calls.push(accessToken);
     if (calls.length === 1) {
-      throw new CaClientError("CA signing failed: 401 Unauthorized: token expired", {
-        code: CaClientErrorCode.Http,
-        status: 401,
-      });
+      throw new CaClientError(
+        "CA signing failed: 401 Unauthorized: token expired",
+        {
+          code: CaClientErrorCode.Http,
+          status: 401,
+        },
+      );
     }
     return "jwt-2";
   };
