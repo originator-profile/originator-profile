@@ -1,8 +1,11 @@
 import {
-  type Jwk,
   UnsignedWebsiteProfile,
   UnsignedWebsiteProfileSet,
 } from "@originator-profile/model";
+import type {
+  JwtSigner,
+  KeyMaterial,
+} from "@originator-profile/securing-mechanism";
 import {
   fetchAndSetDigestSri,
   signWsp,
@@ -61,18 +64,18 @@ export async function unsignedWsp<U extends UnsignedWebsiteProfileInput>(
  * 配列を渡した場合、各要素を個別に署名して JWT 文字列の配列を返します。
  *
  * @param uwsp 未署名 Website Profile (単一または配列)
- * @param privateKey プライベート鍵
+ * @param signer プライベート鍵、または HSM・KMS・WebAuthn等の外部署名者 (JwtSigner)
  * @throws {BadRequestError} 配列入力の整合性違反や入力が UnsignedWebsiteProfile スキーマに適合しない場合
  * @return 単一入力時は JWT 文字列、配列入力時は JWT 文字列の配列
  */
 export async function sign<U extends UnsignedWebsiteProfileInput>(
   uwsp: U,
-  privateKey: Jwk,
+  signer: KeyMaterial | JwtSigner,
   options: TimingOptions = {},
 ): Promise<U extends unknown[] ? string[] : string> {
   const timing = parseDates(options);
   try {
-    return await signWsp(uwsp, privateKey, timing);
+    return await signWsp(uwsp, signer, timing);
   } catch (e) {
     throw new BadRequestError((e as Error).message, { cause: e });
   }

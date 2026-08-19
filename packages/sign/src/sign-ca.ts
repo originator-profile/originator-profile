@@ -1,8 +1,9 @@
-import type {
-  Jwk,
-  UnsignedContentAttestation,
-} from "@originator-profile/model";
-import { signJwtVc } from "@originator-profile/securing-mechanism";
+import type { UnsignedContentAttestation } from "@originator-profile/model";
+import {
+  type JwtSigner,
+  type KeyMaterial,
+  signJwtVc,
+} from "@originator-profile/securing-mechanism";
 import type { HashAlgorithm } from "websri";
 import {
   type DocumentProvider,
@@ -13,20 +14,22 @@ import {
 /**
  * Content Attestation への署名
  * @param uca 未署名 Content Attestation オブジェクト
- * @param privateKey プライベート鍵
+ * @param signer プライベート鍵、または HSM・KMS・WebAuthn等の外部署名者 (JwtSigner)
  * @return JWT でエンコードされた Content Attestation
  */
 export async function signCa(
   uca: UnsignedContentAttestation,
-  privateKey: Jwk,
+  signer: KeyMaterial | JwtSigner,
   {
-    alg = "ES256",
+    alg,
+    kid,
     issuedAt = new Date(),
     expiredAt,
     integrityAlg = "sha256",
     documentProvider = async () => document,
   }: {
     alg?: string;
+    kid?: string;
     issuedAt?: Date;
     expiredAt: Date;
     integrityAlg?: HashAlgorithm;
@@ -45,7 +48,7 @@ export async function signCa(
 
   return await signJwtVc(
     { ...uca, credentialSubject: { ...uca.credentialSubject, id } },
-    privateKey,
-    { alg, issuedAt, expiredAt },
+    signer,
+    { alg, kid, issuedAt, expiredAt },
   );
 }
