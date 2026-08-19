@@ -511,5 +511,11 @@
   },
   "GlobalHeader_Reload": {
     "message": "Reload"
+  },
+  "SiteProfile_Missing": {
+    "message": "Site Profile not found"
+  },
+  "SiteProfile_Missing_Reason": {
+    "message": "It is possible that the site profile could not be retrieved. This does not indicate any issues regarding the site's safety."
   }
 }
