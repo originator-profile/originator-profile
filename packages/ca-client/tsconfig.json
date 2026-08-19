@@ -1,4 +1,4 @@
 {
-  "extends": "../tsconfig/tsconfig.json",
+  "extends": "@originator-profile/tsconfig/tsconfig.json",
   "exclude": ["dist", "node_modules"]
 }
