@@ -25,4 +25,77 @@ CAS 運用 SDK。CA サーバーとの連携、CAS ファイルの読み書き�
 
 ## Public API
 
-TODO
+```ts
+import {
+  createCaClient,
+  CaClientError,
+  CaClientErrorCode,
+  isUnauthorized,
+  type CaClient,
+  type CaClientConfig,
+} from "@originator-profile/ca-client";
+```
+
+### `createCaClient(config)`
+
+CCSP 認証を内蔵し、CA サーバーで Content Attestation を署名・再署名するクライアントを返します。
+
+```ts
+type CaClientConfig = {
+  /** CA サーバーのエンドポイント URL */
+  endpoint: string;
+  /** 発行者 ID（例: `dns:example.com`） */
+  issuer: string;
+  /** CCSP 認証設定（Base64、`CCSP:` プレフィックス可） */
+  ccspConfig: string;
+  /** トークン期限切れ前のバッファ（秒、既定 300） */
+  tokenBufferSeconds?: number;
+};
+
+type CaClient = {
+  config: CaClientConfig;
+  /** 未署名 CA を CA サーバーで署名する → JWT 文字列 */
+  sign: (uca: UnsignedContentAttestation) => Promise<string>;
+  /**
+   * 既存 CAS の JWT payload を再署名する → JWT 文字列
+   * @param source - エラー文脈用（CAS ファイルパス等）
+   */
+  reSign: (
+    jwtPayload: Record<string, unknown>,
+    source: string,
+  ) => Promise<string>;
+};
+```
+
+```ts
+const client = createCaClient({
+  endpoint: process.env.CA_SERVER_URL!,
+  issuer: process.env.ISSUER!,
+  ccspConfig: process.env.CCSP_CONFIG!,
+});
+
+const jwt = await client.sign(unsignedCa);
+
+const renewed = await client.reSign(
+  existingPayload,
+  "public/cas/ja-JP.page.cas.json",
+);
+```
+
+未署名 CA（`UnsignedContentAttestation`）の組立（metadata / `allowedUrl` / `target`）は呼び出し側の責務です。CCSP 認証・TokenManager・CA サーバーへの HTTP 呼び出しは内部実装です。
+
+失敗時はすべて `CaClientError` を throw します。`code` で種別を、HTTP 失敗では `status` でステータスを判定してください。メッセージの接頭辞は `CCSP auth failed:` / `CA signing failed:` / `Invalid Content Attestation:` / `Invalid CAS:` です。
+
+| `code` | 典型例 |
+| --- | --- |
+| `CA_CONFIG` | CCSP 設定の欠落・不正、未対応の `authType` |
+| `CA_AUTH` | CCSP トークンエンドポイントの失敗（401 を含む） |
+| `CA_VALIDATION` | 未署名 CA・CAS payload・日付の不正 |
+| `CA_HTTP` | CA サーバーが非 2xx を返した |
+| `CA_RESPONSE` | CA サーバーの本文が空、または JWT を含まない |
+
+`sign()` / `reSign()` は CA サーバーが 401 を返したとき、アクセストークンを更新して 1 回だけ再試行します。再試行後も 401 なら `isUnauthorized(error)` が真になります。CCSP の 401 は `CA_AUTH` であり、この判定には含まれません。
+
+CCSP 設定 JSON の `clientSec` は OAuth の `client_secret` です。
+
+`writeCasFile` と `detectDrift` は後続 issue で公開予定です。
