@@ -15,7 +15,7 @@ const createJwtToken = (payload: Record<string, unknown>): string => {
 const createTestConfig = (): CcspAuthConfig => ({
   authType: "client_secret_post",
   clientId: "test-client-id",
-  clientSecret: "test-client-secret",
+  clientSec: "test-client-secret",
   tokenUrl: "https://api.example.com/token",
 });
 

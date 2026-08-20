@@ -72,13 +72,13 @@ const client = createCaClient({
 {
   "authType": "client_secret_post",
   "clientId": "YOUR_CLIENT_ID",
-  "clientSecret": "YOUR_CLIENT_SECRET",
+  "clientSec": "YOUR_CLIENT_SECRET",
   "tokenUrl": "https://example.com/oauth/token"
 }
 ```
 
 > [!NOTE]
-> `authType` は `client_secret_post` のみ対応しています。`clientSecret` は OAuth の `client_secret` です。旧フィールド名 `clientSec` も受け付けます。
+> `authType` は `client_secret_post` のみ対応しています。`clientSec` は OAuth の `client_secret` です。
 
 ### APIメソッド
 
