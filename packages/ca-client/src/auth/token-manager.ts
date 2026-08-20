@@ -75,10 +75,7 @@ export class TokenManager {
         const response = await this.tokenOps.getCcspAccessToken(this.config);
 
         const now = this.tokenOps.now();
-        let expiresAt = resolveExpiresAt(response, now);
-        if (!Number.isFinite(expiresAt) || expiresAt <= 0) {
-          expiresAt = now + DEFAULT_TTL_SECONDS;
-        }
+        const expiresAt = resolveExpiresAt(response, now);
 
         this.cachedToken = {
           accessToken: response.access_token,

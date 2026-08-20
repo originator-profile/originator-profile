@@ -59,7 +59,7 @@ const assertJwtPayloadHasContentAttestationKeys = (
   source: string,
 ) => {
   const missingKeys = JWT_PAYLOAD_CONTENT_ATTESTATION_KEYS.filter(
-    (key) => payload[key] === undefined,
+    (key) => payload[key] === undefined || payload[key] === null,
   );
   if (missingKeys.length > 0) {
     throw new CaClientError(

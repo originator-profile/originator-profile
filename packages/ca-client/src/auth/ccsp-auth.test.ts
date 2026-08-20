@@ -18,7 +18,7 @@ const createBase64Config = (
 const validConfig: CcspAuthConfig = {
   authType: "client_secret_post",
   clientId: "test-client-id",
-  clientSec: "test-client-secret",
+  clientSecret: "test-client-secret",
   tokenUrl: "https://api.example.com/token",
 };
 
@@ -42,6 +42,26 @@ describe("parseCcspConfig", () => {
     expect(() => parseCcspConfig("CCSP:not-json")).toThrow(
       /CCSP auth failed: failed to parse config/,
     );
+    expect(() =>
+      parseCcspConfig(createBase64Config({ ...validConfig, clientSecret: "" })),
+    ).toThrow(/clientSecret is required/);
+  });
+
+  test("accepts clientSec as an alias for clientSecret", () => {
+    const encoded = Buffer.from(
+      JSON.stringify({
+        authType: validConfig.authType,
+        clientId: validConfig.clientId,
+        clientSec: "legacy-client-secret",
+        tokenUrl: validConfig.tokenUrl,
+      }),
+      "utf-8",
+    ).toString("base64");
+
+    expect(parseCcspConfig(encoded)).toEqual({
+      ...validConfig,
+      clientSecret: "legacy-client-secret",
+    });
   });
 });
 

@@ -41,16 +41,16 @@ export async function documentProvider({
     );
   }
 
-  [content] = [content].flat();
+  const flatContent = Array.isArray(content) ? (content[0] ?? "") : content;
   let url: string | undefined;
   let html: string;
 
-  if (URL.canParse(content)) {
-    url = content;
+  if (URL.canParse(flatContent)) {
+    url = flatContent;
     html = await fetchDocument(url);
   } else {
     url = undefined;
-    html = content;
+    html = flatContent;
   }
 
   const dom = new JSDOM(html, {

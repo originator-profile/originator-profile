@@ -1,6 +1,6 @@
 import {
-  UnsignedContentAttestation,
-  type UnsignedContentAttestation as UnsignedContentAttestationType,
+  UnsignedContentAttestation as UnsignedContentAttestationSchema,
+  type UnsignedContentAttestation,
 } from "@originator-profile/model";
 import {
   fetchAndSetDigestSri,
@@ -48,7 +48,7 @@ function jwtFromCaResponse(body: string): string {
 }
 
 export async function signByCaServer(
-  uca: UnsignedContentAttestationType,
+  uca: UnsignedContentAttestation,
   {
     endpoint,
     accessToken,
@@ -61,7 +61,7 @@ export async function signByCaServer(
   const payload = structuredClone(uca);
 
   try {
-    UnsignedContentAttestation.parse(payload);
+    UnsignedContentAttestationSchema.parse(payload);
     const subject = payload.credentialSubject as { image?: unknown };
     await Promise.all([
       fetchAndSetDigestSri("sha256", subject.image),
@@ -77,6 +77,8 @@ export async function signByCaServer(
     );
   }
 
+  const subjectId = payload.credentialSubject.id;
+
   const response = await fetchOps.fetch(endpoint, {
     method: "POST",
     headers: {
@@ -86,7 +88,7 @@ export async function signByCaServer(
     body: JSON.stringify({
       ...payload,
       iss: payload.issuer,
-      sub: payload.credentialSubject.id,
+      ...(subjectId !== undefined ? { sub: subjectId } : {}),
       iat: toUnixTime(issuedAt),
       exp: toUnixTime(expiredAt),
       issuedAt: issuedAt.toISOString(),

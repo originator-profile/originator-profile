@@ -1,4 +1,4 @@
-import { access, readFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { decodeCasVc, parseCasTokenFromFileContent } from "./cas-token";
 
@@ -7,14 +7,18 @@ export const readExistingCaId = async (
   outputPath: string,
 ): Promise<string | undefined> => {
   const filePath = join(outputPath, casFileName);
-  const exists = await access(filePath)
-    .then(() => true)
-    .catch(() => false);
-  if (!exists) {
+  const content = await readFile(filePath, "utf-8").catch(
+    (error: NodeJS.ErrnoException) => {
+      if (error.code === "ENOENT") {
+        return undefined;
+      }
+      throw error;
+    },
+  );
+  if (content === undefined) {
     return undefined;
   }
 
-  const content = await readFile(filePath, "utf-8");
   const token = parseCasTokenFromFileContent(content, filePath);
   const payload = decodeCasVc(token);
   const credentialSubject = payload.credentialSubject as

@@ -27,13 +27,14 @@ const uca = {
 } as UnsignedContentAttestation;
 
 test("signByCaServer: POSTs with Bearer auth and returns a JWT", async () => {
-  const fetchMock = vi.fn(
-    async () =>
-      new Response(JSON.stringify(["jwt-1", "jwt-2"]), {
-        status: 200,
-        headers: { "Content-Type": "application/json" },
-      }),
-  );
+  let requestBody: string | undefined;
+  const fetchMock = vi.fn(async (_url: string, options?: { body?: string }) => {
+    requestBody = options?.body;
+    return new Response(JSON.stringify(["jwt-1", "jwt-2"]), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  });
 
   const jwt = await signByCaServer(uca, {
     endpoint,
@@ -52,6 +53,37 @@ test("signByCaServer: POSTs with Bearer auth and returns a JWT", async () => {
       },
     }),
   );
+
+  const body = JSON.parse(requestBody ?? "") as { iss: string; sub: string };
+  expect(body.iss).toBe(uca.issuer);
+  expect(body.sub).toBe(uca.credentialSubject.id);
+});
+
+test("signByCaServer: omits sub when credentialSubject.id is absent", async () => {
+  let requestBody: string | undefined;
+  const fetchMock = vi.fn(async (_url: string, options?: { body?: string }) => {
+    requestBody = options?.body;
+    return new Response(JSON.stringify(["jwt-1"]), {
+      status: 200,
+      headers: { "Content-Type": "application/json" },
+    });
+  });
+
+  const ucaWithoutId = structuredClone(uca);
+  delete ucaWithoutId.credentialSubject.id;
+
+  await signByCaServer(ucaWithoutId, {
+    endpoint,
+    accessToken: "tok",
+    fetchOps: { fetch: fetchMock },
+  });
+
+  const body = JSON.parse(requestBody ?? "") as {
+    sub?: string;
+    credentialSubject: { id?: string };
+  };
+  expect(body).not.toHaveProperty("sub");
+  expect(body.credentialSubject).not.toHaveProperty("id");
 });
 
 test("signByCaServer: throws so that isUnauthorized is true on 401", async () => {

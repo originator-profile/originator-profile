@@ -4,9 +4,18 @@ import type { FetchOperations } from "../fetch-operations";
 export interface CcspAuthConfig {
   authType: string;
   clientId: string;
-  clientSec: string;
+  clientSecret: string;
   tokenUrl: string;
 }
+
+type CcspAuthConfigJson = {
+  authType?: string;
+  clientId?: string;
+  clientSecret?: string;
+  /** @deprecated Use `clientSecret` */
+  clientSec?: string;
+  tokenUrl?: string;
+};
 
 export interface CcspTokenResponse {
   access_token: string;
@@ -15,13 +24,26 @@ export interface CcspTokenResponse {
   scope?: string;
 }
 
+const requireConfigField = (
+  value: string | undefined,
+  field: string,
+  hint = "",
+): string => {
+  if (!value) {
+    throw new CaClientError(`CCSP auth failed: ${field} is required${hint}`, {
+      code: CaClientErrorCode.Config,
+    });
+  }
+  return value;
+};
+
 export const parseCcspConfig = (base64Config: string): CcspAuthConfig => {
   const configStr = base64Config.replace(/^CCSP:/, "");
 
-  let config: CcspAuthConfig;
+  let parsed: CcspAuthConfigJson;
   try {
     const decoded = Buffer.from(configStr, "base64").toString("utf-8");
-    config = JSON.parse(decoded) as CcspAuthConfig;
+    parsed = JSON.parse(decoded) as CcspAuthConfigJson;
   } catch (error) {
     throw new CaClientError("CCSP auth failed: failed to parse config", {
       code: CaClientErrorCode.Config,
@@ -29,29 +51,16 @@ export const parseCcspConfig = (base64Config: string): CcspAuthConfig => {
     });
   }
 
-  if (!config.authType) {
-    throw new CaClientError("CCSP auth failed: authType is required", {
-      code: CaClientErrorCode.Config,
-    });
-  }
-  if (!config.clientId) {
-    throw new CaClientError("CCSP auth failed: clientId is required", {
-      code: CaClientErrorCode.Config,
-    });
-  }
-  if (!config.clientSec) {
-    throw new CaClientError(
-      "CCSP auth failed: clientSec is required (OAuth client_secret)",
-      { code: CaClientErrorCode.Config },
-    );
-  }
-  if (!config.tokenUrl) {
-    throw new CaClientError("CCSP auth failed: tokenUrl is required", {
-      code: CaClientErrorCode.Config,
-    });
-  }
-
-  return config;
+  return {
+    authType: requireConfigField(parsed.authType, "authType"),
+    clientId: requireConfigField(parsed.clientId, "clientId"),
+    clientSecret: requireConfigField(
+      parsed.clientSecret ?? parsed.clientSec,
+      "clientSecret",
+      " (OAuth client_secret)",
+    ),
+    tokenUrl: requireConfigField(parsed.tokenUrl, "tokenUrl"),
+  };
 };
 
 export const getCcspAccessToken = async (
@@ -68,7 +77,7 @@ export const getCcspAccessToken = async (
   const formData = new URLSearchParams();
   formData.append("grant_type", "client_credentials");
   formData.append("client_id", config.clientId);
-  formData.append("client_secret", config.clientSec);
+  formData.append("client_secret", config.clientSecret);
 
   const response = await fetchOps.fetch(config.tokenUrl, {
     method: "POST",

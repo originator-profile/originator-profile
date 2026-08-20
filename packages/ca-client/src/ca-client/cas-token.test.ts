@@ -52,6 +52,20 @@ test("jwtPayloadToUnsignedCa: throws when required keys are missing and can over
     ),
   ).toThrow(/missing required keys/);
 
+  expect(() =>
+    jwtPayloadToUnsignedCa(
+      {
+        "@context": ["https://www.w3.org/ns/credentials/v2"],
+        type: ["VerifiableCredential", "ContentAttestation"],
+        issuer: "dns:issuer.example",
+        credentialSubject: null,
+        allowedUrl: ["https://example.com"],
+        target: [{ type: "TextTargetIntegrity", integrity: "sha256-xxx" }],
+      },
+      "test.cas.json",
+    ),
+  ).toThrow(/missing required keys.*credentialSubject/);
+
   const payload = {
     "@context": ["https://www.w3.org/ns/credentials/v2"],
     type: ["VerifiableCredential", "ContentAttestation"],
