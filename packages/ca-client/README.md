@@ -30,12 +30,6 @@ CAS 運用 SDK。CA サーバーとの連携、CAS ファイルの読み書き�
 #### Node.js
 
 ```bash
-$ npm install @originator-profile/ca-client
-```
-
-または
-
-```bash
 $ pnpm add @originator-profile/ca-client
 ```
 
