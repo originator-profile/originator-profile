@@ -104,7 +104,9 @@ export class TokenManager {
       return false;
     }
 
-    return this.cachedToken.expiresAt > this.tokenOps.now() + this.bufferSeconds;
+    return (
+      this.cachedToken.expiresAt > this.tokenOps.now() + this.bufferSeconds
+    );
   }
 }
 
