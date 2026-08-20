@@ -8,6 +8,7 @@ import {
   type DocumentProvider,
 } from "@originator-profile/sign";
 import { CaClientError, CaClientErrorCode } from "../errors";
+import type { FetchOperations } from "../fetch-operations";
 import { parseDates, toUnixTime, type TimingOptions } from "./dates";
 import { documentProvider as defaultDocumentProvider } from "./document-provider";
 
@@ -15,6 +16,7 @@ export type SignByCaServerOptions = TimingOptions & {
   endpoint: string;
   accessToken: string;
   documentProvider?: DocumentProvider;
+  fetchOps?: FetchOperations;
 };
 
 function jwtFromCaResponse(body: string): string {
@@ -51,6 +53,7 @@ export async function signByCaServer(
     endpoint,
     accessToken,
     documentProvider = defaultDocumentProvider,
+    fetchOps = { fetch },
     ...timingOptions
   }: SignByCaServerOptions,
 ): Promise<string> {
@@ -74,7 +77,7 @@ export async function signByCaServer(
     );
   }
 
-  const response = await fetch(endpoint, {
+  const response = await fetchOps.fetch(endpoint, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",

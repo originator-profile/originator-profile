@@ -31,6 +31,11 @@ export function parseDates({
       code: CaClientErrorCode.Validation,
     });
   }
+  if (expiredAt.getTime() <= issuedAt.getTime()) {
+    throw new CaClientError("expiredAt must be after issuedAt", {
+      code: CaClientErrorCode.Validation,
+    });
+  }
 
   return { issuedAt, expiredAt };
 }

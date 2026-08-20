@@ -104,10 +104,7 @@ export class TokenManager {
       return false;
     }
 
-    const expiresAt =
-      getJwtExpiration(this.cachedToken.accessToken) ??
-      this.cachedToken.expiresAt;
-    return expiresAt > this.tokenOps.now() + this.bufferSeconds;
+    return this.cachedToken.expiresAt > this.tokenOps.now() + this.bufferSeconds;
   }
 }
 

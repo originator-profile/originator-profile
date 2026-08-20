@@ -1,5 +1,5 @@
 import type { UnsignedContentAttestation } from "@originator-profile/model";
-import { afterEach, expect, test, vi } from "vitest";
+import { expect, test, vi } from "vitest";
 import { CaClientError, CaClientErrorCode, isUnauthorized } from "../errors";
 import { signByCaServer } from "./sign-by-ca-server";
 
@@ -26,10 +26,6 @@ const uca = {
   ],
 } as UnsignedContentAttestation;
 
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
-
 test("signByCaServer: POSTs with Bearer auth and returns a JWT", async () => {
   const fetchMock = vi.fn(
     async () =>
@@ -38,11 +34,11 @@ test("signByCaServer: POSTs with Bearer auth and returns a JWT", async () => {
         headers: { "Content-Type": "application/json" },
       }),
   );
-  vi.stubGlobal("fetch", fetchMock);
 
   const jwt = await signByCaServer(uca, {
     endpoint,
     accessToken: "tok",
+    fetchOps: { fetch: fetchMock },
   });
 
   expect(jwt).toBe("jwt-1");
@@ -59,20 +55,16 @@ test("signByCaServer: POSTs with Bearer auth and returns a JWT", async () => {
 });
 
 test("signByCaServer: throws so that isUnauthorized is true on 401", async () => {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(
-      async () =>
+  const error = await signByCaServer(uca, {
+    endpoint,
+    accessToken: "tok",
+    fetchOps: {
+      fetch: async () =>
         new Response("token expired", {
           status: 401,
           statusText: "Unauthorized",
         }),
-    ),
-  );
-
-  const error = await signByCaServer(uca, {
-    endpoint,
-    accessToken: "tok",
+    },
   }).then(
     () => null,
     (e: unknown) => e,
@@ -86,32 +78,68 @@ test("signByCaServer: throws so that isUnauthorized is true on 401", async () =>
   expect(isUnauthorized(error)).toBe(true);
 });
 
-test("signByCaServer: distinguishes empty responses from JSON that is not a JWT", async () => {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(async () => new Response("", { status: 200 })),
+test("signByCaServer: does not wrap document fetch failures as validation errors", async () => {
+  const cause = new TypeError("Failed to fetch");
+
+  const error = await signByCaServer(
+    {
+      ...uca,
+      target: [
+        {
+          type: "TextTargetIntegrity",
+          cssSelector: "main",
+          content: "https://example.com/article",
+        },
+      ],
+    },
+    {
+      endpoint,
+      accessToken: "tok",
+      documentProvider: async () => {
+        throw new CaClientError("Failed to fetch document: Failed to fetch", {
+          code: CaClientErrorCode.Http,
+          cause,
+        });
+      },
+      fetchOps: { fetch: vi.fn() },
+    },
+  ).then(
+    () => null,
+    (e: unknown) => e,
   );
 
+  expect(error).toBeInstanceOf(CaClientError);
+  expect(error).toMatchObject({
+    message: "Failed to fetch document: Failed to fetch",
+    code: CaClientErrorCode.Http,
+    cause,
+  });
+});
+
+test("signByCaServer: distinguishes empty responses from JSON that is not a JWT", async () => {
   await expect(
-    signByCaServer(uca, { endpoint, accessToken: "tok" }),
+    signByCaServer(uca, {
+      endpoint,
+      accessToken: "tok",
+      fetchOps: { fetch: async () => new Response("", { status: 200 }) },
+    }),
   ).rejects.toMatchObject({
     message: "CA signing failed: empty response",
     code: CaClientErrorCode.Response,
   });
 
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(
-      async () =>
-        new Response(JSON.stringify({ ok: true }), {
-          status: 200,
-          headers: { "Content-Type": "application/json" },
-        }),
-    ),
-  );
-
   await expect(
-    signByCaServer(uca, { endpoint, accessToken: "tok" }),
+    signByCaServer(uca, {
+      endpoint,
+      accessToken: "tok",
+      fetchOps: {
+        fetch: async () =>
+          new Response(JSON.stringify({ ok: true }), {
+            status: 200,
+            headers: { "Content-Type": "application/json" },
+          }),
+      },
+    }),
   ).rejects.toMatchObject({
     message: "CA signing failed: response did not contain a JWT",
     code: CaClientErrorCode.Response,

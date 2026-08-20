@@ -1,9 +1,9 @@
 import { describe, expect, test, vi } from "vitest";
+import type { FetchOperations } from "../fetch-operations";
 import {
   getCcspAccessToken,
   parseCcspConfig,
   type CcspAuthConfig,
-  type FetchOperations,
 } from "./ccsp-auth";
 
 const createBase64Config = (

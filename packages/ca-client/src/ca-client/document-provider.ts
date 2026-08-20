@@ -2,6 +2,27 @@ import type { RawTarget } from "@originator-profile/model";
 import { JSDOM } from "jsdom";
 import { CaClientError, CaClientErrorCode } from "../errors";
 
+async function fetchDocument(url: string): Promise<string> {
+  let res: Response;
+  try {
+    res = await fetch(url);
+  } catch (error) {
+    throw new CaClientError(
+      `Failed to fetch document: ${error instanceof Error ? error.message : String(error)}`,
+      { code: CaClientErrorCode.Http, cause: error },
+    );
+  }
+
+  if (!res.ok) {
+    throw new CaClientError(
+      `Failed to fetch document: ${res.status} ${res.statusText}`,
+      { code: CaClientErrorCode.Http, status: res.status },
+    );
+  }
+
+  return await res.text();
+}
+
 export async function documentProvider({
   type,
   content = "",
@@ -26,7 +47,7 @@ export async function documentProvider({
 
   if (URL.canParse(content)) {
     url = content;
-    html = await fetch(url).then((res) => res.text());
+    html = await fetchDocument(url);
   } else {
     url = undefined;
     html = content;

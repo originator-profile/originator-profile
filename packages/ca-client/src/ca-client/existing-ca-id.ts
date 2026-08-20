@@ -1,5 +1,4 @@
-import { existsSync } from "node:fs";
-import { readFile } from "node:fs/promises";
+import { access, readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { decodeCasVc, parseCasTokenFromFileContent } from "./cas-token";
 
@@ -8,7 +7,10 @@ export const readExistingCaId = async (
   outputPath: string,
 ): Promise<string | undefined> => {
   const filePath = join(outputPath, casFileName);
-  if (!existsSync(filePath)) {
+  const exists = await access(filePath)
+    .then(() => true)
+    .catch(() => false);
+  if (!exists) {
     return undefined;
   }
 

@@ -25,6 +25,12 @@ test("decodeJwtPayload: throws when the token does not have 3 parts", () => {
   );
 });
 
+test("decodeJwtPayload: throws when the payload is empty", () => {
+  expect(() => decodeJwtPayload("header..signature")).toThrow(
+    "Invalid JWT: empty payload",
+  );
+});
+
 test("getJwtExpiration: returns exp when it is a number, otherwise undefined", () => {
   expect(getJwtExpiration(createJwtToken({ exp: 1735689600 }))).toBe(
     1735689600,

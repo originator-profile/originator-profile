@@ -1,15 +1,5 @@
 import { CaClientError, CaClientErrorCode } from "../errors";
-
-export interface FetchOperations {
-  fetch: (
-    url: string,
-    options?: {
-      method?: string;
-      headers?: Record<string, string>;
-      body?: string;
-    },
-  ) => Promise<Response>;
-}
+import type { FetchOperations } from "../fetch-operations";
 
 export interface CcspAuthConfig {
   authType: string;

@@ -1,14 +1,14 @@
 import type { UnsignedContentAttestation } from "@originator-profile/model";
 import { isUnauthorized } from "../errors";
-import { signByCaServer } from "./sign-by-ca-server";
+import {
+  signByCaServer,
+  type SignByCaServerOptions,
+} from "./sign-by-ca-server";
 
-export type CaServerSign = (
-  uca: UnsignedContentAttestation,
-  options: { endpoint: string; accessToken: string },
-) => Promise<string>;
+/** Same signature as {@link signByCaServer}. */
+export type CaServerSign = typeof signByCaServer;
 
-export type SignByServerOptions = {
-  endpoint: string;
+export type SignByServerOptions = Omit<SignByCaServerOptions, "accessToken"> & {
   getAccessToken: () => Promise<string>;
   refreshAccessToken?: () => Promise<string>;
   sign?: CaServerSign;
@@ -33,18 +33,21 @@ export const signByServer = async (
   options: SignByServerOptions,
 ): Promise<string> => {
   const {
-    endpoint,
     getAccessToken,
     refreshAccessToken,
     sign = signByCaServer,
+    ...signOptions
   } = options;
 
   try {
-    return await sign(uca, { endpoint, accessToken: await getAccessToken() });
+    return await sign(uca, {
+      ...signOptions,
+      accessToken: await getAccessToken(),
+    });
   } catch (error) {
     if (refreshAccessToken && isUnauthorized(error)) {
       return await sign(uca, {
-        endpoint,
+        ...signOptions,
         accessToken: await refreshAccessToken(),
       });
     }

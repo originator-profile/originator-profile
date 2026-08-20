@@ -9,8 +9,14 @@ export const decodeJwtPayload = (token: string): Record<string, unknown> => {
     );
   }
 
+  const [, payload] = parts;
+  if (!payload) {
+    throw new CaClientError("Invalid JWT: empty payload", {
+      code: CaClientErrorCode.Validation,
+    });
+  }
+
   try {
-    const payload = parts[1];
     const decoded = Buffer.from(payload, "base64url").toString("utf-8");
     return JSON.parse(decoded) as Record<string, unknown>;
   } catch (error) {
