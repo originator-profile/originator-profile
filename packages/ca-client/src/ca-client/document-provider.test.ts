@@ -1,10 +1,7 @@
-import { afterEach, expect, test, vi } from "vitest";
+import { expect, test, vi } from "vitest";
 import { CaClientError, CaClientErrorCode } from "../errors";
+import type { FetchOperations } from "../fetch-operations";
 import { documentProvider } from "./document-provider";
-
-afterEach(() => {
-  vi.unstubAllGlobals();
-});
 
 test("documentProvider: parses inline HTML", async () => {
   const document = await documentProvider({
@@ -16,35 +13,40 @@ test("documentProvider: parses inline HTML", async () => {
 });
 
 test("documentProvider: fetches HTML when content is a URL", async () => {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(
+  const fetchOps: FetchOperations = {
+    fetch: vi.fn(
       async () =>
         new Response("<body><main>from-url</main></body>", { status: 200 }),
     ),
+  };
+
+  const document = await documentProvider(
+    {
+      type: "HtmlTargetIntegrity",
+      content: "https://example.com/article",
+    },
+    fetchOps,
   );
 
-  const document = await documentProvider({
-    type: "HtmlTargetIntegrity",
-    content: "https://example.com/article",
-  });
-
   expect(document.querySelector("main")?.textContent).toBe("from-url");
+  expect(fetchOps.fetch).toHaveBeenCalledWith("https://example.com/article");
 });
 
 test("documentProvider: wraps network failures as HTTP errors", async () => {
   const cause = new TypeError("Failed to fetch");
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(async () => {
+  const fetchOps: FetchOperations = {
+    fetch: vi.fn(async () => {
       throw cause;
     }),
-  );
+  };
 
-  const error = await documentProvider({
-    type: "TextTargetIntegrity",
-    content: "https://example.com/article",
-  }).then(
+  const error = await documentProvider(
+    {
+      type: "TextTargetIntegrity",
+      content: "https://example.com/article",
+    },
+    fetchOps,
+  ).then(
     () => null,
     (e: unknown) => e,
   );
@@ -58,19 +60,21 @@ test("documentProvider: wraps network failures as HTTP errors", async () => {
 });
 
 test("documentProvider: wraps non-OK HTTP responses as HTTP errors", async () => {
-  vi.stubGlobal(
-    "fetch",
-    vi.fn(
+  const fetchOps: FetchOperations = {
+    fetch: vi.fn(
       async () =>
         new Response("not found", { status: 404, statusText: "Not Found" }),
     ),
-  );
+  };
 
   await expect(
-    documentProvider({
-      type: "TextTargetIntegrity",
-      content: "https://example.com/article",
-    }),
+    documentProvider(
+      {
+        type: "TextTargetIntegrity",
+        content: "https://example.com/article",
+      },
+      fetchOps,
+    ),
   ).rejects.toMatchObject({
     message: "Failed to fetch document: 404 Not Found",
     code: CaClientErrorCode.Http,

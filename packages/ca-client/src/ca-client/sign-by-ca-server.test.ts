@@ -127,13 +127,11 @@ test("signByCaServer: does not wrap document fetch failures as validation errors
     {
       endpoint,
       accessToken: "tok",
-      documentProvider: async () => {
-        throw new CaClientError("Failed to fetch document: Failed to fetch", {
-          code: CaClientErrorCode.Http,
-          cause,
-        });
+      fetchOps: {
+        fetch: vi.fn(async () => {
+          throw cause;
+        }),
       },
-      fetchOps: { fetch: vi.fn() },
     },
   ).then(
     () => null,

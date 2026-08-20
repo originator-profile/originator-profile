@@ -1,7 +1,11 @@
 import type { UnsignedContentAttestation } from "@originator-profile/model";
 import { createTokenManager } from "../auth";
 import { reSign } from "./re-sign";
-import { serverSignOptions, signByServer } from "./sign-by-server";
+import {
+  serverSignOptions,
+  signByServer,
+  type CaServerSign,
+} from "./sign-by-server";
 
 export type CaClientConfig = {
   /** CA server endpoint URL */
@@ -28,21 +32,27 @@ export type CaClient = {
   ) => Promise<string>;
 };
 
-export const createCaClient = (config: CaClientConfig): CaClient => {
+export const createCaClient = (
+  config: CaClientConfig,
+  options?: { sign?: CaServerSign },
+): CaClient => {
   const tokenManager = createTokenManager(
     config.ccspConfig,
     config.tokenBufferSeconds,
   );
-  const signOptions = () => serverSignOptions(config.endpoint, tokenManager);
+  const signOptions = {
+    ...serverSignOptions(config.endpoint, tokenManager),
+    ...(options?.sign ? { sign: options.sign } : {}),
+  };
 
   return {
     config,
-    sign: (uca) => signByServer(uca, signOptions()),
+    sign: (uca) => signByServer(uca, signOptions),
     reSign: (jwtPayload, source) =>
       reSign(jwtPayload, {
         source,
         issuer: config.issuer,
-        ...signOptions(),
+        ...signOptions,
       }),
   };
 };
