@@ -1,4 +1,4 @@
-import { Icon } from "@iconify/react";
+import IconFa6SolidArrowUpRightFromSquare from "@iconify-react/fa6-solid/arrow-up-right-from-square";
 import { WebMediaProfile, WebsiteProfile } from "@originator-profile/model";
 import {
   CertificateDetail,
@@ -28,9 +28,9 @@ function ExternalLink(props: React.ComponentProps<"a">) {
       {...props}
     >
       <span>{props.children}</span>
-      <Icon
+      <IconFa6SolidArrowUpRightFromSquare
         className="text-gray-500"
-        icon="fa6-solid:arrow-up-right-from-square"
+        height="1em"
       />
     </a>
   );

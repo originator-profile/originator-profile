@@ -51,9 +51,27 @@ importers:
       '@astrojs/check':
         specifier: 0.9.8
         version: 0.9.8(prettier@3.8.2)(typescript@6.0.2)
-      '@iconify/react':
-        specifier: 6.0.2
-        version: 6.0.2(react@19.2.8)
+      '@iconify-react/fa6-solid':
+        specifier: 1.0.2
+        version: 1.0.2(react@19.2.8)
+      '@iconify-react/gg':
+        specifier: 1.0.2
+        version: 1.0.2(react@19.2.8)
+      '@iconify-react/ic':
+        specifier: 1.0.2
+        version: 1.0.2(react@19.2.8)
+      '@iconify-react/ion':
+        specifier: 1.0.3
+        version: 1.0.3(react@19.2.8)
+      '@iconify-react/material-symbols':
+        specifier: 1.0.30
+        version: 1.0.30(react@19.2.8)
+      '@iconify-react/mdi':
+        specifier: 1.0.2
+        version: 1.0.2(react@19.2.8)
+      '@iconify-react/solar':
+        specifier: 1.0.2
+        version: 1.0.2(react@19.2.8)
       '@originator-profile/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -572,9 +590,9 @@ importers:
         specifier: ^4.1.7
         version: 4.2.2
     devDependencies:
-      '@iconify/react':
-        specifier: 6.0.2
-        version: 6.0.2(react@19.2.8)
+      '@iconify-react/fa6-solid':
+        specifier: 1.0.2
+        version: 1.0.2(react@19.2.8)
       '@originator-profile/core':
         specifier: workspace:*
         version: link:../core
@@ -2200,13 +2218,34 @@ packages:
     resolution: {integrity: sha512-bV0Tgo9K4hfPCek+aMAn81RppFKv2ySDQeMoSZuvTASywNTnVJCArCZE2FWqpvIatKu7VMRLWlR1EazvVhDyhQ==}
     engines: {node: '>=18.18'}
 
+  '@iconify-react/fa6-solid@1.0.2':
+    resolution: {integrity: sha512-Vv+G/RGv1SWdmo5Pq4jf2tghJQxWeTOsZsEQ+o4mFFdlwC36QDxqU3hX4UxqvFj+We/CH5HO7npCjXRIO1jh7A==}
+
+  '@iconify-react/gg@1.0.2':
+    resolution: {integrity: sha512-ZaY9I71K0Pzzhs24VwhhVZF4bqm4c+DLaPzW1AVRCbuPIYOKv4ZSIqtyjHcKfPJVcgMD3tUQK37wEYbYTN8Xag==}
+
+  '@iconify-react/ic@1.0.2':
+    resolution: {integrity: sha512-Ofo00y/HAWus5Cm12FW3uqsmilRjCYqoIbOwgU7bnDSv8afRm6sCTj41as+/vc6Y8a5ROB9Mj2YYlH87BFs/SQ==}
+
+  '@iconify-react/ion@1.0.3':
+    resolution: {integrity: sha512-5OsBNVHgAL3ygRdXToqcB2e9hTzOoho+3X3Bw4hGvMpt5X16TrJc7tBMmccR+WmumGdSJPhlSkGzb01RDcqVPg==}
+
+  '@iconify-react/material-symbols@1.0.30':
+    resolution: {integrity: sha512-kI8HImAhPPlWPm9lPrFTK5aHIm+1l7s/249wxE20te8q1IfL99efMNtL8M+yRvrdPE/fDfoKDuxZCn2GKdV7IQ==}
+
+  '@iconify-react/mdi@1.0.2':
+    resolution: {integrity: sha512-p7YgR1oh8523fLQydG6cu53I/de5EkAnsbusQVJSqb6PYmN2MiKO9ovo/RkBV/jQNx+hHRG5VHM1YWpUfJeUFQ==}
+
+  '@iconify-react/solar@1.0.2':
+    resolution: {integrity: sha512-5D7+IRlnN35GRfZj8F7X/XJXjIg3MBcJvqlRCBhkEQOFQxIjsF8inNa5rSnvxOi4BboQDtaRfqrJDNKCvkYBtw==}
+
   '@iconify/collections@1.0.715':
     resolution: {integrity: sha512-4EP9EOD9qx/Ybu+FtepdxL49FV1mFKsPuLTl06ccwvP5lZyErzTy5CODamEnsnKsYr+8jle2DdlDxqzVBok9hQ==}
 
-  '@iconify/react@6.0.2':
-    resolution: {integrity: sha512-SMmC2sactfpJD427WJEDN6PMyznTFMhByK9yLW0gOTtnjzzbsi/Ke/XqsumsavFPwNiXs8jSiYeZTmLCLwO+Fg==}
+  '@iconify/css-react@1.0.2':
+    resolution: {integrity: sha512-k33FKG4jGgd8odos+1HdSwCKZOQ5F1heQxwl/zDrA53tLg5IseDPMqsmQbcCEZ6E0Zgcrmfo4ceFSBmbuEvGtw==}
     peerDependencies:
-      react: '>=16'
+      react: '>=18.0.0'
 
   '@iconify/types@2.0.0':
     resolution: {integrity: sha512-+wluvCrRhXrhyOmRDJ3q8mux9JkKy5SJ/v8ol2tu4FVjyYvtEzkc/3pK15ET6RKg4b4w4BmTk1+gsCUhf21Ykg==}
@@ -11525,11 +11564,53 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
+  '@iconify-react/fa6-solid@1.0.2(react@19.2.8)':
+    dependencies:
+      '@iconify/css-react': 1.0.2(react@19.2.8)
+    transitivePeerDependencies:
+      - react
+
+  '@iconify-react/gg@1.0.2(react@19.2.8)':
+    dependencies:
+      '@iconify/css-react': 1.0.2(react@19.2.8)
+    transitivePeerDependencies:
+      - react
+
+  '@iconify-react/ic@1.0.2(react@19.2.8)':
+    dependencies:
+      '@iconify/css-react': 1.0.2(react@19.2.8)
+    transitivePeerDependencies:
+      - react
+
+  '@iconify-react/ion@1.0.3(react@19.2.8)':
+    dependencies:
+      '@iconify/css-react': 1.0.2(react@19.2.8)
+    transitivePeerDependencies:
+      - react
+
+  '@iconify-react/material-symbols@1.0.30(react@19.2.8)':
+    dependencies:
+      '@iconify/css-react': 1.0.2(react@19.2.8)
+    transitivePeerDependencies:
+      - react
+
+  '@iconify-react/mdi@1.0.2(react@19.2.8)':
+    dependencies:
+      '@iconify/css-react': 1.0.2(react@19.2.8)
+    transitivePeerDependencies:
+      - react
+
+  '@iconify-react/solar@1.0.2(react@19.2.8)':
+    dependencies:
+      '@iconify/css-react': 1.0.2(react@19.2.8)
+    transitivePeerDependencies:
+      - react
+
   '@iconify/collections@1.0.715':
     dependencies:
       '@iconify/types': 2.0.0
 
-  '@iconify/react@6.0.2(react@19.2.8)':
+  '@iconify/css-react@1.0.2(react@19.2.8)':
     dependencies:
       '@iconify/types': 2.0.0
       react: 19.2.8

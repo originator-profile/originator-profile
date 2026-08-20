@@ -1,4 +1,4 @@
-import { Icon } from "@iconify/react";
+import IconIcRoundWarning from "@iconify-react/ic/round-warning";
 import { stringifyWithError } from "@originator-profile/core";
 import {
   _,
@@ -93,10 +93,7 @@ function DetailInfo({
                     key={index}
                     className="flex items-start mb-2 text-sm text-gray-700"
                   >
-                    <Icon
-                      icon="ic:round-warning"
-                      className="size-5 mr-1 shrink-0 text-caution"
-                    />
+                    <IconIcRoundWarning className="size-5 mr-1 shrink-0 text-caution" />
                     <span className="whitespace-pre-wrap break-all">
                       {warning}
                     </span>
