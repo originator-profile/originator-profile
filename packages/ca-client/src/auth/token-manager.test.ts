@@ -26,14 +26,14 @@ const createManager = ({
   responses,
 }: {
   bufferSeconds?: number;
-  responses?: (callCount: number) => Promise<CcspTokenResponse>;
+  responses?: (callCount: number, now: number) => Promise<CcspTokenResponse>;
 } = {}) => {
   const clock = { time: BASE_TIME };
   let callCount = 0;
   const getCcspAccessToken = vi.fn(async () => {
     callCount += 1;
     if (responses) {
-      return await responses(callCount);
+      return await responses(callCount, clock.time);
     }
     return {
       access_token: createJwtToken({ exp: clock.time + 3600 }),
@@ -161,4 +161,47 @@ test("TokenManager: refreshes short-lived tokens at half TTL", async () => {
 
   expect(getCcspAccessToken).toHaveBeenCalledTimes(2);
   expect(token1).not.toBe(token2);
+});
+
+test("TokenManager: uses JWT exp when expires_in is missing", async () => {
+  const jwtTtlSeconds = 7200;
+  const { manager, clock, getCcspAccessToken } = createManager({
+    responses: async (callCount, now) => ({
+      access_token: createJwtToken({ exp: now + jwtTtlSeconds, n: callCount }),
+    }),
+  });
+
+  const token1 = await manager.getAccessToken();
+  // DEFAULT_TTL is 3600s; if that path were used this would refresh.
+  clock.time = BASE_TIME + 3600 - 200;
+  const token2 = await manager.getAccessToken();
+
+  expect(token1).toBe(token2);
+  expect(getCcspAccessToken).toHaveBeenCalledTimes(1);
+
+  clock.time = BASE_TIME + jwtTtlSeconds - 200;
+  const token3 = await manager.getAccessToken();
+
+  expect(getCcspAccessToken).toHaveBeenCalledTimes(2);
+  expect(token1).not.toBe(token3);
+});
+
+test("TokenManager: uses default TTL when expires_in and JWT exp are missing", async () => {
+  const { manager, clock, getCcspAccessToken } = createManager({
+    responses: async (callCount) => ({
+      access_token: `opaque-token-${callCount}`,
+    }),
+  });
+
+  const token1 = await manager.getAccessToken();
+  const token2 = await manager.getAccessToken();
+
+  expect(token1).toBe(token2);
+  expect(getCcspAccessToken).toHaveBeenCalledTimes(1);
+
+  clock.time += 3600 - 200;
+  const token3 = await manager.getAccessToken();
+
+  expect(getCcspAccessToken).toHaveBeenCalledTimes(2);
+  expect(token1).not.toBe(token3);
 });
