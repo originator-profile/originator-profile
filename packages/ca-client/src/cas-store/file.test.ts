@@ -60,7 +60,7 @@ test("writeCasFile: creates nested directories from outputDir and fileName", asy
   });
 });
 
-test("writeCasFile: uses an absolute outputDir as-is", async () => {
+test("writeCasFile: writes to a deeply nested absolute outputDir", async () => {
   await withTempDir(async (dir) => {
     const outputDir = join(dir, "absolute", "cas");
 
