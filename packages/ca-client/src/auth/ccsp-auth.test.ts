@@ -48,6 +48,16 @@ describe("parseCcspConfig", () => {
       ),
     ).toThrow(/tokenUrl is not a valid URL/);
   });
+
+  test("throws when decoded JSON is not an object", () => {
+    const encoded = Buffer.from("null", "utf-8").toString("base64");
+    expect(() => parseCcspConfig(encoded)).toThrow(
+      /CCSP auth failed: failed to parse config/,
+    );
+    expect(() =>
+      parseCcspConfig(Buffer.from("[]", "utf-8").toString("base64")),
+    ).toThrow(/CCSP auth failed: failed to parse config/);
+  });
 });
 
 describe("getCcspAccessToken", () => {
@@ -110,9 +120,26 @@ describe("getCcspAccessToken", () => {
     );
 
     expect(error).toBeInstanceOf(Error);
-    expect((error as Error).message).toBe(
+    if (!(error instanceof Error)) {
+      throw error;
+    }
+    expect(error.message).toBe(
       "CCSP auth failed: response is missing access_token",
     );
-    expect((error as Error).message).not.toContain("do-not-leak");
+    expect(error.message).not.toContain("do-not-leak");
+  });
+
+  test("rejects a non-object token response", async () => {
+    const mockFetch: FetchOperations = {
+      fetch: async () =>
+        ({
+          ok: true,
+          json: async () => null,
+        }) as unknown as Response,
+    };
+
+    await expect(getCcspAccessToken(validConfig, mockFetch)).rejects.toThrow(
+      /CCSP auth failed: response is missing access_token/,
+    );
   });
 });

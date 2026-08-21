@@ -140,7 +140,7 @@ try {
 | `CA_CONFIG`     | CCSP 設定の欠落・不正、未対応の `authType`      |
 | `CA_AUTH`       | CCSP トークンエンドポイントの失敗（401 を含む） |
 | `CA_VALIDATION` | 未署名 CA・CAS payload・日付の不正              |
-| `CA_HTTP`       | CA サーバーが非 2xx を返した                    |
+| `CA_HTTP`       | CA サーバーが非 2xx を返した、またはネットワーク障害 |
 | `CA_RESPONSE`   | CA サーバーの本文が空、または JWT を含まない    |
 
 `sign()` / `reSign()` は CA サーバーが 401 を返したとき、アクセストークンを更新して 1 回だけ再試行します。再試行後も 401 なら `isUnauthorized(error)` が真になります。

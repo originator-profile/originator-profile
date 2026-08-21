@@ -1,5 +1,6 @@
 import { CaClientError, CaClientErrorCode } from "../errors";
 import type { FetchOperations } from "../fetch-operations";
+import { isRecord } from "../is-record";
 
 export interface CcspAuthConfig {
   authType: string;
@@ -16,41 +17,53 @@ export interface CcspTokenResponse {
   scope?: string;
 }
 
-export const parseCcspConfig = (base64Config: string): CcspAuthConfig => {
-  const configStr = base64Config.replace(/^CCSP:/, "");
+const requireConfigString = (
+  value: unknown,
+  field: string,
+  hint = "",
+): string => {
+  if (typeof value !== "string" || value === "") {
+    throw new CaClientError(`CCSP auth failed: ${field} is required${hint}`, {
+      code: CaClientErrorCode.Config,
+    });
+  }
+  return value;
+};
 
-  let config: CcspAuthConfig;
+const parseConfigRecord = (decoded: string): Record<string, unknown> => {
+  let parsed: unknown;
   try {
-    const decoded = Buffer.from(configStr, "base64").toString("utf-8");
-    config = JSON.parse(decoded) as CcspAuthConfig;
+    parsed = JSON.parse(decoded);
   } catch (error) {
     throw new CaClientError("CCSP auth failed: failed to parse config", {
       code: CaClientErrorCode.Config,
       cause: error,
     });
   }
+  if (!isRecord(parsed)) {
+    throw new CaClientError("CCSP auth failed: failed to parse config", {
+      code: CaClientErrorCode.Config,
+    });
+  }
+  return parsed;
+};
 
-  if (!config.authType) {
-    throw new CaClientError("CCSP auth failed: authType is required", {
-      code: CaClientErrorCode.Config,
-    });
-  }
-  if (!config.clientId) {
-    throw new CaClientError("CCSP auth failed: clientId is required", {
-      code: CaClientErrorCode.Config,
-    });
-  }
-  if (!config.clientSec) {
-    throw new CaClientError(
-      "CCSP auth failed: clientSec is required (OAuth client_secret)",
-      { code: CaClientErrorCode.Config },
-    );
-  }
-  if (!config.tokenUrl) {
-    throw new CaClientError("CCSP auth failed: tokenUrl is required", {
-      code: CaClientErrorCode.Config,
-    });
-  }
+export const parseCcspConfig = (base64Config: string): CcspAuthConfig => {
+  const parsed = parseConfigRecord(
+    Buffer.from(base64Config.replace(/^CCSP:/, ""), "base64").toString("utf-8"),
+  );
+
+  const config: CcspAuthConfig = {
+    authType: requireConfigString(parsed.authType, "authType"),
+    clientId: requireConfigString(parsed.clientId, "clientId"),
+    clientSec: requireConfigString(
+      parsed.clientSec,
+      "clientSec",
+      " (OAuth client_secret)",
+    ),
+    tokenUrl: requireConfigString(parsed.tokenUrl, "tokenUrl"),
+  };
+
   if (!URL.canParse(config.tokenUrl)) {
     throw new CaClientError("CCSP auth failed: tokenUrl is not a valid URL", {
       code: CaClientErrorCode.Config,
@@ -58,6 +71,31 @@ export const parseCcspConfig = (base64Config: string): CcspAuthConfig => {
   }
 
   return config;
+};
+
+const parseTokenResponse = (data: unknown): CcspTokenResponse => {
+  if (
+    !isRecord(data) ||
+    typeof data.access_token !== "string" ||
+    data.access_token === ""
+  ) {
+    throw new CaClientError(
+      "CCSP auth failed: response is missing access_token",
+      { code: CaClientErrorCode.Auth },
+    );
+  }
+
+  const token: CcspTokenResponse = { access_token: data.access_token };
+  if (typeof data.token_type === "string") {
+    token.token_type = data.token_type;
+  }
+  if (typeof data.expires_in === "number") {
+    token.expires_in = data.expires_in;
+  }
+  if (typeof data.scope === "string") {
+    token.scope = data.scope;
+  }
+  return token;
 };
 
 export const getCcspAccessToken = async (
@@ -92,14 +130,5 @@ export const getCcspAccessToken = async (
     );
   }
 
-  const data = (await response.json()) as CcspTokenResponse;
-
-  if (!data.access_token) {
-    throw new CaClientError(
-      "CCSP auth failed: response is missing access_token",
-      { code: CaClientErrorCode.Auth },
-    );
-  }
-
-  return data;
+  return parseTokenResponse(await response.json());
 };

@@ -2,7 +2,7 @@ import { expect, test } from "vitest";
 import { decodeJwtPayload, getJwtExpiration } from "./jwt";
 
 const createJwtToken = (
-  payload: Record<string, unknown>,
+  payload: unknown,
   signature = "signature",
 ): string => {
   const encodedHeader = Buffer.from(
@@ -29,6 +29,17 @@ test("decodeJwtPayload: throws when the payload is empty", () => {
   expect(() => decodeJwtPayload("header..signature")).toThrow(
     "Invalid JWT: empty payload",
   );
+});
+
+test("decodeJwtPayload: throws when the payload is not a JSON object", () => {
+  expect(() => decodeJwtPayload(createJwtToken(["not-an-object"]))).toThrow(
+    "Failed to decode JWT payload",
+  );
+  expect(() =>
+    decodeJwtPayload(
+      `${Buffer.from("{}").toString("base64url")}.${Buffer.from("null").toString("base64url")}.sig`,
+    ),
+  ).toThrow("Failed to decode JWT payload");
 });
 
 test("getJwtExpiration: returns exp when it is a number, otherwise undefined", () => {

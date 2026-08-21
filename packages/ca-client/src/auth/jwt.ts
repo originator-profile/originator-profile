@@ -1,4 +1,5 @@
 import { CaClientError, CaClientErrorCode } from "../errors";
+import { isRecord } from "../is-record";
 
 export const decodeJwtPayload = (token: string): Record<string, unknown> => {
   const parts = token.split(".");
@@ -16,15 +17,24 @@ export const decodeJwtPayload = (token: string): Record<string, unknown> => {
     });
   }
 
+  let parsed: unknown;
   try {
     const decoded = Buffer.from(payload, "base64url").toString("utf-8");
-    return JSON.parse(decoded) as Record<string, unknown>;
+    parsed = JSON.parse(decoded);
   } catch (error) {
     throw new CaClientError("Failed to decode JWT payload", {
       code: CaClientErrorCode.Validation,
       cause: error,
     });
   }
+
+  if (!isRecord(parsed)) {
+    throw new CaClientError("Failed to decode JWT payload", {
+      code: CaClientErrorCode.Validation,
+    });
+  }
+
+  return parsed;
 };
 
 export const getJwtExpiration = (token: string): number | undefined => {

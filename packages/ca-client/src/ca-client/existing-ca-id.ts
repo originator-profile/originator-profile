@@ -1,5 +1,6 @@
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
+import { isRecord } from "../is-record";
 import { decodeCasVc, parseCasTokenFromFileContent } from "./cas-token";
 
 export const readExistingCaId = async (
@@ -21,9 +22,10 @@ export const readExistingCaId = async (
 
   const token = parseCasTokenFromFileContent(content, filePath);
   const payload = decodeCasVc(token);
-  const credentialSubject = payload.credentialSubject as
-    | { id?: string }
-    | undefined;
+  const credentialSubject = payload.credentialSubject;
+  if (!isRecord(credentialSubject) || typeof credentialSubject.id !== "string") {
+    return undefined;
+  }
 
-  return credentialSubject?.id;
+  return credentialSubject.id;
 };

@@ -29,7 +29,7 @@ function jwtFromCaResponse(body: string): string {
 
   let result: unknown;
   try {
-    result = JSON.parse(responseBody) as unknown;
+    result = JSON.parse(responseBody);
   } catch {
     return responseBody;
   }
@@ -64,9 +64,8 @@ export async function signByCaServer(
   let payload: UnsignedContentAttestation;
   try {
     payload = UnsignedContentAttestationSchema.parse(structuredClone(uca));
-    const subject = payload.credentialSubject as { image?: unknown };
     await Promise.all([
-      fetchAndSetDigestSri("sha256", subject.image),
+      fetchAndSetDigestSri("sha256", payload.credentialSubject.image),
       fetchAndSetTargetIntegrity("sha256", payload, resolveDocument),
     ]);
   } catch (error) {
