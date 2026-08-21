@@ -23,6 +23,142 @@ CAS 運用 SDK。CA サーバーとの連携、CAS ファイルの読み書き�
 <!-- environments-stop -->
 <!-- prettier-ignore-end -->
 
-## Public API
+## はじめに
 
-TODO
+### インストール
+
+#### Node.js
+
+```bash
+$ pnpm add @originator-profile/ca-client
+```
+
+> [!IMPORTANT]
+> Node.js の `^22.18.0 || ^24.10.0 || ^26.2.0` が必要です。
+
+## API
+
+### インポート
+
+```ts
+import {
+  createCaClient,
+  CaClientError,
+  CaClientErrorCode,
+  isUnauthorized,
+} from "@originator-profile/ca-client";
+```
+
+### クライアントオブジェクトの作成
+
+```ts
+const client = createCaClient({
+  endpoint: process.env.CA_SERVER_URL!, // CA サーバーのエンドポイント URL
+  issuer: process.env.ISSUER!, // 発行者 ID（例: `dns:example.com`）
+  ccspConfig: process.env.CCSP_CONFIG!, // CCSP 認証設定（Base64、`CCSP:` プレフィックス可）
+  // tokenBufferSeconds: 300, // トークン期限切れ前のバッファ（秒、既定 300）
+});
+```
+
+`ccspConfig` は次の JSON を Base64 エンコードした文字列です。先頭に `CCSP:` を付けても構いません。
+
+```json
+{
+  "authType": "client_secret_post",
+  "clientId": "YOUR_CLIENT_ID",
+  "clientSec": "YOUR_CLIENT_SECRET",
+  "tokenUrl": "https://example.com/oauth/token"
+}
+```
+
+> [!NOTE]
+> `authType` は `client_secret_post` のみ対応しています。`clientSec` は OAuth の `client_secret` です。
+
+### APIメソッド
+
+| メソッド | 説明                                 |
+| -------- | ------------------------------------ |
+| `sign`   | 未署名 CA を CA サーバーで署名する   |
+| `reSign` | 既存 CAS の JWT payload を再署名する |
+
+### 未署名 CA の署名
+
+`sign` メソッドは、未署名の Content Attestation を CA サーバーで署名し、JWT 文字列を返します。
+
+```ts
+const jwt = await client.sign({
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://originator-profile.org/ns/credentials/v1",
+  ],
+  type: ["VerifiableCredential", "ContentAttestation"],
+  issuer: "dns:example.com",
+  credentialSubject: {
+    type: "Article",
+    headline: "タイトル",
+  },
+  allowedUrl: ["https://example.com/ja-JP/about(/?)"],
+  target: [
+    {
+      type: "TextTargetIntegrity",
+      cssSelector: "main",
+    },
+  ],
+});
+```
+
+### 既存 CAS の再署名
+
+`reSign` メソッドは、既存 CAS の JWT payload を再署名し、JWT 文字列を返します。第 2 引数 `source` はエラーメッセージの文脈（CAS ファイルパスなど）に使われます。
+
+```ts
+const renewed = await client.reSign(
+  existingPayload,
+  "public/cas/ja-JP.page.cas.json",
+);
+```
+
+`createCaClient` に渡した `issuer` が、payload の `issuer` より優先されます。
+
+### エラー
+
+失敗時はすべて `CaClientError` を throw します。`code` で種別を、HTTP 失敗では `status` でステータスを判定してください。
+
+```ts
+try {
+  const jwt = await client.sign(unsignedCa);
+} catch (error) {
+  if (error instanceof CaClientError) {
+    console.error(error.code, error.status, error.message);
+  }
+  throw error;
+}
+```
+
+| `code`          | 典型例                                               |
+| --------------- | ---------------------------------------------------- |
+| `CA_CONFIG`     | CCSP 設定の欠落・不正、未対応の `authType`           |
+| `CA_AUTH`       | CCSP トークンエンドポイントの失敗（401 を含む）      |
+| `CA_VALIDATION` | 未署名 CA・CAS payload・日付の不正                   |
+| `CA_HTTP`       | CA サーバーが非 2xx を返した、またはネットワーク障害 |
+| `CA_RESPONSE`   | CA サーバーの本文が空、または JWT を含まない         |
+
+`sign()` / `reSign()` は CA サーバーが 401 を返したとき、アクセストークンを更新して 1 回だけ再試行します。再試行後も 401 なら `isUnauthorized(error)` が真になります。
+
+```ts
+try {
+  const jwt = await client.sign(unsignedCa);
+} catch (error) {
+  if (isUnauthorized(error)) {
+    // CA サーバーが再試行後も 401 を返した
+  }
+  throw error;
+}
+```
+
+> [!NOTE]
+> CCSP の 401 は `CA_AUTH` であり、`isUnauthorized` の判定には含まれません。
+
+## ライセンス
+
+Apache-2.0
