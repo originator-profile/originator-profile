@@ -1,4 +1,11 @@
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
+import {
+  mkdir,
+  mkdtemp,
+  readdir,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { expect, test } from "vitest";
@@ -124,6 +131,51 @@ test("writeCasFile: rejects an empty jwt", async () => {
   }
 });
 
+test("writeCasFile: replaces an existing file with complete new content", async () => {
+  await withTempDir(async (dir) => {
+    const outputDir = join(dir, "cas");
+
+    await writeCasFile({
+      fileName: "test.cas.json",
+      jwt: "old-jwt",
+      outputDir,
+    });
+    await writeCasFile({
+      fileName: "test.cas.json",
+      jwt: "new-jwt",
+      outputDir,
+    });
+
+    const written = await readFile(join(outputDir, "test.cas.json"), "utf8");
+    expect(written).toBe(`${JSON.stringify(["new-jwt"], null, 2)}\n`);
+    expect(
+      (await readdir(outputDir)).filter((name) => name.endsWith(".tmp")),
+    ).toEqual([]);
+  });
+});
+
+test("writeCasFile: removes the temp file when rename cannot replace dest", async () => {
+  await withTempDir(async (dir) => {
+    const outputDir = join(dir, "cas");
+    await mkdir(join(outputDir, "test.cas.json"), { recursive: true });
+
+    await expect(
+      writeCasFile({
+        fileName: "test.cas.json",
+        jwt: "jwt",
+        outputDir,
+      }),
+    ).rejects.toMatchObject({
+      name: "CaClientError",
+      code: CaClientErrorCode.File,
+    });
+
+    expect(
+      (await readdir(outputDir)).filter((name) => name.endsWith(".tmp")),
+    ).toEqual([]);
+  });
+});
+
 test("writeCasFile: wraps filesystem failures as CA_FILE", async () => {
   await withTempDir(async (dir) => {
     const blocker = join(dir, "not-a-dir");
@@ -179,7 +231,26 @@ test("deleteCasFiles: skips missing files", async () => {
 });
 
 test("deleteCasFiles: does nothing for an empty list", async () => {
-  await expect(deleteCasFiles([], "")).resolves.toBeUndefined();
+  await withTempDir(async (dir) => {
+    await expect(deleteCasFiles([], join(dir, "cas"))).resolves.toBeUndefined();
+  });
+});
+
+test("deleteCasFiles: rejects an empty outputDir even for an empty list", async () => {
+  for (const outputDir of ["", "   "]) {
+    await expect(
+      deleteCasFiles(["a.cas.json"], outputDir),
+    ).rejects.toMatchObject({
+      name: "CaClientError",
+      code: CaClientErrorCode.Validation,
+      message: "outputDir must be a non-empty string",
+    });
+    await expect(deleteCasFiles([], outputDir)).rejects.toMatchObject({
+      name: "CaClientError",
+      code: CaClientErrorCode.Validation,
+      message: "outputDir must be a non-empty string",
+    });
+  }
 });
 
 test("deleteCasFiles: rejects a fileName that escapes outputDir before deleting any files", async () => {
