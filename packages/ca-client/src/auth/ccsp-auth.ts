@@ -4,6 +4,7 @@ import type { FetchOperations } from "../fetch-operations";
 export interface CcspAuthConfig {
   authType: string;
   clientId: string;
+  /** OAuth client_secret (named clientSec to match the CA server config token field) */
   clientSec: string;
   tokenUrl: string;
 }
