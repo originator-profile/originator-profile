@@ -4,7 +4,10 @@ import { reSign } from "./re-sign";
 import type { CaServerSign } from "./sign-by-server";
 
 const basePayload = (): Record<string, unknown> => ({
-  "@context": ["https://www.w3.org/ns/credentials/v2"],
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://originator-profile.org/ns/credentials/v1",
+  ],
   type: ["VerifiableCredential", "ContentAttestation"],
   issuer: "dns:old-issuer.example.com",
   credentialSubject: {

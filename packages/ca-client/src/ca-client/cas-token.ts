@@ -1,4 +1,7 @@
-import type { UnsignedContentAttestation } from "@originator-profile/model";
+import {
+  UnsignedContentAttestation as UnsignedContentAttestationSchema,
+  type UnsignedContentAttestation,
+} from "@originator-profile/model";
 import {
   JwtVcDecoder,
   VcDecodeFailed,
@@ -83,12 +86,19 @@ export const jwtPayloadToUnsignedCa = (
   const issuer =
     options?.issuer !== undefined ? options.issuer : payload.issuer;
 
-  return {
+  const parsed = UnsignedContentAttestationSchema.safeParse({
     "@context": payload["@context"],
     type: payload.type,
     issuer,
     credentialSubject: payload.credentialSubject,
     allowedUrl: payload.allowedUrl,
     target: payload.target,
-  } as UnsignedContentAttestation;
+  });
+  if (!parsed.success) {
+    throw new CaClientError(
+      `Invalid Content Attestation: invalid payload in ${source}: ${parsed.error.message}`,
+      { code: CaClientErrorCode.Validation, cause: parsed.error },
+    );
+  }
+  return parsed.data;
 };

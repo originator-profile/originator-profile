@@ -81,22 +81,30 @@ export async function signByCaServer(
 
   const subjectId = payload.credentialSubject.id;
 
-  const response = await fetchOps.fetch(endpoint, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json",
-      Authorization: `Bearer ${accessToken}`,
-    },
-    body: JSON.stringify({
-      ...payload,
-      iss: payload.issuer,
-      ...(subjectId !== undefined ? { sub: subjectId } : {}),
-      iat: toUnixTime(issuedAt),
-      exp: toUnixTime(expiredAt),
-      issuedAt: issuedAt.toISOString(),
-      expiredAt: expiredAt.toISOString(),
-    }),
-  });
+  let response: Response;
+  try {
+    response = await fetchOps.fetch(endpoint, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${accessToken}`,
+      },
+      body: JSON.stringify({
+        ...payload,
+        iss: payload.issuer,
+        ...(subjectId !== undefined ? { sub: subjectId } : {}),
+        iat: toUnixTime(issuedAt),
+        exp: toUnixTime(expiredAt),
+        issuedAt: issuedAt.toISOString(),
+        expiredAt: expiredAt.toISOString(),
+      }),
+    });
+  } catch (error) {
+    throw new CaClientError(
+      `CA signing failed: ${error instanceof Error ? error.message : String(error)}`,
+      { code: CaClientErrorCode.Http, cause: error },
+    );
+  }
 
   if (!response.ok) {
     const responseBody = await response.text();

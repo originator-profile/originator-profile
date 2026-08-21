@@ -21,7 +21,10 @@ const config = {
 const uca = { issuer: "dns:issuer.example" } as UnsignedContentAttestation;
 
 const existingPayload = (): Record<string, unknown> => ({
-  "@context": ["https://www.w3.org/ns/credentials/v2"],
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://originator-profile.org/ns/credentials/v1",
+  ],
   type: ["VerifiableCredential", "ContentAttestation"],
   issuer: "dns:old-issuer.example.com",
   credentialSubject: {

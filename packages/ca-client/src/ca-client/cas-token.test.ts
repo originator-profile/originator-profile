@@ -26,7 +26,10 @@ test("jwtPayloadToUnsignedCa: builds an unsigned CA from the payload", () => {
     sub: "urn:uuid:1",
     iat: 1,
     exp: 2,
-    "@context": ["https://www.w3.org/ns/credentials/v2"],
+    "@context": [
+      "https://www.w3.org/ns/credentials/v2",
+      "https://originator-profile.org/ns/credentials/v1",
+    ],
     type: ["VerifiableCredential", "ContentAttestation"],
     issuer: "dns:issuer.example",
     credentialSubject: { type: "Article", headline: "headline" },
@@ -35,7 +38,10 @@ test("jwtPayloadToUnsignedCa: builds an unsigned CA from the payload", () => {
   };
 
   expect(jwtPayloadToUnsignedCa(payload, "test.cas.json")).toEqual({
-    "@context": ["https://www.w3.org/ns/credentials/v2"],
+    "@context": [
+      "https://www.w3.org/ns/credentials/v2",
+      "https://originator-profile.org/ns/credentials/v1",
+    ],
     type: ["VerifiableCredential", "ContentAttestation"],
     issuer: "dns:issuer.example",
     credentialSubject: { type: "Article", headline: "headline" },
@@ -55,7 +61,10 @@ test("jwtPayloadToUnsignedCa: throws when required keys are missing and can over
   expect(() =>
     jwtPayloadToUnsignedCa(
       {
-        "@context": ["https://www.w3.org/ns/credentials/v2"],
+        "@context": [
+          "https://www.w3.org/ns/credentials/v2",
+          "https://originator-profile.org/ns/credentials/v1",
+        ],
         type: ["VerifiableCredential", "ContentAttestation"],
         issuer: "dns:issuer.example",
         credentialSubject: null,
@@ -67,7 +76,10 @@ test("jwtPayloadToUnsignedCa: throws when required keys are missing and can over
   ).toThrow(/missing required keys.*credentialSubject/);
 
   const payload = {
-    "@context": ["https://www.w3.org/ns/credentials/v2"],
+    "@context": [
+      "https://www.w3.org/ns/credentials/v2",
+      "https://originator-profile.org/ns/credentials/v1",
+    ],
     type: ["VerifiableCredential", "ContentAttestation"],
     issuer: "dns:jwt.example",
     credentialSubject: {
@@ -86,4 +98,22 @@ test("jwtPayloadToUnsignedCa: throws when required keys are missing and can over
   expect(
     jwtPayloadToUnsignedCa(payload, "test.cas.json").credentialSubject.id,
   ).toBe("urn:uuid:aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
+});
+
+test("jwtPayloadToUnsignedCa: throws with source when field types are invalid", () => {
+  expect(() =>
+    jwtPayloadToUnsignedCa(
+      {
+        "@context": ["https://www.w3.org/ns/credentials/v2"],
+        type: ["VerifiableCredential", "ContentAttestation"],
+        issuer: "dns:issuer.example",
+        credentialSubject: { type: "Article" },
+        allowedUrl: ["https://example.com"],
+        target: [{ type: "TextTargetIntegrity" }],
+      },
+      "src/cas/en-US.about.cas.json",
+    ),
+  ).toThrow(
+    /Invalid Content Attestation: invalid payload in src\/cas\/en-US\.about\.cas\.json/,
+  );
 });

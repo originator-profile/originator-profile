@@ -91,6 +91,30 @@ test("signByCaServer: omits sub when credentialSubject.id is absent", async () =
   expect(body.credentialSubject).not.toHaveProperty("id");
 });
 
+test("signByCaServer: wraps network failures as HTTP errors", async () => {
+  const cause = new TypeError("Failed to fetch");
+
+  const error = await signByCaServer(uca, {
+    endpoint,
+    accessToken: "tok",
+    fetchOps: {
+      fetch: vi.fn(async () => {
+        throw cause;
+      }),
+    },
+  }).then(
+    () => null,
+    (e: unknown) => e,
+  );
+
+  expect(error).toBeInstanceOf(CaClientError);
+  expect(error).toMatchObject({
+    message: "CA signing failed: Failed to fetch",
+    code: CaClientErrorCode.Http,
+    cause,
+  });
+});
+
 test("signByCaServer: throws so that isUnauthorized is true on 401", async () => {
   const error = await signByCaServer(uca, {
     endpoint,
