@@ -82,6 +82,33 @@ test("documentProvider: wraps non-OK HTTP responses as HTTP errors", async () =>
   });
 });
 
+test("documentProvider: treats empty or omitted content as empty HTML", async () => {
+  const fromEmptyArray = await documentProvider({
+    type: "TextTargetIntegrity",
+    content: [],
+  });
+  const fromEmptyString = await documentProvider({
+    type: "TextTargetIntegrity",
+    content: "",
+  });
+  const fromOmitted = await documentProvider({
+    type: "TextTargetIntegrity",
+  });
+
+  expect(fromEmptyArray.body?.textContent).toBe("");
+  expect(fromEmptyString.body?.textContent).toBe("");
+  expect(fromOmitted.body?.textContent).toBe("");
+});
+
+test("documentProvider: parses a single-element content array", async () => {
+  const document = await documentProvider({
+    type: "TextTargetIntegrity",
+    content: ["<body><main>hello</main></body>"],
+  });
+
+  expect(document.querySelector("main")?.textContent).toBe("hello");
+});
+
 test("documentProvider: rejects unsupported target types and multiple contents", async () => {
   await expect(
     documentProvider({
