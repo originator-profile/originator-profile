@@ -42,6 +42,11 @@ describe("parseCcspConfig", () => {
     expect(() => parseCcspConfig("CCSP:not-json")).toThrow(
       /CCSP auth failed: failed to parse config/,
     );
+    expect(() =>
+      parseCcspConfig(
+        createBase64Config({ ...validConfig, tokenUrl: "not-a-url" }),
+      ),
+    ).toThrow(/tokenUrl is not a valid URL/);
   });
 });
 

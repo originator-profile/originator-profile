@@ -50,6 +50,11 @@ export const parseCcspConfig = (base64Config: string): CcspAuthConfig => {
       code: CaClientErrorCode.Config,
     });
   }
+  if (!URL.canParse(config.tokenUrl)) {
+    throw new CaClientError("CCSP auth failed: tokenUrl is not a valid URL", {
+      code: CaClientErrorCode.Config,
+    });
+  }
 
   return config;
 };
