@@ -123,7 +123,7 @@ const jwt = await client.sign({
 });
 ```
 
-### resign
+### reSign
 
 `reSign` メソッドは、既存 CAS の JWT payload を再署名し、JWT 文字列を返します。第 2 引数 `source` はエラーメッセージの文脈（CAS ファイルパスなど）に使われます。
 
