@@ -54,9 +54,14 @@ test("signByCaServer: POSTs with Bearer auth and returns a JWT", async () => {
     }),
   );
 
-  const body = JSON.parse(requestBody ?? "") as { iss: string; sub: string };
+  const body = JSON.parse(requestBody ?? "") as {
+    iss: string;
+    sub: string;
+    credentialSubject: { image?: unknown };
+  };
   expect(body.iss).toBe(uca.issuer);
   expect(body.sub).toBe(uca.credentialSubject.id);
+  expect(body.credentialSubject).not.toHaveProperty("image");
 });
 
 test("signByCaServer: omits sub when credentialSubject.id is absent", async () => {

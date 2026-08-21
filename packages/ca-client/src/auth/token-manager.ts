@@ -9,6 +9,7 @@ import { getJwtExpiration } from "./jwt";
 interface CachedToken {
   accessToken: string;
   expiresAt: number;
+  bufferSeconds: number;
 }
 
 export interface TokenOperations {
@@ -30,6 +31,12 @@ const resolveExpiresAt = (response: CcspTokenResponse, now: number): number => {
 
   return now + DEFAULT_TTL_SECONDS;
 };
+
+const resolveBufferSeconds = (
+  ttlSeconds: number,
+  configuredBufferSeconds: number,
+): number =>
+  Math.min(configuredBufferSeconds, Math.max(0, Math.floor(ttlSeconds / 2)));
 
 const defaultTokenOperations: TokenOperations = {
   getCcspAccessToken,
@@ -80,6 +87,10 @@ export class TokenManager {
         this.cachedToken = {
           accessToken: response.access_token,
           expiresAt,
+          bufferSeconds: resolveBufferSeconds(
+            expiresAt - now,
+            this.bufferSeconds,
+          ),
         };
 
         return response.access_token;
@@ -102,7 +113,8 @@ export class TokenManager {
     }
 
     return (
-      this.cachedToken.expiresAt > this.tokenOps.now() + this.bufferSeconds
+      this.cachedToken.expiresAt >
+      this.tokenOps.now() + this.cachedToken.bufferSeconds
     );
   }
 }

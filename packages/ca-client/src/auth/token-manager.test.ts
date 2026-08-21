@@ -128,3 +128,37 @@ test("TokenManager: isTokenValid", async () => {
   clock.time += 3600;
   expect(manager.isTokenValid()).toBe(false);
 });
+
+test("TokenManager: caches tokens shorter than the buffer", async () => {
+  const { manager, getCcspAccessToken } = createManager({
+    bufferSeconds: 300,
+    responses: async (callCount) => ({
+      access_token: `token-${callCount}`,
+      expires_in: 60,
+    }),
+  });
+
+  const token1 = await manager.getAccessToken();
+  const token2 = await manager.getAccessToken();
+
+  expect(token1).toBe(token2);
+  expect(getCcspAccessToken).toHaveBeenCalledTimes(1);
+  expect(manager.isTokenValid()).toBe(true);
+});
+
+test("TokenManager: refreshes short-lived tokens at half TTL", async () => {
+  const { manager, clock, getCcspAccessToken } = createManager({
+    bufferSeconds: 300,
+    responses: async (callCount) => ({
+      access_token: `token-${callCount}`,
+      expires_in: 60,
+    }),
+  });
+
+  const token1 = await manager.getAccessToken();
+  clock.time += 31;
+  const token2 = await manager.getAccessToken();
+
+  expect(getCcspAccessToken).toHaveBeenCalledTimes(2);
+  expect(token1).not.toBe(token2);
+});

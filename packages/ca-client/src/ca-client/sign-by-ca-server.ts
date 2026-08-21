@@ -58,12 +58,12 @@ export async function signByCaServer(
   }: SignByCaServerOptions,
 ): Promise<string> {
   const { issuedAt, expiredAt } = parseDates(timingOptions);
-  const payload = structuredClone(uca);
   const resolveDocument =
     documentProvider ?? ((raw) => defaultDocumentProvider(raw, fetchOps));
 
+  let payload: UnsignedContentAttestation;
   try {
-    UnsignedContentAttestationSchema.parse(payload);
+    payload = UnsignedContentAttestationSchema.parse(structuredClone(uca));
     const subject = payload.credentialSubject as { image?: unknown };
     await Promise.all([
       fetchAndSetDigestSri("sha256", subject.image),
