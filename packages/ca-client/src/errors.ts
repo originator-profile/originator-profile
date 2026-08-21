@@ -4,6 +4,7 @@ export const CaClientErrorCode = {
   Validation: "CA_VALIDATION",
   Http: "CA_HTTP",
   Response: "CA_RESPONSE",
+  File: "CA_FILE",
 } as const;
 
 export type CaClientErrorCode =

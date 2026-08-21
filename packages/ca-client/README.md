@@ -43,6 +43,7 @@ $ pnpm add @originator-profile/ca-client
 ```ts
 import {
   createCaClient,
+  writeCasFile,
   CaClientError,
   CaClientErrorCode,
   isUnauthorized,
@@ -74,6 +75,21 @@ const client = createCaClient({
 > [!NOTE]
 > `authType` は `client_secret_post` のみ対応しています。`clientSec` は OAuth の `client_secret` です。
 
+### Quick Start
+
+未署名 CA を CA サーバーで署名し、署名済み JWT を CAS ファイルとして書き出します。
+
+```ts
+const jwt = await client.sign(unsignedCa);
+
+// output dist/cas/ja-JP.hello.cas.json
+await writeCasFile({
+  fileName: "ja-JP.hello.cas.json",
+  jwt,
+  outputDir: "dist/cas",
+});
+```
+
 ### APIメソッド
 
 | メソッド | 説明                                 |
@@ -81,7 +97,7 @@ const client = createCaClient({
 | `sign`   | 未署名 CA を CA サーバーで署名する   |
 | `reSign` | 既存 CAS の JWT payload を再署名する |
 
-### 未署名 CA の署名
+### sign
 
 `sign` メソッドは、未署名の Content Attestation を CA サーバーで署名し、JWT 文字列を返します。
 
@@ -107,7 +123,7 @@ const jwt = await client.sign({
 });
 ```
 
-### 既存 CAS の再署名
+### resign
 
 `reSign` メソッドは、既存 CAS の JWT payload を再署名し、JWT 文字列を返します。第 2 引数 `source` はエラーメッセージの文脈（CAS ファイルパスなど）に使われます。
 
@@ -119,6 +135,27 @@ const renewed = await client.reSign(
 ```
 
 `createCaClient` に渡した `issuer` が、payload の `issuer` より優先されます。
+
+### writeCasFile
+
+`writeCasFile` は、署名済み JWT を CAS ファイルとして書き出します。`fileName`・`jwt`・`outputDir` は必須です。
+
+```ts
+// output dist/cas/ja-JP.page.cas.json
+await writeCasFile({
+  fileName: "ja-JP.page.cas.json",
+  jwt,
+  outputDir: "dist/cas",
+});
+
+// output /path/to/site/dist/cas/ja-JP.page.cas.json
+await writeCasFile({
+  fileName: "ja-JP.page.cas.json",
+  jwt,
+  outputDir: "dist/cas",
+  baseDir: "/path/to/site",
+});
+```
 
 ### エラー
 
@@ -139,9 +176,10 @@ try {
 | --------------- | ---------------------------------------------------- |
 | `CA_CONFIG`     | CCSP 設定の欠落・不正、未対応の `authType`           |
 | `CA_AUTH`       | CCSP トークンエンドポイントの失敗（401 を含む）      |
-| `CA_VALIDATION` | 未署名 CA・CAS payload・日付の不正                   |
+| `CA_VALIDATION` | 未署名 CA・CAS payload・日付・パス・JWT の不正       |
 | `CA_HTTP`       | CA サーバーが非 2xx を返した、またはネットワーク障害 |
 | `CA_RESPONSE`   | CA サーバーの本文が空、または JWT を含まない         |
+| `CA_FILE`       | CAS ファイルの書き込み・削除に失敗した               |
 
 `sign()` / `reSign()` は CA サーバーが 401 を返したとき、アクセストークンを更新して 1 回だけ再試行します。再試行後も 401 なら `isUnauthorized(error)` が真になります。
 
