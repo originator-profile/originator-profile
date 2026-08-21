@@ -1,10 +1,7 @@
 import { expect, test } from "vitest";
 import { decodeJwtPayload, getJwtExpiration } from "./jwt";
 
-const createJwtToken = (
-  payload: unknown,
-  signature = "signature",
-): string => {
+const createJwtToken = (payload: unknown, signature = "signature"): string => {
   const encodedHeader = Buffer.from(
     JSON.stringify({ alg: "HS256", typ: "JWT" }),
   ).toString("base64url");

@@ -23,7 +23,10 @@ export const readExistingCaId = async (
   const token = parseCasTokenFromFileContent(content, filePath);
   const payload = decodeCasVc(token);
   const credentialSubject = payload.credentialSubject;
-  if (!isRecord(credentialSubject) || typeof credentialSubject.id !== "string") {
+  if (
+    !isRecord(credentialSubject) ||
+    typeof credentialSubject.id !== "string"
+  ) {
     return undefined;
   }
 
