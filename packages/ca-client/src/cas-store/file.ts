@@ -1,27 +1,25 @@
 import { mkdir, unlink, writeFile } from "node:fs/promises";
-import { dirname, join, resolve } from "node:path";
+import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { CaClientError, CaClientErrorCode } from "../errors";
 
 export type WriteCasFileOptions = {
-  /** CAS file name, e.g. `ja-JP.page.cas.json`. */
+  /** CAS file name relative to `outputDir`, e.g. `ja-JP.page.cas.json`. */
   fileName: string;
   /** Signed JWT string to write. */
   jwt: string;
   /**
-   * Output directory. Relative paths resolve against `baseDir`
-   * (or the current working directory if omitted).
+   * Output directory. Relative paths (e.g. `./dist/cas`) resolve against
+   * the current working directory. Absolute paths are used as-is.
    */
   outputDir: string;
-  /**
-   * Base directory for a relative `outputDir`.
-   * Defaults to the current working directory.
-   */
-  baseDir?: string;
 };
 
-type CasDirOptions = Pick<WriteCasFileOptions, "outputDir" | "baseDir">;
+const isEmpty = (value: string): boolean => value.trim() === "";
 
-const isEmpty = (value: string): boolean => value === "";
+const isInsideCasDir = (dir: string, dest: string): boolean => {
+  const rel = relative(dir, dest);
+  return rel !== "" && !isAbsolute(rel) && !rel.split(sep).includes("..");
+};
 
 const isEnoent = (error: unknown): boolean =>
   typeof error === "object" &&
@@ -50,44 +48,46 @@ const unlinkMissing = async (filePath: string): Promise<void> => {
   }
 };
 
-/** Resolve a CAS output directory. Relative paths use `baseDir` or the current working directory. */
-export const resolveCasDir = ({
-  outputDir,
-  baseDir,
-}: CasDirOptions): string => {
+/** Resolve a CAS output directory. Relative paths use the current working directory. */
+export const resolveCasDir = (outputDir: string): string => {
   if (isEmpty(outputDir)) {
     throw new CaClientError("outputDir must be a non-empty string", {
       code: CaClientErrorCode.Validation,
     });
   }
-  return resolve(baseDir ?? process.cwd(), outputDir);
+  return resolve(outputDir);
 };
 
 export const casFilePath = ({
   fileName,
   outputDir,
-  baseDir,
-}: Pick<WriteCasFileOptions, "fileName" | "outputDir" | "baseDir">): string => {
+}: Pick<WriteCasFileOptions, "fileName" | "outputDir">): string => {
   if (isEmpty(fileName)) {
     throw new CaClientError("fileName must be a non-empty string", {
       code: CaClientErrorCode.Validation,
     });
   }
-  return join(resolveCasDir({ outputDir, baseDir }), fileName);
+  const dir = resolveCasDir(outputDir);
+  const dest = resolve(dir, fileName);
+  if (!isInsideCasDir(dir, dest)) {
+    throw new CaClientError("fileName must stay inside outputDir", {
+      code: CaClientErrorCode.Validation,
+    });
+  }
+  return dest;
 };
 
 export const writeCasFile = async ({
   fileName,
   jwt,
   outputDir,
-  baseDir,
 }: WriteCasFileOptions): Promise<void> => {
   if (isEmpty(jwt)) {
     throw new CaClientError("jwt must be a non-empty string", {
       code: CaClientErrorCode.Validation,
     });
   }
-  const dest = casFilePath({ fileName, outputDir, baseDir });
+  const dest = casFilePath({ fileName, outputDir });
   const casContent = `${JSON.stringify([jwt], null, 2)}\n`;
 
   try {
@@ -100,22 +100,15 @@ export const writeCasFile = async ({
 
 export const deleteCasFiles = async (
   fileNames: string[],
-  { outputDir, baseDir }: CasDirOptions,
+  outputDir: string,
 ): Promise<void> => {
   if (fileNames.length === 0) {
     return;
   }
 
-  const dir = resolveCasDir({ outputDir, baseDir });
-
-  await Promise.all(
-    fileNames.map((fileName) => {
-      if (isEmpty(fileName)) {
-        throw new CaClientError("fileName must be a non-empty string", {
-          code: CaClientErrorCode.Validation,
-        });
-      }
-      return unlinkMissing(join(dir, fileName));
-    }),
+  const dests = fileNames.map((fileName) =>
+    casFilePath({ fileName, outputDir }),
   );
+
+  await Promise.all(dests.map((filePath) => unlinkMissing(filePath)));
 };

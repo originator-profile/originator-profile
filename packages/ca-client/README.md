@@ -145,15 +145,14 @@ const renewed = await client.reSign(
 await writeCasFile({
   fileName: "ja-JP.page.cas.json",
   jwt,
-  outputDir: "dist/cas",
+  outputDir: "./dist/cas",
 });
 
 // output /path/to/site/dist/cas/ja-JP.page.cas.json
 await writeCasFile({
   fileName: "ja-JP.page.cas.json",
   jwt,
-  outputDir: "dist/cas",
-  baseDir: "/path/to/site",
+  outputDir: "/path/to/site/dist/cas",
 });
 ```
 
