@@ -16,8 +16,8 @@ export type ExtractTargetsOptions = {
 };
 
 /**
- * Default selector for ExternalResourceTargetIntegrity when CAS に cssSelector が無く、
- * 引数も省略された場合。呼び出し側の `externalSelector` で上書きできる。
+ * Default selector for ExternalResourceTargetIntegrity when CAS has no
+ * cssSelector and the caller omitted `externalSelector`.
  */
 export const DEFAULT_EXTERNAL_SELECTOR = ".target-integrity";
 
@@ -76,8 +76,8 @@ const extractDomTargets = async (
 };
 
 /**
- * HTML から target integrity を抽出する。セレクタは呼び出し側（CAS または引数）が渡す。
- * CIP サイト前提の既定セレクタ（`article [itemprop='headline']` 等）は持たない。
+ * Extract target integrity from HTML. Selectors come from the caller
+ * (CAS-recorded values or `DetectDriftOptions`); there is no site-specific default.
  */
 export const extractTargetsFromHtml = async (
   htmlContent: string,

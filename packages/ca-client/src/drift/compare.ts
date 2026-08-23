@@ -1,6 +1,8 @@
 import { ContentAttestationSet } from "@originator-profile/model";
-import { existsSync, readFileSync } from "node:fs";
+import { readFile } from "node:fs/promises";
 import { decodeJwtPayload } from "../auth/jwt";
+import { casFilePath } from "../cas-store/file";
+import { CaClientError, CaClientErrorCode } from "../errors";
 import { isRecord } from "../is-record";
 import {
   DEFAULT_EXTERNAL_SELECTOR,
@@ -24,15 +26,24 @@ export type DriftResult =
     };
 
 export type DetectDriftOptions = {
-  /** TextTargetIntegrity の CSS セレクタ。CAS に cssSelector が無いとき使う */
+  /** Built HTML to recompute target integrity from. */
+  html: string;
+  /** CAS file name relative to `outputDir`, e.g. `ja-JP.page.cas.json`. */
+  fileName: string;
+  /**
+   * Directory containing the CAS file. Relative paths (e.g. `./dist/cas`)
+   * resolve against the current working directory. Absolute paths are used as-is.
+   */
+  outputDir: string;
+  /** CSS selector for TextTargetIntegrity when CAS has none. */
   textSelector?: string;
-  /** HtmlTargetIntegrity の CSS セレクタ。CAS に cssSelector が無いとき使う */
+  /** CSS selector for HtmlTargetIntegrity when CAS has none. */
   htmlSelector?: string;
-  /** VisibleTextTargetIntegrity の CSS セレクタ。CAS に cssSelector が無いとき使う */
+  /** CSS selector for VisibleTextTargetIntegrity when CAS has none. */
   visibleTextSelector?: string;
   /**
-   * ExternalResourceTargetIntegrity 要素の CSS セレクタ。
-   * 省略時は CAS の cssSelector、それも無ければ `.target-integrity`
+   * CSS selector for ExternalResourceTargetIntegrity elements.
+   * Defaults to the CAS `cssSelector`, then `.target-integrity`.
    */
   externalSelector?: string;
 };
@@ -45,6 +56,22 @@ type CasTarget = {
 
 const INVALID_CAS_FORMAT =
   "Invalid CAS file format (expected JSON array with JWT string)";
+
+const isEnoent = (error: unknown): boolean =>
+  typeof error === "object" &&
+  error !== null &&
+  "code" in error &&
+  error.code === "ENOENT";
+
+const toFileError = (message: string, error: unknown): CaClientError => {
+  if (error instanceof CaClientError) {
+    return error;
+  }
+  return new CaClientError(
+    `${message}: ${error instanceof Error ? error.message : String(error)}`,
+    { code: CaClientErrorCode.File, cause: error },
+  );
+};
 
 const jwtFromCasItem = (item: unknown): string | undefined => {
   if (typeof item === "string") {
@@ -109,31 +136,26 @@ type ReadCasTargetsResult =
   | { ok: true; targets: NormalizedTarget[] }
   | { ok: false; reason: string };
 
-const readCasTargets = (casFilePath: string): ReadCasTargetsResult => {
-  if (!existsSync(casFilePath)) {
-    return { ok: false, reason: "CAS file not found" };
+const parseCasTargets = (casFileContent: string): ReadCasTargetsResult => {
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(casFileContent);
+  } catch (error) {
+    const detail = error instanceof Error ? error.message : String(error);
+    return { ok: false, reason: detail };
+  }
+
+  const cas = ContentAttestationSet.safeParse(parsed);
+  if (!cas.success) {
+    return { ok: false, reason: INVALID_CAS_FORMAT };
+  }
+
+  const jwt = jwtFromCasItem(cas.data[0]);
+  if (!jwt) {
+    return { ok: false, reason: INVALID_CAS_FORMAT };
   }
 
   try {
-    const casFileContent = readFileSync(casFilePath, "utf-8");
-    let parsed: unknown;
-    try {
-      parsed = JSON.parse(casFileContent);
-    } catch (error) {
-      const detail = error instanceof Error ? error.message : String(error);
-      return { ok: false, reason: detail };
-    }
-
-    const cas = ContentAttestationSet.safeParse(parsed);
-    if (!cas.success) {
-      return { ok: false, reason: INVALID_CAS_FORMAT };
-    }
-
-    const jwt = jwtFromCasItem(cas.data[0]);
-    if (!jwt) {
-      return { ok: false, reason: INVALID_CAS_FORMAT };
-    }
-
     const payload = decodeJwtPayload(jwt);
     return { ok: true, targets: normalizeTargets(payload.target) };
   } catch (error) {
@@ -164,71 +186,74 @@ const selectorsForType = (
 
 const extractOptionsFromCas = (
   casTargets: NormalizedTarget[],
-  options?: DetectDriftOptions,
+  options: DetectDriftOptions,
 ): ExtractTargetsOptions => ({
   textSelectors: selectorsForType(
     casTargets,
     "TextTargetIntegrity",
-    options?.textSelector,
+    options.textSelector,
   ),
   htmlSelectors: selectorsForType(
     casTargets,
     "HtmlTargetIntegrity",
-    options?.htmlSelector,
+    options.htmlSelector,
   ),
   visibleTextSelectors: selectorsForType(
     casTargets,
     "VisibleTextTargetIntegrity",
-    options?.visibleTextSelector,
+    options.visibleTextSelector,
   ),
   externalSelector:
-    options?.externalSelector ??
+    options.externalSelector ??
     casTargets.find(
       (target) => target.type === "ExternalResourceTargetIntegrity",
     )?.cssSelector ??
     DEFAULT_EXTERNAL_SELECTOR,
 });
 
-/**
- * CAS payload に記録された cssSelector で現 HTML の target を再計算し、
- * CAS の target との一致（drift の有無）を判定する。
- *
- * `@originator-profile/verify` による暗号検証とは別物。ビルド後 HTML と
- * 既存 CAS 記録の target integrity が一致するかを見る発行パイプライン向け API。
- */
 export const detectDrift = async (
-  htmlContent: string,
-  casFilePath: string,
-  options?: DetectDriftOptions,
+  options: DetectDriftOptions,
 ): Promise<DriftResult> => {
-  const casRead = readCasTargets(casFilePath);
-  if (!casRead.ok) {
-    if (casRead.reason === "CAS file not found") {
-      return { status: "cas_missing", casFilePath };
+  const dest = casFilePath({
+    fileName: options.fileName,
+    outputDir: options.outputDir,
+  });
+
+  let casFileContent: string;
+  try {
+    casFileContent = await readFile(dest, "utf8");
+  } catch (error) {
+    if (isEnoent(error)) {
+      return { status: "cas_missing", casFilePath: dest };
     }
-    return { status: "cas_invalid", casFilePath, reason: casRead.reason };
+    throw toFileError(`Failed to read CAS file ${dest}`, error);
+  }
+
+  const casRead = parseCasTargets(casFileContent);
+  if (!casRead.ok) {
+    return { status: "cas_invalid", casFilePath: dest, reason: casRead.reason };
   }
 
   const casTargets = casRead.targets;
   const currentTargets = normalizeTargets(
     await extractTargetsFromHtml(
-      htmlContent,
+      options.html,
       extractOptionsFromCas(casTargets, options),
     ),
   );
 
   if (currentTargets.length === 0) {
-    return { status: "html_no_targets", casFilePath };
+    return { status: "html_no_targets", casFilePath: dest };
   }
 
   if (!areTargetsEqual(currentTargets, casTargets)) {
     return {
       status: "drifted",
-      casFilePath,
+      casFilePath: dest,
       current: currentTargets,
       expected: casTargets,
     };
   }
 
-  return { status: "ok", casFilePath };
+  return { status: "ok", casFilePath: dest };
 };
