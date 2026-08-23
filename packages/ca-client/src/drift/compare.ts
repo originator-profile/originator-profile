@@ -92,8 +92,10 @@ const normalizeTargets = (targets: unknown): NormalizedTarget[] => {
         : { type: target.type, integrity: target.integrity },
     )
     .sort((a, b) => {
-      const left = `${a.type}:${a.cssSelector ?? ""}:${a.integrity}`;
-      const right = `${b.type}:${b.cssSelector ?? ""}:${b.integrity}`;
+      // NUL separates fields so CSS selectors containing ":"
+      // (e.g. :nth-child, :not) cannot collide with adjacent fields.
+      const left = `${a.type}\0${a.cssSelector ?? ""}\0${a.integrity}`;
+      const right = `${b.type}\0${b.cssSelector ?? ""}\0${b.integrity}`;
       return left.localeCompare(right);
     });
 };
@@ -108,6 +110,8 @@ const areTargetsEqual = (
 
   return currentTargets.every((target, index) => {
     const casTarget = casTargets[index];
+    // Skip cssSelector when CAS omits it (ExternalResourceTargetIntegrity or
+    // fallback selectors). Current targets may still have cssSelector.
     const cssSelectorEqual =
       casTarget?.cssSelector === undefined ||
       target.cssSelector === casTarget.cssSelector;

@@ -78,7 +78,7 @@ const client = createCaClient({
 
 ### Quick Start
 
-未署名 CA を CA サーバーで署名し、CAS ファイルとして書き出したうえで、HTML との drift を判定します。
+未署名 CA を CA サーバーで署名し、CAS ファイルとして書き出します。
 
 ```ts
 const jwt = await client.sign(unsignedCa);
@@ -87,12 +87,6 @@ const jwt = await client.sign(unsignedCa);
 await writeCasFile({
   fileName: "ja-JP.hello.cas.json",
   jwt,
-  outputDir: "dist/cas",
-});
-
-const result = await detectDrift({
-  html: builtHtml,
-  fileName: "ja-JP.hello.cas.json",
   outputDir: "dist/cas",
 });
 ```
@@ -166,8 +160,6 @@ await writeCasFile({
 ### detectDrift
 
 `detectDrift` は、ビルド後 HTML から target integrity を再計算し、CAS に記録された target とのずれを判定します。`html`・`fileName`・`outputDir` は必須です。
-
-[`@originator-profile/verify`](https://www.npmjs.com/package/@originator-profile/verify) による暗号検証（JWT 署名の真正性）とは別です。署名は検証せず、記録済み target と現 HTML の差分だけを見ます。
 
 ```ts
 const result = await detectDrift({

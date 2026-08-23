@@ -113,6 +113,42 @@ test("detectDrift: CAS 記録の selector で再計算し、CIP 既定セレク�
   });
 });
 
+test("detectDrift: :nth-child を含むセレクタでも CAS と現 HTML を突き合わせられる", async () => {
+  const html = `
+    <article>
+      <p>First</p>
+      <p>Second</p>
+    </article>
+  `;
+  const firstSelector = "article p:nth-child(1)";
+  const secondSelector = "article p:nth-child(2)";
+  const firstIntegrity = await extractTextIntegrity(html, firstSelector);
+  const secondIntegrity = await extractTextIntegrity(html, secondSelector);
+
+  await withTempDir(async (dir) => {
+    const outputDir = join(dir, "cas");
+    const dest = await writeCasTargets(outputDir, "nth-child.cas.json", [
+      {
+        type: "TextTargetIntegrity",
+        cssSelector: secondSelector,
+        integrity: secondIntegrity,
+      },
+      {
+        type: "TextTargetIntegrity",
+        cssSelector: firstSelector,
+        integrity: firstIntegrity,
+      },
+    ]);
+
+    await expect(
+      detectDrift({ html, fileName: "nth-child.cas.json", outputDir }),
+    ).resolves.toEqual({
+      status: "ok",
+      casFilePath: dest,
+    });
+  });
+});
+
 test("detectDrift: text target が drift していれば drifted と current/expected を返す", async () => {
   const html = `
     <article>
