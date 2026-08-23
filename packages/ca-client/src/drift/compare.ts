@@ -2,16 +2,19 @@ import { ContentAttestationSet } from "@originator-profile/model";
 import { readFile } from "node:fs/promises";
 import { decodeJwtPayload } from "../auth/jwt";
 import { casFilePath } from "../cas-store/file";
-import { CaClientError, CaClientErrorCode } from "../errors";
+import { isEnoent, toFileError } from "../file-utils";
 import { isRecord } from "../is-record";
 import {
   DEFAULT_EXTERNAL_SELECTOR,
   extractTargetsFromHtml,
-  type ExtractedTarget,
   type ExtractTargetsOptions,
 } from "../targets/html";
 
-export type NormalizedTarget = ExtractedTarget;
+export type NormalizedTarget = {
+  type: string;
+  integrity: string;
+  cssSelector?: string;
+};
 
 export type DriftResult =
   | { status: "ok"; casFilePath: string }
@@ -56,22 +59,6 @@ type CasTarget = {
 
 const INVALID_CAS_FORMAT =
   "Invalid CAS file format (expected JSON array with JWT string)";
-
-const isEnoent = (error: unknown): boolean =>
-  typeof error === "object" &&
-  error !== null &&
-  "code" in error &&
-  error.code === "ENOENT";
-
-const toFileError = (message: string, error: unknown): CaClientError => {
-  if (error instanceof CaClientError) {
-    return error;
-  }
-  return new CaClientError(
-    `${message}: ${error instanceof Error ? error.message : String(error)}`,
-    { code: CaClientErrorCode.File, cause: error },
-  );
-};
 
 const jwtFromCasItem = (item: unknown): string | undefined => {
   if (typeof item === "string") {
