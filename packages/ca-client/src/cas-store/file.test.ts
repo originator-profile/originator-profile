@@ -154,7 +154,7 @@ test("writeCasFile: replaces an existing file with complete new content", async 
   });
 });
 
-test("writeCasFile: removes the temp file when rename cannot replace dest", async () => {
+test("writeCasFile: wraps EISDIR when dest is a directory", async () => {
   await withTempDir(async (dir) => {
     const outputDir = join(dir, "cas");
     await mkdir(join(outputDir, "test.cas.json"), { recursive: true });

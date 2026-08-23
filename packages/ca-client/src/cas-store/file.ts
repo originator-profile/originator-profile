@@ -1,5 +1,4 @@
-import { randomUUID } from "node:crypto";
-import { mkdir, rename, unlink, writeFile } from "node:fs/promises";
+import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { dirname, isAbsolute, relative, resolve, sep } from "node:path";
 import { CaClientError, CaClientErrorCode } from "../errors";
 
@@ -90,16 +89,11 @@ export const writeCasFile = async ({
   }
   const dest = casFilePath({ fileName, outputDir });
   const casContent = `${JSON.stringify([jwt], null, 2)}\n`;
-  // Same-directory temp + rename so dest is never a truncated JWT CAS file
-  // if the process is killed or the disk fills mid-write.
-  const tmp = `${dest}.${randomUUID()}.tmp`;
 
   try {
     await mkdir(dirname(dest), { recursive: true });
-    await writeFile(tmp, casContent, "utf8");
-    await rename(tmp, dest);
+    await writeFile(dest, casContent, "utf8");
   } catch (error) {
-    await unlink(tmp).catch(() => {});
     throw toFileError(`Failed to write CAS file ${dest}`, error);
   }
 };
