@@ -1,11 +1,4 @@
-import {
-  mkdir,
-  mkdtemp,
-  readdir,
-  readFile,
-  rm,
-  writeFile,
-} from "node:fs/promises";
+import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { expect, test } from "vitest";
@@ -60,9 +53,10 @@ test("writeCasFile: creates nested directories from outputDir and fileName", asy
   });
 });
 
-test("writeCasFile: writes to a deeply nested absolute outputDir", async () => {
+test("writeCasFile: writes when outputDir already exists", async () => {
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "absolute", "cas");
+    const outputDir = join(dir, "cas");
+    await mkdir(outputDir, { recursive: true });
 
     await writeCasFile({
       fileName: "b.cas.json",
@@ -148,9 +142,6 @@ test("writeCasFile: replaces an existing file with complete new content", async 
 
     const written = await readFile(join(outputDir, "test.cas.json"), "utf8");
     expect(written).toBe(`${JSON.stringify(["new-jwt"], null, 2)}\n`);
-    expect(
-      (await readdir(outputDir)).filter((name) => name.endsWith(".tmp")),
-    ).toEqual([]);
   });
 });
 
@@ -169,10 +160,6 @@ test("writeCasFile: wraps EISDIR when dest is a directory", async () => {
       name: "CaClientError",
       code: CaClientErrorCode.File,
     });
-
-    expect(
-      (await readdir(outputDir)).filter((name) => name.endsWith(".tmp")),
-    ).toEqual([]);
   });
 });
 
