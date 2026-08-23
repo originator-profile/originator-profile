@@ -4,9 +4,9 @@ import { isEnoent, toFileError } from "./file-utils";
 
 test("isEnoent: is true only for objects with code ENOENT", () => {
   expect(isEnoent({ code: "ENOENT" })).toBe(true);
-  expect(isEnoent(Object.assign(new Error("missing"), { code: "ENOENT" }))).toBe(
-    true,
-  );
+  expect(
+    isEnoent(Object.assign(new Error("missing"), { code: "ENOENT" })),
+  ).toBe(true);
 
   expect(isEnoent({ code: "EACCES" })).toBe(false);
   expect(isEnoent(new Error("missing"))).toBe(false);
