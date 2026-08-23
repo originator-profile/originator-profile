@@ -70,27 +70,31 @@ test("writeCasFile: writes when outputDir already exists", async () => {
 });
 
 test("writeCasFile: rejects an empty outputDir", async () => {
-  for (const outputDir of ["", "   "]) {
-    await expect(
-      writeCasFile({ fileName: "a.cas.json", jwt: "jwt", outputDir }),
-    ).rejects.toMatchObject({
-      name: "CaClientError",
-      code: CaClientErrorCode.Validation,
-      message: "outputDir must be a non-empty string",
-    });
-  }
+  await Promise.all(
+    ["", "   "].map((outputDir) =>
+      expect(
+        writeCasFile({ fileName: "a.cas.json", jwt: "jwt", outputDir }),
+      ).rejects.toMatchObject({
+        name: "CaClientError",
+        code: CaClientErrorCode.Validation,
+        message: "outputDir must be a non-empty string",
+      }),
+    ),
+  );
 });
 
 test("writeCasFile: rejects an empty fileName", async () => {
-  for (const fileName of ["", "   "]) {
-    await expect(
-      writeCasFile({ fileName, jwt: "jwt", outputDir: "cas" }),
-    ).rejects.toMatchObject({
-      name: "CaClientError",
-      code: CaClientErrorCode.Validation,
-      message: "fileName must be a non-empty string",
-    });
-  }
+  await Promise.all(
+    ["", "   "].map((fileName) =>
+      expect(
+        writeCasFile({ fileName, jwt: "jwt", outputDir: "cas" }),
+      ).rejects.toMatchObject({
+        name: "CaClientError",
+        code: CaClientErrorCode.Validation,
+        message: "fileName must be a non-empty string",
+      }),
+    ),
+  );
 });
 
 test("writeCasFile: rejects a fileName that escapes outputDir", async () => {
@@ -114,15 +118,17 @@ test("writeCasFile: rejects a fileName that escapes outputDir", async () => {
 });
 
 test("writeCasFile: rejects an empty jwt", async () => {
-  for (const jwt of ["", "   "]) {
-    await expect(
-      writeCasFile({ fileName: "a.cas.json", jwt, outputDir: "cas" }),
-    ).rejects.toMatchObject({
-      name: "CaClientError",
-      code: CaClientErrorCode.Validation,
-      message: "jwt must be a non-empty string",
-    });
-  }
+  await Promise.all(
+    ["", "   "].map((jwt) =>
+      expect(
+        writeCasFile({ fileName: "a.cas.json", jwt, outputDir: "cas" }),
+      ).rejects.toMatchObject({
+        name: "CaClientError",
+        code: CaClientErrorCode.Validation,
+        message: "jwt must be a non-empty string",
+      }),
+    ),
+  );
 });
 
 test("writeCasFile: replaces an existing file with complete new content", async () => {
@@ -224,20 +230,22 @@ test("deleteCasFiles: does nothing for an empty list", async () => {
 });
 
 test("deleteCasFiles: rejects an empty outputDir even for an empty list", async () => {
-  for (const outputDir of ["", "   "]) {
-    await expect(
-      deleteCasFiles(["a.cas.json"], outputDir),
-    ).rejects.toMatchObject({
-      name: "CaClientError",
-      code: CaClientErrorCode.Validation,
-      message: "outputDir must be a non-empty string",
-    });
-    await expect(deleteCasFiles([], outputDir)).rejects.toMatchObject({
-      name: "CaClientError",
-      code: CaClientErrorCode.Validation,
-      message: "outputDir must be a non-empty string",
-    });
-  }
+  await Promise.all(
+    ["", "   "].map(async (outputDir) => {
+      await expect(
+        deleteCasFiles(["a.cas.json"], outputDir),
+      ).rejects.toMatchObject({
+        name: "CaClientError",
+        code: CaClientErrorCode.Validation,
+        message: "outputDir must be a non-empty string",
+      });
+      await expect(deleteCasFiles([], outputDir)).rejects.toMatchObject({
+        name: "CaClientError",
+        code: CaClientErrorCode.Validation,
+        message: "outputDir must be a non-empty string",
+      });
+    }),
+  );
 });
 
 test("deleteCasFiles: rejects a fileName that escapes outputDir before deleting any files", async () => {
