@@ -44,6 +44,7 @@ $ pnpm add @originator-profile/ca-client
 import {
   createCaClient,
   writeCasFile,
+  detectDrift,
   CaClientError,
   CaClientErrorCode,
   isUnauthorized,
@@ -195,6 +196,52 @@ try {
 
 > [!NOTE]
 > CCSP の 401 は `CA_AUTH` であり、`isUnauthorized` の判定には含まれません。
+
+### HTML と CAS の drift 検出
+
+`detectDrift` はビルド後 HTML から target integrity を再計算し、CAS に記録された target とのずれを判定します。発行パイプライン向けです。
+
+[`@originator-profile/verify`](https://www.npmjs.com/package/@originator-profile/verify) とは責務が違います。`verify` は閲覧時の暗号検証（JWT 署名・integrity の真正性）です。`detectDrift` は署名を検証せず、記録済み target と現 HTML の差分だけを見ます。
+
+```ts
+const result = await detectDrift(builtHtml, "public/cas/ja-JP.page.cas.json");
+
+switch (result.status) {
+  case "ok":
+    break;
+  case "cas_missing":
+    // CAS ファイルが無い → 新規署名
+    break;
+  case "cas_invalid":
+    console.warn(result.reason);
+    break;
+  case "html_no_targets":
+    // セレクタに一致する要素が HTML に無い
+    break;
+  case "drifted":
+    // result.current / result.expected で差分を確認
+    break;
+}
+```
+
+| `status`          | 意味                                               |
+| ----------------- | -------------------------------------------------- |
+| `ok`              | HTML から再計算した target が CAS と一致する       |
+| `cas_missing`     | CAS ファイルが存在しない                           |
+| `cas_invalid`     | CAS の JSON / JWT が不正                           |
+| `html_no_targets` | HTML から target を抽出できない                    |
+| `drifted`         | target がずれている（`current` / `expected` 付き） |
+
+TextTargetIntegrity / HtmlTargetIntegrity / VisibleTextTargetIntegrity の `cssSelector` は CAS に記録された値を使い、同じセレクタで HTML を再評価します。CAS にセレクタが無いときだけ、第 3 引数で渡せます。
+
+```ts
+await detectDrift(html, casPath, {
+  textSelector: "main",
+  externalSelector: ".op-resource",
+});
+```
+
+CIP サイト前提の既定セレクタ（`article [itemprop='headline']` 等）は使いません。ExternalResourceTargetIntegrity は CAS の `cssSelector`、引数の `externalSelector`、どちらも無ければ `.target-integrity` で HTML 上の `integrity` 属性を集めます。
 
 ## ライセンス
 
