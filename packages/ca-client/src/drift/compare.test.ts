@@ -54,7 +54,7 @@ const writeCasTargets = async (
   return casFilePath({ fileName, outputDir });
 };
 
-test("detectDrift: CAS と現 HTML の target が一致すれば ok", async () => {
+test("detectDrift: returns ok when CAS targets match the current HTML", async () => {
   const html = `
     <article>
       <h1 itemprop="headline">About</h1>
@@ -84,7 +84,7 @@ test("detectDrift: CAS と現 HTML の target が一致すれば ok", async () =
   });
 });
 
-test("detectDrift: CAS 記録の selector で再計算し、CIP 既定セレクタに依存しない", async () => {
+test("detectDrift: recomputes with the CAS-recorded selector, not CIP defaults", async () => {
   const html = `
     <main>
       <h1 itemprop="headline">News</h1>
@@ -113,7 +113,7 @@ test("detectDrift: CAS 記録の selector で再計算し、CIP 既定セレク�
   });
 });
 
-test("detectDrift: :nth-child を含むセレクタでも CAS と現 HTML を突き合わせられる", async () => {
+test("detectDrift: matches CAS against current HTML when selectors include :nth-child", async () => {
   const html = `
     <article>
       <p>First</p>
@@ -149,7 +149,7 @@ test("detectDrift: :nth-child を含むセレクタでも CAS と現 HTML を突
   });
 });
 
-test("detectDrift: text target が drift していれば drifted と current/expected を返す", async () => {
+test("detectDrift: returns drifted with current and expected when a text target has drifted", async () => {
   const html = `
     <article>
       <h1 itemprop="headline">Privacy</h1>
@@ -193,7 +193,7 @@ test("detectDrift: text target が drift していれば drifted と current/exp
   });
 });
 
-test("detectDrift: .target-integrity 差分があれば drifted", async () => {
+test("detectDrift: returns drifted when .target-integrity values differ", async () => {
   const html = `
     <article>
       <h1 itemprop="headline">Message</h1>
@@ -232,7 +232,7 @@ test("detectDrift: .target-integrity 差分があれば drifted", async () => {
   });
 });
 
-test("detectDrift: externalSelector で CIP 以外のマークアップから抽出できる", async () => {
+test("detectDrift: extracts external resources from non-CIP markup via externalSelector", async () => {
   const html = `
     <main>Body</main>
     <img class="op-resource" integrity="sha256-img" src="/a.png" />
@@ -267,7 +267,7 @@ test("detectDrift: externalSelector で CIP 以外のマークアップから抽
   });
 });
 
-test("detectDrift: CAS ファイルが存在しなければ cas_missing", async () => {
+test("detectDrift: returns cas_missing when the CAS file does not exist", async () => {
   await withTempDir(async (dir) => {
     const outputDir = join(dir, "cas");
     await mkdir(outputDir, { recursive: true });
@@ -286,7 +286,7 @@ test("detectDrift: CAS ファイルが存在しなければ cas_missing", async 
   });
 });
 
-test("detectDrift: 現 HTML に target が無ければ html_no_targets", async () => {
+test("detectDrift: returns html_no_targets when the current HTML has no targets", async () => {
   await withTempDir(async (dir) => {
     const outputDir = join(dir, "cas");
     const dest = await writeCasTargets(outputDir, "empty.cas.json", [
@@ -299,7 +299,7 @@ test("detectDrift: 現 HTML に target が無ければ html_no_targets", async (
 
     await expect(
       detectDrift({
-        html: `<article>itemprop の無い本文だけ</article>`,
+        html: `<article>body only, without itemprop</article>`,
         fileName: "empty.cas.json",
         outputDir,
       }),
@@ -310,7 +310,7 @@ test("detectDrift: 現 HTML に target が無ければ html_no_targets", async (
   });
 });
 
-test("detectDrift: CAS が不正なら cas_invalid", async () => {
+test("detectDrift: returns cas_invalid when the CAS is invalid", async () => {
   await withTempDir(async (dir) => {
     const outputDir = join(dir, "cas");
     await mkdir(outputDir, { recursive: true });
@@ -357,7 +357,7 @@ test("detectDrift: CAS が不正なら cas_invalid", async () => {
   });
 });
 
-test("detectDrift: { main, attestation } 形式の CAS も読める", async () => {
+test("detectDrift: reads a CAS in { main, attestation } form", async () => {
   const html = `<main>Body</main>`;
   const integrity = await extractTextIntegrity(html, "main");
 
@@ -389,7 +389,7 @@ test("detectDrift: { main, attestation } 形式の CAS も読める", async () =
   });
 });
 
-test("detectDrift: CAS に cssSelector が無いとき textSelector 引数で HTML を評価する", async () => {
+test("detectDrift: evaluates HTML with the textSelector option when CAS has no cssSelector", async () => {
   const html = `<main>Main text</main>`;
   const integrity = await extractTextIntegrity(html, "main");
 
