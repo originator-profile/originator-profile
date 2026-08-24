@@ -1,7 +1,7 @@
 import { ContentAttestationSet } from "@originator-profile/model";
 import { readFile } from "node:fs/promises";
 import { decodeJwtPayload } from "../auth/jwt";
-import { casFilePath } from "../cas-store/file";
+import { resolveCasFilePath } from "../cas-store/file";
 import { isEnoent, toFileError } from "../file-utils";
 import { isRecord } from "../is-record";
 import {
@@ -31,13 +31,11 @@ export type DriftResult =
 export type DetectDriftOptions = {
   /** Built HTML to recompute target integrity from. */
   html: string;
-  /** CAS file name relative to `outputDir`, e.g. `ja-JP.page.cas.json`. */
-  fileName: string;
   /**
-   * Directory containing the CAS file. Relative paths (e.g. `./dist/cas`)
-   * resolve against the current working directory. Absolute paths are used as-is.
+   * Path to the CAS file, e.g. `dist/cas/ja-JP.page.cas.json`.
+   * Relative paths resolve against the current working directory.
    */
-  outputDir: string;
+  filePath: string;
   /** CSS selector for TextTargetIntegrity when CAS has none. */
   textSelector?: string;
   /** CSS selector for HtmlTargetIntegrity when CAS has none. */
@@ -205,10 +203,7 @@ const extractOptionsFromCas = (
 export const detectDrift = async (
   options: DetectDriftOptions,
 ): Promise<DriftResult> => {
-  const dest = casFilePath({
-    fileName: options.fileName,
-    outputDir: options.outputDir,
-  });
+  const dest = resolveCasFilePath(options.filePath);
 
   let casFileContent: string;
   try {

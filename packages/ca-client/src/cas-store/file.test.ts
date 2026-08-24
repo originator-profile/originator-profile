@@ -3,12 +3,7 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { expect, test } from "vitest";
 import { CaClientError, CaClientErrorCode } from "../errors";
-import {
-  casFilePath,
-  deleteCasFiles,
-  resolveCasDir,
-  writeCasFile,
-} from "./file";
+import { deleteCasFiles, resolveCasFilePath, writeCasFile } from "./file";
 
 const withTempDir = async (run: (dir: string) => Promise<void>) => {
   const dir = await mkdtemp(join(tmpdir(), "ca-client-cas-store-"));
@@ -22,106 +17,55 @@ const withTempDir = async (run: (dir: string) => Promise<void>) => {
 test("writeCasFile: writes JWT as a one-element JSON array with a trailing newline", async () => {
   await withTempDir(async (dir) => {
     const jwt = "test-jwt-token";
-    const outputDir = join(dir, "cas");
+    const filePath = join(dir, "cas", "test.cas.json");
 
-    await writeCasFile({
-      fileName: "test.cas.json",
-      jwt,
-      outputDir,
-    });
+    await writeCasFile({ filePath, jwt });
 
-    const written = await readFile(join(outputDir, "test.cas.json"), "utf8");
+    const written = await readFile(filePath, "utf8");
     expect(written).toBe(`${JSON.stringify([jwt], null, 2)}\n`);
   });
 });
 
-test("writeCasFile: creates nested directories from outputDir and fileName", async () => {
+test("writeCasFile: creates nested directories from filePath", async () => {
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "out", "cas");
+    const filePath = join(dir, "out", "cas", "nested", "page.cas.json");
 
-    await writeCasFile({
-      fileName: "nested/page.cas.json",
-      jwt: "jwt-1",
-      outputDir,
-    });
+    await writeCasFile({ filePath, jwt: "jwt-1" });
 
-    const written = await readFile(
-      join(outputDir, "nested", "page.cas.json"),
-      "utf8",
-    );
+    const written = await readFile(filePath, "utf8");
     expect(JSON.parse(written)).toEqual(["jwt-1"]);
   });
 });
 
-test("writeCasFile: writes when outputDir already exists", async () => {
+test("writeCasFile: writes when the parent directory already exists", async () => {
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
-    await mkdir(outputDir, { recursive: true });
+    const filePath = join(dir, "cas", "b.cas.json");
+    await mkdir(join(dir, "cas"), { recursive: true });
 
-    await writeCasFile({
-      fileName: "b.cas.json",
-      jwt: "jwt-b",
-      outputDir,
-    });
+    await writeCasFile({ filePath, jwt: "jwt-b" });
 
-    const written = await readFile(join(outputDir, "b.cas.json"), "utf8");
+    const written = await readFile(filePath, "utf8");
     expect(JSON.parse(written)).toEqual(["jwt-b"]);
   });
 });
 
-test("writeCasFile: rejects an empty outputDir", async () => {
+test("writeCasFile: rejects an empty filePath", async () => {
   await Promise.all(
-    ["", "   "].map((outputDir) =>
-      expect(
-        writeCasFile({ fileName: "a.cas.json", jwt: "jwt", outputDir }),
-      ).rejects.toMatchObject({
+    ["", "   "].map((filePath) =>
+      expect(writeCasFile({ filePath, jwt: "jwt" })).rejects.toMatchObject({
         name: "CaClientError",
         code: CaClientErrorCode.Validation,
-        message: "outputDir must be a non-empty string",
+        message: "filePath must be a non-empty string",
       }),
     ),
   );
-});
-
-test("writeCasFile: rejects an empty fileName", async () => {
-  await Promise.all(
-    ["", "   "].map((fileName) =>
-      expect(
-        writeCasFile({ fileName, jwt: "jwt", outputDir: "cas" }),
-      ).rejects.toMatchObject({
-        name: "CaClientError",
-        code: CaClientErrorCode.Validation,
-        message: "fileName must be a non-empty string",
-      }),
-    ),
-  );
-});
-
-test("writeCasFile: rejects a fileName that escapes outputDir", async () => {
-  await withTempDir(async (dir) => {
-    await expect(
-      writeCasFile({
-        fileName: "../outside.cas.json",
-        jwt: "jwt",
-        outputDir: join(dir, "cas"),
-      }),
-    ).rejects.toMatchObject({
-      name: "CaClientError",
-      code: CaClientErrorCode.Validation,
-      message: "fileName must stay inside outputDir",
-    });
-
-    await expect(
-      readFile(join(dir, "outside.cas.json"), "utf8"),
-    ).rejects.toMatchObject({ code: "ENOENT" });
-  });
 });
 
 test("writeCasFile: rejects an empty jwt", async () => {
   await Promise.all(
     ["", "   "].map((jwt) =>
       expect(
-        writeCasFile({ fileName: "a.cas.json", jwt, outputDir: "cas" }),
+        writeCasFile({ filePath: "cas/a.cas.json", jwt }),
       ).rejects.toMatchObject({
         name: "CaClientError",
         code: CaClientErrorCode.Validation,
@@ -133,36 +77,22 @@ test("writeCasFile: rejects an empty jwt", async () => {
 
 test("writeCasFile: replaces an existing file with complete new content", async () => {
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
+    const filePath = join(dir, "cas", "test.cas.json");
 
-    await writeCasFile({
-      fileName: "test.cas.json",
-      jwt: "old-jwt",
-      outputDir,
-    });
-    await writeCasFile({
-      fileName: "test.cas.json",
-      jwt: "new-jwt",
-      outputDir,
-    });
+    await writeCasFile({ filePath, jwt: "old-jwt" });
+    await writeCasFile({ filePath, jwt: "new-jwt" });
 
-    const written = await readFile(join(outputDir, "test.cas.json"), "utf8");
+    const written = await readFile(filePath, "utf8");
     expect(written).toBe(`${JSON.stringify(["new-jwt"], null, 2)}\n`);
   });
 });
 
 test("writeCasFile: wraps EISDIR when dest is a directory", async () => {
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
-    await mkdir(join(outputDir, "test.cas.json"), { recursive: true });
+    const filePath = join(dir, "cas", "test.cas.json");
+    await mkdir(filePath, { recursive: true });
 
-    await expect(
-      writeCasFile({
-        fileName: "test.cas.json",
-        jwt: "jwt",
-        outputDir,
-      }),
-    ).rejects.toMatchObject({
+    await expect(writeCasFile({ filePath, jwt: "jwt" })).rejects.toMatchObject({
       name: "CaClientError",
       code: CaClientErrorCode.File,
     });
@@ -176,9 +106,8 @@ test("writeCasFile: wraps filesystem failures as CA_FILE", async () => {
 
     await expect(
       writeCasFile({
-        fileName: "a.cas.json",
+        filePath: join(blocker, "cas", "a.cas.json"),
         jwt: "jwt",
-        outputDir: join(blocker, "cas"),
       }),
     ).rejects.toMatchObject({
       name: "CaClientError",
@@ -189,140 +118,70 @@ test("writeCasFile: wraps filesystem failures as CA_FILE", async () => {
 
 test("deleteCasFiles: deletes existing CAS files", async () => {
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
+    const keep = join(dir, "cas", "keep.cas.json");
+    const drop = join(dir, "cas", "drop.cas.json");
 
-    await writeCasFile({
-      fileName: "keep.cas.json",
-      jwt: "keep",
-      outputDir,
-    });
-    await writeCasFile({
-      fileName: "drop.cas.json",
-      jwt: "drop",
-      outputDir,
-    });
+    await writeCasFile({ filePath: keep, jwt: "keep" });
+    await writeCasFile({ filePath: drop, jwt: "drop" });
 
-    await deleteCasFiles(["drop.cas.json"], outputDir);
+    await deleteCasFiles([drop]);
 
-    const kept = await readFile(join(outputDir, "keep.cas.json"), "utf8");
+    const kept = await readFile(keep, "utf8");
     expect(JSON.parse(kept)).toEqual(["keep"]);
-    await expect(
-      readFile(join(outputDir, "drop.cas.json"), "utf8"),
-    ).rejects.toMatchObject({ code: "ENOENT" });
+    await expect(readFile(drop, "utf8")).rejects.toMatchObject({
+      code: "ENOENT",
+    });
   });
 });
 
 test("deleteCasFiles: skips missing files", async () => {
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
-    await mkdir(outputDir, { recursive: true });
-
     await expect(
-      deleteCasFiles(["missing.cas.json"], outputDir),
+      deleteCasFiles([join(dir, "cas", "missing.cas.json")]),
     ).resolves.toBeUndefined();
   });
 });
 
 test("deleteCasFiles: does nothing for an empty list", async () => {
-  await withTempDir(async (dir) => {
-    await expect(deleteCasFiles([], join(dir, "cas"))).resolves.toBeUndefined();
-  });
+  await expect(deleteCasFiles([])).resolves.toBeUndefined();
 });
 
-test("deleteCasFiles: rejects an empty outputDir even for an empty list", async () => {
-  await Promise.all(
-    ["", "   "].map(async (outputDir) => {
-      await expect(
-        deleteCasFiles(["a.cas.json"], outputDir),
-      ).rejects.toMatchObject({
-        name: "CaClientError",
-        code: CaClientErrorCode.Validation,
-        message: "outputDir must be a non-empty string",
-      });
-      await expect(deleteCasFiles([], outputDir)).rejects.toMatchObject({
-        name: "CaClientError",
-        code: CaClientErrorCode.Validation,
-        message: "outputDir must be a non-empty string",
-      });
-    }),
-  );
-});
-
-test("deleteCasFiles: rejects a fileName that escapes outputDir before deleting any files", async () => {
+test("deleteCasFiles: rejects an empty filePath before deleting any files", async () => {
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
+    const keep = join(dir, "cas", "keep.cas.json");
+    await writeCasFile({ filePath: keep, jwt: "keep" });
 
-    await writeCasFile({
-      fileName: "keep.cas.json",
-      jwt: "keep",
-      outputDir,
-    });
-    const outside = join(dir, "outside.cas.json");
-    await writeFile(outside, "secret");
-
-    await expect(
-      deleteCasFiles(["keep.cas.json", "../outside.cas.json"], outputDir),
-    ).rejects.toMatchObject({
+    await expect(deleteCasFiles([keep, ""])).rejects.toMatchObject({
       name: "CaClientError",
       code: CaClientErrorCode.Validation,
-      message: "fileName must stay inside outputDir",
+      message: "filePath must be a non-empty string",
     });
-
-    const kept = await readFile(join(outputDir, "keep.cas.json"), "utf8");
-    expect(JSON.parse(kept)).toEqual(["keep"]);
-    expect(await readFile(outside, "utf8")).toBe("secret");
-  });
-});
-
-test("deleteCasFiles: rejects an empty fileName before deleting any files", async () => {
-  await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
-
-    await writeCasFile({
-      fileName: "keep.cas.json",
-      jwt: "keep",
-      outputDir,
-    });
-
-    await expect(
-      deleteCasFiles(["keep.cas.json", ""], outputDir),
-    ).rejects.toMatchObject({
+    await expect(deleteCasFiles([keep, "   "])).rejects.toMatchObject({
       name: "CaClientError",
       code: CaClientErrorCode.Validation,
-      message: "fileName must be a non-empty string",
-    });
-    await expect(
-      deleteCasFiles(["keep.cas.json", "   "], outputDir),
-    ).rejects.toMatchObject({
-      name: "CaClientError",
-      code: CaClientErrorCode.Validation,
-      message: "fileName must be a non-empty string",
+      message: "filePath must be a non-empty string",
     });
 
-    const kept = await readFile(join(outputDir, "keep.cas.json"), "utf8");
+    const kept = await readFile(keep, "utf8");
     expect(JSON.parse(kept)).toEqual(["keep"]);
   });
 });
 
 test("deleteCasFiles: deletes multiple CAS files", async () => {
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
-    const names = ["one.cas.json", "two.cas.json"];
+    const filePaths = [
+      join(dir, "cas", "one.cas.json"),
+      join(dir, "cas", "two.cas.json"),
+    ];
     await Promise.all(
-      names.map((fileName) =>
-        writeCasFile({
-          fileName,
-          jwt: fileName,
-          outputDir,
-        }),
-      ),
+      filePaths.map((filePath) => writeCasFile({ filePath, jwt: filePath })),
     );
 
-    await deleteCasFiles(names, outputDir);
+    await deleteCasFiles(filePaths);
 
     await Promise.all(
-      names.map((name) =>
-        expect(readFile(join(outputDir, name), "utf8")).rejects.toMatchObject({
+      filePaths.map((filePath) =>
+        expect(readFile(filePath, "utf8")).rejects.toMatchObject({
           code: "ENOENT",
         }),
       ),
@@ -330,66 +189,26 @@ test("deleteCasFiles: deletes multiple CAS files", async () => {
   });
 });
 
-test("casFilePath: keeps nested fileName inside outputDir", () => {
-  expect(
-    casFilePath({
-      fileName: "nested/page.cas.json",
-      outputDir: "/workspace/cas",
-    }),
-  ).toBe(resolve("/workspace", "cas", "nested", "page.cas.json"));
-});
-
-test("casFilePath: allows a fileName whose .. segments stay inside outputDir", () => {
-  expect(
-    casFilePath({
-      fileName: "nested/../page.cas.json",
-      outputDir: "/workspace/cas",
-    }),
-  ).toBe(resolve("/workspace", "cas", "page.cas.json"));
-});
-
-test("casFilePath: rejects a fileName that escapes outputDir", () => {
-  for (const fileName of [
-    "../outside.cas.json",
-    "../../etc/passwd",
-    "nested/../../outside.cas.json",
-    "/etc/passwd",
-    ".",
-    "..",
-  ]) {
-    expect(() =>
-      casFilePath({ fileName, outputDir: "/workspace/cas" }),
-    ).toThrow("fileName must stay inside outputDir");
-  }
-});
-
-test("casFilePath: does not treat a name starting with .. as traversal", () => {
-  expect(
-    casFilePath({
-      fileName: "..page.cas.json",
-      outputDir: "/workspace/cas",
-    }),
-  ).toBe(resolve("/workspace", "cas", "..page.cas.json"));
-});
-
-test("resolveCasDir: resolves a relative path against process.cwd()", () => {
-  expect(resolveCasDir("public/cas")).toBe(
-    resolve(process.cwd(), "public", "cas"),
+test("resolveCasFilePath: resolves a relative path against process.cwd()", () => {
+  expect(resolveCasFilePath("dist/cas/page.cas.json")).toBe(
+    resolve(process.cwd(), "dist", "cas", "page.cas.json"),
   );
-  expect(resolveCasDir("./public/cas")).toBe(
-    resolve(process.cwd(), "public", "cas"),
+  expect(resolveCasFilePath("./dist/cas/page.cas.json")).toBe(
+    resolve(process.cwd(), "dist", "cas", "page.cas.json"),
   );
 });
 
-test("resolveCasDir: returns an absolute path unchanged", () => {
-  expect(resolveCasDir("/abs/cas")).toBe(resolve("/abs/cas"));
+test("resolveCasFilePath: returns an absolute path unchanged", () => {
+  expect(resolveCasFilePath("/abs/cas/page.cas.json")).toBe(
+    resolve("/abs/cas/page.cas.json"),
+  );
 });
 
-test("resolveCasDir: rejects an empty path so it is not resolved to the root", () => {
-  for (const outputDir of ["", "   "]) {
-    expect(() => resolveCasDir(outputDir)).toThrow(CaClientError);
-    expect(() => resolveCasDir(outputDir)).toThrow(
-      "outputDir must be a non-empty string",
+test("resolveCasFilePath: rejects an empty path so it is not resolved to cwd", () => {
+  for (const filePath of ["", "   "]) {
+    expect(() => resolveCasFilePath(filePath)).toThrow(CaClientError);
+    expect(() => resolveCasFilePath(filePath)).toThrow(
+      "filePath must be a non-empty string",
     );
   }
 });

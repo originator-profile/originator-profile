@@ -2,7 +2,7 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "vitest";
-import { casFilePath, writeCasFile } from "../cas-store/file";
+import { resolveCasFilePath, writeCasFile } from "../cas-store/file";
 import { CaClientErrorCode } from "../errors";
 import { extractTargetsFromHtml } from "../targets/html";
 import { detectDrift } from "./compare";
@@ -42,16 +42,14 @@ const withTempDir = async (run: (dir: string) => Promise<void>) => {
 };
 
 const writeCasTargets = async (
-  outputDir: string,
-  fileName: string,
+  filePath: string,
   targets: Array<Record<string, string>>,
 ) => {
   await writeCasFile({
-    fileName,
+    filePath,
     jwt: createCasJwt({ target: targets }),
-    outputDir,
   });
-  return casFilePath({ fileName, outputDir });
+  return resolveCasFilePath(filePath);
 };
 
 test("detectDrift: returns ok when CAS targets match the current HTML", async () => {
@@ -66,8 +64,7 @@ test("detectDrift: returns ok when CAS targets match the current HTML", async ()
   const integrity = await extractTextIntegrity(html, cssSelector);
 
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
-    const dest = await writeCasTargets(outputDir, "about.cas.json", [
+    const dest = await writeCasTargets(join(dir, "cas", "about.cas.json"), [
       {
         type: "TextTargetIntegrity",
         cssSelector,
@@ -75,9 +72,7 @@ test("detectDrift: returns ok when CAS targets match the current HTML", async ()
       },
     ]);
 
-    await expect(
-      detectDrift({ html, fileName: "about.cas.json", outputDir }),
-    ).resolves.toEqual({
+    await expect(detectDrift({ html, filePath: dest })).resolves.toEqual({
       status: "ok",
       casFilePath: dest,
     });
@@ -95,8 +90,7 @@ test("detectDrift: recomputes with the CAS-recorded selector, not CIP defaults",
   const integrity = await extractTextIntegrity(html, cssSelector);
 
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
-    const dest = await writeCasTargets(outputDir, "news.cas.json", [
+    const dest = await writeCasTargets(join(dir, "cas", "news.cas.json"), [
       {
         type: "TextTargetIntegrity",
         cssSelector,
@@ -104,9 +98,7 @@ test("detectDrift: recomputes with the CAS-recorded selector, not CIP defaults",
       },
     ]);
 
-    await expect(
-      detectDrift({ html, fileName: "news.cas.json", outputDir }),
-    ).resolves.toEqual({
+    await expect(detectDrift({ html, filePath: dest })).resolves.toEqual({
       status: "ok",
       casFilePath: dest,
     });
@@ -126,8 +118,7 @@ test("detectDrift: matches CAS against current HTML when selectors include :nth-
   const secondIntegrity = await extractTextIntegrity(html, secondSelector);
 
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
-    const dest = await writeCasTargets(outputDir, "nth-child.cas.json", [
+    const dest = await writeCasTargets(join(dir, "cas", "nth-child.cas.json"), [
       {
         type: "TextTargetIntegrity",
         cssSelector: secondSelector,
@@ -140,9 +131,7 @@ test("detectDrift: matches CAS against current HTML when selectors include :nth-
       },
     ]);
 
-    await expect(
-      detectDrift({ html, fileName: "nth-child.cas.json", outputDir }),
-    ).resolves.toEqual({
+    await expect(detectDrift({ html, filePath: dest })).resolves.toEqual({
       status: "ok",
       casFilePath: dest,
     });
@@ -161,8 +150,7 @@ test("detectDrift: returns drifted with current and expected when a text target 
   const integrity = await extractTextIntegrity(html, cssSelector);
 
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
-    const dest = await writeCasTargets(outputDir, "privacy.cas.json", [
+    const dest = await writeCasTargets(join(dir, "cas", "privacy.cas.json"), [
       {
         type: "TextTargetIntegrity",
         cssSelector,
@@ -170,9 +158,7 @@ test("detectDrift: returns drifted with current and expected when a text target 
       },
     ]);
 
-    await expect(
-      detectDrift({ html, fileName: "privacy.cas.json", outputDir }),
-    ).resolves.toEqual({
+    await expect(detectDrift({ html, filePath: dest })).resolves.toEqual({
       status: "drifted",
       casFilePath: dest,
       current: [
@@ -207,8 +193,8 @@ test("detectDrift: returns drifted when .target-integrity values differ", async 
   const integrity = await extractTextIntegrity(html, cssSelector);
 
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
-    await writeCasTargets(outputDir, "chief-director.cas.json", [
+    const dest = join(dir, "cas", "chief-director.cas.json");
+    await writeCasTargets(dest, [
       {
         type: "TextTargetIntegrity",
         cssSelector,
@@ -223,8 +209,7 @@ test("detectDrift: returns drifted when .target-integrity values differ", async 
     await expect(
       detectDrift({
         html,
-        fileName: "chief-director.cas.json",
-        outputDir,
+        filePath: dest,
       }),
     ).resolves.toMatchObject({
       status: "drifted",
@@ -240,24 +225,25 @@ test("detectDrift: extracts external resources from non-CIP markup via externalS
   const integrity = await extractTextIntegrity(html, "main");
 
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
-    const dest = await writeCasTargets(outputDir, "custom-external.cas.json", [
-      {
-        type: "TextTargetIntegrity",
-        cssSelector: "main",
-        integrity,
-      },
-      {
-        type: "ExternalResourceTargetIntegrity",
-        integrity: "sha256-img",
-      },
-    ]);
+    const dest = await writeCasTargets(
+      join(dir, "cas", "custom-external.cas.json"),
+      [
+        {
+          type: "TextTargetIntegrity",
+          cssSelector: "main",
+          integrity,
+        },
+        {
+          type: "ExternalResourceTargetIntegrity",
+          integrity: "sha256-img",
+        },
+      ],
+    );
 
     await expect(
       detectDrift({
         html,
-        fileName: "custom-external.cas.json",
-        outputDir,
+        filePath: dest,
         externalSelector: ".op-resource",
       }),
     ).resolves.toEqual({
@@ -269,15 +255,13 @@ test("detectDrift: extracts external resources from non-CIP markup via externalS
 
 test("detectDrift: returns cas_missing when the CAS file does not exist", async () => {
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
-    await mkdir(outputDir, { recursive: true });
-    const dest = casFilePath({ fileName: "missing.cas.json", outputDir });
+    await mkdir(join(dir, "cas"), { recursive: true });
+    const dest = join(dir, "cas", "missing.cas.json");
 
     await expect(
       detectDrift({
         html: "<main>Body</main>",
-        fileName: "missing.cas.json",
-        outputDir,
+        filePath: dest,
       }),
     ).resolves.toEqual({
       status: "cas_missing",
@@ -288,8 +272,7 @@ test("detectDrift: returns cas_missing when the CAS file does not exist", async 
 
 test("detectDrift: returns html_no_targets when the current HTML has no targets", async () => {
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
-    const dest = await writeCasTargets(outputDir, "empty.cas.json", [
+    const dest = await writeCasTargets(join(dir, "cas", "empty.cas.json"), [
       {
         type: "TextTargetIntegrity",
         cssSelector: "main",
@@ -300,8 +283,7 @@ test("detectDrift: returns html_no_targets when the current HTML has no targets"
     await expect(
       detectDrift({
         html: `<article>body only, without itemprop</article>`,
-        fileName: "empty.cas.json",
-        outputDir,
+        filePath: dest,
       }),
     ).resolves.toEqual({
       status: "html_no_targets",
@@ -312,29 +294,26 @@ test("detectDrift: returns html_no_targets when the current HTML has no targets"
 
 test("detectDrift: returns cas_invalid when the CAS is invalid", async () => {
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
-    await mkdir(outputDir, { recursive: true });
+    await mkdir(join(dir, "cas"), { recursive: true });
 
-    const notJson = casFilePath({ fileName: "not-json.cas.json", outputDir });
+    const notJson = join(dir, "cas", "not-json.cas.json");
     await writeFile(notJson, "{", "utf8");
     await expect(
       detectDrift({
         html: "<main>x</main>",
-        fileName: "not-json.cas.json",
-        outputDir,
+        filePath: notJson,
       }),
     ).resolves.toMatchObject({
       status: "cas_invalid",
       casFilePath: notJson,
     });
 
-    const notArray = casFilePath({ fileName: "object.cas.json", outputDir });
+    const notArray = join(dir, "cas", "object.cas.json");
     await writeFile(notArray, JSON.stringify({ attestation: "x" }), "utf8");
     await expect(
       detectDrift({
         html: "<main>x</main>",
-        fileName: "object.cas.json",
-        outputDir,
+        filePath: notArray,
       }),
     ).resolves.toEqual({
       status: "cas_invalid",
@@ -342,13 +321,12 @@ test("detectDrift: returns cas_invalid when the CAS is invalid", async () => {
       reason: "Invalid CAS file format (expected JSON array with JWT string)",
     });
 
-    const badJwt = casFilePath({ fileName: "bad-jwt.cas.json", outputDir });
+    const badJwt = join(dir, "cas", "bad-jwt.cas.json");
     await writeFile(badJwt, JSON.stringify(["not-a-jwt"]), "utf8");
     await expect(
       detectDrift({
         html: "<main>x</main>",
-        fileName: "bad-jwt.cas.json",
-        outputDir,
+        filePath: badJwt,
       }),
     ).resolves.toMatchObject({
       status: "cas_invalid",
@@ -362,9 +340,8 @@ test("detectDrift: reads a CAS in { main, attestation } form", async () => {
   const integrity = await extractTextIntegrity(html, "main");
 
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
-    await mkdir(outputDir, { recursive: true });
-    const dest = casFilePath({ fileName: "wrapped.cas.json", outputDir });
+    await mkdir(join(dir, "cas"), { recursive: true });
+    const dest = join(dir, "cas", "wrapped.cas.json");
     const jwt = createCasJwt({
       target: [
         {
@@ -380,9 +357,7 @@ test("detectDrift: reads a CAS in { main, attestation } form", async () => {
       "utf8",
     );
 
-    await expect(
-      detectDrift({ html, fileName: "wrapped.cas.json", outputDir }),
-    ).resolves.toEqual({
+    await expect(detectDrift({ html, filePath: dest })).resolves.toEqual({
       status: "ok",
       casFilePath: dest,
     });
@@ -394,10 +369,8 @@ test("detectDrift: evaluates HTML with the textSelector option when CAS has no c
   const integrity = await extractTextIntegrity(html, "main");
 
   await withTempDir(async (dir) => {
-    const outputDir = join(dir, "cas");
     const dest = await writeCasTargets(
-      outputDir,
-      "fallback-selector.cas.json",
+      join(dir, "cas", "fallback-selector.cas.json"),
       [
         {
           type: "TextTargetIntegrity",
@@ -409,8 +382,7 @@ test("detectDrift: evaluates HTML with the textSelector option when CAS has no c
     await expect(
       detectDrift({
         html,
-        fileName: "fallback-selector.cas.json",
-        outputDir,
+        filePath: dest,
       }),
     ).resolves.toEqual({
       status: "html_no_targets",
@@ -419,8 +391,7 @@ test("detectDrift: evaluates HTML with the textSelector option when CAS has no c
     await expect(
       detectDrift({
         html,
-        fileName: "fallback-selector.cas.json",
-        outputDir,
+        filePath: dest,
         textSelector: "main",
       }),
     ).resolves.toEqual({
@@ -430,33 +401,18 @@ test("detectDrift: evaluates HTML with the textSelector option when CAS has no c
   });
 });
 
-test("detectDrift: rejects an empty outputDir", async () => {
+test("detectDrift: rejects an empty filePath", async () => {
   await Promise.all(
-    ["", "   "].map((outputDir) =>
+    ["", "   "].map((filePath) =>
       expect(
         detectDrift({
           html: "<main>x</main>",
-          fileName: "a.cas.json",
-          outputDir,
+          filePath,
         }),
       ).rejects.toMatchObject({
         name: "CaClientError",
         code: CaClientErrorCode.Validation,
-        message: "outputDir must be a non-empty string",
-      }),
-    ),
-  );
-});
-
-test("detectDrift: rejects an empty fileName", async () => {
-  await Promise.all(
-    ["", "   "].map((fileName) =>
-      expect(
-        detectDrift({ html: "<main>x</main>", fileName, outputDir: "cas" }),
-      ).rejects.toMatchObject({
-        name: "CaClientError",
-        code: CaClientErrorCode.Validation,
-        message: "fileName must be a non-empty string",
+        message: "filePath must be a non-empty string",
       }),
     ),
   );

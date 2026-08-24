@@ -78,16 +78,14 @@ const client = createCaClient({
 
 ### Quick Start
 
-未署名 CA を CA サーバーで署名し、CAS ファイルとして書き出します。
+未署名 CA を CA サーバーで署名し、署名済み JWT を CAS ファイルとして書き出します。
 
 ```ts
 const jwt = await client.sign(unsignedCa);
 
-// output dist/cas/ja-JP.hello.cas.json
 await writeCasFile({
-  fileName: "ja-JP.hello.cas.json",
+  filePath: "dist/cas/ja-JP.hello.cas.json",
   jwt,
-  outputDir: "dist/cas",
 });
 ```
 
@@ -139,33 +137,28 @@ const renewed = await client.reSign(
 
 ### writeCasFile
 
-`writeCasFile` は、署名済み JWT を CAS ファイルとして書き出します。`fileName`・`jwt`・`outputDir` は必須です。
+`writeCasFile` は、署名済み JWT を CAS ファイルとして書き出します。`filePath`・`jwt` は必須です。
 
 ```ts
-// output dist/cas/ja-JP.page.cas.json
 await writeCasFile({
-  fileName: "ja-JP.page.cas.json",
+  filePath: "dist/cas/ja-JP.page.cas.json",
   jwt,
-  outputDir: "./dist/cas",
 });
 
-// output /path/to/site/dist/cas/ja-JP.page.cas.json
 await writeCasFile({
-  fileName: "ja-JP.page.cas.json",
+  filePath: "/path/to/site/dist/cas/ja-JP.page.cas.json",
   jwt,
-  outputDir: "/path/to/site/dist/cas",
 });
 ```
 
 ### detectDrift
 
-`detectDrift` は、ビルド後 HTML から target integrity を再計算し、CAS に記録された target とのずれを判定します。`html`・`fileName`・`outputDir` は必須です。
+`detectDrift` は、ビルド後 HTML から target integrity を再計算し、CAS に記録された target とのずれを判定します。`html`・`filePath` は必須です。
 
 ```ts
 const result = await detectDrift({
   html: builtHtml,
-  fileName: "ja-JP.page.cas.json",
-  outputDir: "./dist/cas",
+  filePath: "dist/cas/ja-JP.page.cas.json",
 });
 
 switch (result.status) {
@@ -199,8 +192,7 @@ TextTargetIntegrity などの `cssSelector` は CAS に記録された値を使�
 ```ts
 await detectDrift({
   html: builtHtml,
-  fileName: "ja-JP.page.cas.json",
-  outputDir: "./dist/cas",
+  filePath: "dist/cas/ja-JP.page.cas.json",
   textSelector: "main",
   externalSelector: ".op-resource",
 });
