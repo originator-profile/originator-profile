@@ -82,11 +82,9 @@ const client = createCaClient({
 ```ts
 const jwt = await client.sign(unsignedCa);
 
-// output dist/cas/ja-JP.hello.cas.json
 await writeCasFile({
-  fileName: "ja-JP.hello.cas.json",
+  filePath: "dist/cas/ja-JP.hello.cas.json",
   jwt,
-  outputDir: "dist/cas",
 });
 ```
 
@@ -138,21 +136,17 @@ const renewed = await client.reSign(
 
 ### writeCasFile
 
-`writeCasFile` は、署名済み JWT を CAS ファイルとして書き出します。`fileName`・`jwt`・`outputDir` は必須です。
+`writeCasFile` は、署名済み JWT を CAS ファイルとして書き出します。`filePath`・`jwt` は必須です。
 
 ```ts
-// output dist/cas/ja-JP.page.cas.json
 await writeCasFile({
-  fileName: "ja-JP.page.cas.json",
+  filePath: "dist/cas/ja-JP.page.cas.json",
   jwt,
-  outputDir: "./dist/cas",
 });
 
-// output /path/to/site/dist/cas/ja-JP.page.cas.json
 await writeCasFile({
-  fileName: "ja-JP.page.cas.json",
+  filePath: "/path/to/site/dist/cas/ja-JP.page.cas.json",
   jwt,
-  outputDir: "/path/to/site/dist/cas",
 });
 ```
 

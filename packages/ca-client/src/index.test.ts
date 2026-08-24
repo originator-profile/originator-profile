@@ -23,6 +23,5 @@ test("public API: does not export low-level APIs from index", () => {
   expect(api.serverSignOptions).toBeUndefined();
   expect(api.signByCaServer).toBeUndefined();
   expect(api.deleteCasFiles).toBeUndefined();
-  expect(api.resolveCasDir).toBeUndefined();
-  expect(api.casFilePath).toBeUndefined();
+  expect(api.resolveCasFilePath).toBeUndefined();
 });
