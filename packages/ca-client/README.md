@@ -44,6 +44,7 @@ $ pnpm add @originator-profile/ca-client
 import {
   createCaClient,
   writeCasFile,
+  detectDrift,
   CaClientError,
   CaClientErrorCode,
   isUnauthorized,
@@ -147,6 +148,53 @@ await writeCasFile({
 await writeCasFile({
   filePath: "/path/to/site/dist/cas/ja-JP.page.cas.json",
   jwt,
+});
+```
+
+### detectDrift
+
+`detectDrift` は、ビルド後 HTML から target integrity を再計算し、CAS に記録された target とのずれを判定します。`html`・`filePath` は必須です。
+
+```ts
+const result = await detectDrift({
+  html: builtHtml,
+  filePath: "dist/cas/ja-JP.page.cas.json",
+});
+
+switch (result.status) {
+  case "ok":
+    break;
+  case "cas_missing":
+    // CAS ファイルが無い → 新規署名
+    break;
+  case "cas_invalid":
+    console.warn(result.reason);
+    break;
+  case "html_no_targets":
+    // セレクタに一致する要素が HTML に無い
+    break;
+  case "drifted":
+    // result.current / result.expected で差分を確認
+    break;
+}
+```
+
+| `status`          | 意味                                               |
+| ----------------- | -------------------------------------------------- |
+| `ok`              | HTML から再計算した target が CAS と一致する       |
+| `cas_missing`     | CAS ファイルが存在しない                           |
+| `cas_invalid`     | CAS の JSON / JWT が不正                           |
+| `html_no_targets` | HTML から target を抽出できない                    |
+| `drifted`         | target がずれている（`current` / `expected` 付き） |
+
+TextTargetIntegrity などの `cssSelector` は CAS に記録された値を使い、同じセレクタで HTML を再評価します。CAS にセレクタが無いときだけ、オプションで渡せます。
+
+```ts
+await detectDrift({
+  html: builtHtml,
+  filePath: "dist/cas/ja-JP.page.cas.json",
+  textSelector: "main",
+  externalSelector: ".op-resource",
 });
 ```
 

@@ -1,6 +1,7 @@
 import { mkdir, unlink, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
 import { CaClientError, CaClientErrorCode } from "../errors";
+import { isEnoent, toFileError } from "../file-utils";
 
 export type WriteCasFileOptions = {
   /**
@@ -13,22 +14,6 @@ export type WriteCasFileOptions = {
 };
 
 const isEmpty = (value: string): boolean => value.trim() === "";
-
-const isEnoent = (error: unknown): boolean =>
-  typeof error === "object" &&
-  error !== null &&
-  "code" in error &&
-  error.code === "ENOENT";
-
-const toFileError = (message: string, error: unknown): CaClientError => {
-  if (error instanceof CaClientError) {
-    return error;
-  }
-  return new CaClientError(
-    `${message}: ${error instanceof Error ? error.message : String(error)}`,
-    { code: CaClientErrorCode.File, cause: error },
-  );
-};
 
 const unlinkMissing = async (filePath: string): Promise<void> => {
   try {
