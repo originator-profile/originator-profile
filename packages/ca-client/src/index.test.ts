@@ -1,8 +1,9 @@
 import { expect, test } from "vitest";
 import * as publicApi from "./index";
 
-test("public API: exports createCaClient and error types", () => {
+test("public API: exports createCaClient, writeCasFile, and error types", () => {
   expect(typeof publicApi.createCaClient).toBe("function");
+  expect(typeof publicApi.writeCasFile).toBe("function");
   expect(typeof publicApi.isUnauthorized).toBe("function");
   expect(publicApi.CaClientError).toBeDefined();
   expect(Object.keys(publicApi).sort()).toEqual([
@@ -10,6 +11,7 @@ test("public API: exports createCaClient and error types", () => {
     "CaClientErrorCode",
     "createCaClient",
     "isUnauthorized",
+    "writeCasFile",
   ]);
 });
 
@@ -20,4 +22,6 @@ test("public API: does not export low-level APIs from index", () => {
   expect(api.TokenManager).toBeUndefined();
   expect(api.serverSignOptions).toBeUndefined();
   expect(api.signByCaServer).toBeUndefined();
+  expect(api.deleteCasFiles).toBeUndefined();
+  expect(api.resolveCasFilePath).toBeUndefined();
 });
