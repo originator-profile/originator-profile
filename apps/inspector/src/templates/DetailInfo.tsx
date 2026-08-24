@@ -1,3 +1,4 @@
+import IconIcRoundInfo from "@iconify-react/ic/round-info";
 import IconIcRoundWarning from "@iconify-react/ic/round-warning";
 import { stringifyWithError } from "@originator-profile/core";
 import {
@@ -24,6 +25,7 @@ type DetailInfoProps = {
   framesCas?: FrameVerifiedCas[];
   errors: Error[];
   warnings?: string[];
+  info?: string[];
   backPath: {
     pathname: string;
     search: string;
@@ -37,6 +39,7 @@ function DetailInfo({
   framesCas,
   errors,
   warnings = [],
+  info = [],
   backPath,
 }: DetailInfoProps) {
   const linkVerification = useLinkVerification();
@@ -96,6 +99,26 @@ function DetailInfo({
                     <IconIcRoundWarning className="size-5 mr-1 shrink-0 text-caution" />
                     <span className="whitespace-pre-wrap break-all">
                       {warning}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          )}
+          {info.length > 0 && (
+            <div className="pl-4 mb-8" data-testid="verification-info">
+              <h3 className="mb-4 text-sm font-bold text-gray-700">
+                {_("DetailInfo_Info")}
+              </h3>
+              <ul>
+                {info.map((message, index) => (
+                  <li
+                    key={index}
+                    className="flex items-start mb-2 text-sm text-gray-700"
+                  >
+                    <IconIcRoundInfo className="size-5 mr-1 shrink-0 text-gray-400" />
+                    <span className="whitespace-pre-wrap break-all">
+                      {message}
                     </span>
                   </li>
                 ))}
