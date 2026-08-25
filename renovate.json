@@ -6,5 +6,13 @@
     "schedule:monthly",
     ":gitSignOff"
   ],
-  "postUpdateOptions": ["pnpmDedupe"]
+  "postUpdateOptions": ["pnpmDedupe"],
+  "packageRules": [
+    {
+      "description": "Keep packages/wordpress's base image on PHP 8.2 (oldest PHP line still under support) for old-PHP compatibility per #472; still pick up WordPress version and digest updates within that PHP line.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["wordpress"],
+      "allowedVersions": "/^\\d+\\.\\d+\\.\\d+-php8\\.2$/"
+    }
+  ]
 }
