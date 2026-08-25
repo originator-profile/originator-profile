@@ -11,8 +11,8 @@ export type ExtractTargetsOptions = {
   textSelectors?: string[];
   htmlSelectors?: string[];
   visibleTextSelectors?: string[];
-  /** CSS selector for ExternalResourceTargetIntegrity elements */
-  externalSelector?: string;
+  /** CSS selectors for ExternalResourceTargetIntegrity elements */
+  externalSelectors?: string[];
 };
 
 /**
@@ -36,23 +36,24 @@ const toExtractedTarget = (
 
 export const extractExternalTargetIntegrities = (
   document: Document,
-  cssSelector: string = DEFAULT_EXTERNAL_SELECTOR,
-): ExtractedTarget[] => {
-  const targets: ExtractedTarget[] = [];
-  for (const element of document.querySelectorAll(cssSelector)) {
-    const integrity = element.getAttribute("integrity");
-    if (integrity && /^sha(256|384|512)-/.test(integrity)) {
-      targets.push(
-        toExtractedTarget(
-          "ExternalResourceTargetIntegrity",
-          integrity,
-          cssSelector,
-        ),
-      );
+  cssSelectors: string[] = [DEFAULT_EXTERNAL_SELECTOR],
+): ExtractedTarget[] =>
+  uniqueSelectors(cssSelectors).flatMap((cssSelector) => {
+    const targets: ExtractedTarget[] = [];
+    for (const element of document.querySelectorAll(cssSelector)) {
+      const integrity = element.getAttribute("integrity");
+      if (integrity && /^sha(256|384|512)-/.test(integrity)) {
+        targets.push(
+          toExtractedTarget(
+            "ExternalResourceTargetIntegrity",
+            integrity,
+            cssSelector,
+          ),
+        );
+      }
     }
-  }
-  return targets;
-};
+    return targets;
+  });
 
 const extractDomTargets = async (
   document: Document,
@@ -102,6 +103,6 @@ export const extractTargetsFromHtml = async (
     ...textTargets,
     ...htmlTargets,
     ...visibleTextTargets,
-    ...extractExternalTargetIntegrities(document, options.externalSelector),
+    ...extractExternalTargetIntegrities(document, options.externalSelectors),
   ];
 };
