@@ -19,7 +19,7 @@ export async function verifyMedia(
     logger?: Logger;
   } = {},
 ) {
-  const { validator, logger } = options;
+  const { validator, logger = console } = options;
   if (!media) return;
   return await Promise.all(
     media.map(async (m) => {

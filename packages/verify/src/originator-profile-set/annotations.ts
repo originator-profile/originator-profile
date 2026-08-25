@@ -50,7 +50,7 @@ export async function verifyAnnotations(
     logger?: Logger;
   } = {},
 ) {
-  const { validator, logger } = options;
+  const { validator, logger = console } = options;
   if (!annotations) return;
   return await Promise.all(
     annotations.map(async (annotation) => {
