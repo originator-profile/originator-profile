@@ -8,7 +8,7 @@ import {
 } from "./ccsp-auth";
 
 const createBase64Config = (
-  config: Partial<CcspAuthConfig>,
+  config: Omit<Partial<CcspAuthConfig>, "authType"> & { authType?: string },
   withPrefix = false,
 ): string => {
   const jsonStr = JSON.stringify(config);
