@@ -345,17 +345,6 @@ Content Attestation サーバーのリクエストアウト (秒) の初期値�
 
 検証対象要素の存在する HTML の初期値です。`%TITLE%` は投稿タイトルに、`%CONTENT%` は `apply_filters()` 適用後の投稿本文に置換されます。
 
-### もっと古い PHP (7.4 など) でも動かせますか?
-
-現在のコードのままでは動きません。
-ただし 3 箇所を書き換えれば動く可能性はあります (実際に PHP 7.4 上での動作確認はしていません)。
-
-1. コンストラクタプロパティプロモーション (PHP 8.0+): `includes/class-uca.php` クラスコンストラクタ引数 `public string $issuer`
-2. ユニオン型 (PHP 8.0+): `includes/class-uca.php` メソッド戻り値の型 `string|false`
-3. `mixed` 型 (PHP 8.0+): `includes/issue.php` と `includes/class-uca.php` の一部
-
-なお PHP 7.4 は 2022年11月にセキュリティ更新が終了しており、本番サイトでの利用はおすすめできません。
-
 ## 既知の問題
 
 ### パーマリンク設定の変更による影響
@@ -435,6 +424,17 @@ Post ID <投稿ID>, page <ページ番号>: image(s) with missing or invalid int
 ```
 
 **回避策**: 該当する画像をメディアライブラリから直接アップロードし直すことで、その投稿に添付され、Integrityメタデータが生成されます。
+
+### もっと古い PHP (7.4 など) でも動かせますか?
+
+現在のコードのままでは動きません。
+ただし 3 箇所を書き換えれば動く可能性はあります (実際に PHP 7.4 上での動作確認はしていません)。
+
+1. コンストラクタプロパティプロモーション (PHP 8.0+): `includes/class-uca.php` クラスコンストラクタ引数 `public string $issuer`
+2. ユニオン型 (PHP 8.0+): `includes/class-uca.php` メソッド戻り値の型 `string|false`
+3. `mixed` 型 (PHP 8.0+): `includes/issue.php` と `includes/class-uca.php` の一部
+
+なお PHP 7.4 は 2022年11月にセキュリティ更新が終了しており、本番サイトでの利用はおすすめできません。
 
 ## 開発ガイド
 
