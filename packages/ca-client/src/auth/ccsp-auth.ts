@@ -70,6 +70,13 @@ export const parseCcspConfig = (base64Config: string): CcspAuthConfig => {
     });
   }
 
+  if (config.authType !== "client_secret_post") {
+    throw new CaClientError(
+      `CCSP auth failed: unsupported auth type "${config.authType}" (only "client_secret_post" is supported)`,
+      { code: CaClientErrorCode.Config },
+    );
+  }
+
   return config;
 };
 
@@ -81,7 +88,7 @@ const parseTokenResponse = (data: unknown): CcspTokenResponse => {
   ) {
     throw new CaClientError(
       "CCSP auth failed: response is missing access_token",
-      { code: CaClientErrorCode.Auth },
+      { code: CaClientErrorCode.Response },
     );
   }
 
@@ -102,31 +109,32 @@ export const getCcspAccessToken = async (
   config: CcspAuthConfig,
   fetchOps: FetchOperations = { fetch },
 ): Promise<CcspTokenResponse> => {
-  if (config.authType !== "client_secret_post") {
-    throw new CaClientError(
-      `CCSP auth failed: unsupported auth type "${config.authType}" (only "client_secret_post" is supported)`,
-      { code: CaClientErrorCode.Config },
-    );
-  }
-
   const formData = new URLSearchParams();
   formData.append("grant_type", "client_credentials");
   formData.append("client_id", config.clientId);
   formData.append("client_secret", config.clientSec);
 
-  const response = await fetchOps.fetch(config.tokenUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: formData.toString(),
-  });
+  let response: Response;
+  try {
+    response = await fetchOps.fetch(config.tokenUrl, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded",
+      },
+      body: formData.toString(),
+    });
+  } catch (error) {
+    throw new CaClientError(
+      `CCSP auth failed: ${error instanceof Error ? error.message : String(error)}`,
+      { code: CaClientErrorCode.Http, cause: error },
+    );
+  }
 
   if (!response.ok) {
     const errorText = await response.text();
     throw new CaClientError(
       `CCSP auth failed: ${response.status} ${response.statusText}: ${errorText}`,
-      { code: CaClientErrorCode.Auth, status: response.status },
+      { code: CaClientErrorCode.Http, status: response.status },
     );
   }
 

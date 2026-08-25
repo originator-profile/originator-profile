@@ -1,6 +1,5 @@
 export const CaClientErrorCode = {
   Config: "CA_CONFIG",
-  Auth: "CA_AUTH",
   Validation: "CA_VALIDATION",
   Http: "CA_HTTP",
   Response: "CA_RESPONSE",
@@ -29,7 +28,7 @@ export class CaClientError extends Error {
   }
 }
 
-/** True when the CA server rejected the request with HTTP 401 (not CCSP). */
+/** True when the request failed with HTTP 401. */
 export const isUnauthorized = (error: unknown): boolean =>
   error instanceof CaClientError &&
   error.code === CaClientErrorCode.Http &&

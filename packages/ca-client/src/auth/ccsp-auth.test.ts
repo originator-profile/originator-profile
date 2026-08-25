@@ -1,4 +1,5 @@
 import { describe, expect, test, vi } from "vitest";
+import { CaClientError, CaClientErrorCode, isUnauthorized } from "../errors";
 import type { FetchOperations } from "../fetch-operations";
 import {
   getCcspAccessToken,
@@ -35,18 +36,49 @@ describe("parseCcspConfig", () => {
   test("throws when required fields are missing", () => {
     expect(() =>
       parseCcspConfig(createBase64Config({ clientId: "id" })),
-    ).toThrow(/authType is required/);
+    ).toThrow(
+      expect.objectContaining({
+        message: expect.stringMatching(/authType is required/),
+        code: CaClientErrorCode.Config,
+      }),
+    );
     expect(() =>
       parseCcspConfig(createBase64Config({ ...validConfig, clientId: "" })),
-    ).toThrow(/clientId is required/);
+    ).toThrow(
+      expect.objectContaining({
+        message: expect.stringMatching(/clientId is required/),
+        code: CaClientErrorCode.Config,
+      }),
+    );
     expect(() => parseCcspConfig("CCSP:not-json")).toThrow(
-      /CCSP auth failed: failed to parse config/,
+      expect.objectContaining({
+        message: "CCSP auth failed: failed to parse config",
+        code: CaClientErrorCode.Config,
+      }),
     );
     expect(() =>
       parseCcspConfig(
         createBase64Config({ ...validConfig, tokenUrl: "not-a-url" }),
       ),
-    ).toThrow(/tokenUrl is not a valid URL/);
+    ).toThrow(
+      expect.objectContaining({
+        message: "CCSP auth failed: tokenUrl is not a valid URL",
+        code: CaClientErrorCode.Config,
+      }),
+    );
+  });
+
+  test("throws for unsupported authType", () => {
+    expect(() =>
+      parseCcspConfig(
+        createBase64Config({ ...validConfig, authType: "basic" }),
+      ),
+    ).toThrow(
+      expect.objectContaining({
+        message: expect.stringMatching(/unsupported auth type/),
+        code: CaClientErrorCode.Config,
+      }),
+    );
   });
 
   test("throws when decoded JSON is not an object", () => {
@@ -85,7 +117,7 @@ describe("getCcspAccessToken", () => {
     });
   });
 
-  test("rejects unsupported authType and HTTP errors", async () => {
+  test("wraps HTTP errors as CA_HTTP with status", async () => {
     const mockFetch: FetchOperations = {
       fetch: async () =>
         ({
@@ -96,13 +128,42 @@ describe("getCcspAccessToken", () => {
         }) as unknown as Response,
     };
 
-    await expect(
-      getCcspAccessToken({ ...validConfig, authType: "basic" }, mockFetch),
-    ).rejects.toThrow(/unsupported auth type/);
-
-    await expect(getCcspAccessToken(validConfig, mockFetch)).rejects.toThrow(
-      /CCSP auth failed: 401/,
+    const error = await getCcspAccessToken(validConfig, mockFetch).then(
+      () => null,
+      (e: unknown) => e,
     );
+
+    expect(error).toMatchObject({
+      message: "CCSP auth failed: 401 Unauthorized: nope",
+      code: CaClientErrorCode.Http,
+      status: 401,
+    });
+    expect(isUnauthorized(error)).toBe(true);
+  });
+
+  test("wraps network failures as CA_HTTP without status", async () => {
+    const cause = new TypeError("Failed to fetch");
+    const mockFetch: FetchOperations = {
+      fetch: async () => {
+        throw cause;
+      },
+    };
+
+    const error = await getCcspAccessToken(validConfig, mockFetch).then(
+      () => null,
+      (e: unknown) => e,
+    );
+
+    expect(error).toBeInstanceOf(CaClientError);
+    expect(error).toMatchObject({
+      message: "CCSP auth failed: Failed to fetch",
+      code: CaClientErrorCode.Http,
+      cause,
+    });
+    if (!(error instanceof CaClientError)) {
+      throw error;
+    }
+    expect(error.status).toBeUndefined();
   });
 
   test("does not include the response body when access_token is missing", async () => {
@@ -119,13 +180,14 @@ describe("getCcspAccessToken", () => {
       (e: unknown) => e,
     );
 
-    expect(error).toBeInstanceOf(Error);
+    expect(error).toBeInstanceOf(CaClientError);
+    expect(error).toMatchObject({
+      message: "CCSP auth failed: response is missing access_token",
+      code: CaClientErrorCode.Response,
+    });
     if (!(error instanceof Error)) {
       throw error;
     }
-    expect(error.message).toBe(
-      "CCSP auth failed: response is missing access_token",
-    );
     expect(error.message).not.toContain("do-not-leak");
   });
 
@@ -138,8 +200,11 @@ describe("getCcspAccessToken", () => {
         }) as unknown as Response,
     };
 
-    await expect(getCcspAccessToken(validConfig, mockFetch)).rejects.toThrow(
-      /CCSP auth failed: response is missing access_token/,
-    );
+    await expect(
+      getCcspAccessToken(validConfig, mockFetch),
+    ).rejects.toMatchObject({
+      message: "CCSP auth failed: response is missing access_token",
+      code: CaClientErrorCode.Response,
+    });
   });
 });
