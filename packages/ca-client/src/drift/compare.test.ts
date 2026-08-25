@@ -253,6 +253,42 @@ test("detectDrift: extracts external resources from non-CIP markup via externalS
   });
 });
 
+test("detectDrift: returns ok when the CAS external target records its cssSelector", async () => {
+  const html = `
+    <main>Body</main>
+    <img class="op-resource" integrity="sha256-img" src="/a.png" />
+  `;
+  const integrity = await extractTextIntegrity(html, "main");
+
+  await withTempDir(async (dir) => {
+    const dest = await writeCasTargets(
+      join(dir, "cas", "external-css-selector.cas.json"),
+      [
+        {
+          type: "TextTargetIntegrity",
+          cssSelector: "main",
+          integrity,
+        },
+        {
+          type: "ExternalResourceTargetIntegrity",
+          cssSelector: ".op-resource",
+          integrity: "sha256-img",
+        },
+      ],
+    );
+
+    await expect(
+      detectDrift({
+        html,
+        filePath: dest,
+      }),
+    ).resolves.toEqual({
+      status: "ok",
+      casFilePath: dest,
+    });
+  });
+});
+
 test("detectDrift: returns cas_missing when the CAS file does not exist", async () => {
   await withTempDir(async (dir) => {
     await mkdir(join(dir, "cas"), { recursive: true });

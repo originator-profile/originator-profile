@@ -84,10 +84,18 @@ test("extractExternalTargetIntegrities: uses the given selector", () => {
   const document = new JSDOM(html).window.document;
 
   expect(extractExternalTargetIntegrities(document)).toEqual([
-    { type: "ExternalResourceTargetIntegrity", integrity: "sha256-default" },
+    {
+      type: "ExternalResourceTargetIntegrity",
+      integrity: "sha256-default",
+      cssSelector: DEFAULT_EXTERNAL_SELECTOR,
+    },
   ]);
   expect(extractExternalTargetIntegrities(document, ".my-resource")).toEqual([
-    { type: "ExternalResourceTargetIntegrity", integrity: "sha256-custom" },
+    {
+      type: "ExternalResourceTargetIntegrity",
+      integrity: "sha256-custom",
+      cssSelector: ".my-resource",
+    },
   ]);
   expect(DEFAULT_EXTERNAL_SELECTOR).toBe(".target-integrity");
 });

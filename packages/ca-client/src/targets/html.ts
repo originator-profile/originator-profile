@@ -42,10 +42,13 @@ export const extractExternalTargetIntegrities = (
   for (const element of document.querySelectorAll(cssSelector)) {
     const integrity = element.getAttribute("integrity");
     if (integrity && /^sha(256|384|512)-/.test(integrity)) {
-      targets.push({
-        type: "ExternalResourceTargetIntegrity",
-        integrity,
-      });
+      targets.push(
+        toExtractedTarget(
+          "ExternalResourceTargetIntegrity",
+          integrity,
+          cssSelector,
+        ),
+      );
     }
   }
   return targets;
