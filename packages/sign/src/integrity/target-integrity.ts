@@ -80,6 +80,18 @@ export const selectByIntegrity: ElementSelector = (params) => {
 };
 
 /**
+ * `ExternalResourceTargetIntegrity` の要素位置特定
+ *
+ * `cssSelector` があれば CSS セレクター、なければ `integrity` 属性で特定します。
+ *
+ * @see {@link https://docs.originator-profile.org/opb/content-integrity-descriptor/external-resource/#how-to-identify-element-location}
+ */
+export const selectByCssOrIntegrity: ElementSelector = (params) =>
+  params.cssSelector === undefined
+    ? selectByIntegrity(params)
+    : selectByCss(params);
+
+/**
  * Target Integrity の作成
  *
  * `ExternalResourceTargetIntegrity` で複数のコンテンツが指定された場合、それぞれのハッシュ値がスペース区切りで結合されます。
