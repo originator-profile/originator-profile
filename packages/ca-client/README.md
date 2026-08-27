@@ -1,6 +1,6 @@
 # CA Client
 
-[![npm version](https://img.shields.io/npm/v/@originator-profile/ca-client)](https://www.npmjs.com/package/@originator-profile/ca-client)
+[![npm version](https://img.shields.io/npm/v/@originator-profile/ca-client)](https://www.npmjs.com/package/@originator-profile/ca-client) [![jsDocs.io](https://img.shields.io/badge/jsDocs.io-reference-blue)](https://www.jsdocs.io/package/@originator-profile/ca-client)
 
 Content Attestation (CA) を発行し、Content Attestation Set (CAS) として配信するための Node.js クライアントです。
 
@@ -11,10 +11,14 @@ Content Attestation (CA) を発行し、Content Attestation Set (CAS) として�
 インストールが必要です。任意のパッケージマネージャーでインストールをしてください。
 
 ```bash
-$ npm i @originator-profile/ca-client
+npm install @originator-profile/ca-client
+# or
+yarn add @originator-profile/ca-client
+# or
+pnpm add @originator-profile/ca-client
 ```
 
-### クラアントを生成する
+### クライアントを生成する
 
 CAサーバーと連携するクライアントオブジェクトを生成します。
 
@@ -22,9 +26,9 @@ CAサーバーと連携するクライアントオブジェクトを生成しま
 import { createCaClient } from "@originator-profile/ca-client";
 
 const client = createCaClient({
-  endpoint: process.env.CA_SERVER_URL, // CA サーバーのエンドポイント URL
-  issuer: process.env.ISSUER, // 発行者 ID（例: `dns:example.com`）
-  ccspConfig: process.env.CCSP_CONFIG, // 下記ccspConfigの設定を参照
+  endpoint: "YOUR_CA_SERVER_URL", // CA サーバーのエンドポイント URL
+  issuer: "YOUR_ISSUER", // 発行者 ID（例: `dns:example.com`）
+  ccspConfig: "YOUR_CCSP_CONFIG", // 下記ccspConfigの設定を参照
   // tokenBufferSeconds: 300, // トークン期限切れ前のバッファ（秒、デフォルト 300）
 });
 ```
@@ -40,7 +44,7 @@ const client = createCaClient({
 }
 ```
 
-次のように、上記のようなJSON を Base64 エンコードしてから先頭に `CCSP:` を付けます。
+次のような Node.js コマンドで JSON を Base64 エンコードし、先頭に `CCSP:` を付けます。
 
 ```bash
 node -e 'console.log("CCSP:" + Buffer.from(JSON.stringify({
@@ -105,7 +109,7 @@ const jwt = await client.sign({
 
 `reSign` メソッドは、既存 CAS の JWT payload を再署名し、JWT 文字列を返します。
 第 1 引数は [署名済み CA の JWT](https://docs.originator-profile.org/ja/opb/securing-mechanism/#content-attestation) をデコードした payload です。
-第 2 引数はpayload が不正なとき、エラーメッセージに埋め込む識別子です。
+第 2 引数は payload が不正なとき、エラーメッセージに埋め込む識別子です。
 
 ```ts
 const existingPayload = JSON.parse(
