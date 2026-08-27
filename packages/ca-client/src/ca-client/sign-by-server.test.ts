@@ -55,6 +55,34 @@ test("signByServer: refreshes and retries once on 401", async () => {
   expect(refreshed).toBe(1);
 });
 
+test("signByServer: does not refresh when getAccessToken fails with 401", async () => {
+  let refreshed = 0;
+  let signed = 0;
+  const error = new CaClientError("CCSP auth failed: 401 Unauthorized: nope", {
+    code: CaClientErrorCode.Http,
+    status: 401,
+  });
+
+  await expect(
+    signByServer(uca, {
+      endpoint: "https://ca.example.com",
+      getAccessToken: async () => {
+        throw error;
+      },
+      refreshAccessToken: async () => {
+        refreshed += 1;
+        return "tok-2";
+      },
+      sign: async () => {
+        signed += 1;
+        return "jwt";
+      },
+    }),
+  ).rejects.toBe(error);
+  expect(refreshed).toBe(0);
+  expect(signed).toBe(0);
+});
+
 test("signByServer: does not refresh on non-401 errors", async () => {
   let refreshed = 0;
   const sign: CaServerSign = async () => {

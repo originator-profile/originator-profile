@@ -1,7 +1,7 @@
 import { expect, test } from "vitest";
 import { CaClientError, CaClientErrorCode, isUnauthorized } from "./errors";
 
-test("isUnauthorized: is true only for CA HTTP 401", () => {
+test("isUnauthorized: is true for HTTP 401", () => {
   expect(
     isUnauthorized(
       new CaClientError("CA signing failed: 401 Unauthorized: expired", {
@@ -14,11 +14,11 @@ test("isUnauthorized: is true only for CA HTTP 401", () => {
   expect(
     isUnauthorized(
       new CaClientError("CCSP auth failed: 401 Unauthorized: nope", {
-        code: CaClientErrorCode.Auth,
+        code: CaClientErrorCode.Http,
         status: 401,
       }),
     ),
-  ).toBe(false);
+  ).toBe(true);
 
   expect(
     isUnauthorized(

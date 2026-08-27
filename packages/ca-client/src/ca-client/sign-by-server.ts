@@ -39,10 +39,12 @@ export const signByServer = async (
     ...signOptions
   } = options;
 
+  const accessToken = await getAccessToken();
+
   try {
     return await sign(uca, {
       ...signOptions,
-      accessToken: await getAccessToken(),
+      accessToken,
     });
   } catch (error) {
     if (refreshAccessToken && isUnauthorized(error)) {

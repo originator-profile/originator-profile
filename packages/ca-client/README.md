@@ -200,43 +200,42 @@ await detectDrift({
 
 ### エラー
 
-失敗時はすべて `CaClientError` を throw します。`code` で種別を、HTTP 失敗では `status` でステータスを判定してください。
+失敗時はすべて `CaClientError` を throw します。失敗の層は `code` で、HTTP の詳細は `status` で判定してください。
 
 ```ts
+import {
+  CaClientError,
+  CaClientErrorCode,
+  isUnauthorized,
+} from "@originator-profile/ca-client";
+
 try {
   const jwt = await client.sign(unsignedCa);
 } catch (error) {
   if (error instanceof CaClientError) {
+    if (
+      error.code === CaClientErrorCode.Http &&
+      (error.status === undefined ||
+        error.status === 429 ||
+        error.status >= 500)
+    ) {
+      // サーバーのネットワーク障害、429、5xx
+    } else if (isUnauthorized(error)) {
+      // 401 → CCSP 認証情報を再確認
+    }
     console.error(error.code, error.status, error.message);
   }
   throw error;
 }
 ```
 
-| `code`          | 典型例                                               |
-| --------------- | ---------------------------------------------------- |
-| `CA_CONFIG`     | CCSP 設定の欠落・不正、未対応の `authType`           |
-| `CA_AUTH`       | CCSP トークンエンドポイントの失敗（401 を含む）      |
-| `CA_VALIDATION` | 未署名 CA・CAS payload・日付・パス・JWT の不正       |
-| `CA_HTTP`       | CA サーバーが非 2xx を返した、またはネットワーク障害 |
-| `CA_RESPONSE`   | CA サーバーの本文が空、または JWT を含まない         |
-| `CA_FILE`       | CAS ファイルの書き込み・削除に失敗した               |
-
-`sign()` / `reSign()` は CA サーバーが 401 を返したとき、アクセストークンを更新して 1 回だけ再試行します。再試行後も 401 なら `isUnauthorized(error)` が真になります。
-
-```ts
-try {
-  const jwt = await client.sign(unsignedCa);
-} catch (error) {
-  if (isUnauthorized(error)) {
-    // CA サーバーが再試行後も 401 を返した
-  }
-  throw error;
-}
-```
-
-> [!NOTE]
-> CCSP の 401 は `CA_AUTH` であり、`isUnauthorized` の判定には含まれません。
+| `code`          | エラー内容                                                                                                                                                                  | 原因と回避策                                       |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `CA_CONFIG`     | CCSP 設定の欠落・不正、未対応の `authType`                                                                                                                                  | CCSP 設定を直してから再実行する                    |
+| `CA_VALIDATION` | 未署名 CA・CAS payload・日付・パス・JWT の不正                                                                                                                              | 入力を直してから再実行する                         |
+| `CA_HTTP`       | CA サーバーアクセス失敗。400 / 401 / 403 / 404 の原因は [CA Server のエラーリスト](https://docs.originator-profile.org/ja/error-reference/#ca-server-のエラーリスト) を参照 | `status` が 401 の場合: CCSP 認証情報を再確認      |
+| `CA_RESPONSE`   | 2xx だが `access_token` や JWT を含まない                                                                                                                                   | サーバー応答の形式を確認する                       |
+| `CA_FILE`       | CAS ファイルの読み取り・書き込み・削除に失敗した                                                                                                                            | パス・権限・ディスク空き容量を直してから再実行する |
 
 ## ライセンス
 
