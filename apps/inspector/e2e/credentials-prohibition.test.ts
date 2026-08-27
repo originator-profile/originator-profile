@@ -23,7 +23,11 @@ test("CASの検証に失敗した場合に閲覧禁止が表示されるか", as
   validOps,
   credentialsPage,
 }) => {
-  await validOps({ publicKey, privateKey }, credentialsPage.issuer);
+  await validOps(
+    { publicKey, privateKey },
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
   await page.goto(credentialsPage.endpoint);
   const ext = await sidepanel(context);
   await expect(ext?.getByTestId("p-elm-prohibition-message")).toBeVisible();
@@ -42,8 +46,12 @@ test("CAの署名がその発行者のOPで配布される検証鍵を使って�
   evilCas: evilCas,
   credentialsPage,
 }) => {
-  await evilCas(credentialsPage.contents, credentialsPage.issuer);
-  await validOps({ publicKey, privateKey }, credentialsPage.issuer);
+  await evilCas(credentialsPage.contents, credentialsPage.holder);
+  await validOps(
+    { publicKey, privateKey },
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
   await page.goto(credentialsPage.endpoint);
   const ext = await sidepanel(context);
   await expect(ext?.getByTestId("p-elm-prohibition-message")).toBeVisible();
@@ -65,9 +73,13 @@ test("OPの署名がその発行者のOPで配布される検証鍵を使って�
   await validCas(
     { privateKey },
     credentialsPage.contents,
-    credentialsPage.issuer,
+    credentialsPage.holder,
   );
-  await evilOps({ publicKey: publicKey }, credentialsPage.issuer);
+  await evilOps(
+    { publicKey: publicKey },
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
   await page.goto(credentialsPage.endpoint);
   const ext = await sidepanel(context);
   await expect(ext?.getByTestId("p-elm-prohibition-message")).toBeVisible();
@@ -88,8 +100,12 @@ test("OPとCAの署名がその発行者のOPで配布される検証鍵を使�
   evilCas: evilCas,
   credentialsPage,
 }) => {
-  await evilCas(credentialsPage.contents, credentialsPage.issuer);
-  await evilOps({ publicKey: publicKey }, credentialsPage.issuer);
+  await evilCas(credentialsPage.contents, credentialsPage.holder);
+  await evilOps(
+    { publicKey: publicKey },
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
   await page.goto(credentialsPage.endpoint);
   const ext = await sidepanel(context);
   await expect(ext?.getByTestId("p-elm-prohibition-message")).toBeVisible();
@@ -115,7 +131,11 @@ test("CAのissuerが適切でない場合閲覧禁止", async ({
     credentialsPage.contents,
     "incorrectIssuer",
   );
-  await validOps({ publicKey, privateKey }, credentialsPage.issuer);
+  await validOps(
+    { publicKey, privateKey },
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
   await page.goto(credentialsPage.endpoint);
   const ext = await sidepanel(context);
   await expect(ext?.getByTestId("p-elm-prohibition-message")).toBeVisible();

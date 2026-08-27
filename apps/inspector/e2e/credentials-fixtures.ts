@@ -21,6 +21,7 @@ type TestFixtures = {
     key: { publicKey: Jwk; privateKey: Jwk },
     contents: string,
     issuer: string,
+    holder: string,
   ) => Promise<void>;
   missingCredentials: void;
   validCas: (
@@ -32,12 +33,17 @@ type TestFixtures = {
   validOps: (
     key: { publicKey: Jwk; privateKey: Jwk },
     issuer: string,
+    holder: string,
   ) => Promise<void>;
   invalidCas: void;
   missingCas: void;
   evilCas: (contents: string, issuer: string) => Promise<void>;
   missingOps: void;
-  evilOps: (key: { publicKey: Jwk }, issuer: string) => Promise<void>;
+  evilOps: (
+    key: { publicKey: Jwk },
+    issuer: string,
+    holder: string,
+  ) => Promise<void>;
 };
 
 const casEndpoint: string = "http://localhost:8080/examples/cas.json";
@@ -50,12 +56,13 @@ export const test = base.extend<TestFixtures>({
         key: { publicKey: Jwk; privateKey: Jwk },
         contents: string,
         issuer: string,
+        holder: string,
       ) => {
         const { publicKey, privateKey } = key;
         const issuedAt: Date = new Date(Date.now());
         const expiredAt: Date = addYears(new Date(), 1);
         const unsignedContentAttestation: UnsignedContentAttestation =
-          generateUnsignedContentAttestation(contents, issuer);
+          generateUnsignedContentAttestation(contents, holder);
         const contentAttestation = await signCa(
           unsignedContentAttestation,
           privateKey,
@@ -71,7 +78,7 @@ export const test = base.extend<TestFixtures>({
         );
 
         const signedCoreProfile = await signJwtVc(
-          generateCoreProfileData(publicKey, issuer),
+          generateCoreProfileData(publicKey, issuer, holder),
           privateKey,
           {
             issuedAt,
@@ -79,7 +86,7 @@ export const test = base.extend<TestFixtures>({
           },
         );
         const annotations = await signJwtVc(
-          generateCertificateData(issuer),
+          generateCertificateData(issuer, holder),
           privateKey,
           {
             issuedAt,
@@ -87,7 +94,7 @@ export const test = base.extend<TestFixtures>({
           },
         );
         const signedMediaProfile = await signJwtVc(
-          generateWebMediaProfileData(issuer),
+          generateWebMediaProfileData(issuer, holder),
           privateKey,
           {
             issuedAt,
@@ -185,12 +192,16 @@ export const test = base.extend<TestFixtures>({
   },
   validOps: async ({ page }: { page: Page }, use) => {
     await use(
-      async (key: { publicKey: Jwk; privateKey: Jwk }, issuer: string) => {
+      async (
+        key: { publicKey: Jwk; privateKey: Jwk },
+        issuer: string,
+        holder: string,
+      ) => {
         const { publicKey, privateKey } = key;
         const issuedAt: Date = new Date(Date.now());
         const expiredAt: Date = addYears(new Date(), 1);
         const signedCoreProfile = await signJwtVc(
-          generateCoreProfileData(publicKey, issuer),
+          generateCoreProfileData(publicKey, issuer, holder),
           privateKey,
           {
             issuedAt,
@@ -198,7 +209,7 @@ export const test = base.extend<TestFixtures>({
           },
         );
         const annotations = await signJwtVc(
-          generateCertificateData(issuer),
+          generateCertificateData(issuer, holder),
           privateKey,
           {
             issuedAt,
@@ -206,7 +217,7 @@ export const test = base.extend<TestFixtures>({
           },
         );
         const signedMediaProfile = await signJwtVc(
-          generateWebMediaProfileData(issuer),
+          generateWebMediaProfileData(issuer, holder),
           privateKey,
           {
             issuedAt,
@@ -224,10 +235,9 @@ export const test = base.extend<TestFixtures>({
             contentType: "application/json",
           }),
         );
-
-        await page.unroute(opsEndpoint);
       },
     );
+    await page.unroute(opsEndpoint);
   },
   invalidCas: async ({ page }: { page: Page }, use) => {
     const cas: ContentAttestationSet = [
@@ -306,48 +316,50 @@ export const test = base.extend<TestFixtures>({
     await page.unroute(opsEndpoint);
   },
   evilOps: async ({ page }: { page: Page }, use) => {
-    await use(async (key: { publicKey: Jwk }, issuer: string) => {
-      const { publicKey } = key;
-      const { privateKey } = await generateKey();
-      const issuedAt: Date = new Date(Date.now());
-      const expiredAt: Date = addYears(new Date(), 1);
-      const signedCoreProfile = await signJwtVc(
-        generateCoreProfileData(publicKey, issuer),
-        privateKey,
-        {
-          issuedAt,
-          expiredAt,
-        },
-      );
-      const annotations = await signJwtVc(
-        generateCertificateData(issuer),
-        privateKey,
-        {
-          issuedAt,
-          expiredAt,
-        },
-      );
-      const signedMediaProfile = await signJwtVc(
-        generateWebMediaProfileData(issuer),
-        privateKey,
-        {
-          issuedAt,
-          expiredAt,
-        },
-      );
+    await use(
+      async (key: { publicKey: Jwk }, issuer: string, holder: string) => {
+        const { publicKey } = key;
+        const { privateKey } = await generateKey();
+        const issuedAt: Date = new Date(Date.now());
+        const expiredAt: Date = addYears(new Date(), 1);
+        const signedCoreProfile = await signJwtVc(
+          generateCoreProfileData(publicKey, issuer, holder),
+          privateKey,
+          {
+            issuedAt,
+            expiredAt,
+          },
+        );
+        const annotations = await signJwtVc(
+          generateCertificateData(issuer, holder),
+          privateKey,
+          {
+            issuedAt,
+            expiredAt,
+          },
+        );
+        const signedMediaProfile = await signJwtVc(
+          generateWebMediaProfileData(issuer, holder),
+          privateKey,
+          {
+            issuedAt,
+            expiredAt,
+          },
+        );
 
-      await page.route(opsEndpoint, async (route) =>
-        route.fulfill({
-          body: JSON.stringify({
-            core: signedCoreProfile,
-            annotations: [annotations],
-            media: signedMediaProfile,
+        await page.route(opsEndpoint, async (route) =>
+          route.fulfill({
+            body: JSON.stringify({
+              core: signedCoreProfile,
+              annotations: [annotations],
+              media: signedMediaProfile,
+            }),
+            contentType: "application/json",
           }),
-          contentType: "application/json",
-        }),
-      );
+        );
 
-      //await page.unroute(opsEndpoint);
-    });
+        //await page.unroute(opsEndpoint);
+      },
+    );
   },
 });

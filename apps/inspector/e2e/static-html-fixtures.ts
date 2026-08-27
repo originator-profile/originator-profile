@@ -5,9 +5,20 @@ type TestFixtures = {
     contents: string;
     endpoint: string;
     issuer: string;
+    holder: string;
   };
-  credentialsPage: { contents: string; endpoint: string; issuer: string };
-  onlineAdPage: { contents: string; endpoint: string; issuer: string };
+  credentialsPage: {
+    contents: string;
+    endpoint: string;
+    issuer: string;
+    holder: string;
+  };
+  onlineAdPage: {
+    contents: string;
+    endpoint: string;
+    issuer: string;
+    holder: string;
+  };
 };
 
 export const test = base.extend<TestFixtures>({
@@ -38,6 +49,7 @@ export const test = base.extend<TestFixtures>({
       contents: credentialsMissingHtml,
       endpoint,
       issuer: "dns:localhost",
+      holder: "dns:op-holder.example.com",
     });
 
     await page.unroute(endpoint);
@@ -75,6 +87,7 @@ export const test = base.extend<TestFixtures>({
       contents: validCredentialsHtml,
       endpoint,
       issuer: "dns:localhost",
+      holder: "dns:op-holder.example.com",
     });
 
     await page.unroute(endpoint);
@@ -114,7 +127,12 @@ export const test = base.extend<TestFixtures>({
       }),
     );
 
-    await use({ contents: onlineAdHtml, endpoint, issuer: "dns:localhost" });
+    await use({
+      contents: onlineAdHtml,
+      endpoint,
+      issuer: "dns:localhost",
+      holder: "dns:op-holder.example.com",
+    });
 
     await page.unroute(endpoint);
   },

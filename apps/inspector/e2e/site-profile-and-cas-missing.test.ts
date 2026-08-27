@@ -23,7 +23,11 @@ test("Site Profile と CAS が取得できない場合Unsuportedが表示され�
   validOps,
   credentialsPage,
 }) => {
-  await validOps({ publicKey, privateKey }, credentialsPage.issuer);
+  await validOps(
+    { publicKey, privateKey },
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
   await page.goto(credentialsPage.endpoint);
   const ext = await sidepanel(context);
   await expect(ext?.getByTestId("p-elm-unsupported-message")).toBeVisible();
