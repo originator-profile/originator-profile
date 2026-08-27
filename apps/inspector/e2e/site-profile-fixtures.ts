@@ -83,8 +83,10 @@ async function createSiteProfile(
   };
 
   if (includeMedia) {
-    const webMediaProfile: WebMediaProfile =
-      generateWebMediaProfileData(issuer, holder);
+    const webMediaProfile: WebMediaProfile = generateWebMediaProfileData(
+      issuer,
+      holder,
+    );
     const signedMediaProfile = await signJwtVc(webMediaProfile, privateKey, {
       issuedAt,
       expiredAt,
