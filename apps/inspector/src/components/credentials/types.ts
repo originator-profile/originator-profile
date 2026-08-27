@@ -8,7 +8,10 @@ import type {
   OriginatorProfileSet,
   WebMediaProfile,
 } from "@originator-profile/model";
-import type { FetchCredentialSetResult } from "@originator-profile/presentation";
+import type {
+  FetchCredentialSetResult,
+  SourcedCredential,
+} from "@originator-profile/presentation";
 import type {
   IntegrityVerifyResult,
   VerifiedCas,
@@ -43,8 +46,8 @@ export type FrameResponse = {
 };
 export type FrameCredentials = FrameResponse &
   FrameLocation & {
-    ops: OriginatorProfileSet;
-    cas: ContentAttestationSet;
+    ops: SourcedCredential<OriginatorProfileSet[number]>[];
+    cas: SourcedCredential<ContentAttestationSet[number]>[];
     opMeta?: OpMeta;
   };
 export type TabCredentials = FrameCredentials & { frames: FrameCredentials[] };

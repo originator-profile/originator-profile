@@ -79,7 +79,7 @@ const decodeCasJwtPayload = (
 const getCasIssuer = (cas: unknown): string | undefined => {
   if (!Array.isArray(cas)) return undefined;
   for (const casItem of cas) {
-    const decoded = decodeCasJwtPayload(casItem);
+    const decoded = decodeCasJwtPayload(casItem.credential);
     if (decoded && isAdCaType(decoded.credentialSubject?.type)) {
       return decoded.issuer;
     }
@@ -148,7 +148,9 @@ const tryCacheNames = () => {
 
       if (Array.isArray(ops)) {
         for (const op of ops) {
-          const mediaJwt = Array.isArray(op.media) ? op.media[0] : op.media;
+          const mediaJwt = Array.isArray(op.credential.media)
+            ? op.credential.media[0]
+            : op.credential.media;
           updateOrgNames(
             decodeOpJwt(mediaJwt),
             casIssuer,
@@ -157,7 +159,7 @@ const tryCacheNames = () => {
             names,
           );
           updateOrgNames(
-            decodeOpJwt(op.core),
+            decodeOpJwt(op.credential.core),
             casIssuer,
             hasCas,
             opMeta.targetopid,

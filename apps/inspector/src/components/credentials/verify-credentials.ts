@@ -1,4 +1,8 @@
-import type { ContentAttestationSet } from "@originator-profile/model";
+import type {
+  ContentAttestationSet,
+  OriginatorProfileSet,
+} from "@originator-profile/model";
+import type { SourcedCredential } from "@originator-profile/presentation";
 import {
   CasVerifyFailed,
   OpsInvalid,
@@ -25,8 +29,8 @@ import type {
  * Site Profile由来のOriginatorsを追加する。
  */
 export async function verifyOps(
-  page: { ops: Parameters<typeof OpsVerifier>[0] },
-  frames: { ops: Parameters<typeof OpsVerifier>[0] }[],
+  page: { ops: SourcedCredential<OriginatorProfileSet[number]>[] },
+  frames: { ops: SourcedCredential<OriginatorProfileSet[number]>[] }[],
   siteProfile?: VerifiedSp | null,
   warn?: WarnHandler,
 ): ReturnType<ReturnType<typeof OpsVerifier>> {
@@ -36,7 +40,13 @@ export async function verifyOps(
   } = await getRegistryOps();
 
   const opsVerifier = OpsVerifier(
-    [...registryOps, ...page.ops, ...frames.flatMap((frame) => frame.ops)],
+    [
+      ...registryOps,
+      ...page.ops.map(({ credential }) => credential),
+      ...frames.flatMap((frame) =>
+        frame.ops.map(({ credential }) => credential),
+      ),
+    ],
     verificationKeys,
     cpIssuer,
     { warn },
@@ -57,7 +67,7 @@ export async function verifyOps(
 }
 
 type FrameCasInput = {
-  cas: ContentAttestationSet;
+  cas: SourcedCredential<ContentAttestationSet[number]>[];
   url: string;
   frameId: number;
 };
@@ -74,7 +84,7 @@ export async function verifyFramesCas<F extends FrameCasInput>(
   return Promise.all(
     frames.map((frame) =>
       verifyCas<SupportedCa>(
-        frame.cas,
+        frame.cas.map(({ credential }) => credential),
         verifiedOps,
         frame.url,
         FrameIntegrityVerifier(tabId, frame.frameId),
