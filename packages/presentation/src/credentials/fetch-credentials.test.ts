@@ -48,7 +48,12 @@ describe("Originator Profile Set", () => {
     const result = await fetchOriginatorProfileSet(
       window.document as unknown as Document,
     );
-    expect(result).toStrictEqual(ops);
+    expect(result).toStrictEqual(
+      ops.map((credential) => ({
+        credential,
+        source: { kind: "external", url: opsUrl },
+      })),
+    );
   });
 
   test("無効なエンドポイント指定時 Originator Profile Set の取得に失敗", async () => {
