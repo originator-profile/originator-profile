@@ -13,6 +13,7 @@ import {
   VerifiedJwtVc,
 } from "@originator-profile/securing-mechanism";
 import { verifyImageDigestSri } from "../integrity";
+import type { Logger } from "../logger";
 import {
   CoreProfileNotFound,
   OpsInvalid,
@@ -21,7 +22,6 @@ import {
 import { VerifiedOps } from "../originator-profile-set/types";
 import { OpsVerifier } from "../originator-profile-set/verify-ops";
 import { verifyAllowedOrigin } from "../verify-allowed-origin";
-import type { WarnHandler } from "../warn";
 import { SpVerificationResult } from "./types";
 import { SiteProfileInvalid, SiteProfileVerifyFailed } from "./verify-errors";
 
@@ -65,7 +65,7 @@ const decodeWebsiteProfiles = (
  * @param keys Core Profile の発行者の検証鍵
  * @param issuer Core Profile の発行者
  * @param origin 提示するWebサイトを識別するための RFC 6454 オリジン
- * @param options オリジン検証の可否・バリデーター・警告ハンドラー
+ * @param options オリジン検証の可否・バリデーター・ロガー
  * @returns 検証者
  */
 export function SpVerifier(
@@ -78,15 +78,15 @@ export function SpVerifier(
     verifyOrigin?: boolean;
     /** バリデーター */
     validator?: typeof VcValidator;
-    /** 警告ハンドラー (デフォルト: `console.warn`) */
-    warn?: WarnHandler;
+    /** ロガー (デフォルト: `console`) */
+    logger?: Logger;
   } = {},
 ) {
-  const { verifyOrigin = true, validator, warn } = options;
+  const { verifyOrigin = true, validator, logger = console } = options;
   async function verify(): Promise<SpVerificationResult> {
     const verifyOps = OpsVerifier(sp.originators, keys, issuer, {
       validator,
-      warn,
+      logger,
     });
     const opsVerified = await verifyOps();
     if (opsVerified instanceof OpsInvalid) {
@@ -149,7 +149,7 @@ export function SpVerifier(
         }
 
         await verifyImageDigestSri(verified.doc.credentialSubject.image, {
-          warn,
+          logger,
         });
 
         return verified;

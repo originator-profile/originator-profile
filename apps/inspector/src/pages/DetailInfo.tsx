@@ -10,6 +10,7 @@ function DetailInfo(props: Props) {
     siteProfile,
     error: spError,
     warnings: spWarnings,
+    info: spInfo,
   } = useSiteProfile();
   const {
     ops,
@@ -17,6 +18,7 @@ function DetailInfo(props: Props) {
     framesCas,
     error: credentialsError,
     warnings: credentialsWarnings,
+    info: credentialsInfo,
   } = useCredentials();
   const [queryParams] = useSearchParams();
   const backPath = {
@@ -31,6 +33,7 @@ function DetailInfo(props: Props) {
       framesCas={framesCas}
       errors={[spError, credentialsError].filter((x) => x !== undefined)}
       warnings={[...(spWarnings ?? []), ...(credentialsWarnings ?? [])]}
+      info={[...(spInfo ?? []), ...(credentialsInfo ?? [])]}
       backPath={backPath}
     />
   );

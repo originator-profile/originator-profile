@@ -362,6 +362,9 @@
   "DetailInfo_Warnings": {
     "message": "Warnings"
   },
+  "DetailInfo_Info": {
+    "message": "Info"
+  },
   "Link_OriginatorProfile": {
     "message": "Learn more about Originator Profile (external site)"
   },
