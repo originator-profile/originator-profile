@@ -65,6 +65,8 @@ node -e 'console.log("CCSP:" + Buffer.from(JSON.stringify({
 未署名 CA を CA サーバーで署名し、署名済み JWT を CAS ファイルとして書き出します。
 
 ```ts
+import { writeCasFile } from "@originator-profile/ca-client";
+
 const jwt = await client.sign(unsignedCa);
 
 await writeCasFile({
@@ -112,14 +114,19 @@ const jwt = await client.sign({
 第 2 引数は payload が不正なとき、エラーメッセージに埋め込む識別子です。
 
 ```ts
-// jwt は既存 CAS ファイルから読み込んだ署名済み JWT 文字列
+import { readFile } from "node:fs/promises";
+
+const casJson = JSON.parse(
+  await readFile("dist/cas/ja-JP.page.cas.json", "utf8"),
+);
+const jwt = casJson[0]; // CAS ファイルは JWT の配列
 const existingPayload = JSON.parse(
   Buffer.from(jwt.split(".")[1], "base64url").toString("utf8"),
 );
 
 const renewed = await client.reSign(
   existingPayload,
-  "public/cas/ja-JP.page.cas.json",
+  "dist/cas/ja-JP.page.cas.json",
 );
 ```
 
