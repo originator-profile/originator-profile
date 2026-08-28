@@ -8,7 +8,7 @@ Content Attestation (CA) を発行し、Content Attestation Set (CAS) として�
 
 ### インストール
 
-インストールが必要です。任意のパッケージマネージャーでインストールをしてください。
+任意のパッケージマネージャーでインストールしてください。
 
 ```bash
 npm install @originator-profile/ca-client
@@ -20,7 +20,7 @@ pnpm add @originator-profile/ca-client
 
 ### クライアントを生成する
 
-CAサーバーと連携するクライアントオブジェクトを生成します。
+CA サーバーと連携するクライアントオブジェクトを生成します。
 
 ```ts
 import { createCaClient } from "@originator-profile/ca-client";
@@ -28,7 +28,7 @@ import { createCaClient } from "@originator-profile/ca-client";
 const client = createCaClient({
   endpoint: "YOUR_CA_SERVER_URL", // CA サーバーのエンドポイント URL
   issuer: "YOUR_ISSUER", // 発行者 ID（例: `dns:example.com`）
-  ccspConfig: "YOUR_CCSP_CONFIG", // 下記ccspConfigの設定を参照
+  ccspConfig: "YOUR_CCSP_CONFIG", // 下記 ccspConfig の設定を参照
   // tokenBufferSeconds: 300, // トークン期限切れ前のバッファ（秒、デフォルト 300）
 });
 ```
@@ -55,7 +55,7 @@ node -e 'console.log("CCSP:" + Buffer.from(JSON.stringify({
 })).toString("base64"))'
 ```
 
-結果は `CCSP:eyJhds...` のような形式になります。この文字列を `CCSP_CONFIG` に設定します。
+結果は `CCSP:eyJhds...` のような形式になります。この文字列を `ccspConfig` に渡します。
 
 > [!NOTE]
 > `authType` は `client_secret_post` のみ対応しています。`clientSec` は OAuth の `client_secret` の略称です。
@@ -112,6 +112,7 @@ const jwt = await client.sign({
 第 2 引数は payload が不正なとき、エラーメッセージに埋め込む識別子です。
 
 ```ts
+// jwt は既存 CAS ファイルから読み込んだ署名済み JWT 文字列
 const existingPayload = JSON.parse(
   Buffer.from(jwt.split(".")[1], "base64url").toString("utf8"),
 );
@@ -129,6 +130,8 @@ const renewed = await client.reSign(
 `writeCasFile` は、署名済み JWT を [CAS](https://docs.originator-profile.org/ja/opb/content-attestation-set/) ファイルとして書き出します。`filePath`・`jwt` は必須です。
 
 ```ts
+import { writeCasFile } from "@originator-profile/ca-client";
+
 await writeCasFile({
   filePath: "dist/cas/ja-JP.page.cas.json",
   jwt,
@@ -150,6 +153,7 @@ await writeCasFile({
 
 ```ts
 import { readFile } from "node:fs/promises";
+import { detectDrift } from "@originator-profile/ca-client";
 
 const html = await readFile("dist/ja-JP/page/index.html", "utf8");
 
