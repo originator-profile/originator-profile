@@ -26,6 +26,7 @@ test("Content Attestation Set の表示が正常に行えたか", async ({
     { publicKey, privateKey },
     credentialsPage.contents,
     credentialsPage.issuer,
+    credentialsPage.holder,
   );
   await page.goto(credentialsPage.endpoint);
   const ext = await sidepanel(context);

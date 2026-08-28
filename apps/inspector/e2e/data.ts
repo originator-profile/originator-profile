@@ -10,6 +10,7 @@ import type {
 export function generateCoreProfileData(
   publicKey: Jwk,
   issuer: string = "dns:localhost",
+  holder: string = "dns:op-holder.example.com",
 ): CoreProfile {
   return {
     "@context": [
@@ -19,7 +20,7 @@ export function generateCoreProfileData(
     type: ["VerifiableCredential", "CoreProfile"],
     issuer: issuer,
     credentialSubject: {
-      id: issuer,
+      id: holder,
       type: "Core",
       jwks: {
         keys: [publicKey],
@@ -30,6 +31,7 @@ export function generateCoreProfileData(
 
 export function generateCertificateData(
   issuer: string = "dns:localhost",
+  holder: string = "dns:op-holder.example.com",
 ): Certificate {
   return {
     "@context": [
@@ -43,7 +45,7 @@ export function generateCertificateData(
     type: ["VerifiableCredential", "Certificate"],
     issuer: issuer,
     credentialSubject: {
-      id: issuer,
+      id: holder,
       type: "CertificateProperties",
       description: "Example Certificate",
       certificationSystem: {
@@ -58,6 +60,7 @@ export function generateCertificateData(
 
 export function generateWebMediaProfileData(
   issuer: string = "dns:localhost",
+  holder: string = "dns:op-holder.example.com",
 ): WebMediaProfile {
   return {
     "@context": [
@@ -71,7 +74,7 @@ export function generateWebMediaProfileData(
     type: ["VerifiableCredential", "WebMediaProfile"],
     issuer: issuer,
     credentialSubject: {
-      id: issuer,
+      id: holder,
       type: "OnlineBusiness",
       name: "Originator Profile 技術研究組合 (開発用)",
       url: "http://localhost:8080",

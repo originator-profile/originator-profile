@@ -14,7 +14,11 @@ test("SiteProfileは検証成功するが、OPS / CASの取得に失敗した時
   missingCredentials: _missingCredentials,
   credentialsPage,
 }) => {
-  await validSiteProfile({ publicKey, privateKey }, credentialsPage.issuer);
+  await validSiteProfile(
+    { publicKey, privateKey },
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
   await page.goto(credentialsPage.endpoint);
   const ext = await sidepanel(context);
   await expect(ext.getByTestId("site-profile")).toBeVisible();

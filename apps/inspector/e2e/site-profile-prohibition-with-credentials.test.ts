@@ -26,6 +26,7 @@ test("CAS/OPSの取得に成功するがSPの検証に失敗した場合閲覧�
     { publicKey, privateKey },
     credentialsPage.contents,
     credentialsPage.issuer,
+    credentialsPage.holder,
   );
   await page.goto(credentialsPage.endpoint);
   const ext = await sidepanel(context);
@@ -56,8 +57,12 @@ test("CAの署名がその発行者のSPで配布される検証鍵を使って�
   evilCas: evilCas,
   credentialsPage,
 }) => {
-  await evilCas(credentialsPage.contents, credentialsPage.issuer);
-  await validSiteProfile({ privateKey, publicKey }, credentialsPage.issuer);
+  await evilCas(credentialsPage.contents, credentialsPage.holder);
+  await validSiteProfile(
+    { privateKey, publicKey },
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
   await page.goto(credentialsPage.endpoint);
   const ext = await sidepanel(context);
   await expect(ext?.getByTestId("p-elm-prohibition-message")).toBeVisible();
@@ -78,17 +83,21 @@ test("SPの署名がその発行者のOPで配布される検証鍵を使って�
   await validCas(
     { privateKey },
     credentialsPage.contents,
-    credentialsPage.issuer,
+    credentialsPage.holder,
   );
-  await evilSiteProfile({ publicKey }, credentialsPage.issuer);
+  await evilSiteProfile(
+    { publicKey },
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
   await page.goto(credentialsPage.endpoint);
   const ext = await sidepanel(context);
   await expect(ext?.getByTestId("p-elm-prohibition-message")).toBeVisible();
 
   await gotoDetailPage(ext);
   await expectStatus(ext, "site-profile", "cancel");
-  await expectStatus(ext, "originator-profile-set-top", "check");
-  await expectStatus(ext, "content-attestation-set", "check");
+  await expectStatus(ext, "originator-profile-set-top", "null");
+  await expectStatus(ext, "content-attestation-set", "cancel");
   await expectStatus(ext, "core-profile", "cancel");
   await expectStatus(ext, "profile-annotation", "cancel");
   await expectStatus(ext, "web-media-profile", "cancel");
@@ -101,8 +110,12 @@ test("SPとCAの署名がその発行者のOPまたはSPで配布される検証
   evilCas: evilCas,
   credentialsPage,
 }) => {
-  await evilCas(credentialsPage.contents, credentialsPage.issuer);
-  await evilSiteProfile({ publicKey }, credentialsPage.issuer);
+  await evilCas(credentialsPage.contents, credentialsPage.holder);
+  await evilSiteProfile(
+    { publicKey },
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
   await page.goto(credentialsPage.endpoint);
   const ext = await sidepanel(context);
   await expect(ext?.getByTestId("p-elm-prohibition-message")).toBeVisible();
