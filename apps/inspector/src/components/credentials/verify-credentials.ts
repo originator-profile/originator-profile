@@ -23,7 +23,7 @@ import { FrameIntegrityVerifier } from "./messaging";
 import type {
   FrameCredentials,
   SupportedCa,
-  SupportedVerifiedCas,
+  SupportedVerifiedCa,
   TabCredentials,
 } from "./types";
 
@@ -116,6 +116,11 @@ type FrameCasInput = {
   frameId: number;
 };
 
+/** 出所(取得経路)付き検証済み Content Attestation */
+export type VerifiedCaWithSource = SupportedVerifiedCa & {
+  source: CredentialSource;
+};
+
 /**
  * フレームごとにCASを検証する。
  * 各フレームの検証結果とフレーム情報をペアで返す。
@@ -124,16 +129,28 @@ export async function verifyFramesCas<F extends FrameCasInput>(
   tabId: number,
   frames: F[],
   verifiedOps: VerifiedOps,
-): Promise<{ result: SupportedVerifiedCas | CasVerifyFailed; frame: F }[]> {
+): Promise<{ result: VerifiedCaWithSource[] | CasVerifyFailed; frame: F }[]> {
   return Promise.all(
-    frames.map((frame) =>
-      verifyCas<SupportedCa>(
+    frames.map(async (frame) => {
+      const result = await verifyCas<SupportedCa>(
         frame.cas.map(({ credential }) => credential),
         verifiedOps,
         frame.url,
         FrameIntegrityVerifier(tabId, frame.frameId),
-      ).then((result) => ({ result, frame })),
-    ),
+      );
+      if (result instanceof CasVerifyFailed) {
+        return { result, frame };
+      }
+      // frame.cas と同じ配列(順序)から検証しているため、インデックスがそのまま対応する
+      const resultWithSource: VerifiedCaWithSource[] = result.map((item, i) => {
+        const sourced = frame.cas[i];
+        if (!sourced) {
+          throw new Error(`frame.cas[${i}] not found`);
+        }
+        return { ...item, source: sourced.source };
+      });
+      return { result: resultWithSource, frame };
+    }),
   );
 }
 
@@ -185,7 +202,7 @@ export async function verifyAllCredentials(
   return {
     ops: verifiedOps,
     cas: deduplicateCas(
-      casResults.flatMap(({ result }) => result as SupportedVerifiedCas),
+      casResults.flatMap(({ result }) => result as VerifiedCaWithSource[]),
     ),
     casResults,
     warnings,
