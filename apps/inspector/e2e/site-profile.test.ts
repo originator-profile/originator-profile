@@ -18,6 +18,7 @@ test("Site Profile を取得検証できる", async ({
   await validSiteProfile(
     { privateKey, publicKey },
     credentialsMissingPage.issuer,
+    credentialsMissingPage.holder,
   );
   await page.goto(credentialsMissingPage.endpoint);
   const ext = await sidepanel(context);
@@ -47,6 +48,7 @@ test("Site Profile のビジュアルリグレッションテスト", async ({
   await validSiteProfile(
     { privateKey, publicKey },
     credentialsMissingPage.issuer,
+    credentialsMissingPage.holder,
   );
   await page.goto(credentialsMissingPage.endpoint);
   const ext = await sidepanel(context);
@@ -63,6 +65,7 @@ test("Site Profile を取得検証できるが、WMP が存在しない", async 
   await missingMediaSiteProfile(
     { privateKey, publicKey },
     credentialsMissingPage.issuer,
+    credentialsMissingPage.holder,
   );
   await page.goto(credentialsMissingPage.endpoint);
   const ext = await sidepanel(context);
@@ -84,6 +87,7 @@ test("Site Profile を取得検証できるが、有効期限が近く、詳細�
   await expiringSoonSiteProfile(
     { privateKey, publicKey },
     credentialsMissingPage.issuer,
+    credentialsMissingPage.holder,
   );
   await page.goto(credentialsMissingPage.endpoint);
   const ext = await sidepanel(context);
@@ -108,6 +112,7 @@ test("詳細情報画面に検証中の警告ログが表示される", async ({
   await validSiteProfile(
     { privateKey, publicKey },
     credentialsMissingPage.issuer,
+    credentialsMissingPage.holder,
   );
   await page.goto(credentialsMissingPage.endpoint);
   const ext = await sidepanel(context);

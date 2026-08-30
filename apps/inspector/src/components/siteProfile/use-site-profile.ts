@@ -1,7 +1,7 @@
 import {
+  type Logger,
   SpVerifier,
   VerifiedSp,
-  type WarnHandler,
 } from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
@@ -13,6 +13,7 @@ const key = "site-profile";
 type FetchVerifiedSiteProfileResult = {
   siteProfile: VerifiedSp;
   warnings: string[];
+  info: string[];
 };
 
 async function fetchVerifiedSiteProfile([, tabId]: [
@@ -25,11 +26,18 @@ async function fetchVerifiedSiteProfile([, tabId]: [
     keys: [cpIssuer, verificationKeys],
   } = await getRegistryOps();
 
-  // 検証中の警告を収集する (コンソールへの出力は維持)
+  // 検証中の警告・情報を収集する (コンソールへの出力は維持)
   const warnings: string[] = [];
-  const warn: WarnHandler = (message) => {
-    console.warn(message);
-    warnings.push(message);
+  const info: string[] = [];
+  const logger: Logger = {
+    warn: (message) => {
+      console.warn(message);
+      warnings.push(message);
+    },
+    info: (message) => {
+      console.info(message);
+      info.push(message);
+    },
   };
 
   const verifySp = SpVerifier(
@@ -40,14 +48,14 @@ async function fetchVerifiedSiteProfile([, tabId]: [
     verificationKeys,
     cpIssuer,
     data.origin,
-    { warn },
+    { logger },
   );
 
   const verifiedSp = await verifySp();
   if (verifiedSp instanceof Error) {
     throw verifiedSp;
   }
-  return { siteProfile: verifiedSp, warnings };
+  return { siteProfile: verifiedSp, warnings, info };
 }
 
 /**
@@ -70,5 +78,6 @@ export function useSiteProfile() {
     siteProfile: data?.siteProfile,
     tabId,
     warnings: data?.warnings,
+    info: data?.info,
   };
 }

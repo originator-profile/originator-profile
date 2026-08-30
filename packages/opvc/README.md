@@ -137,7 +137,7 @@ FLAG DESCRIPTIONS
     }
 ```
 
-_See code: [src/commands/ca/sign.ts](https://github.com/originator-profile/originator-profile/blob/v0.7.0-beta.2/packages/opvc/src/commands/ca/sign.ts)_
+_See code: [src/commands/ca/sign.ts](https://github.com/originator-profile/originator-profile/blob/v0.7.0-beta.3/packages/opvc/src/commands/ca/sign.ts)_
 
 ## `opvc ca:unsigned`
 
@@ -222,7 +222,7 @@ FLAG DESCRIPTIONS
     }
 ```
 
-_See code: [src/commands/ca/unsigned.ts](https://github.com/originator-profile/originator-profile/blob/v0.7.0-beta.2/packages/opvc/src/commands/ca/unsigned.ts)_
+_See code: [src/commands/ca/unsigned.ts](https://github.com/originator-profile/originator-profile/blob/v0.7.0-beta.3/packages/opvc/src/commands/ca/unsigned.ts)_
 
 ## `opvc help [COMMAND]`
 
@@ -260,7 +260,7 @@ DESCRIPTION
   鍵ペアの生成
 ```
 
-_See code: [src/commands/key-gen/index.ts](https://github.com/originator-profile/originator-profile/blob/v0.7.0-beta.2/packages/opvc/src/commands/key-gen/index.ts)_
+_See code: [src/commands/key-gen/index.ts](https://github.com/originator-profile/originator-profile/blob/v0.7.0-beta.3/packages/opvc/src/commands/key-gen/index.ts)_
 
 ## `opvc sign`
 
@@ -427,7 +427,7 @@ FLAG DESCRIPTIONS
     }
 ```
 
-_See code: [src/commands/sign.ts](https://github.com/originator-profile/originator-profile/blob/v0.7.0-beta.2/packages/opvc/src/commands/sign.ts)_
+_See code: [src/commands/sign.ts](https://github.com/originator-profile/originator-profile/blob/v0.7.0-beta.3/packages/opvc/src/commands/sign.ts)_
 
 ## `opvc wsp:sign`
 
@@ -565,7 +565,7 @@ FLAG DESCRIPTIONS
     ]
 ```
 
-_See code: [src/commands/wsp/sign.ts](https://github.com/originator-profile/originator-profile/blob/v0.7.0-beta.2/packages/opvc/src/commands/wsp/sign.ts)_
+_See code: [src/commands/wsp/sign.ts](https://github.com/originator-profile/originator-profile/blob/v0.7.0-beta.3/packages/opvc/src/commands/wsp/sign.ts)_
 
 ## `opvc wsp:unsigned`
 
@@ -695,7 +695,7 @@ FLAG DESCRIPTIONS
     ]
 ```
 
-_See code: [src/commands/wsp/unsigned.ts](https://github.com/originator-profile/originator-profile/blob/v0.7.0-beta.2/packages/opvc/src/commands/wsp/unsigned.ts)_
+_See code: [src/commands/wsp/unsigned.ts](https://github.com/originator-profile/originator-profile/blob/v0.7.0-beta.3/packages/opvc/src/commands/wsp/unsigned.ts)_
 <!-- commandsstop -->
 <!-- prettier-ignore-end -->
 

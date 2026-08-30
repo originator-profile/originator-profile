@@ -23,6 +23,220 @@ CAS 運用 SDK。CA サーバーとの連携、CAS ファイルの読み書き�
 <!-- environments-stop -->
 <!-- prettier-ignore-end -->
 
-## Public API
+## はじめに
 
-TODO
+### インストール
+
+#### Node.js
+
+```bash
+$ pnpm add @originator-profile/ca-client
+```
+
+> [!IMPORTANT]
+> Node.js の `^22.18.0 || ^24.10.0 || ^26.2.0` が必要です。
+
+## API
+
+### インポート
+
+```ts
+import {
+  createCaClient,
+  writeCasFile,
+  detectDrift,
+  CaClientError,
+  CaClientErrorCode,
+  isUnauthorized,
+} from "@originator-profile/ca-client";
+```
+
+### クライアントオブジェクトの作成
+
+```ts
+const client = createCaClient({
+  endpoint: process.env.CA_SERVER_URL!, // CA サーバーのエンドポイント URL
+  issuer: process.env.ISSUER!, // 発行者 ID（例: `dns:example.com`）
+  ccspConfig: process.env.CCSP_CONFIG!, // CCSP 認証設定（Base64、`CCSP:` プレフィックス可）
+  // tokenBufferSeconds: 300, // トークン期限切れ前のバッファ（秒、既定 300）
+});
+```
+
+`ccspConfig` は次の JSON を Base64 エンコードした文字列です。先頭に `CCSP:` を付けても構いません。
+
+```json
+{
+  "authType": "client_secret_post",
+  "clientId": "YOUR_CLIENT_ID",
+  "clientSec": "YOUR_CLIENT_SECRET",
+  "tokenUrl": "https://example.com/oauth/token"
+}
+```
+
+> [!NOTE]
+> `authType` は `client_secret_post` のみ対応しています。`clientSec` は OAuth の `client_secret` です。
+
+### Quick Start
+
+未署名 CA を CA サーバーで署名し、署名済み JWT を CAS ファイルとして書き出します。
+
+```ts
+const jwt = await client.sign(unsignedCa);
+
+await writeCasFile({
+  filePath: "dist/cas/ja-JP.hello.cas.json",
+  jwt,
+});
+```
+
+### APIメソッド
+
+| メソッド | 説明                                 |
+| -------- | ------------------------------------ |
+| `sign`   | 未署名 CA を CA サーバーで署名する   |
+| `reSign` | 既存 CAS の JWT payload を再署名する |
+
+### sign
+
+`sign` メソッドは、未署名の Content Attestation を CA サーバーで署名し、JWT 文字列を返します。
+
+```ts
+const jwt = await client.sign({
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://originator-profile.org/ns/credentials/v1",
+  ],
+  type: ["VerifiableCredential", "ContentAttestation"],
+  issuer: "dns:example.com",
+  credentialSubject: {
+    type: "Article",
+    headline: "タイトル",
+  },
+  allowedUrl: ["https://example.com/ja-JP/about(/?)"],
+  target: [
+    {
+      type: "TextTargetIntegrity",
+      cssSelector: "main",
+    },
+  ],
+});
+```
+
+### reSign
+
+`reSign` メソッドは、既存 CAS の JWT payload を再署名し、JWT 文字列を返します。第 2 引数 `source` はエラーメッセージの文脈（CAS ファイルパスなど）に使われます。
+
+```ts
+const renewed = await client.reSign(
+  existingPayload,
+  "public/cas/ja-JP.page.cas.json",
+);
+```
+
+`createCaClient` に渡した `issuer` が、payload の `issuer` より優先されます。
+
+### writeCasFile
+
+`writeCasFile` は、署名済み JWT を CAS ファイルとして書き出します。`filePath`・`jwt` は必須です。
+
+```ts
+await writeCasFile({
+  filePath: "dist/cas/ja-JP.page.cas.json",
+  jwt,
+});
+
+await writeCasFile({
+  filePath: "/path/to/site/dist/cas/ja-JP.page.cas.json",
+  jwt,
+});
+```
+
+### detectDrift
+
+`detectDrift` は、ビルド後 HTML から target integrity を再計算し、CAS に記録された target とのずれを判定します。`html`・`filePath` は必須です。
+
+```ts
+const result = await detectDrift({
+  html: builtHtml,
+  filePath: "dist/cas/ja-JP.page.cas.json",
+});
+
+switch (result.status) {
+  case "ok":
+    break;
+  case "cas_missing":
+    // CAS ファイルが無い → 新規署名
+    break;
+  case "cas_invalid":
+    console.warn(result.reason);
+    break;
+  case "html_no_targets":
+    // セレクタに一致する要素が HTML に無い
+    break;
+  case "drifted":
+    // result.current / result.expected で差分を確認
+    break;
+}
+```
+
+| `status`          | 意味                                               |
+| ----------------- | -------------------------------------------------- |
+| `ok`              | HTML から再計算した target が CAS と一致する       |
+| `cas_missing`     | CAS ファイルが存在しない                           |
+| `cas_invalid`     | CAS の JSON / JWT が不正                           |
+| `html_no_targets` | HTML から target を抽出できない                    |
+| `drifted`         | target がずれている（`current` / `expected` 付き） |
+
+TextTargetIntegrity などの `cssSelector` は CAS に記録された値を使い、同じセレクタで HTML を再評価します。CAS にセレクタが無いときだけ、オプションで渡せます。
+
+```ts
+await detectDrift({
+  html: builtHtml,
+  filePath: "dist/cas/ja-JP.page.cas.json",
+  textSelector: "main",
+  externalSelector: ".op-resource",
+});
+```
+
+### エラー
+
+失敗時はすべて `CaClientError` を throw します。失敗の層は `code` で、HTTP の詳細は `status` で判定してください。
+
+```ts
+import {
+  CaClientError,
+  CaClientErrorCode,
+  isUnauthorized,
+} from "@originator-profile/ca-client";
+
+try {
+  const jwt = await client.sign(unsignedCa);
+} catch (error) {
+  if (error instanceof CaClientError) {
+    if (
+      error.code === CaClientErrorCode.Http &&
+      (error.status === undefined ||
+        error.status === 429 ||
+        error.status >= 500)
+    ) {
+      // サーバーのネットワーク障害、429、5xx
+    } else if (isUnauthorized(error)) {
+      // 401 → CCSP 認証情報を再確認
+    }
+    console.error(error.code, error.status, error.message);
+  }
+  throw error;
+}
+```
+
+| `code`          | エラー内容                                                                                                                                                                  | 原因と回避策                                       |
+| --------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------- |
+| `CA_CONFIG`     | CCSP 設定の欠落・不正、未対応の `authType`                                                                                                                                  | CCSP 設定を直してから再実行する                    |
+| `CA_VALIDATION` | 未署名 CA・CAS payload・日付・パス・JWT の不正                                                                                                                              | 入力を直してから再実行する                         |
+| `CA_HTTP`       | CA サーバーアクセス失敗。400 / 401 / 403 / 404 の原因は [CA Server のエラーリスト](https://docs.originator-profile.org/ja/error-reference/#ca-server-のエラーリスト) を参照 | `status` が 401 の場合: CCSP 認証情報を再確認      |
+| `CA_RESPONSE`   | 2xx だが `access_token` や JWT を含まない                                                                                                                                   | サーバー応答の形式を確認する                       |
+| `CA_FILE`       | CAS ファイルの読み取り・書き込み・削除に失敗した                                                                                                                            | パス・権限・ディスク空き容量を直してから再実行する |
+
+## ライセンス
+
+Apache-2.0

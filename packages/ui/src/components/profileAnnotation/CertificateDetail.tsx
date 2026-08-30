@@ -1,4 +1,4 @@
-import { Icon } from "@iconify/react";
+import IconFa6SolidArrowRight from "@iconify-react/fa6-solid/arrow-right";
 import {
   Certificate,
   getAnnotationPolicy,
@@ -39,7 +39,7 @@ function CertificateRef(props: { ref?: string }) {
         {/* oxlint-disable-next-line react/react-compiler */}
         <span className="text-sm">{props.ref}</span>
       </span>
-      <Icon className="text-sm text-gray-500" icon="fa6-solid:arrow-right" />
+      <IconFa6SolidArrowRight className="text-sm text-gray-500" height="1em" />
     </a>
   );
 }

@@ -5,7 +5,7 @@ import {
 } from "@originator-profile/securing-mechanism";
 import { verifyImageDigestSri } from "../integrity";
 import { type MappedKeys } from "../keys";
-import type { WarnHandler } from "../warn";
+import type { Logger } from "../logger";
 import { OpVerifier } from "./op-verifier";
 
 /** media プロパティの署名検証 */
@@ -15,11 +15,11 @@ export async function verifyMedia(
   options: {
     /** バリデーター */
     validator?: typeof VcValidator;
-    /** 警告ハンドラー (デフォルト: `console.warn`) */
-    warn?: WarnHandler;
+    /** ロガー (デフォルト: `console`) */
+    logger?: Logger;
   } = {},
 ) {
-  const { validator, warn } = options;
+  const { validator, logger = console } = options;
   if (!media) return;
   return await Promise.all(
     media.map(async (m) => {
@@ -33,7 +33,9 @@ export async function verifyMedia(
         return result;
       }
 
-      await verifyImageDigestSri(result.doc.credentialSubject.logo, { warn });
+      await verifyImageDigestSri(result.doc.credentialSubject.logo, {
+        logger,
+      });
 
       return result;
     }),

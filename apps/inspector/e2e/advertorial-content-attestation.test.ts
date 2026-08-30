@@ -20,12 +20,16 @@ test("Advertorial Content Attestation の表示が正しく行われているこ
   validCas,
   credentialsPage,
 }) => {
-  await validOps({ publicKey, privateKey }, credentialsPage.issuer);
+  await validOps(
+    { publicKey, privateKey },
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
 
   await validCas(
     { privateKey },
     credentialsPage.contents,
-    credentialsPage.issuer,
+    credentialsPage.holder,
     "Advertorial",
   );
 

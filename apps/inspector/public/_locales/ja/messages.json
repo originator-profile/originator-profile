@@ -362,6 +362,9 @@
   "DetailInfo_Warnings": {
     "message": "警告"
   },
+  "DetailInfo_Info": {
+    "message": "情報"
+  },
   "Link_OriginatorProfile": {
     "message": "Originator Profile についてより詳しく（外部サイト）"
   },

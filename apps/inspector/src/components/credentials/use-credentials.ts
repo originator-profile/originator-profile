@@ -15,6 +15,7 @@ type FetchVerifiedCredentialsResult = {
   url: string;
   framesCas: FramesVerifiedCas;
   warnings: string[];
+  info: string[];
 };
 
 /**
@@ -47,6 +48,7 @@ async function fetchVerifiedCredentials([, tabId, sp]: [
       parentFrameId: frame.parentFrameId,
     })),
     warnings: result.warnings,
+    info: result.info,
   };
 }
 
@@ -60,6 +62,7 @@ type UseCredentialsResult =
       origin: undefined;
       tabId: number;
       warnings: undefined;
+      info: undefined;
     }
   | {
       cas: undefined;
@@ -70,6 +73,7 @@ type UseCredentialsResult =
       origin: undefined;
       tabId: number;
       warnings: undefined;
+      info: undefined;
     }
   | {
       cas: SupportedVerifiedCas;
@@ -80,6 +84,7 @@ type UseCredentialsResult =
       origin: string;
       tabId: number;
       warnings: string[];
+      info: string[];
     };
 
 /**
@@ -98,7 +103,7 @@ export function useCredentials() {
     Error,
     [typeof CREDENTIALS_KEY, number, VerifiedSp?]
   >([CREDENTIALS_KEY, tabId, siteProfile], fetchVerifiedCredentials);
-  const { ops, cas, origin, framesCas, warnings } = credentials ?? {};
+  const { ops, cas, origin, framesCas, warnings, info } = credentials ?? {};
 
   return {
     cas,
@@ -109,6 +114,7 @@ export function useCredentials() {
     origin,
     tabId,
     warnings,
+    info,
   } as UseCredentialsResult;
 }
 

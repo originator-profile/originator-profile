@@ -14,7 +14,7 @@ WordPress での記事の公開時の Content Attestation (CA) の発行に役�
 ### Verified
 
 - OS: Ubuntu 24.04
-- Base image: `wordpress:6.9.4-php8.5`
+- Base image: `wordpress:6.9.4-php8.2`
 
 ### Development
 
@@ -28,6 +28,16 @@ WordPress での記事の公開時の Content Attestation (CA) の発行に役�
 
 - Non-Apache servers (e.g. nginx): .htaccess is generated only for Apache; configure access control manually.
 - Autoptimize (incl. Pro): HTML/image minification can break signature verification. See "Known issues".
+
+### PHP のサポート方針
+
+このプラグインは、PHP のバージョンについて[アクティブなセキュリティサポートのある環境](https://endoflife.date/php)を下限としてサポートします。
+この下限を下回る PHP は、正式なサポート対象外です。
+
+CA Manager が動作を検証しているのは、現時点では [Verified](#verified) に記載の Docker イメージのみです。
+
+PHP 7.4 のように下限を下回る環境では、現在のコードのままでは動作しません。
+動作させるには、コードの一部を書き換える必要があります (詳細は後述の[もっと古い PHP でも動かせますか?](#もっと古い-php-74-など-でも動かせますか)を参照してください)。
 
 ## 機能
 
@@ -414,6 +424,17 @@ Post ID <投稿ID>, page <ページ番号>: image(s) with missing or invalid int
 ```
 
 **回避策**: 該当する画像をメディアライブラリから直接アップロードし直すことで、その投稿に添付され、Integrityメタデータが生成されます。
+
+### もっと古い PHP (7.4 など) でも動かせますか?
+
+現在のコードのままでは動きません。
+ただし 3 箇所を書き換えれば動く可能性はあります (実際に PHP 7.4 上での動作確認はしていません)。
+
+1. コンストラクタプロパティプロモーション (PHP 8.0+): `includes/class-uca.php` クラスコンストラクタ引数 `public string $issuer`
+2. ユニオン型 (PHP 8.0+): `includes/class-uca.php` メソッド戻り値の型 `string|false`
+3. `mixed` 型 (PHP 8.0+): `includes/issue.php` と `includes/class-uca.php` の一部
+
+なお PHP 7.4 は 2022年11月にセキュリティ更新が終了しており、本番サイトでの利用はおすすめできません。
 
 ## 開発ガイド
 
