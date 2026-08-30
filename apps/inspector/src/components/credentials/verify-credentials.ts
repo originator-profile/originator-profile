@@ -2,12 +2,16 @@ import type {
   ContentAttestationSet,
   OriginatorProfileSet,
 } from "@originator-profile/model";
-import type { SourcedCredential } from "@originator-profile/presentation";
+import type {
+  CredentialSource,
+  SourcedCredential,
+} from "@originator-profile/presentation";
 import {
   CasVerifyFailed,
   OpsInvalid,
   OpsVerifier,
   OpsVerifyFailed,
+  VerifiedOp,
   type VerifiedOps,
   type VerifiedSp,
   verifyCas,
@@ -24,6 +28,22 @@ import type {
 } from "./types";
 
 /**
+ * OP の取得経路。
+ * ページ埋め込み/外部URL(CredentialSource)に加え、
+ * ページ由来ではない経路(レジストリ・Site Profile)も表現する。
+ */
+export type OpOrigin =
+  | CredentialSource
+  | { kind: "registry" }
+  | { kind: "site-profile" };
+
+export const registrySource = (): OpOrigin => ({ kind: "registry" });
+export const siteProfileSource = (): OpOrigin => ({ kind: "site-profile" });
+
+/** 出所(取得経路)付き検証済み Originator Profile */
+export type VerifiedOpWithSource = VerifiedOp & { source: OpOrigin };
+
+/**
  * OPSを検証する。
  * REGISTRY_OPSとページ・フレームのOPSを結合して検証し、
  * Site Profile由来のOriginatorsを追加する。
@@ -33,20 +53,28 @@ export async function verifyOps(
   frames: { ops: SourcedCredential<OriginatorProfileSet[number]>[] }[],
   siteProfile?: VerifiedSp | null,
   warn?: WarnHandler,
-): ReturnType<ReturnType<typeof OpsVerifier>> {
+): Promise<VerifiedOpWithSource[] | OpsInvalid | OpsVerifyFailed> {
   const {
     ops: registryOps,
     keys: [cpIssuer, verificationKeys],
   } = await getRegistryOps();
 
+  // registryOps分も含めて1本の配列にまとめる(OpsVerifierへの入力と検証後の
+  // 対応付けを同じ配列から作ることで、インデックスのズレを防ぐ)
+  const sourcedOps: {
+    credential: OriginatorProfileSet[number];
+    source: OpOrigin;
+  }[] = [
+    ...registryOps.map((credential) => ({
+      credential,
+      source: registrySource(),
+    })),
+    ...page.ops,
+    ...frames.flatMap((frame) => frame.ops),
+  ];
+
   const opsVerifier = OpsVerifier(
-    [
-      ...registryOps,
-      ...page.ops.map(({ credential }) => credential),
-      ...frames.flatMap((frame) =>
-        frame.ops.map(({ credential }) => credential),
-      ),
-    ],
+    sourcedOps.map(({ credential }) => credential),
     verificationKeys,
     cpIssuer,
     { warn },
@@ -60,10 +88,26 @@ export async function verifyOps(
     return verifiedOps;
   }
 
-  const siteOriginators = siteProfile?.originators ?? [];
-  verifiedOps.push(...siteOriginators);
+  // sourcedOps と同じ配列から作っているため、インデックスがそのまま対応する
+  const verifiedOpsWithSource: VerifiedOpWithSource[] = verifiedOps.map(
+    (op, i) => {
+      const sourced = sourcedOps[i];
+      if (!sourced) {
+        throw new Error(`sourcedOps[${i}] not found`);
+      }
+      return { ...op, source: sourced.source };
+    },
+  );
 
-  return verifiedOps;
+  const siteOriginators = siteProfile?.originators ?? [];
+  verifiedOpsWithSource.push(
+    ...siteOriginators.map((op) => ({
+      ...op,
+      source: siteProfileSource(),
+    })),
+  );
+
+  return verifiedOpsWithSource;
 }
 
 type FrameCasInput = {
