@@ -3,6 +3,8 @@ import { OpMeta, OpVc } from "@originator-profile/model";
 import {
   fetchCredentials,
   fetchOpMeta,
+  type CredentialsFetchFailed,
+  type SourcedCredential,
 } from "@originator-profile/presentation";
 import {
   normalizeCasItem,
@@ -76,7 +78,9 @@ const decodeCasJwtPayload = (
 };
 
 // 広告関連CAS(OnlineAd/Advertorial)のissuerを取得
-const getCasIssuer = (cas: unknown): string | undefined => {
+const getCasIssuer = (
+  cas: SourcedCredential<unknown>[] | CredentialsFetchFailed,
+): string | undefined => {
   if (!Array.isArray(cas)) return undefined;
   for (const casItem of cas) {
     const decoded = decodeCasJwtPayload(casItem.credential);

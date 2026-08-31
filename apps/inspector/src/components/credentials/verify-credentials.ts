@@ -61,6 +61,9 @@ export async function verifyOps(
 
   // registryOps分も含めて1本の配列にまとめる(OpsVerifierへの入力と検証後の
   // 対応付けを同じ配列から作ることで、インデックスのズレを防ぐ)
+  // ※ OpsVerifier は内部で Promise.all(ops.map(...)) により検証しており、
+  //   要素のフィルタ・並び替え・重複排除を行わないため、入力と同じ順序・
+  //   件数の結果を返す(packages/verify/src/originator-profile-set/verify-ops.ts 参照)
   const sourcedOps: {
     credential: OriginatorProfileSet[number];
     source: OpOrigin;
@@ -100,14 +103,13 @@ export async function verifyOps(
   );
 
   const siteOriginators = siteProfile?.originators ?? [];
-  verifiedOpsWithSource.push(
-    ...siteOriginators.map((op) => ({
+
+  return verifiedOpsWithSource.concat(
+    siteOriginators.map((op) => ({
       ...op,
       source: siteProfileSource(),
     })),
   );
-
-  return verifiedOpsWithSource;
 }
 
 type FrameCasInput = {
@@ -116,7 +118,11 @@ type FrameCasInput = {
   frameId: number;
 };
 
-/** 出所(取得経路)付き検証済み Content Attestation */
+/**
+ * 出所(取得経路)付き検証済み Content Attestation。
+ * CAS はページ由来(ページ埋め込み/外部URL)以外の取得経路を持たないため、
+ * OPS の {@link OpOrigin} と異なり source は {@link CredentialSource} のみとなる。
+ */
 export type VerifiedCaWithSource = SupportedVerifiedCa & {
   source: CredentialSource;
 };
@@ -142,6 +148,9 @@ export async function verifyFramesCas<F extends FrameCasInput>(
         return { result, frame };
       }
       // frame.cas と同じ配列(順序)から検証しているため、インデックスがそのまま対応する
+      // ※ verifyCas も Promise.all(cas.map(...)) により検証しており、要素の
+      //   フィルタ・並び替えを行わないため、入力と同じ順序・件数の結果を返す
+      //   (packages/verify/src/content-attestation-set/verify-cas.ts 参照)
       const resultWithSource: VerifiedCaWithSource[] = result.map((item, i) => {
         const sourced = frame.cas[i];
         if (!sourced) {

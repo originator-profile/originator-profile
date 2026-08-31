@@ -60,6 +60,14 @@ const isVerifiedOps = (ops: OpVerificationResult[]): ops is VerifiedOps =>
  * @param issuer Core Profile の発行者
  * @param options バリデーターとロガー
  * @returns 検証者
+ *
+ * @remarks
+ * 生成された検証者(`verify()`)は `ops` と同じ順序・同じ件数の結果を返す契約とする。
+ * 内部では `Promise.all(ops.map(...))` により検証しており、要素のフィルタ・
+ * 並び替え・重複排除は行わない。この契約は呼び出し側(例: inspector の
+ * `verifyOps`)がインデックスで入力と結果を対応付ける際の前提になっているため、
+ * 将来実装を変更する場合はこの契約を維持するか、呼び出し側にも影響がある点に
+ * 注意すること。
  */
 export function OpsVerifier(
   ops: OriginatorProfileSet,
