@@ -4,7 +4,7 @@
 namespace Profile\Config;
 
 /** Content Attestation サーバーのホスト名の設定の初期値 */
-const PROFILE_DEFAULT_CA_SERVER_HOSTNAME = 'dprexpt.originator-profile.org';
+const PROFILE_DEFAULT_CA_SERVER_HOSTNAME = 'playground.originator-profile.org';
 
 /** Content Attestation サーバーのリクエストタイムアウト (秒) の初期値 */
 const PROFILE_DEFAULT_CA_SERVER_REQUEST_TIMEOUT = 30;

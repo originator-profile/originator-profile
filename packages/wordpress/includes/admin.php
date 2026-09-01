@@ -148,7 +148,7 @@ function profile_ca_server_hostname_field() {
 		<input
 			name="profile_ca_server_hostname"
 			value="<?php echo \esc_attr( \get_option( 'profile_ca_server_hostname' ) ); ?>"
-			title="有効なドメイン名を入力してください (例: dprexpt.originator-profile.org)"
+			title="有効なドメイン名を入力してください (例: playground.originator-profile.org)"
 			placeholder="<?php echo \esc_attr( PROFILE_DEFAULT_CA_SERVER_HOSTNAME ); ?>"
 			required
 			style="width: 320px;"
