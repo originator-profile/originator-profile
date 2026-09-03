@@ -8,3 +8,4 @@ export * from "./originator-profile-set";
 export * from "./registry";
 export * from "./site-profile/";
 export * from "./verify-allowed-origin";
+export * from "./website";

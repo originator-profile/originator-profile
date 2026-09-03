@@ -2,8 +2,8 @@ import { VerifiedSp } from "@originator-profile/verify";
 import type { LinkVerificationResult } from "../credentials/types";
 import {
   isSiteProfileFetchError,
-  verifyTabSiteProfile,
-} from "../siteProfile/verify-site-profile";
+  verifyTabWebsite,
+} from "../siteProfile/verify-website";
 import { getDestinationOrgName, isMatched } from "./matching";
 import type { CreateMismatchResultParams, VerificationContext } from "./types";
 
@@ -69,7 +69,7 @@ export const getVerificationResult = async (
 
   let verifiedSp: VerifiedSp;
   try {
-    verifiedSp = await verifyTabSiteProfile(tabId);
+    verifiedSp = await verifyTabWebsite(tabId);
   } catch (error) {
     // NOTE: Site Profile 未設置は検証失敗ではなく OPID 未提示として扱う
     if (isSiteProfileFetchError(error)) {

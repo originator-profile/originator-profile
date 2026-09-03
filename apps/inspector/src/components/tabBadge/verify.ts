@@ -5,8 +5,8 @@ import type { SupportedVerifiedCas } from "../credentials/types";
 import { verifyAllCredentials } from "../credentials/verify-credentials";
 import {
   isSiteProfileFetchError,
-  verifyTabSiteProfile,
-} from "../siteProfile/verify-site-profile";
+  verifyTabWebsite,
+} from "../siteProfile/verify-website";
 
 /**
  * Site Profileを取得して検証する
@@ -17,7 +17,7 @@ async function fetchVerifiedSiteProfile(
   tabId: number,
 ): Promise<VerifiedSp | null> {
   try {
-    return await verifyTabSiteProfile(tabId);
+    return await verifyTabWebsite(tabId);
   } catch (error) {
     // NOTE: Site Profile 未設置は異常ではないため通知しない
     if (!isSiteProfileFetchError(error)) {

@@ -2,7 +2,7 @@ import { VerifiedSp } from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
 import { createCollectingLogger } from "../../utils/collecting-logger";
-import { verifyTabSiteProfile } from "./verify-site-profile";
+import { verifyTabWebsite } from "./verify-website";
 
 const key = "site-profile";
 
@@ -17,7 +17,7 @@ async function fetchVerifiedSiteProfile([, tabId]: [
   tabId: number,
 ]): Promise<FetchVerifiedSiteProfileResult> {
   const { logger, warnings, info } = createCollectingLogger();
-  const siteProfile = await verifyTabSiteProfile(tabId, { logger });
+  const siteProfile = await verifyTabWebsite(tabId, { logger });
 
   return { siteProfile, warnings, info };
 }

@@ -4,42 +4,35 @@ import {
 } from "@originator-profile/presentation";
 import {
   type Logger,
-  SpVerifier,
   type VerifiedSp,
+  verifyWebsite,
 } from "@originator-profile/verify";
 import { getRegistry } from "../../utils/registry-ops";
 import { fetchTabSiteProfile } from "./messaging";
 
 /**
- * タブの Site Profile を取得して検証する。
+ * タブが表示している Web サイトを取得して検証する。
  * @param tabId タブID
  * @param options ロガー
  * @returns 検証済み Site Profile
  * @throws 取得または検証に失敗した場合
  */
-export async function verifyTabSiteProfile(
+export async function verifyTabWebsite(
   tabId: number,
   options: { logger?: Logger } = {},
 ): Promise<VerifiedSp> {
   const data = await fetchTabSiteProfile(tabId);
   const registry = await getRegistry();
 
-  const verifySp = SpVerifier(
-    {
-      ...data.result,
-      originators: [...registry.ops, ...data.result.originators],
-    },
-    registry.keys,
-    registry.issuer,
-    data.origin,
-    options,
-  );
-
-  const verifiedSp = await verifySp();
-  if (verifiedSp instanceof Error) {
-    throw verifiedSp;
+  const verified = await verifyWebsite(data.origin, {
+    siteProfile: data.result,
+    registry,
+    ...options,
+  });
+  if (verified instanceof Error) {
+    throw verified;
   }
-  return verifiedSp;
+  return verified;
 }
 
 /**
