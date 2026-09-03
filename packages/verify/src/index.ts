@@ -1,5 +1,6 @@
 export * from "./content-attestation";
 export * from "./content-attestation-set";
+export * from "./document";
 export * from "./helper";
 export * from "./integrity/";
 export * from "./keys";
