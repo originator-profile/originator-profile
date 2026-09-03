@@ -1,5 +1,6 @@
 import type { VerifiedSp } from "@originator-profile/verify";
-import { fetchTabCredentials } from "../credentials";
+import { getRegistryOps } from "../../utils/registry-ops";
+import { fetchTabCredentials, FrameIntegrityVerifier } from "../credentials";
 import type { SupportedVerifiedCas } from "../credentials/types";
 import { verifyAllCredentials } from "../credentials/verify-credentials";
 import {
@@ -40,11 +41,17 @@ export async function verifyTabCredentials(tabId: number): Promise<{
   count: number;
 } | null> {
   try {
-    const [siteProfile, { frames, ...page }] = await Promise.all([
+    const [siteProfile, { frames, ...page }, registry] = await Promise.all([
       fetchVerifiedSiteProfile(tabId),
       fetchTabCredentials(tabId),
+      getRegistryOps(),
     ]);
-    const result = await verifyAllCredentials(tabId, page, frames, siteProfile);
+    const result = await verifyAllCredentials(page, frames, {
+      registry,
+      createIntegrityVerifier: ({ frameId }) =>
+        FrameIntegrityVerifier(tabId, frameId),
+      siteProfile,
+    });
 
     if (result instanceof Error) return null;
 

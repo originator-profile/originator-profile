@@ -1,17 +1,21 @@
-import type { ContentAttestationSet } from "@originator-profile/model";
+import type {
+  ContentAttestationSet,
+  OriginatorProfileSet,
+} from "@originator-profile/model";
 import {
   CasVerifyFailed,
   type Logger,
   OpsInvalid,
   OpsVerifier,
   OpsVerifyFailed,
+  type TupledKeys,
   type VerifiedOps,
   type VerifiedSp,
+  type VerifyIntegrity,
   verifyCas,
 } from "@originator-profile/verify";
-import { getRegistryOps } from "../../utils/registry-ops";
+import { createCollectingLogger } from "../../utils/collecting-logger";
 import { deduplicateCas } from "./deduplicate-cas";
-import { FrameIntegrityVerifier } from "./messaging";
 import type {
   FrameCredentials,
   SupportedCa,
@@ -19,21 +23,46 @@ import type {
   TabCredentials,
 } from "./types";
 
+/** Core Profile 発行者の Originator Profile Set と検証鍵 */
+export type RegistryOps = {
+  ops: OriginatorProfileSet;
+  keys: TupledKeys;
+};
+
+/** フレームの Target Integrity 検証器を作成する */
+export type CreateIntegrityVerifier = (frame: {
+  frameId: number;
+}) => VerifyIntegrity;
+
+/** クレデンシャル検証に必要な外部境界 */
+export type VerifyCredentialsContext = {
+  registry: RegistryOps;
+  createIntegrityVerifier: CreateIntegrityVerifier;
+  siteProfile?: VerifiedSp | null;
+};
+
 /**
  * OPSを検証する。
  * REGISTRY_OPSとページ・フレームのOPSを結合して検証し、
  * Site Profile由来のOriginatorsを追加する。
  */
 export async function verifyOps(
-  page: { ops: Parameters<typeof OpsVerifier>[0] },
-  frames: { ops: Parameters<typeof OpsVerifier>[0] }[],
-  siteProfile?: VerifiedSp | null,
-  logger?: Logger,
+  page: { ops: OriginatorProfileSet },
+  frames: { ops: OriginatorProfileSet }[],
+  options: {
+    registry: RegistryOps;
+    siteProfile?: VerifiedSp | null;
+    logger?: Logger;
+  },
 ): ReturnType<ReturnType<typeof OpsVerifier>> {
   const {
-    ops: registryOps,
-    keys: [cpIssuer, verificationKeys],
-  } = await getRegistryOps();
+    registry: {
+      ops: registryOps,
+      keys: [cpIssuer, verificationKeys],
+    },
+    siteProfile,
+    logger,
+  } = options;
 
   const opsVerifier = OpsVerifier(
     [...registryOps, ...page.ops, ...frames.flatMap((frame) => frame.ops)],
@@ -67,9 +96,9 @@ type FrameCasInput = {
  * 各フレームの検証結果とフレーム情報をペアで返す。
  */
 export async function verifyFramesCas<F extends FrameCasInput>(
-  tabId: number,
   frames: F[],
   verifiedOps: VerifiedOps,
+  createIntegrityVerifier: CreateIntegrityVerifier,
 ): Promise<{ result: SupportedVerifiedCas | CasVerifyFailed; frame: F }[]> {
   return Promise.all(
     frames.map((frame) =>
@@ -77,7 +106,7 @@ export async function verifyFramesCas<F extends FrameCasInput>(
         frame.cas,
         verifiedOps,
         frame.url,
-        FrameIntegrityVerifier(tabId, frame.frameId),
+        createIntegrityVerifier(frame),
       ).then((result) => ({ result, frame })),
     ),
   );
@@ -85,36 +114,27 @@ export async function verifyFramesCas<F extends FrameCasInput>(
 
 /**
  * タブ内のクレデンシャルを検証する共通関数
- * @param tabId タブID
  * @param page ページ
  * @param frames フレームのリスト
- * @param siteProfile Site Profile
+ * @param context レジストリ・Target Integrity 検証器・Site Profile
  * @returns
  *    - 成功時: { ops, cas, casResults, warnings, info }
  *    - 失敗時: 検証失敗した結果
  */
 export async function verifyAllCredentials(
-  tabId: number,
   page: Omit<TabCredentials, "frames">,
   frames: FrameCredentials[],
-  siteProfile?: VerifiedSp | null,
+  context: VerifyCredentialsContext,
 ) {
-  // 検証中の警告・情報を収集する (コンソールへの出力は維持)
-  const warnings: string[] = [];
-  const info: string[] = [];
-  const logger: Logger = {
-    warn: (message) => {
-      console.warn(message);
-      warnings.push(message);
-    },
-    info: (message) => {
-      console.info(message);
-      info.push(message);
-    },
-  };
+  const { registry, createIntegrityVerifier, siteProfile } = context;
+  const { logger, warnings, info } = createCollectingLogger();
 
   // OPS 検証
-  const verifiedOps = await verifyOps(page, frames, siteProfile, logger);
+  const verifiedOps = await verifyOps(page, frames, {
+    registry,
+    siteProfile,
+    logger,
+  });
   if (
     verifiedOps instanceof OpsInvalid ||
     verifiedOps instanceof OpsVerifyFailed
@@ -124,9 +144,9 @@ export async function verifyAllCredentials(
 
   // CAS 検証
   const casResults = await verifyFramesCas(
-    tabId,
     [page, ...frames],
     verifiedOps,
+    createIntegrityVerifier,
   );
   const failedCas = casResults.find(
     ({ result }) => result instanceof CasVerifyFailed,

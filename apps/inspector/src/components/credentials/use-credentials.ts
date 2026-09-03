@@ -1,8 +1,13 @@
 import { VerifiedOps, VerifiedSp } from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
+import { getRegistryOps } from "../../utils/registry-ops";
 import { useSiteProfile } from "../siteProfile";
-import { fetchTabCredentials, fetchVerificationResult } from "./messaging";
+import {
+  fetchTabCredentials,
+  fetchVerificationResult,
+  FrameIntegrityVerifier,
+} from "./messaging";
 import type { FramesVerifiedCas, SupportedVerifiedCas } from "./types";
 import { verifyAllCredentials } from "./verify-credentials";
 
@@ -29,7 +34,12 @@ async function fetchVerifiedCredentials([, tabId, sp]: [
   sp?: VerifiedSp,
 ]): Promise<FetchVerifiedCredentialsResult> {
   const { frames, ...page } = await fetchTabCredentials(tabId);
-  const result = await verifyAllCredentials(tabId, page, frames, sp);
+  const result = await verifyAllCredentials(page, frames, {
+    registry: await getRegistryOps(),
+    createIntegrityVerifier: ({ frameId }) =>
+      FrameIntegrityVerifier(tabId, frameId),
+    siteProfile: sp,
+  });
 
   if (result instanceof Error) {
     throw result;
