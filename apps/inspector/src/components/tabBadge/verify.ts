@@ -1,10 +1,11 @@
-import { deserializeIfError } from "@originator-profile/core";
-import { SpVerifier, VerifiedSp } from "@originator-profile/verify";
-import { getRegistryOps } from "../../utils/registry-ops";
+import type { VerifiedSp } from "@originator-profile/verify";
 import { fetchTabCredentials } from "../credentials";
 import type { SupportedVerifiedCas } from "../credentials/types";
 import { verifyAllCredentials } from "../credentials/verify-credentials";
-import { siteProfileMessenger } from "../siteProfile/events";
+import {
+  isSiteProfileFetchError,
+  verifyTabSiteProfile,
+} from "../siteProfile/verify-site-profile";
 
 /**
  * Site Profileを取得して検証する
@@ -15,42 +16,15 @@ async function fetchVerifiedSiteProfile(
   tabId: number,
 ): Promise<VerifiedSp | null> {
   try {
-    const result = await siteProfileMessenger.sendMessage(
-      "fetchSiteProfile",
-      null,
-      tabId,
-    );
-    const parsed = deserializeIfError(result);
-
-    if (parsed instanceof Error) {
-      return null;
-    }
-
-    const {
-      ops: registryOps,
-      keys: [cpIssuer, verificationKeys],
-    } = await getRegistryOps();
-
-    const verifySp = SpVerifier(
-      {
-        ...parsed.result,
-        originators: [...registryOps, ...parsed.result.originators],
-      },
-      verificationKeys,
-      cpIssuer,
-      parsed.origin,
-    );
-
-    const verifiedSp = await verifySp();
-    if (verifiedSp instanceof Error) {
-      return null;
-    }
-    return verifiedSp;
+    return await verifyTabSiteProfile(tabId);
   } catch (error) {
-    console.error(
-      `[fetchVerifiedSiteProfile] Failed to fetch site profile for tab ${tabId}:`,
-      error,
-    );
+    // NOTE: Site Profile 未設置は異常ではないため通知しない
+    if (!isSiteProfileFetchError(error)) {
+      console.error(
+        `[fetchVerifiedSiteProfile] Failed to verify site profile for tab ${tabId}:`,
+        error,
+      );
+    }
     return null;
   }
 }
