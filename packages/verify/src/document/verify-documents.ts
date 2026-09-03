@@ -60,7 +60,9 @@ export type VerifiedDocuments<
  *
  * @param targets 検証対象の文書
  * @param options レジストリ・検証済み Web サイト・バリデーター・ロガー
- * @returns 文書ごとの検証結果、または検証に失敗した結果
+ * @returns 文書ごとの検証結果、または検証に失敗した結果。
+ *   Content Attestation Set の検証に失敗した文書がある場合は、最初に失敗した
+ *   結果のみを返し、他の文書の検証結果は返さない。
  *
  * @example
  * ```ts

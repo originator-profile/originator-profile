@@ -9,7 +9,12 @@ export type Registry = {
   ops: OriginatorProfileSet;
   /** Core Profile の検証鍵 */
   keys: Keys;
-  /** Core Profile の発行者 */
+  /**
+   * Core Profile の発行者
+   *
+   * レジストリが複数の発行者を含む場合は配列になる。
+   * @see {@link prepareRegistry}
+   */
   issuer: string | string[];
 };
 
