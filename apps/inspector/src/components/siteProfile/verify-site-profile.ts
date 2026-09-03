@@ -7,7 +7,7 @@ import {
   SpVerifier,
   type VerifiedSp,
 } from "@originator-profile/verify";
-import { getRegistryOps } from "../../utils/registry-ops";
+import { getRegistry } from "../../utils/registry-ops";
 import { fetchTabSiteProfile } from "./messaging";
 
 /**
@@ -22,18 +22,15 @@ export async function verifyTabSiteProfile(
   options: { logger?: Logger } = {},
 ): Promise<VerifiedSp> {
   const data = await fetchTabSiteProfile(tabId);
-  const {
-    ops: registryOps,
-    keys: [cpIssuer, verificationKeys],
-  } = await getRegistryOps();
+  const registry = await getRegistry();
 
   const verifySp = SpVerifier(
     {
       ...data.result,
-      originators: [...registryOps, ...data.result.originators],
+      originators: [...registry.ops, ...data.result.originators],
     },
-    verificationKeys,
-    cpIssuer,
+    registry.keys,
+    registry.issuer,
     data.origin,
     options,
   );

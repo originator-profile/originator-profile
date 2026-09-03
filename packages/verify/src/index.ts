@@ -5,5 +5,6 @@ export * from "./integrity/";
 export * from "./keys";
 export * from "./logger";
 export * from "./originator-profile-set";
+export * from "./registry";
 export * from "./site-profile/";
 export * from "./verify-allowed-origin";

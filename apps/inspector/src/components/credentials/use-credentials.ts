@@ -1,7 +1,7 @@
 import { VerifiedOps, VerifiedSp } from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
-import { getRegistryOps } from "../../utils/registry-ops";
+import { getRegistry } from "../../utils/registry-ops";
 import { useSiteProfile } from "../siteProfile";
 import {
   fetchTabCredentials,
@@ -35,7 +35,7 @@ async function fetchVerifiedCredentials([, tabId, sp]: [
 ]): Promise<FetchVerifiedCredentialsResult> {
   const { frames, ...page } = await fetchTabCredentials(tabId);
   const result = await verifyAllCredentials(page, frames, {
-    registry: await getRegistryOps(),
+    registry: await getRegistry(),
     createIntegrityVerifier: ({ frameId }) =>
       FrameIntegrityVerifier(tabId, frameId),
     siteProfile: sp,

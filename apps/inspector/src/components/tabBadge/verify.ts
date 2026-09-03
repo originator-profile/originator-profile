@@ -1,5 +1,5 @@
 import type { VerifiedSp } from "@originator-profile/verify";
-import { getRegistryOps } from "../../utils/registry-ops";
+import { getRegistry } from "../../utils/registry-ops";
 import { fetchTabCredentials, FrameIntegrityVerifier } from "../credentials";
 import type { SupportedVerifiedCas } from "../credentials/types";
 import { verifyAllCredentials } from "../credentials/verify-credentials";
@@ -44,7 +44,7 @@ export async function verifyTabCredentials(tabId: number): Promise<{
     const [siteProfile, { frames, ...page }, registry] = await Promise.all([
       fetchVerifiedSiteProfile(tabId),
       fetchTabCredentials(tabId),
-      getRegistryOps(),
+      getRegistry(),
     ]);
     const result = await verifyAllCredentials(page, frames, {
       registry,

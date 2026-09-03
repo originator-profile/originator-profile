@@ -8,7 +8,7 @@ import {
   OpsInvalid,
   OpsVerifier,
   OpsVerifyFailed,
-  type TupledKeys,
+  type Registry,
   type VerifiedOps,
   type VerifiedSp,
   type VerifyIntegrity,
@@ -23,12 +23,6 @@ import type {
   TabCredentials,
 } from "./types";
 
-/** Core Profile 発行者の Originator Profile Set と検証鍵 */
-export type RegistryOps = {
-  ops: OriginatorProfileSet;
-  keys: TupledKeys;
-};
-
 /** フレームの Target Integrity 検証器を作成する */
 export type CreateIntegrityVerifier = (frame: {
   frameId: number;
@@ -36,7 +30,7 @@ export type CreateIntegrityVerifier = (frame: {
 
 /** クレデンシャル検証に必要な外部境界 */
 export type VerifyCredentialsContext = {
-  registry: RegistryOps;
+  registry: Registry;
   createIntegrityVerifier: CreateIntegrityVerifier;
   siteProfile?: VerifiedSp | null;
 };
@@ -50,24 +44,17 @@ export async function verifyOps(
   page: { ops: OriginatorProfileSet },
   frames: { ops: OriginatorProfileSet }[],
   options: {
-    registry: RegistryOps;
+    registry: Registry;
     siteProfile?: VerifiedSp | null;
     logger?: Logger;
   },
 ): ReturnType<ReturnType<typeof OpsVerifier>> {
-  const {
-    registry: {
-      ops: registryOps,
-      keys: [cpIssuer, verificationKeys],
-    },
-    siteProfile,
-    logger,
-  } = options;
+  const { registry, siteProfile, logger } = options;
 
   const opsVerifier = OpsVerifier(
-    [...registryOps, ...page.ops, ...frames.flatMap((frame) => frame.ops)],
-    verificationKeys,
-    cpIssuer,
+    [...registry.ops, ...page.ops, ...frames.flatMap((frame) => frame.ops)],
+    registry.keys,
+    registry.issuer,
     { logger },
   );
   const verifiedOps = await opsVerifier();
