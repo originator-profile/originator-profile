@@ -24,8 +24,13 @@ export const fetchOpMeta = (doc: Document): FetchOpMetaResult => {
   }
 
   const firstOpMeta = opMetas[0];
-  if (!isValidOpMeta(firstOpMeta)) {
+  if (!firstOpMeta) {
     return undefined;
   }
-  return firstOpMeta;
+
+  const opMeta = firstOpMeta.credential;
+  if (!isValidOpMeta(opMeta)) {
+    return undefined;
+  }
+  return opMeta;
 };

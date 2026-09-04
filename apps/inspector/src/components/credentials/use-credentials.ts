@@ -1,16 +1,20 @@
-import { VerifiedOps, VerifiedSp } from "@originator-profile/verify";
+import { VerifiedSp } from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
 import { useSiteProfile } from "../siteProfile";
 import { fetchTabCredentials, fetchVerificationResult } from "./messaging";
-import type { FramesVerifiedCas, SupportedVerifiedCas } from "./types";
+import type {
+  FramesVerifiedCas,
+  SupportedVerifiedCasWithSource,
+  VerifiedOpsWithSource,
+} from "./types";
 import { verifyAllCredentials } from "./verify-credentials";
 
 const CREDENTIALS_KEY = "credentials";
 
 type FetchVerifiedCredentialsResult = {
-  ops: VerifiedOps;
-  cas: SupportedVerifiedCas;
+  ops: VerifiedOpsWithSource;
+  cas: SupportedVerifiedCasWithSource;
   origin: string;
   url: string;
   framesCas: FramesVerifiedCas;
@@ -41,7 +45,7 @@ async function fetchVerifiedCredentials([, tabId, sp]: [
     origin: page.origin,
     url: page.url,
     framesCas: result.casResults.map(({ result: cas, frame }) => ({
-      cas: cas as SupportedVerifiedCas,
+      cas: cas as SupportedVerifiedCasWithSource,
       url: frame.url,
       origin: frame.origin,
       frameId: frame.frameId,
@@ -76,11 +80,11 @@ type UseCredentialsResult =
       info: undefined;
     }
   | {
-      cas: SupportedVerifiedCas;
+      cas: SupportedVerifiedCasWithSource;
       error: undefined;
       framesCas: FramesVerifiedCas;
       isLoading: false;
-      ops: VerifiedOps;
+      ops: VerifiedOpsWithSource;
       origin: string;
       tabId: number;
       warnings: string[];

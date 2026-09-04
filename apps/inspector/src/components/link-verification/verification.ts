@@ -138,7 +138,7 @@ export const getVerificationResult = async (
   try {
     const { ops } = await fetchTabCredentials(tabId);
     const { result: sp } = await fetchTabSiteProfile(tabId);
-    const decodedOps = decodeOps(ops);
+    const decodedOps = decodeOps(ops.map(({ credential }) => credential));
     const decodedWsps = decodeWsps(sp);
 
     if (decodedOps instanceof Error) {

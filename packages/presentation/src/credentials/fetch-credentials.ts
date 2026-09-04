@@ -4,7 +4,12 @@ import {
 } from "@originator-profile/model";
 import { getEmbeddedData } from "../get-embedded-data";
 import { CredentialsFetchFailed } from "./errors";
-import { FetchCredentialSetResult, FetchCredentialsResult } from "./types";
+import {
+  externalSource,
+  FetchCredentialSetResult,
+  FetchCredentialsResult,
+  SourcedCredential,
+} from "./types";
 
 function getEndpoints(doc: Document, mediaType: string): string[] {
   const endpoints = [
@@ -26,17 +31,24 @@ async function fetchCredentialSet<
     const profileEndpoints = getEndpoints(doc, mediaType);
 
     const profileSetFromEndpoints = await Promise.all(
-      profileEndpoints.map(async (endpoint) => {
-        const res = await fetch(endpoint);
+      profileEndpoints.map(
+        async (endpoint): Promise<SourcedCredential<T[number]>[]> => {
+          const res = await fetch(endpoint);
 
-        if (!res.ok) {
-          throw new CredentialsFetchFailed(`HTTP status code ${res.status}`);
-        }
+          if (!res.ok) {
+            throw new CredentialsFetchFailed(`HTTP status code ${res.status}`);
+          }
 
-        return await res.json();
-      }),
+          const json = await res.json();
+          const items = (Array.isArray(json) ? json : [json]) as T;
+          return items.map((credential) => ({
+            credential,
+            source: externalSource(endpoint),
+          }));
+        },
+      ),
     );
-    profiles = profiles.concat(profileSetFromEndpoints.flat()) as T;
+    profiles = profiles.concat(profileSetFromEndpoints.flat());
   } catch (e) {
     if (e instanceof Error || e instanceof window.Error) {
       return new CredentialsFetchFailed(

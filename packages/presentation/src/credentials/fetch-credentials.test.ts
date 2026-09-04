@@ -11,7 +11,10 @@ import {
   test,
 } from "vitest";
 import { CredentialsFetchFailed } from "./errors";
-import { fetchOriginatorProfileSet } from "./fetch-credentials";
+import {
+  fetchContentAttestationSet,
+  fetchOriginatorProfileSet,
+} from "./fetch-credentials";
 
 const server = setupServer();
 
@@ -48,7 +51,12 @@ describe("Originator Profile Set", () => {
     const result = await fetchOriginatorProfileSet(
       window.document as unknown as Document,
     );
-    expect(result).toStrictEqual(ops);
+    expect(result).toStrictEqual(
+      ops.map((credential) => ({
+        credential,
+        source: { kind: "external", url: opsUrl },
+      })),
+    );
   });
 
   test("無効なエンドポイント指定時 Originator Profile Set の取得に失敗", async () => {
@@ -202,5 +210,71 @@ describe("<script>要素から Originator Profile Set を取得する", () => {
     );
     expect(result).not.toBeInstanceOf(CredentialsFetchFailed);
     expect(result).toMatchSnapshot();
+  });
+});
+
+describe("Content Attestation Set", () => {
+  const casUrl = "https://example.com/cas.json";
+  const cas = ["eyJ..."];
+
+  test("有効な URL 指定時 source: external 付きで Content Attestation Set が得られる", async () => {
+    server.use(http.get(casUrl, () => HttpResponse.json(cas)));
+
+    const window = new Window();
+    window.document.body.innerHTML = `
+<script
+  src="${casUrl}"
+  rel="alternate"
+  type="application/cas+json"
+/>`;
+    const result = await fetchContentAttestationSet(
+      window.document as unknown as Document,
+    );
+    expect(result).toStrictEqual(
+      cas.map((credential) => ({
+        credential,
+        source: { kind: "external", url: casUrl },
+      })),
+    );
+  });
+
+  test("<script> 埋め込み時 source: embedded 付きで Content Attestation Set が得られる", async () => {
+    const window = new Window();
+    window.document.body.innerHTML = `
+<script type="application/cas+json">${JSON.stringify(cas)}</script>
+`;
+    const result = await fetchContentAttestationSet(
+      window.document as unknown as Document,
+    );
+    expect(result).toStrictEqual(
+      cas.map((credential) => ({
+        credential,
+        source: { kind: "embedded", elementIndex: 0 },
+      })),
+    );
+  });
+
+  test("埋め込み・参照両方から Content Attestation Set を取得できる", async () => {
+    server.use(http.get(casUrl, () => HttpResponse.json(cas)));
+
+    const window = new Window();
+    window.document.body.innerHTML = `
+<script type="application/cas+json">${JSON.stringify(cas)}</script>
+<script src="${casUrl}" rel="alternate" type="application/cas+json" />
+`;
+    const result = await fetchContentAttestationSet(
+      window.document as unknown as Document,
+    );
+    expect(result).not.toBeInstanceOf(CredentialsFetchFailed);
+    expect(result).toStrictEqual([
+      ...cas.map((credential) => ({
+        credential,
+        source: { kind: "embedded", elementIndex: 0 },
+      })),
+      ...cas.map((credential) => ({
+        credential,
+        source: { kind: "external", url: casUrl },
+      })),
+    ]);
   });
 });

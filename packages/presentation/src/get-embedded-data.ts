@@ -1,3 +1,5 @@
+import { embeddedSource, SourcedCredential } from "./credentials/types";
+
 /**
  * 文書内の指定された mediaType の埋め込みデータを取得する
  * @param doc Document オブジェクト
@@ -6,22 +8,24 @@
 export function getEmbeddedData<T extends unknown[]>(
   doc: Document,
   mediaType: string,
-): T {
+): SourcedCredential<T[number]>[] {
   const elements = [...doc.querySelectorAll(`script[type="${mediaType}"]`)];
-  const dataArray = elements
-    .map((elem) => {
-      const text = elem.textContent;
-      if (typeof text !== "string") {
-        return undefined;
-      }
-      try {
-        const json = JSON.parse(text);
-        return json;
-      } catch (e: unknown) {
-        return undefined;
-      }
-    })
-    .filter((e) => typeof e !== "undefined");
 
-  return dataArray.flat() as T;
+  return elements.flatMap((elem, elementIndex) => {
+    const text = elem.textContent;
+    if (typeof text !== "string") {
+      return [];
+    }
+    let json: unknown;
+    try {
+      json = JSON.parse(text);
+    } catch (e: unknown) {
+      return [];
+    }
+    const items = (Array.isArray(json) ? json : [json]) as T;
+    return items.map((credential) => ({
+      credential: credential,
+      source: embeddedSource(elementIndex),
+    }));
+  });
 }
