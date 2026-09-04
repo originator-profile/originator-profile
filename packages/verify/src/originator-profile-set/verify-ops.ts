@@ -62,7 +62,7 @@ const isVerifiedOps = (ops: OpVerificationResult[]): ops is VerifiedOps =>
  * @returns 検証者
  *
  * @remarks
- * 生成された検証者(`verify()`)は `ops` と同じ順序・同じ件数の結果を返す契約とする。
+ * 生成された検証者(`verify()`)が `VerifiedOps` を返す場合、その配列は `ops` と同じ順序・同じ件数になる契約とする。
  * 内部では `Promise.all(ops.map(...))` により検証しており、要素のフィルタ・
  * 並び替え・重複排除は行わない。この契約は呼び出し側(例: inspector の
  * `verifyOps`)がインデックスで入力と結果を対応付ける際の前提になっているため、
