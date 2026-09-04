@@ -15,6 +15,8 @@ import {
   verifyImageDigestSri,
   VerifyIntegrity,
 } from "../integrity";
+import type { Logger } from "../logger";
+import { ProblemType } from "../result/problem-types";
 import { verifyAllowedOrigin } from "../verify-allowed-origin";
 import { verifyAllowedUrl } from "../verify-allowed-url";
 import { CaInvalid, CaVerifyFailed } from "./errors";
@@ -26,20 +28,36 @@ type IntegrityResult = {
   expectedIntegrity: string;
 };
 
+/** allowedOrigin の非推奨を通知する */
+function warnAllowedOriginDeprecated(
+  logger: Logger,
+  subject: string,
+  at?: string,
+): void {
+  const message =
+    "[OP Warning] allowedOrigin is deprecated in Content Attestation and will be removed after September 2026. " +
+    "Please use allowedUrl instead. " +
+    "See: https://docs.originator-profile.org/";
+  logger.warn(message, {
+    type: ProblemType.AllowedOriginDeprecated,
+    title: message,
+    detail: subject,
+    ...(at && { pointer: at }),
+  });
+}
+
 async function checkUrlAndOrigin<T extends ContentAttestation>(
   result: VerifiedCa<T>,
   url: URL,
+  logger: Logger,
+  at?: string,
 ) {
   if (result.doc.allowedUrl && result.doc.allowedOrigin) {
     return new CaInvalid("allowedUrl and allowedOrigin are exclusive", result);
   }
 
   if (result.doc.allowedOrigin) {
-    console.warn(
-      "[OP Warning] allowedOrigin is deprecated in Content Attestation and will be removed after September 2026. " +
-        "Please use allowedUrl instead. " +
-        "See: https://docs.originator-profile.org/",
-    );
+    warnAllowedOriginDeprecated(logger, result.doc.credentialSubject.id, at);
   }
 
   if (
@@ -115,6 +133,8 @@ function checkIntegrityResults<T extends ContentAttestation>(
  * @param url 検証対象のURL
  * @param verifyIntegrity Target Integrity の検証器
  * @param validator バリデーター
+ * @param logger ロガー (デフォルト: `console`)
+ * @param at 検証対象の位置を指す JSONPath
  * @returns 検証機
  */
 export function CaVerifier<T extends ContentAttestation>(
@@ -124,6 +144,8 @@ export function CaVerifier<T extends ContentAttestation>(
   url: URL,
   verifyIntegrity: VerifyIntegrity = nativeVerifyIntegrity,
   validator?: VcValidator<VerifiedCa<T>>,
+  logger: Logger = console,
+  at?: string,
 ) {
   const verifyCa = JwtVcVerifier<T>(keys, issuer, validator);
   return async (): Promise<CaVerificationResult<T>> => {
@@ -134,12 +156,13 @@ export function CaVerifier<T extends ContentAttestation>(
     if (result instanceof VcVerifyFailed) {
       return new CaVerifyFailed("Content Attestation verify failed", result);
     }
-    const urlResult = await checkUrlAndOrigin(result, url);
+    const urlResult = await checkUrlAndOrigin(result, url, logger, at);
     if (urlResult instanceof Error) {
       return urlResult;
     }
     await verifyImageDigestSri(
       urlResult.doc.credentialSubject.image as Image | undefined,
+      { logger, ...(at && { at }) },
     );
     if (urlResult.doc.target) {
       if (urlResult.doc.target.length === 0) {
