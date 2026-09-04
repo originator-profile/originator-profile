@@ -1,4 +1,4 @@
-import { VerifiedSp } from "@originator-profile/verify";
+import type { ProblemDetails } from "@originator-profile/verify";
 import type { LinkVerificationResult } from "../credentials/types";
 import {
   isSiteProfileFetchError,
@@ -10,13 +10,12 @@ import type { CreateMismatchResultParams, VerificationContext } from "./types";
 /**
  * Site Profile 検証エラー時の結果オブジェクトを生成する
  * @param context - 検証コンテキスト
- * @param error - 発生したエラー
+ * @param problem - 検証失敗の理由
  */
 export const createErrorResult = (
   { targetOpId, sourceOrgName, expectedOrgName }: VerificationContext,
-  error: unknown,
+  problem?: ProblemDetails,
 ): LinkVerificationResult => {
-  const message = error instanceof Error ? error.message : String(error);
   return {
     status: "error",
     expectedOpId: targetOpId,
@@ -26,7 +25,7 @@ export const createErrorResult = (
       import.meta.env.MODE === "development"
         ? chrome.i18n.getMessage(
             "Verification_SiteProfileVerifyFailedDetail",
-            message,
+            problem?.title ?? "",
           )
         : chrome.i18n.getMessage("Verification_SiteProfileVerifyFailed"),
   };
@@ -57,7 +56,7 @@ export const createMismatchResult = ({
 };
 
 /**
- * 遷移先の Site Profile を検証し、OPID の照合結果を返す
+ * 遷移先の Web サイトを検証し、OPID の照合結果を返す
  * @param tabId - 検証対象のタブID
  * @param context - 検証コンテキスト
  */
@@ -67,12 +66,13 @@ export const getVerificationResult = async (
 ): Promise<LinkVerificationResult> => {
   const { targetOpId, sourceOrgName, expectedOrgName } = context;
 
-  let verifiedSp: VerifiedSp;
-  try {
-    verifiedSp = await verifyTabWebsite(tabId);
-  } catch (error) {
-    // NOTE: Site Profile 未設置は検証失敗ではなく OPID 未提示として扱う
-    if (isSiteProfileFetchError(error)) {
+  const { result } = await verifyTabWebsite(tabId);
+
+  // NOTE: 検証を通過した場合だけ照合する。通過していない Website Profile で
+  // 照合すると、署名されていない sp.json で matched を作れてしまう。
+  if (!result.status) {
+    const problem = result.errors[0];
+    if (isSiteProfileFetchError(problem)) {
       return createMismatchResult({
         targetOpId,
         sourceOrgName,
@@ -80,10 +80,10 @@ export const getVerificationResult = async (
         isMissing: true,
       });
     }
-    return createErrorResult(context, error);
+    return createErrorResult(context, problem);
   }
 
-  const { originators, sites } = verifiedSp;
+  const { originators, sites } = result.outcome;
   const destinationOrgName = getDestinationOrgName(
     originators,
     sites,

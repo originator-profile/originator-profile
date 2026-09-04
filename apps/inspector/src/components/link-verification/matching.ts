@@ -1,49 +1,40 @@
-import {
-  VerifiedOp,
-  VerifiedOps,
-  VerifiedSp,
-} from "@originator-profile/verify";
+import type { WebsiteProfile } from "@originator-profile/model";
+import type { OriginatorPayload } from "@originator-profile/verify";
 
-/** 検証済み Website Profile */
-export type VerifiedWsp = VerifiedSp["sites"][number];
-
-export const getOrgNameFromOp = (op: VerifiedOp): string | undefined => {
-  const annotationWithName = op.annotations?.find(
-    (a) =>
-      "name" in a.doc.credentialSubject &&
-      typeof a.doc.credentialSubject.name === "string",
-  );
-  if (annotationWithName) {
-    return (annotationWithName.doc.credentialSubject as { name: string }).name;
-  }
-  return undefined;
+export const getOrgNameFromOp = (op: OriginatorPayload): string | undefined => {
+  const named = op.annotations?.find((annotation) => {
+    const subject = annotation?.credentialSubject;
+    return subject && "name" in subject && typeof subject.name === "string";
+  });
+  const subject = named?.credentialSubject;
+  return subject && "name" in subject && typeof subject.name === "string"
+    ? subject.name
+    : undefined;
 };
 
 export const resolveName = (
-  wsp: VerifiedWsp,
-  originators: VerifiedOps,
+  wsp: WebsiteProfile,
+  originators: OriginatorPayload[],
 ): string | undefined => {
   const op = originators.find(
-    (o) => o.core.doc.credentialSubject.id === wsp.doc.issuer,
+    (o) => o.core?.credentialSubject.id === wsp.issuer,
   );
   if (op) {
     const orgName = getOrgNameFromOp(op);
     if (orgName) return orgName;
   }
   // WSP名のフォールバック
-  if ("name" in wsp.doc.credentialSubject) {
-    return wsp.doc.credentialSubject.name;
-  }
-  return undefined;
+  return "name" in wsp.credentialSubject
+    ? wsp.credentialSubject.name
+    : undefined;
 };
 
 export const getDestinationOrgName = (
-  originators: VerifiedOps,
-  sites: VerifiedWsp[],
+  originators: OriginatorPayload[],
+  sites: (WebsiteProfile | null)[],
   targetOpId: string,
 ): string | undefined => {
-  // targetOpIdに一致するWSPを検索
-  const matchedWsp = sites.find((wsp) => wsp.doc.issuer === targetOpId);
+  const matchedWsp = sites.find((wsp) => wsp?.issuer === targetOpId);
   if (matchedWsp) {
     return resolveName(matchedWsp, originators);
   }
@@ -54,8 +45,8 @@ export const getDestinationOrgName = (
 };
 
 export const isMatched = (
-  sites: VerifiedWsp[],
+  sites: (WebsiteProfile | null)[],
   targetOpId: string,
 ): boolean => {
-  return sites.some((wsp) => wsp.doc.issuer === targetOpId);
+  return sites.some((wsp) => wsp?.issuer === targetOpId);
 };

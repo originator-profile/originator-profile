@@ -1,31 +1,32 @@
-import type { VerifiedOps } from "@originator-profile/verify";
+import type { WebsiteProfile } from "@originator-profile/model";
+import type { OriginatorPayload } from "@originator-profile/verify";
 import { describe, expect, test } from "vitest";
 import {
   getDestinationOrgName,
   getOrgNameFromOp,
   isMatched,
   resolveName,
-  type VerifiedWsp,
 } from "./matching";
 
-/** テスト用の検証済み OP (照合に必要なプロパティのみ) */
-function op(id: string, annotationNames?: (string | undefined)[]) {
+/** テスト用の発信者ペイロード (照合に必要なプロパティのみ) */
+function op(
+  id: string,
+  annotationNames?: (string | undefined)[],
+): OriginatorPayload {
   return {
-    core: { doc: { credentialSubject: { id } } },
+    core: { credentialSubject: { id } },
     annotations: annotationNames?.map((name) => ({
-      doc: { credentialSubject: name === undefined ? {} : { name } },
+      credentialSubject: name === undefined ? {} : { name },
     })),
-  } as unknown as VerifiedOps[number];
+  } as unknown as OriginatorPayload;
 }
 
-/** テスト用の検証済み WSP (照合に必要なプロパティのみ) */
-function wsp(issuer: string, name?: string) {
+/** テスト用の Website Profile (照合に必要なプロパティのみ) */
+function wsp(issuer: string, name?: string): WebsiteProfile {
   return {
-    doc: {
-      issuer,
-      credentialSubject: name === undefined ? {} : { name },
-    },
-  } as unknown as VerifiedWsp;
+    issuer,
+    credentialSubject: name === undefined ? {} : { name },
+  } as unknown as WebsiteProfile;
 }
 
 describe("isMatched", () => {
@@ -37,6 +38,10 @@ describe("isMatched", () => {
 
   test("一致する WSP がなければ false", () => {
     expect(isMatched([wsp("dns:other")], "dns:example")).toBe(false);
+  });
+
+  test("復号できなかった WSP は照合に使わない", () => {
+    expect(isMatched([null], "dns:example")).toBe(false);
   });
 
   test("WSP が空なら false", () => {
