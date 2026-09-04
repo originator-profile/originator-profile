@@ -779,6 +779,7 @@ describe("Site Profileの検証", async () => {
       expect(result).not.instanceOf(SiteProfileVerifyFailed);
       expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining("digestSRI is missing"),
+        expect.anything(),
       );
     });
 
@@ -814,6 +815,7 @@ describe("Site Profileの検証", async () => {
       expect(result).not.instanceOf(SiteProfileVerifyFailed);
       expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining("digestSRI verification failed"),
+        expect.anything(),
       );
     });
   });

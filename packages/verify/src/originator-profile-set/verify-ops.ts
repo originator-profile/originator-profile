@@ -6,6 +6,7 @@ import {
 } from "@originator-profile/securing-mechanism";
 import { getMappedKeys } from "../keys";
 import type { Logger } from "../logger";
+import { pointer } from "../result/pointer";
 import { verifyAnnotations } from "./annotations";
 import { decodeOps } from "./decode-ops";
 import { OpsInvalid, OpsVerifyFailed, OpVerifyFailed } from "./errors";
@@ -91,15 +92,17 @@ export function OpsVerifier(
     const paOrWmpIssuerKeys = getMappedKeys(decoded);
     const resultOps = await Promise.all(
       decoded.map(async (op, opIndex): Promise<OpVerificationResult> => {
+        const at = pointer("originators", opIndex);
         const core = await verifyCp(op.core.source);
         const annotations = await verifyAnnotations(
           paOrWmpIssuerKeys,
           op.annotations,
-          { validator, logger },
+          { validator, logger, at },
         );
         const media = await verifyMedia(paOrWmpIssuerKeys, op.media, {
           validator,
           logger,
+          at,
         });
         const resultOp = { core, annotations, media };
 

@@ -389,6 +389,7 @@ describe("Profile Annotation の検証", async () => {
       expect(result).not.instanceOf(OpsVerifyFailed);
       expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining("digestSRI is missing"),
+        expect.anything(),
       );
     });
 
@@ -428,6 +429,7 @@ describe("Profile Annotation の検証", async () => {
       expect(result).not.instanceOf(OpsVerifyFailed);
       expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining("digestSRI verification failed"),
+        expect.anything(),
       );
     });
   });

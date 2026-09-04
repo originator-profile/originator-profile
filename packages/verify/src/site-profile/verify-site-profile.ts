@@ -21,6 +21,7 @@ import {
 } from "../originator-profile-set/errors";
 import { VerifiedOps } from "../originator-profile-set/types";
 import { OpsVerifier } from "../originator-profile-set/verify-ops";
+import { pointer } from "../result/pointer";
 import { verifyAllowedOrigin } from "../verify-allowed-origin";
 import { SpVerificationResult } from "./types";
 import { SiteProfileInvalid, SiteProfileVerifyFailed } from "./verify-errors";
@@ -150,6 +151,7 @@ export function SpVerifier(
 
         await verifyImageDigestSri(verified.doc.credentialSubject.image, {
           logger,
+          at: pointer("sites", index),
         });
 
         return verified;
