@@ -5,6 +5,8 @@ import {
 } from "@originator-profile/model";
 import { VerifiedJwtVc } from "@originator-profile/securing-mechanism";
 import type { Logger } from "../logger";
+import { pointer } from "../result/pointer";
+import { ProblemType } from "../result/problem-types";
 import type { Certificate, VerifiedOps } from "./types";
 
 /** 認可された Profile Annotation Policy ID の集合 */
@@ -84,9 +86,15 @@ function reportUnauthorizedAnnotation({
   const { doc } = annotation;
   const { issuer: profileAnnotationIssuer } = doc;
   const location = `OP[${opIndex}].PA[${paIndex}]`;
+  const at = pointer("originators", opIndex, "annotations", paIndex);
 
   if (!isProfileAnnotation(doc)) {
-    logger.warn(`Certificate is deprecated (${location})`);
+    const message = `Certificate is deprecated (${location})`;
+    logger.warn(message, {
+      type: ProblemType.CertificateDeprecated,
+      title: message,
+      pointer: at,
+    });
     return;
   }
 
@@ -94,9 +102,14 @@ function reportUnauthorizedAnnotation({
   const isAllowed =
     policyId && policy.get(profileAnnotationIssuer)?.has(policyId);
   if (!isAllowed) {
-    logger.info(
-      `Profile Annotation Issuer is not registered for this annotation scheme (${location} issuer: ${profileAnnotationIssuer}, scheme: ${policyId ?? "unknown"})`,
-    );
+    const scheme = policyId ?? "unknown";
+    const message = `Profile Annotation Issuer is not registered for this annotation scheme (${location} issuer: ${profileAnnotationIssuer}, scheme: ${scheme})`;
+    logger.info(message, {
+      type: ProblemType.PaIssuerNotRegistered,
+      title: message,
+      detail: `issuer: ${profileAnnotationIssuer}, scheme: ${scheme}`,
+      pointer: at,
+    });
   }
 }
 

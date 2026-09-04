@@ -212,6 +212,7 @@ describe("Content Attestationの検証", async () => {
       expect(result).not.instanceOf(CaVerifyFailed);
       expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining("digestSRI is missing"),
+        expect.anything(),
       );
     });
 
@@ -244,6 +245,7 @@ describe("Content Attestationの検証", async () => {
       expect(result).not.instanceOf(CaVerifyFailed);
       expect(warnSpy).toHaveBeenCalledWith(
         expect.stringContaining("digestSRI verification failed"),
+        expect.anything(),
       );
     });
   });
