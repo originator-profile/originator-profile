@@ -8,7 +8,7 @@ test("English UI messages are displayed correctly", async ({ context }) => {
 
   await expect(
     ext.getByText(
-      "Please contact the site operator regarding the originator of this web page",
+      "The originator of this web page is unverified. Please exercise caution",
     ),
     "Verify that the English text is displayed",
   ).toBeVisible();
