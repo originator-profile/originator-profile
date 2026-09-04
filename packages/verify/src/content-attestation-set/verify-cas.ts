@@ -29,7 +29,7 @@ import { CasVerificationResult, VerifiedCas } from "./types";
  * @returns CAS 検証結果
  *
  * @remarks
- * 返り値は `cas` と同じ順序・同じ件数の結果を返す契約とする。内部では
+ * `CasVerifyFailed` を返さず `VerifiedCas` を返す場合、その配列は `cas` と同じ順序・同じ件数になる契約とする。内部では
  * `Promise.all(cas.map(...))` により検証しており、要素のフィルタ・並び替えは
  * 行わない。この契約は呼び出し側(例: inspector の `verifyFramesCas`)が
  * インデックスで入力と結果を対応付ける際の前提になっているため、将来実装を
