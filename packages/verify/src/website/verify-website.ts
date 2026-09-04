@@ -1,5 +1,5 @@
 import type { SiteProfile } from "@originator-profile/model";
-import type { VcValidator } from "@originator-profile/securing-mechanism";
+import type { VcValidatorFactory } from "@originator-profile/securing-mechanism";
 import type { Logger } from "../logger";
 import type { Registry } from "../registry";
 import { SpVerifier, type SpVerificationResult } from "../site-profile";
@@ -34,7 +34,7 @@ export async function verifyWebsite(
     /** WSP が提示された Web サイトの origin との一致性検証の可否 (デフォルト: 有効) */
     verifyOrigin?: boolean;
     /** バリデーター */
-    validator?: typeof VcValidator;
+    validator?: VcValidatorFactory;
     /** ロガー (デフォルト: `console`) */
     logger?: Logger;
   },

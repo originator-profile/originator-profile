@@ -3,7 +3,7 @@ import type {
   ContentAttestationSet,
   OriginatorProfileSet,
 } from "@originator-profile/model";
-import type { VcValidator } from "@originator-profile/securing-mechanism";
+import type { VcValidatorFactory } from "@originator-profile/securing-mechanism";
 import {
   CasVerifyFailed,
   verifyCas,
@@ -82,7 +82,7 @@ export async function verifyDocuments<
     /** 検証済みの Web サイト。その発信者を検証済み OPS に加える */
     website?: VerifiedSp | null;
     /** バリデーター */
-    validator?: typeof VcValidator;
+    validator?: VcValidatorFactory;
     /** ロガー (デフォルト: `console`) */
     logger?: Logger;
   },

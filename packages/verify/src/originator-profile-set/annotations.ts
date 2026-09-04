@@ -5,9 +5,9 @@ import {
   ProfileAnnotation,
   ProfileAnnotationIssuerRegistration,
 } from "@originator-profile/model";
-import {
+import type {
   UnverifiedJwtVc,
-  VcValidator,
+  VcValidatorFactory,
   VerifiedJwtVc,
 } from "@originator-profile/securing-mechanism";
 import { z } from "zod";
@@ -45,7 +45,7 @@ export async function verifyAnnotations(
   annotations?: UnverifiedJwtVc<Certificate>[],
   options: {
     /** バリデーター */
-    validator?: typeof VcValidator;
+    validator?: VcValidatorFactory;
     /** ロガー (デフォルト: `console`) */
     logger?: Logger;
   } = {},

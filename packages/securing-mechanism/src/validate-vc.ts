@@ -32,7 +32,10 @@ export function VcValidator<V extends UnverifiedVc>(schema: ZodType) {
   return validate;
 }
 
-/** データモデルへの適合性確認のためのバリデーター */
+/** データモデルへの適合性確認のためのバリデーター (オブジェクト) */
 export type VcValidator<V extends UnverifiedVc> = ReturnType<
   typeof VcValidator<V>
 >;
+
+/** データモデルへの適合性確認のためのバリデーター (ファクトリー関数) */
+export type VcValidatorFactory = typeof VcValidator;

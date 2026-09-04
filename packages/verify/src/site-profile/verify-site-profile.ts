@@ -8,9 +8,9 @@ import {
   JwtVcDecoder,
   JwtVcVerificationResult,
   JwtVcVerifier,
-  UnverifiedJwtVc,
-  VcValidator,
-  VerifiedJwtVc,
+  type UnverifiedJwtVc,
+  type VcValidatorFactory,
+  type VerifiedJwtVc,
 } from "@originator-profile/securing-mechanism";
 import { verifyImageDigestSri } from "../integrity";
 import type { Logger } from "../logger";
@@ -77,7 +77,7 @@ export function SpVerifier(
     /** WSPが提示されたWebサイトのorigin引数との一致性検証の可否 (デフォルト: 有効) */
     verifyOrigin?: boolean;
     /** バリデーター */
-    validator?: typeof VcValidator;
+    validator?: VcValidatorFactory;
     /** ロガー (デフォルト: `console`) */
     logger?: Logger;
   } = {},
