@@ -2,17 +2,13 @@ import type {
   ContentAttestationSet,
   OriginatorProfileSet,
 } from "@originator-profile/model";
-import type {
-  CredentialSource,
-  SourcedCredential,
-} from "@originator-profile/presentation";
+import type { SourcedCredential } from "@originator-profile/presentation";
 import {
   CasVerifyFailed,
   type Logger,
   OpsInvalid,
   OpsVerifier,
   OpsVerifyFailed,
-  VerifiedOp,
   type VerifiedOps,
   type VerifiedSp,
   verifyCas,
@@ -22,26 +18,17 @@ import { deduplicateCas } from "./deduplicate-cas";
 import { FrameIntegrityVerifier } from "./messaging";
 import type {
   FrameCredentials,
+  OpOrigin,
   SupportedCa,
-  SupportedVerifiedCa,
+  SupportedVerifiedCaWithSource,
+  SupportedVerifiedCasWithSource,
   TabCredentials,
+  VerifiedOpWithSource,
+  VerifiedOpsWithSource,
 } from "./types";
-
-/**
- * OP の取得経路。
- * ページ埋め込み/外部URL(CredentialSource)に加え、
- * ページ由来ではない経路(レジストリ・Site Profile)も表現する。
- */
-export type OpOrigin =
-  | CredentialSource
-  | { kind: "registry" }
-  | { kind: "site-profile" };
 
 export const registrySource = (): OpOrigin => ({ kind: "registry" });
 export const siteProfileSource = (): OpOrigin => ({ kind: "site-profile" });
-
-/** 出所(取得経路)付き検証済み Originator Profile */
-export type VerifiedOpWithSource = VerifiedOp & { source: OpOrigin };
 
 /**
  * OPSを検証する。
@@ -53,7 +40,7 @@ export async function verifyOps(
   frames: { ops: SourcedCredential<OriginatorProfileSet[number]>[] }[],
   siteProfile?: VerifiedSp | null,
   logger?: Logger,
-): Promise<VerifiedOpWithSource[] | OpsInvalid | OpsVerifyFailed> {
+): Promise<VerifiedOpsWithSource | OpsInvalid | OpsVerifyFailed> {
   const {
     ops: registryOps,
     keys: [cpIssuer, verificationKeys],
@@ -119,15 +106,6 @@ type FrameCasInput = {
 };
 
 /**
- * 出所(取得経路)付き検証済み Content Attestation。
- * CAS はページ由来(ページ埋め込み/外部URL)以外の取得経路を持たないため、
- * OPS の {@link OpOrigin} と異なり source は {@link CredentialSource} のみとなる。
- */
-export type VerifiedCaWithSource = SupportedVerifiedCa & {
-  source: CredentialSource;
-};
-
-/**
  * フレームごとにCASを検証する。
  * 各フレームの検証結果とフレーム情報をペアで返す。
  */
@@ -135,7 +113,9 @@ export async function verifyFramesCas<F extends FrameCasInput>(
   tabId: number,
   frames: F[],
   verifiedOps: VerifiedOps,
-): Promise<{ result: VerifiedCaWithSource[] | CasVerifyFailed; frame: F }[]> {
+): Promise<
+  { result: SupportedVerifiedCasWithSource | CasVerifyFailed; frame: F }[]
+> {
   return Promise.all(
     frames.map(async (frame) => {
       const result = await verifyCas<SupportedCa>(
@@ -151,13 +131,15 @@ export async function verifyFramesCas<F extends FrameCasInput>(
       // ※ verifyCas も Promise.all(cas.map(...)) により検証しており、要素の
       //   フィルタ・並び替えを行わないため、入力と同じ順序・件数の結果を返す
       //   (packages/verify/src/content-attestation-set/verify-cas.ts 参照)
-      const resultWithSource: VerifiedCaWithSource[] = result.map((item, i) => {
-        const sourced = frame.cas[i];
-        if (!sourced) {
-          throw new Error(`frame.cas[${i}] not found`);
-        }
-        return { ...item, source: sourced.source };
-      });
+      const resultWithSource: SupportedVerifiedCaWithSource[] = result.map(
+        (item, i) => {
+          const sourced = frame.cas[i];
+          if (!sourced) {
+            throw new Error(`frame.cas[${i}] not found`);
+          }
+          return { ...item, source: sourced.source };
+        },
+      );
       return { result: resultWithSource, frame };
     }),
   );
@@ -218,7 +200,9 @@ export async function verifyAllCredentials(
   return {
     ops: verifiedOps,
     cas: deduplicateCas(
-      casResults.flatMap(({ result }) => result as VerifiedCaWithSource[]),
+      casResults.flatMap(
+        ({ result }) => result as SupportedVerifiedCaWithSource[],
+      ),
     ),
     casResults,
     warnings,
