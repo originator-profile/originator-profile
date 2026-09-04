@@ -6,7 +6,7 @@ import {
   createIntegrityMetadataSet,
   IntegrityMetadataSet,
 } from "websri";
-import { IntegrityFetchFailed } from "./error";
+import { IntegrityFetchFailed, IntegrityVerificationFailed } from "./error";
 import { verifyIntegrity } from "./target-integrity";
 import { IntegrityVerifyResult } from "./types";
 
@@ -179,5 +179,136 @@ describe("verifyIntegrity()", () => {
 
     expect(result instanceof Error).toBe(true);
     expect(result).toBeInstanceOf(IntegrityFetchFailed);
+  });
+
+  describe("cssSelector for ExternalResourceTargetIntegrity", () => {
+    const sriOf = async (content: string) =>
+      (
+        await createIntegrityMetadata(
+          "sha256",
+          await new Response(content).arrayBuffer(),
+        )
+      ).toString();
+
+    it("should verify the element matching the CSS selector without an integrity attribute", async () => {
+      const integrity = await sriOf("ok");
+
+      document.body.innerHTML = `\
+<img class="hero" src="data:text/plain,ok" />
+`;
+
+      const fetchResult = await verifyIntegrity({
+        type: "ExternalResourceTargetIntegrity",
+        cssSelector: ".hero",
+        integrity,
+      });
+
+      expect(fetchResult instanceof Error).toBe(false);
+      expect((fetchResult as IntegrityVerifyResult).valid).toBe(true);
+    });
+
+    it("should prefer the CSS selector over the integrity attribute", async () => {
+      const integrity = await sriOf("ok");
+
+      document.body.innerHTML = `\
+<img class="hero" src="data:text/plain,ok" />
+<img integrity="${integrity}" src="data:text/plain,ng" />
+`;
+
+      const fetchResult = await verifyIntegrity({
+        type: "ExternalResourceTargetIntegrity",
+        cssSelector: ".hero",
+        integrity,
+      });
+
+      expect(fetchResult instanceof Error).toBe(false);
+      expect((fetchResult as IntegrityVerifyResult).valid).toBe(true);
+    });
+
+    it("should return true when every element matching the CSS selector matches the integrity", async () => {
+      const integrity = await sriOf("ok");
+
+      document.body.innerHTML = `\
+<img class="logo" src="data:text/plain,ok" />
+<img class="logo" src="data:text/plain,ok" />
+`;
+
+      const fetchResult = await verifyIntegrity({
+        type: "ExternalResourceTargetIntegrity",
+        cssSelector: ".logo",
+        integrity,
+      });
+
+      expect(fetchResult instanceof Error).toBe(false);
+      expect((fetchResult as IntegrityVerifyResult).valid).toBe(true);
+    });
+
+    it("should return false when any element matching the CSS selector does not match the integrity", async () => {
+      const integrity = await sriOf("ok");
+
+      document.body.innerHTML = `\
+<img class="logo" src="data:text/plain,ok" />
+<img class="logo" src="data:text/plain,ng" />
+`;
+
+      const fetchResult = await verifyIntegrity({
+        type: "ExternalResourceTargetIntegrity",
+        cssSelector: ".logo",
+        integrity,
+      });
+
+      expect(fetchResult instanceof Error).toBe(false);
+      const verifyResult = fetchResult as IntegrityVerifyResult;
+      expect(verifyResult.valid).toBe(false);
+      expect(verifyResult.failedIntegrities).toEqual([await sriOf("ng")]);
+    });
+
+    it("should return false when any element matching the integrity attribute does not match the integrity", async () => {
+      const integrity = await sriOf("ok");
+
+      document.body.innerHTML = `\
+<img integrity="${integrity}" src="data:text/plain,ok" />
+<img integrity="${integrity}" src="data:text/plain,ng" />
+`;
+
+      const fetchResult = await verifyIntegrity({
+        type: "ExternalResourceTargetIntegrity",
+        integrity,
+      });
+
+      expect(fetchResult instanceof Error).toBe(false);
+      const verifyResult = fetchResult as IntegrityVerifyResult;
+      expect(verifyResult.valid).toBe(false);
+      expect(verifyResult.failedIntegrities).toEqual([await sriOf("ng")]);
+    });
+
+    it("should return false if no elements match the CSS selector", async () => {
+      const integrity = await sriOf("ok");
+
+      document.body.innerHTML = `\
+<img integrity="${integrity}" src="data:text/plain,ok" />
+`;
+
+      const fetchResult = await verifyIntegrity({
+        type: "ExternalResourceTargetIntegrity",
+        cssSelector: ".non-existent",
+        integrity,
+      });
+
+      expect(fetchResult instanceof Error).toBe(false);
+      const verifyResult = fetchResult as IntegrityVerifyResult;
+      expect(verifyResult.valid).toBe(false);
+      expect(verifyResult.failedIntegrities).toEqual([]);
+    });
+
+    it("should return IntegrityVerificationFailed if the CSS selector has a syntax error", async () => {
+      const fetchResult = await verifyIntegrity({
+        type: "ExternalResourceTargetIntegrity",
+        cssSelector: "[",
+        integrity: await sriOf("ok"),
+      });
+
+      expect(fetchResult).toBeInstanceOf(IntegrityVerificationFailed);
+    });
   });
 });

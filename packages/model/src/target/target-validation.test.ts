@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
 import { BasicTarget } from "./basic-target";
+import { ExternalResourceTarget } from "./external-resource-target";
 import { RawTarget } from "./raw-target";
+import { Target } from "./target";
 
 const VALID_INTEGRITY = `sha256-${"A".repeat(43)}=`;
 
@@ -69,5 +71,45 @@ describe("target[].cssSelector バリデーション", () => {
         ).toBe(true);
       });
     }
+  });
+
+  describe("ExternalResourceTarget", () => {
+    test("cssSelector を省略できる", () => {
+      expect(
+        ExternalResourceTarget.safeParse({
+          type: "ExternalResourceTargetIntegrity",
+          integrity: VALID_INTEGRITY,
+        }).success,
+      ).toBe(true);
+    });
+
+    test("cssSelector を保持する", () => {
+      const result = ExternalResourceTarget.safeParse({
+        type: "ExternalResourceTargetIntegrity",
+        integrity: VALID_INTEGRITY,
+        cssSelector: "#hero-image",
+      });
+      expect(result.data?.cssSelector).toBe("#hero-image");
+    });
+
+    test("文字列以外の cssSelector → エラー", () => {
+      expect(
+        ExternalResourceTarget.safeParse({
+          type: "ExternalResourceTargetIntegrity",
+          integrity: VALID_INTEGRITY,
+          cssSelector: 123,
+        }).success,
+      ).toBe(false);
+    });
+
+    test("Target が cssSelector 付きの External Resource Target を受け付ける", () => {
+      const result = Target.safeParse({
+        type: "ExternalResourceTargetIntegrity",
+        integrity: VALID_INTEGRITY,
+        cssSelector: "#hero-image",
+      });
+      expect(result.success).toBe(true);
+      expect(result.data).toMatchObject({ cssSelector: "#hero-image" });
+    });
   });
 });

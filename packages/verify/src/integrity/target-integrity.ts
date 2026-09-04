@@ -8,7 +8,7 @@ import {
   fetchTextContent,
   fetchVisibleTextContent,
   selectByCss,
-  selectByIntegrity,
+  selectByCssOrIntegrity,
 } from "@originator-profile/sign";
 import { createIntegrityMetadataSet, IntegrityMetadataSet } from "websri";
 import { IntegrityFetchFailed, IntegrityVerificationFailed } from "./error";
@@ -67,7 +67,7 @@ export const TargetIntegrityAlgorithm = {
   },
   ExternalResourceTargetIntegrity: {
     contentFetcher: fetchExternalResource,
-    elementSelector: selectByIntegrity,
+    elementSelector: selectByCssOrIntegrity,
   },
 };
 

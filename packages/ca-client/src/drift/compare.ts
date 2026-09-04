@@ -192,12 +192,11 @@ const extractOptionsFromCas = (
     "VisibleTextTargetIntegrity",
     options.visibleTextSelector,
   ),
-  externalSelector:
-    options.externalSelector ??
-    casTargets.find(
-      (target) => target.type === "ExternalResourceTargetIntegrity",
-    )?.cssSelector ??
-    DEFAULT_EXTERNAL_SELECTOR,
+  externalSelectors: selectorsForType(
+    casTargets,
+    "ExternalResourceTargetIntegrity",
+    options.externalSelector ?? DEFAULT_EXTERNAL_SELECTOR,
+  ),
 });
 
 export const detectDrift = async (
