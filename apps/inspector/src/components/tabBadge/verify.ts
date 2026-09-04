@@ -1,56 +1,29 @@
-import { deserializeIfError } from "@originator-profile/core";
-import { SpVerifier, VerifiedSp } from "@originator-profile/verify";
-import { getRegistryOps } from "../../utils/registry-ops";
-import { fetchTabCredentials } from "../credentials";
-import type { SupportedVerifiedCas } from "../credentials/types";
-import { verifyAllCredentials } from "../credentials/verify-credentials";
-import { siteProfileMessenger } from "../siteProfile/events";
+import { type VerifiedSp, verifyDocuments } from "@originator-profile/verify";
+import { getRegistry } from "../../utils/registry-ops";
+import { fetchTabCredentials, FrameIntegrityVerifier } from "../credentials";
+import { deduplicateCas } from "../credentials/deduplicate-cas";
+import type { SupportedCa, SupportedVerifiedCas } from "../credentials/types";
+import {
+  isSiteProfileFetchError,
+  verifyTabWebsite,
+} from "../siteProfile/verify-website";
 
 /**
- * Site Profileを取得して検証する
+ * Web サイトを取得して検証する
  * @param tabId タブID
- * @returns 検証済みSite Profile、または取得・検証失敗時はnull
+ * @returns 検証済み Site Profile、または取得・検証失敗時はnull
  */
-async function fetchVerifiedSiteProfile(
-  tabId: number,
-): Promise<VerifiedSp | null> {
+async function fetchVerifiedWebsite(tabId: number): Promise<VerifiedSp | null> {
   try {
-    const result = await siteProfileMessenger.sendMessage(
-      "fetchSiteProfile",
-      null,
-      tabId,
-    );
-    const parsed = deserializeIfError(result);
-
-    if (parsed instanceof Error) {
-      return null;
-    }
-
-    const {
-      ops: registryOps,
-      keys: [cpIssuer, verificationKeys],
-    } = await getRegistryOps();
-
-    const verifySp = SpVerifier(
-      {
-        ...parsed.result,
-        originators: [...registryOps, ...parsed.result.originators],
-      },
-      verificationKeys,
-      cpIssuer,
-      parsed.origin,
-    );
-
-    const verifiedSp = await verifySp();
-    if (verifiedSp instanceof Error) {
-      return null;
-    }
-    return verifiedSp;
+    return await verifyTabWebsite(tabId);
   } catch (error) {
-    console.error(
-      `[fetchVerifiedSiteProfile] Failed to fetch site profile for tab ${tabId}:`,
-      error,
-    );
+    // NOTE: Site Profile 未設置は異常ではないため通知しない
+    if (!isSiteProfileFetchError(error)) {
+      console.error(
+        `[fetchVerifiedWebsite] Failed to verify website for tab ${tabId}:`,
+        error,
+      );
+    }
     return null;
   }
 }
@@ -66,18 +39,28 @@ export async function verifyTabCredentials(tabId: number): Promise<{
   count: number;
 } | null> {
   try {
-    const [siteProfile, { frames, ...page }] = await Promise.all([
-      fetchVerifiedSiteProfile(tabId),
+    const [website, { frames, ...page }, registry] = await Promise.all([
+      fetchVerifiedWebsite(tabId),
       fetchTabCredentials(tabId),
+      getRegistry(),
     ]);
-    const result = await verifyAllCredentials(tabId, page, frames, siteProfile);
+
+    const targets = [page, ...frames].map((frame) => ({
+      ...frame,
+      verifyIntegrity: FrameIntegrityVerifier(tabId, frame.frameId),
+    }));
+
+    const result = await verifyDocuments<SupportedCa, (typeof targets)[number]>(
+      targets,
+      { registry, website },
+    );
 
     if (result instanceof Error) return null;
 
-    return {
-      verifiedCas: result.cas,
-      count: result.cas.length,
-    };
+    const verifiedCas = deduplicateCas(
+      result.documents.flatMap(({ cas }) => cas),
+    );
+    return { verifiedCas, count: verifiedCas.length };
   } catch (error) {
     console.error(
       `[verifyTabCredentials] Failed to verify credentials for tab ${tabId}:`,
