@@ -1,37 +1,48 @@
-import { type VerifiedSp, verifyDocuments } from "@originator-profile/verify";
+import type { OriginatorProfileSet } from "@originator-profile/model";
+import { verifyDocuments } from "@originator-profile/verify";
 import { getRegistry } from "../../utils/registry-ops";
+import { toLegacyDocuments } from "../../utils/to-legacy-result";
 import { fetchTabCredentials, FrameIntegrityVerifier } from "../credentials";
 import { deduplicateCas } from "../credentials/deduplicate-cas";
-import type { SupportedCa, SupportedVerifiedCas } from "../credentials/types";
+import type { SupportedVerifiedCas } from "../credentials/types";
 import {
   isSiteProfileFetchError,
   verifyTabWebsite,
 } from "../siteProfile/verify-website";
 
 /**
- * Web サイトを取得して検証する
+ * Web サイトを検証し、文書の検証で検証鍵に加える発信者を得る
  * @param tabId タブID
- * @returns 検証済み Site Profile、または取得・検証失敗時はnull
+ * @returns サイトが提示した発信者。取得・検証に失敗した場合は undefined
  */
-async function fetchVerifiedWebsite(tabId: number): Promise<VerifiedSp | null> {
+async function fetchWebsiteOriginators(
+  tabId: number,
+): Promise<OriginatorProfileSet | undefined> {
   try {
-    return await verifyTabWebsite(tabId);
-  } catch (error) {
+    const { result, siteProfile } = await verifyTabWebsite(tabId);
+    if (result.status) return siteProfile?.originators;
+
     // NOTE: Site Profile 未設置は異常ではないため通知しない
-    if (!isSiteProfileFetchError(error)) {
+    if (!isSiteProfileFetchError(result.errors[0])) {
       console.error(
-        `[fetchVerifiedWebsite] Failed to verify website for tab ${tabId}:`,
-        error,
+        `[fetchWebsiteOriginators] Failed to verify website for tab ${tabId}:`,
+        result.errors,
       );
     }
-    return null;
+    return undefined;
+  } catch (error) {
+    console.error(
+      `[fetchWebsiteOriginators] Failed to verify website for tab ${tabId}:`,
+      error,
+    );
+    return undefined;
   }
 }
 
 /**
  * タブのクレデンシャルを検証する
  * @param tabId タブID
- * @returns 検証成功時は検証済みCASとその件数。OPS検証失敗時、CAS検証失敗時、
+ * @returns 検証成功時は検証済みCASとその件数。検証に失敗した場合、
  *          または検証処理中にエラーが発生した場合はnull
  */
 export async function verifyTabCredentials(tabId: number): Promise<{
@@ -39,27 +50,29 @@ export async function verifyTabCredentials(tabId: number): Promise<{
   count: number;
 } | null> {
   try {
-    const [website, { frames, ...page }, registry] = await Promise.all([
-      fetchVerifiedWebsite(tabId),
-      fetchTabCredentials(tabId),
-      getRegistry(),
-    ]);
+    const [websiteOriginators, { frames, ...page }, registry] =
+      await Promise.all([
+        fetchWebsiteOriginators(tabId),
+        fetchTabCredentials(tabId),
+        getRegistry(),
+      ]);
 
     const targets = [page, ...frames].map((frame) => ({
       ...frame,
       verifyIntegrity: FrameIntegrityVerifier(tabId, frame.frameId),
     }));
 
-    const result = await verifyDocuments<SupportedCa, (typeof targets)[number]>(
-      targets,
-      { registry, website },
-    );
+    const result = await verifyDocuments(targets, {
+      registry,
+      websiteOriginators,
+    });
 
-    if (result instanceof Error) return null;
+    const legacy = toLegacyDocuments(result);
+    if (legacy instanceof Error) return null;
 
     const verifiedCas = deduplicateCas(
-      result.documents.flatMap(({ cas }) => cas),
-    );
+      legacy.documents.flatMap(({ cas }) => cas),
+    ) as SupportedVerifiedCas;
     return { verifiedCas, count: verifiedCas.length };
   } catch (error) {
     console.error(

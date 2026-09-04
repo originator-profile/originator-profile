@@ -15,6 +15,8 @@ import {
   VerifiedOps,
   VerifyIntegrity,
 } from "../";
+import type { Logger } from "../logger";
+import { childPointer } from "../result/pointer";
 import { CasVerifyFailed } from "./errors";
 import { normalizeCasItem } from "./normalize-cas-item";
 import { CasVerificationResult, VerifiedCas } from "./types";
@@ -26,6 +28,8 @@ import { CasVerificationResult, VerifiedCas } from "./types";
  * @param url 検証対象のURL
  * @param verifyIntegrity Target Integrity の検証器
  * @param validator バリデーター
+ * @param logger ロガー (デフォルト: `console`)
+ * @param at 検証対象の文書の位置を指す JSONPath
  * @returns CAS 検証結果
  *
  * @example
@@ -51,10 +55,12 @@ export async function verifyCas<
   url: string,
   verifyIntegrity: VerifyIntegrity,
   validator?: VcValidatorFactory,
+  logger?: Logger,
+  at?: string,
 ): Promise<CasVerificationResult<T>> {
   const decodeCa = JwtVcDecoder<ContentAttestation>();
   const resultCas = await Promise.all(
-    cas.map(async (ca) => {
+    cas.map(async (ca, index) => {
       const { main, attestation: source } = normalizeCasItem(ca);
       const decodedCa = decodeCa(source);
       if (decodedCa instanceof Error) {
@@ -79,6 +85,8 @@ export async function verifyCas<
         new URL(url),
         verifyIntegrity,
         validator?.(ContentAttestation),
+        logger,
+        at ? childPointer(at, "cas", index, "attestation") : undefined,
       );
       return { main, attestation: await verify() };
     }),

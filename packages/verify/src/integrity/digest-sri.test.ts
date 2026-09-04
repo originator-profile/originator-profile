@@ -8,6 +8,8 @@ import {
   vi,
 } from "vitest";
 import { createIntegrityMetadata } from "websri";
+import { collectProblems } from "../result/collect-problems";
+import { ProblemType } from "../result/problem-types";
 import { verifyDigestSri, verifyImageDigestSri } from "./digest-sri";
 
 async function fetcher(): Promise<Response> {
@@ -150,6 +152,7 @@ describe("verifyImageDigestSri", () => {
 
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining("digestSRI verification failed"),
+      expect.anything(),
     );
   });
 
@@ -161,7 +164,29 @@ describe("verifyImageDigestSri", () => {
 
     expect(warnSpy).toHaveBeenCalledWith(
       expect.stringContaining("digestSRI is missing"),
+      expect.anything(),
     );
+  });
+
+  test("構造化された通知を位置とともに収集できる", async () => {
+    const { logger, warnings } = collectProblems({
+      warn: vi.fn(),
+      info: vi.fn(),
+    });
+
+    await verifyImageDigestSri(
+      { id: "https://example.org/image.png" },
+      { fetcher, logger, at: "$.originators[0].media[0]" },
+    );
+
+    expect(warnings).toEqual([
+      {
+        type: ProblemType.DigestSriMissing,
+        title: expect.stringContaining("digestSRI is missing"),
+        detail: "https://example.org/image.png",
+        pointer: "$.originators[0].media[0]",
+      },
+    ]);
   });
 
   test("undefined の場合、何もしない", async () => {
