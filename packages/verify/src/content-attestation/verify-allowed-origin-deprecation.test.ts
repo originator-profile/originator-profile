@@ -12,6 +12,7 @@ import {
   vi,
 } from "vitest";
 import { opId } from "../helper";
+import { ProblemType } from "../result/problem-types";
 import { CaVerifier } from "./verify-content-attestation";
 
 const issuedAt = fromUnixTime(getUnixTime(new Date()));
@@ -73,6 +74,7 @@ describe("allowedOrigin deprecation 警告", async () => {
       "[OP Warning] allowedOrigin is deprecated in Content Attestation and will be removed after September 2026. " +
         "Please use allowedUrl instead. " +
         "See: https://docs.originator-profile.org/",
+      expect.objectContaining({ type: ProblemType.AllowedOriginDeprecated }),
     );
   });
 
