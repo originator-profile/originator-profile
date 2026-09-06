@@ -742,21 +742,7 @@ const uca = await ContentAttestation.unsignedCa(input, {
 });
 ```
 
-### CA Server経由での署名
-
-CA Server で署名する場合は `ContentAttestation.signByServer()` を使います。
-内部では未署名 Content Attestation を組み立てて CA server に送信し、返却された JWT を受け取ります。
-
-```ts
-import { ContentAttestation } from "@originator-profile/opvc";
-
-const jwt = await ContentAttestation.signByServer(input, {
-  endpoint: "https://example.com/ca",
-  accessToken: process.env.CA_SERVER_ACCESS_TOKEN!,
-  issuedAt: new Date(),
-  expiredAt: "2027-03-31",
-});
-```
+CA サーバー経由の署名は [`@originator-profile/ca-client`](https://www.npmjs.com/package/@originator-profile/ca-client) の `createCaClient().sign()` を使用してください。
 
 ### Website Profile の署名 (単一 / 多言語)
 
