@@ -133,20 +133,10 @@ const jwt = await client.sign({
 第 2 引数は payload が不正なとき、エラーメッセージに埋め込む識別子です。
 
 ```ts
-import { readFile } from "node:fs/promises";
+import { readCasFile } from "@originator-profile/ca-client";
 
-const casJson = JSON.parse(
-  await readFile("dist/cas/ja-JP.page.cas.json", "utf8"),
-);
-const jwt = casJson[0]; // CAS ファイルは JWT の配列
-const existingPayload = JSON.parse(
-  Buffer.from(jwt.split(".")[1], "base64url").toString("utf8"),
-);
-
-const renewed = await client.reSign(
-  existingPayload,
-  "dist/cas/ja-JP.page.cas.json",
-);
+const { payload } = await readCasFile("dist/cas/ja-JP.page.cas.json");
+const renewed = await client.reSign(payload, "dist/cas/ja-JP.page.cas.json");
 ```
 
 `createCaClient` に渡した `issuer` が、payload の `issuer` より優先されます。
@@ -168,6 +158,18 @@ await writeCasFile({
 
 ```json
 ["eyJ..."]
+```
+
+### readCasFile
+
+`readCasFile` は、[CAS](https://docs.originator-profile.org/ja/opb/content-attestation-set/) ファイルを読み、先頭 JWT とデコード済み payload を返します。相対パスは cwd 基準です。
+
+payload は署名検証をしない VC 文書です。JWT の `iss` / `iat` / `exp` は含まれません。`reSign` にそのまま渡せます。複数要素の CAS は先頭 1 件のみ読みます。
+
+```ts
+import { readCasFile } from "@originator-profile/ca-client";
+
+const { jwt, payload } = await readCasFile("dist/cas/ja-JP.page.cas.json");
 ```
 
 ### detectDrift

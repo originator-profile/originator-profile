@@ -29,6 +29,7 @@
   },
   "dependencies": {
     "@originator-profile/model": "workspace:*",
+    "@originator-profile/securing-mechanism": "workspace:*",
     "@originator-profile/sign": "workspace:*",
     "jsdom": "^29.0.1"
   },

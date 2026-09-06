@@ -3,7 +3,13 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { expect, test } from "vitest";
 import { CaClientError, CaClientErrorCode } from "../errors";
-import { deleteCasFiles, resolveCasFilePath, writeCasFile } from "./file";
+import {
+  deleteCasFiles,
+  parseCasFileContent,
+  readCasFile,
+  resolveCasFilePath,
+  writeCasFile,
+} from "./file";
 
 const withTempDir = async (run: (dir: string) => Promise<void>) => {
   const dir = await mkdtemp(join(tmpdir(), "ca-client-cas-store-"));
@@ -211,4 +217,105 @@ test("resolveCasFilePath: rejects an empty path so it is not resolved to cwd", (
       "filePath must be a non-empty string",
     );
   }
+});
+
+const INVALID_CAS_FORMAT =
+  "Invalid CAS file format (expected JSON array with JWT string)";
+
+const encodeJwt = (
+  payload: unknown,
+  header: Record<string, unknown> = { alg: "ES256", typ: "vc+jwt" },
+) =>
+  `${Buffer.from(JSON.stringify(header)).toString("base64url")}.${Buffer.from(JSON.stringify(payload)).toString("base64url")}.sig`;
+
+test("parseCasFileContent: returns the leading JWT", () => {
+  const token = "header.payload.signature";
+  expect(parseCasFileContent(JSON.stringify([token]))).toBe(token);
+});
+
+test("parseCasFileContent: accepts { main, attestation } items", () => {
+  const token = "header.payload.signature";
+  expect(
+    parseCasFileContent(JSON.stringify([{ main: true, attestation: token }])),
+  ).toBe(token);
+});
+
+test("parseCasFileContent: rejects a non-array document", () => {
+  expect(() => parseCasFileContent(JSON.stringify({ notArray: true }))).toThrow(
+    CaClientError,
+  );
+  expect(() => parseCasFileContent(JSON.stringify({ notArray: true }))).toThrow(
+    INVALID_CAS_FORMAT,
+  );
+});
+
+test("parseCasFileContent: surfaces JSON.parse errors as CA_VALIDATION", () => {
+  expect(() => parseCasFileContent("{invalid")).toThrow(CaClientError);
+  expect(() => parseCasFileContent("{invalid")).toThrow(/JSON/i);
+});
+
+test("readCasFile: returns jwt and payload with JWT registered claims stripped", async () => {
+  await withTempDir(async (dir) => {
+    const payload = {
+      target: [{ type: "TextTargetIntegrity" }],
+      iss: "dns:x",
+      credentialSubject: { id: "urn:uuid:1" },
+    };
+    const jwt = encodeJwt(payload);
+    const filePath = join(dir, "ja-JP.about.cas.json");
+    await writeFile(filePath, JSON.stringify([jwt]));
+
+    const result = await readCasFile(filePath);
+    expect(result.jwt).toBe(jwt);
+    expect(result.payload).toEqual({
+      target: payload.target,
+      credentialSubject: payload.credentialSubject,
+    });
+  });
+});
+
+test("readCasFile: reads a file written by writeCasFile", async () => {
+  await withTempDir(async (dir) => {
+    const payload = { credentialSubject: { id: "urn:uuid:roundtrip" } };
+    const jwt = encodeJwt(payload);
+    const filePath = join(dir, "cas", "page.cas.json");
+
+    await writeCasFile({ filePath, jwt });
+    const result = await readCasFile(filePath);
+
+    expect(result.jwt).toBe(jwt);
+    expect(result.payload).toEqual(payload);
+  });
+});
+
+test("readCasFile: wraps missing files as CA_FILE", async () => {
+  const missing = join(tmpdir(), "missing-cas-file.cas.json");
+  await expect(readCasFile(missing)).rejects.toMatchObject({
+    name: "CaClientError",
+    code: CaClientErrorCode.File,
+    message: expect.stringMatching(
+      `^Failed to read CAS file ${resolve(missing)}:`,
+    ),
+  });
+});
+
+test("readCasFile: rejects an empty filePath as CA_VALIDATION", async () => {
+  await expect(readCasFile("   ")).rejects.toMatchObject({
+    name: "CaClientError",
+    code: CaClientErrorCode.Validation,
+    message: "filePath must be a non-empty string",
+  });
+});
+
+test("readCasFile: rejects an invalid JWT as CA_VALIDATION", async () => {
+  await withTempDir(async (dir) => {
+    const filePath = join(dir, "bad.cas.json");
+    await writeFile(filePath, JSON.stringify(["not-a-jwt"]));
+
+    await expect(readCasFile(filePath)).rejects.toMatchObject({
+      name: "CaClientError",
+      code: CaClientErrorCode.Validation,
+      message: "Failed to decode CAS JWT: JWT VC Decoding Failure",
+    });
+  });
 });
