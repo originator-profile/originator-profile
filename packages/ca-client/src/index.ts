@@ -3,7 +3,12 @@ export {
   type CaClient,
   type CaClientConfig,
 } from "./ca-client/create-ca-client";
-export { writeCasFile, type WriteCasFileOptions } from "./cas-store/file";
+export {
+  readCasFile,
+  writeCasFile,
+  type ReadCasFileResult,
+  type WriteCasFileOptions,
+} from "./cas-store/file";
 export {
   detectDrift,
   type DetectDriftOptions,
