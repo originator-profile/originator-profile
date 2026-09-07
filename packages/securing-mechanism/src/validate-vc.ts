@@ -7,10 +7,10 @@ import {
   VcValidationResult,
 } from "./types";
 
-/** データモデルへの適合性確認のためのバリデーター */
+/** VC ペイロードの妥当性確認のためのバリデーター */
 export function VcValidator<V extends UnverifiedVc>(schema: ZodType) {
   /**
-   * VC の妥当性確認
+   * VC ペイロードの妥当性確認
    * @param vc VC (未検証 or 検証済み)
    * @return 妥当性確認結果
    */
@@ -32,10 +32,10 @@ export function VcValidator<V extends UnverifiedVc>(schema: ZodType) {
   return validate;
 }
 
-/** データモデルへの適合性確認のためのバリデーター (オブジェクト) */
+/** VC ペイロードの妥当性確認のためのバリデーター (オブジェクト) */
 export type VcValidator<V extends UnverifiedVc> = ReturnType<
   typeof VcValidator<V>
 >;
 
-/** データモデルへの適合性確認のためのバリデーター (ファクトリー関数) */
+/** VC ペイロードの妥当性確認のためのバリデーター (ファクトリー関数) */
 export type VcValidatorFactory = typeof VcValidator;
