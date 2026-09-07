@@ -1,4 +1,5 @@
 export * from "./digest-sri";
+export * from "./document-provider";
 export * from "./error";
 export * from "./fetch-and-set-digest-sri";
 export * from "./fetch-and-set-target-integrity";

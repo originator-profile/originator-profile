@@ -12,3 +12,11 @@ export class FetchFailed extends Error {
     this.error = error;
   }
 }
+
+/** DocumentProvider が扱えない Target */
+export class UnsupportedDocumentTarget extends Error {
+  static get code() {
+    return "ERR_UNSUPPORTED_DOCUMENT_TARGET" as const;
+  }
+  readonly code = UnsupportedDocumentTarget.code;
+}
