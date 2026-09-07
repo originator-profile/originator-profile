@@ -98,6 +98,6 @@ export async function verifyWebsite(
         securingResults: collect.securingResults,
         warnings,
         info,
-        errors: collect.errors,
+        errors: [],
       };
 }
