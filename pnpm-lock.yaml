@@ -210,6 +210,9 @@ importers:
       '@originator-profile/model':
         specifier: workspace:*
         version: link:../model
+      '@originator-profile/securing-mechanism':
+        specifier: workspace:*
+        version: link:../securing-mechanism
       '@originator-profile/sign':
         specifier: workspace:*
         version: link:../sign

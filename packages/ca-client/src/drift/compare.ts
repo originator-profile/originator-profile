@@ -1,7 +1,6 @@
-import { ContentAttestationSet } from "@originator-profile/model";
 import { readFile } from "node:fs/promises";
 import { decodeJwtPayload } from "../auth/jwt";
-import { resolveCasFilePath } from "../cas-store/file";
+import { parseCasFileContent, resolveCasFilePath } from "../cas-store/file";
 import { isEnoent, toFileError } from "../file-utils";
 import { isRecord } from "../is-record";
 import {
@@ -53,19 +52,6 @@ type CasTarget = {
   type: string;
   cssSelector?: string;
   integrity: string;
-};
-
-const INVALID_CAS_FORMAT =
-  "Invalid CAS file format (expected JSON array with JWT string)";
-
-const jwtFromCasItem = (item: unknown): string | undefined => {
-  if (typeof item === "string") {
-    return item;
-  }
-  if (isRecord(item) && typeof item.attestation === "string") {
-    return item.attestation;
-  }
-  return undefined;
 };
 
 const isCasTarget = (value: unknown): value is CasTarget =>
@@ -126,22 +112,12 @@ type ReadCasTargetsResult =
   | { ok: false; reason: string };
 
 const parseCasTargets = (casFileContent: string): ReadCasTargetsResult => {
-  let parsed: unknown;
+  let jwt: string;
   try {
-    parsed = JSON.parse(casFileContent);
+    jwt = parseCasFileContent(casFileContent);
   } catch (error) {
     const detail = error instanceof Error ? error.message : String(error);
     return { ok: false, reason: detail };
-  }
-
-  const cas = ContentAttestationSet.safeParse(parsed);
-  if (!cas.success) {
-    return { ok: false, reason: INVALID_CAS_FORMAT };
-  }
-
-  const jwt = jwtFromCasItem(cas.data[0]);
-  if (!jwt) {
-    return { ok: false, reason: INVALID_CAS_FORMAT };
   }
 
   try {
