@@ -52,9 +52,6 @@ export type DocumentsOutcome<Target extends VerificationTarget> = {
   documents: DocumentOutcome<Target>[];
 };
 
-/** Content Attestation Set の検証結果が持つ形 */
-type CasLike = { main: boolean; attestation: unknown }[];
-
 /**
  * 文書群の検証
  *
@@ -141,7 +138,7 @@ export async function verifyDocuments<
     documents: results.map(({ target, at, cas }) => ({
       target,
       cas: convertCas(
-        (cas instanceof CasVerifyFailed ? cas.result : cas) as CasLike,
+        cas instanceof CasVerifyFailed ? cas.result : cas,
         at,
         collect,
       ),

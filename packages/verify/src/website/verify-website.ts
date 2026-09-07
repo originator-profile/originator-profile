@@ -22,9 +22,6 @@ export type WebsiteOutcome = {
   sites: (WebsiteProfile | null)[];
 };
 
-/** Site Profile の検証結果が持つ形 */
-type SpLike = { originators: unknown; sites?: unknown[] };
-
 /**
  * Web サイトの検証
  *
@@ -73,12 +70,12 @@ export async function verifyWebsite(
 
   const verified = await verifySp();
   const failed = verified instanceof Error;
-  const sp = (failed ? verified.result : verified) as SpLike;
+  const sp = failed ? verified.result : verified;
 
   const collect = createCollector();
   const outcome: WebsiteOutcome = {
     originators: convertOps(sp.originators, collect),
-    sites: (sp.sites ?? []).map((site, index) =>
+    sites: sp.sites.map((site, index) =>
       convertVc<WebsiteProfile>(site, pointer("sites", index), collect),
     ),
   };
