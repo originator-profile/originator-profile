@@ -34,7 +34,7 @@ export function VcValidator<V extends UnverifiedVc>(schema: ZodType) {
 
 /** VC ペイロードの妥当性確認 */
 export type VcValidator<V extends UnverifiedVc> = ReturnType<
-typeof VcValidator<V>
+  typeof VcValidator<V>
 >;
 
 /** スキーマに基づく VC ペイロードのバリデーターを生成するファクトリー */
