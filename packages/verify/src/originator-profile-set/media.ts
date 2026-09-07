@@ -1,7 +1,7 @@
 import { WebMediaProfile } from "@originator-profile/model";
-import {
+import type {
   UnverifiedJwtVc,
-  VcValidator,
+  VcValidatorFactory,
 } from "@originator-profile/securing-mechanism";
 import { verifyImageDigestSri } from "../integrity";
 import { type MappedKeys } from "../keys";
@@ -14,7 +14,7 @@ export async function verifyMedia(
   media?: UnverifiedJwtVc<WebMediaProfile>[],
   options: {
     /** バリデーター */
-    validator?: typeof VcValidator;
+    validator?: VcValidatorFactory;
     /** ロガー (デフォルト: `console`) */
     logger?: Logger;
   } = {},

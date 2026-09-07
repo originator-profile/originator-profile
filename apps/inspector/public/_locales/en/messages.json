@@ -491,15 +491,15 @@
   "Warning_Destination": {
     "message": "Destination: "
   },
-  "Verification_InvalidOps": {
-    "message": "Invalid OPS (decode failed)"
+  "Verification_SiteProfileVerifyFailed": {
+    "message": "Could not verify the destination Site Profile"
   },
-  "Verification_InvalidOpsDetail": {
-    "message": "Invalid OPS (decode failed): $error$",
+  "Verification_SiteProfileVerifyFailedDetail": {
+    "message": "Could not verify the destination Site Profile: $error$",
     "placeholders": {
       "error": {
         "content": "$1",
-        "example": "Invalid JWT format"
+        "example": "Website Profile verify failed"
       }
     }
   },
@@ -508,9 +508,6 @@
   },
   "Verification_OpidMismatch": {
     "message": "OPID mismatch"
-  },
-  "Verification_FetchFailed": {
-    "message": "Credentials not found (fetch failed)"
   },
   "GlobalHeader_Reload": {
     "message": "Reload"

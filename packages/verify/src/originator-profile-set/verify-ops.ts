@@ -2,7 +2,7 @@ import { Keys } from "@originator-profile/cryptography";
 import { CoreProfile, OriginatorProfileSet } from "@originator-profile/model";
 import {
   JwtVcVerifier,
-  VcValidator,
+  type VcValidatorFactory,
 } from "@originator-profile/securing-mechanism";
 import { getMappedKeys } from "../keys";
 import type { Logger } from "../logger";
@@ -67,7 +67,7 @@ export function OpsVerifier(
   issuer: string | string[],
   options: {
     /** バリデーター */
-    validator?: typeof VcValidator;
+    validator?: VcValidatorFactory;
     /** ロガー (デフォルト: `console`) */
     logger?: Logger;
   } = {},
