@@ -124,6 +124,24 @@ function toLegacyOp(
   );
 }
 
+const isOpsProblem = (code?: string): boolean =>
+  code === OpsInvalid.code || code === OpsVerifyFailed.code;
+
+/**
+ * OPS の失敗を、問題の種類に応じた従来のエラークラスに戻す
+ *
+ * NOTE: Base.tsx は OpsVerifyFailed を閲覧禁止、OpsInvalid を検証結果の表示に
+ * 振り分ける。取り違えると画面が変わるため、必ず種類を見て組み立てる。
+ */
+const toOpsError = (
+  code: string | undefined,
+  message: string,
+  list: unknown,
+): Error =>
+  code === OpsInvalid.code
+    ? new OpsInvalid(message, list as never)
+    : new OpsVerifyFailed(message, list as never);
+
 function toLegacyOps(payloads: OriginatorPayload[], index: Index): unknown {
   const list = payloads.map((payload, i) =>
     toLegacyOp(payload, pointer("originators", i), index),
@@ -132,9 +150,11 @@ function toLegacyOps(payloads: OriginatorPayload[], index: Index): unknown {
   if (!list.some((op) => op instanceof Error) && problems.length === 0)
     return list;
 
-  return new OpsVerifyFailed(
-    problems[0]?.title ?? "Originator Profile Set verify failed",
-    list as never,
+  const problem = problems[0];
+  return toOpsError(
+    problem && codeOf(problem.type),
+    problem?.title ?? "Originator Profile Set verify failed",
+    list,
   );
 }
 
@@ -171,9 +191,6 @@ export type LegacyDocuments<Target extends VerificationTarget> = {
   documents: { target: Target; cas: VerifiedCas }[];
 };
 
-const isOpsProblem = (code?: string): boolean =>
-  code === OpsInvalid.code || code === OpsVerifyFailed.code;
-
 /**
  * 文書群の検証失敗を、従来のエラークラスに戻す
  * @param problem 検証失敗の理由
@@ -196,11 +213,9 @@ function toLegacyDocumentsFailure(
   }
   if (!isOpsProblem(code)) return toError(problem);
 
-  // NOTE: toLegacyOps は失敗を含む場合すでに OpsVerifyFailed を返している。
-  // 二重に包むと result が配列でなくなり、表示側の走査が壊れる。
-  return ops instanceof Error
-    ? ops
-    : new OpsVerifyFailed(message, ops as never);
+  // NOTE: toLegacyOps は失敗を含む場合すでにエラーを返している。二重に包むと
+  // result が配列でなくなり、表示側の走査が壊れる。
+  return ops instanceof Error ? ops : toOpsError(code, message, ops);
 }
 
 /**
