@@ -34,10 +34,10 @@ export type SecuringResult = {
   mediaType?: string;
   /** 暗号アルゴリズム */
   algorithm?: string;
-  /** 発行日時 */
-  issuedAt?: Date;
-  /** 有効期限 */
-  expiredAt?: Date;
+  /** 発行日時 (ISO 8601) */
+  issuedAt?: string;
+  /** 有効期限 (ISO 8601) */
+  expiredAt?: string;
   /** 検証に用いた鍵 */
   verificationKey?: Jwk;
   /** 検証鍵の保有者 */
@@ -49,7 +49,8 @@ export type SecuringResult = {
  *
  * 階層を持つのは `outcome` だけで、securing mechanism の情報と検出した問題は
  * いずれも JSONPath で `outcome` 内の位置を指すフラットなリストとして持つ。
- * Error クラスを含まないため、メッセージ境界を跨いでも判定が変わらない。
+ * JSON で表現できる値だけで構成されるため、メッセージ境界や storage を跨いでも
+ * 値と判定が変わらない。
  *
  * @see {@link https://www.w3.org/TR/vc-data-model-2.0/#verification}
  */

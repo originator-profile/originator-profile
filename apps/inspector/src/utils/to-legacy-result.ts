@@ -53,6 +53,10 @@ function createIndex(result: {
   };
 }
 
+/** 従来の VC は発行日時・有効期限を Date で持つため、ISO 8601 文字列から戻す */
+const toDate = (value: string | undefined): Date | undefined =>
+  value === undefined ? undefined : new Date(value);
+
 /** 復号ペイロードと securing 情報から、従来の VC の形を組み立てる */
 function restoreVc(doc: unknown, at: string, index: Index): unknown {
   if (doc === null || doc === undefined) return undefined;
@@ -61,8 +65,8 @@ function restoreVc(doc: unknown, at: string, index: Index): unknown {
   return {
     doc,
     source: securing?.source,
-    issuedAt: securing?.issuedAt,
-    expiredAt: securing?.expiredAt,
+    issuedAt: toDate(securing?.issuedAt),
+    expiredAt: toDate(securing?.expiredAt),
     mediaType: securing?.mediaType,
     algorithm: securing?.algorithm,
     ...(securing?.verificationKey && {

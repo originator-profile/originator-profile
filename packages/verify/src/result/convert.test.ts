@@ -31,13 +31,23 @@ describe("convertVc", () => {
         source: "eyJ...",
         mediaType: "application/vc+jwt",
         algorithm: "ES256",
-        issuedAt: new Date("2026-01-01T00:00:00Z"),
-        expiredAt: new Date("2027-01-01T00:00:00Z"),
+        issuedAt: "2026-01-01T00:00:00.000Z",
+        expiredAt: "2027-01-01T00:00:00.000Z",
         verificationKey: { kid: "key-1" },
         controller: "dns:example",
       },
     ]);
     expect(collect.errors).toEqual([]);
+  });
+
+  test("収集した securing 情報は JSON を跨いでも変わらない", () => {
+    const collect = createCollector();
+
+    convertVc(verifiedVc("dns:example"), "$.sites[0]", collect);
+
+    expect(JSON.parse(JSON.stringify(collect.securingResults))).toEqual(
+      collect.securingResults,
+    );
   });
 
   test("失敗しても復号できていればペイロードを返す", () => {

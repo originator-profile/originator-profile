@@ -52,8 +52,8 @@ const asRecord = (value: unknown): Record<string, unknown> | undefined =>
 const asString = (value: unknown): string | undefined =>
   typeof value === "string" ? value : undefined;
 
-const asDate = (value: unknown): Date | undefined =>
-  value instanceof Date ? value : undefined;
+const asIsoString = (value: unknown): string | undefined =>
+  value instanceof Date ? value.toISOString() : undefined;
 
 const asJwk = (value: unknown): Jwk | undefined =>
   isObject(value) ? (value as Jwk) : undefined;
@@ -78,8 +78,8 @@ function toSecuringResult(
     source: asString(vc?.source),
     mediaType: asString(vc?.mediaType),
     algorithm: asString(vc?.algorithm),
-    issuedAt: asDate(vc?.issuedAt),
-    expiredAt: asDate(vc?.expiredAt),
+    issuedAt: asIsoString(vc?.issuedAt),
+    expiredAt: asIsoString(vc?.expiredAt),
     verificationKey: asJwk(vc?.verificationKey),
     controller: asString(doc?.issuer),
   });
