@@ -1,6 +1,6 @@
 import IconFa6SolidCheck from "@iconify-react/fa6-solid/check";
 import IconIonFilter from "@iconify-react/ion/filter";
-import { _ } from "@originator-profile/ui";
+import { _ } from "@originator-profile/extension-common/ui";
 import { useMemo } from "react";
 import { twMerge } from "tailwind-merge";
 import { Menu, MenuButton, MenuItem, useMenuButton } from "./Menu";

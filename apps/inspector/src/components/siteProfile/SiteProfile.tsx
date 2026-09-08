@@ -1,5 +1,5 @@
-import { Image, _ } from "@originator-profile/ui";
-import placeholderLogoMainUrl from "@originator-profile/ui/src/assets/placeholder-logo-main.png";
+import { Image, _ } from "@originator-profile/extension-common/ui";
+import placeholderLogoMainUrl from "@originator-profile/extension-common/ui/assets/placeholder-logo-main.png";
 import GlobalHeader from "../GlobalHeader";
 import ReliabilityGuide from "../ReliabilityGuide";
 import WebMediaProfileSummaryCard from "../WebMediaProfileSummaryCard";

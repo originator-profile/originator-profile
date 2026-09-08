@@ -1,5 +1,5 @@
-import { Image } from "@originator-profile/ui";
-import placeholderContentThumbnail from "@originator-profile/ui/src/assets/placeholder-content-thumbnail.png";
+import { Image } from "@originator-profile/extension-common/ui";
+import placeholderContentThumbnail from "@originator-profile/extension-common/ui/assets/placeholder-content-thumbnail.png";
 import { Link, useParams } from "react-router";
 import { twMerge } from "tailwind-merge";
 import { buildPublUrl } from "../utils/routes";

@@ -1,5 +1,5 @@
 {
-  "name": "@originator-profile/ui",
+  "name": "@originator-profile/extension-common",
   "version": "0.7.0-beta.4",
   "license": "Apache-2.0",
   "private": true,
@@ -7,15 +7,18 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/originator-profile/originator-profile.git",
-    "directory": "packages/ui"
+    "directory": "packages/extension-common"
   },
   "type": "module",
   "exports": {
     ".": {
       "default": "./src/index.ts"
     },
-    "./src/assets/*": {
-      "default": "./src/assets/*"
+    "./ui": {
+      "default": "./src/ui/index.ts"
+    },
+    "./ui/assets/*": {
+      "default": "./src/ui/assets/*"
     }
   },
   "scripts": {

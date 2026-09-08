@@ -7,7 +7,7 @@ import {
   ProjectTitle,
   Table,
   TableRow,
-} from "@originator-profile/ui";
+} from "@originator-profile/extension-common/ui";
 import type { VerifiedOps, VerifiedSp } from "@originator-profile/verify";
 import JsonView from "@uiw/react-json-view";
 import BackHeader from "../components/BackHeader";

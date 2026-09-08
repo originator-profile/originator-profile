@@ -1,4 +1,4 @@
-import { _ } from "@originator-profile/ui";
+import { _ } from "@originator-profile/extension-common/ui";
 
 export function getProfileErrorMessage(error: Error) {
   return (

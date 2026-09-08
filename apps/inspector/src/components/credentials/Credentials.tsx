@@ -1,16 +1,16 @@
 import {
-  AdvertisementCA,
-  AdvertorialCA,
-  ArticleCA,
-} from "@originator-profile/model";
-import {
   AdvertisementTable,
   ArticleTable,
   Description,
   Image,
   _,
-} from "@originator-profile/ui";
-import placeholderLogoMainUrl from "@originator-profile/ui/src/assets/placeholder-logo-main.png";
+} from "@originator-profile/extension-common/ui";
+import placeholderLogoMainUrl from "@originator-profile/extension-common/ui/assets/placeholder-logo-main.png";
+import {
+  AdvertisementCA,
+  AdvertorialCA,
+  ArticleCA,
+} from "@originator-profile/model";
 import flush from "just-flush";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";

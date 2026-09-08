@@ -10,7 +10,7 @@
     "packages/presentation",
     "packages/securing-mechanism",
     "packages/sign",
-    "packages/ui",
+    "packages/extension-common",
     "packages/opvc",
     "packages/verify",
     "packages/ca-client"

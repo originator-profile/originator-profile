@@ -1,5 +1,5 @@
 import { selectByLocale } from "@originator-profile/core";
-import { isDisplayableProfileAnnotation } from "@originator-profile/ui";
+import { isDisplayableProfileAnnotation } from "@originator-profile/extension-common/ui";
 import { getAnnotationPolicy } from "@originator-profile/verify";
 import { useMemo } from "react";
 import { useParams, useSearchParams } from "react-router";

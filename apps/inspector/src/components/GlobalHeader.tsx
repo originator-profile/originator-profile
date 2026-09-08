@@ -1,6 +1,6 @@
 import IconMdiEllipsisVertical from "@iconify-react/mdi/ellipsis-vertical";
 import IconMdiRefresh from "@iconify-react/mdi/refresh";
-import { Header, _ } from "@originator-profile/ui";
+import { Header, _ } from "@originator-profile/extension-common/ui";
 import { useNavigate, useParams } from "react-router";
 import { useSWRConfig } from "swr";
 import { twMerge } from "tailwind-merge";

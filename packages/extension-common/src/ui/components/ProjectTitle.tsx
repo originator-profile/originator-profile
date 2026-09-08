@@ -1,6 +1,6 @@
 import { twMerge } from "tailwind-merge";
 import logoUrl from "../assets/logo.svg";
-import { _ } from "../utils/get-message";
+import { _ } from "../utils";
 
 type Props = {
   as?: keyof React.JSX.IntrinsicElements;

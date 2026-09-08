@@ -1,8 +1,8 @@
 import IconGgCheckO from "@iconify-react/gg/check-o";
+import { Image, _ } from "@originator-profile/extension-common/ui";
+import logomarkUrl from "@originator-profile/extension-common/ui/assets/logomark.svg";
+import placeholderLogoMainUrl from "@originator-profile/extension-common/ui/assets/placeholder-logo-main.png";
 import { WebMediaProfile } from "@originator-profile/model";
-import { Image, _ } from "@originator-profile/ui";
-import logomarkUrl from "@originator-profile/ui/src/assets/logomark.svg";
-import placeholderLogoMainUrl from "@originator-profile/ui/src/assets/placeholder-logo-main.png";
 
 type Props = {
   wmp: WebMediaProfile;

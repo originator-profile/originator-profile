@@ -1,5 +1,5 @@
 import { selectByLocale } from "@originator-profile/core";
-import { _ } from "@originator-profile/ui";
+import { _ } from "@originator-profile/extension-common/ui";
 import { useSearchParams } from "react-router";
 import GlobalHeader from "../components/GlobalHeader";
 import Loading from "../components/Loading";

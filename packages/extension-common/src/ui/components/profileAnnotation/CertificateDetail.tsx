@@ -6,7 +6,7 @@ import {
 } from "@originator-profile/verify";
 import { twMerge } from "tailwind-merge";
 import placeholderLogoMainUrl from "../../assets/placeholder-logo-main.png";
-import { _ } from "../../utils/get-message";
+import { _ } from "../../utils";
 import Image from "../Image";
 import Spinner from "../Spinner";
 import { useProfileAnnotatorWmp } from "./use-profile-annotator-wmp";

@@ -1,8 +1,8 @@
+import { _ } from "@originator-profile/extension-common/ui";
 import {
   SiteProfileFetchFailed,
   SiteProfileFetchInvalid,
 } from "@originator-profile/presentation";
-import { _ } from "@originator-profile/ui";
 import {
   CasVerifyFailed,
   OpsInvalid,

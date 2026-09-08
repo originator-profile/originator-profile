@@ -1,6 +1,6 @@
+import { Image } from "@originator-profile/extension-common/ui";
+import placeholderLogoMainUrl from "@originator-profile/extension-common/ui/assets/placeholder-logo-main.png";
 import { WebMediaProfile } from "@originator-profile/model";
-import { Image } from "@originator-profile/ui";
-import placeholderLogoMainUrl from "@originator-profile/ui/src/assets/placeholder-logo-main.png";
 import { twMerge } from "tailwind-merge";
 
 export function CaMarker(props: {

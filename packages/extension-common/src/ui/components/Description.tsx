@@ -1,6 +1,6 @@
 import type { WebMediaProfile } from "@originator-profile/model";
 import { twMerge } from "tailwind-merge";
-import { _ } from "../utils/get-message";
+import { _ } from "../utils";
 import useSanitizedHtmlForDescription from "../utils/use-sanitized-html-for-description";
 
 type Props = {
