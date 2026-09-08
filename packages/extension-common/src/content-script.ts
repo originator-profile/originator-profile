@@ -13,6 +13,18 @@ import { siteProfileMessenger } from "./site-profile/events";
 import "./utils/cors-basic-auth";
 
 /**
+ * 同一タブでの通常のナビゲーションを起こさないスキーム
+ *
+ * NOTE: 遷移しないなら新規タブが開かれたとみなす推定であり、href="#" や
+ * preventDefault() で window.open() を呼ぶ実装は拾えない (#517)
+ */
+const NON_NAVIGATING_SCHEMES: readonly string[] = [
+  "javascript:",
+  "data:",
+  "vbscript:",
+];
+
+/**
  * 全フレームで登録するハンドラ
  *
  * クレデンシャルの取得、Target Integrity の検証、広告リンクのクリック検知、
@@ -209,10 +221,10 @@ export function setupFrameHandlers() {
     if (anchor && opMeta) {
       const isModifierKey =
         e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1;
-      // href="javascript:..." は window.open() 等で新規タブを開くパターン
-      const isJavascriptHref = anchor.protocol === "javascript:";
       const isNewTab =
-        anchor.target === "_blank" || isModifierKey || isJavascriptHref;
+        anchor.target === "_blank" ||
+        isModifierKey ||
+        NON_NAVIGATING_SCHEMES.includes(anchor.protocol);
       void sendAdClicked(opMeta, isNewTab);
     }
   };
