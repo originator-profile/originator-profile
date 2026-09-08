@@ -8,6 +8,7 @@ export * from "./i18n";
 export * from "./link-verification";
 export * from "./overlay/extension-events";
 export * from "./overlay/window-events";
+export * from "./rtb";
 export * from "./site-profile";
 export * from "./tab-badge/update-badge";
 export * from "./utils/navigation-state";

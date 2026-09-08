@@ -62,11 +62,12 @@ test("HTML内にadvertiserが見つかる", () => {
     </script>
   `;
 
+  // NOTE: happy-dom の Document は DOM の Document と構造的に互換でないため変換する
   const bids = getBidResponses(window.document as unknown as Document);
   expect(bids).toBeDefined();
   expect(Array.isArray(bids)).toBe(true);
   expect(bids.length).toBe(1);
-  const first = bids[0] as (typeof bids)[number];
+  const first = bids[0];
   expect(getAdvertiser(first)).toEqual({
     type: "advertiser",
     id: "localhost",
@@ -85,6 +86,7 @@ test("HTML内にBidResponseがみつからない", () => {
     </script>
   `;
 
+  // NOTE: happy-dom の Document は DOM の Document と構造的に互換でないため変換する
   const bids = getBidResponses(window.document as unknown as Document);
   expect(bids).toBeDefined();
   expect(Array.isArray(bids)).toBe(true);

@@ -1,8 +1,8 @@
+import { findAdvertiser } from "@originator-profile/extension-common";
 import { AdvertisementCA } from "@originator-profile/model";
 import useSWR from "swr";
 import { twMerge } from "tailwind-merge";
 import { messages } from "./messages";
-import { findAdvertiser } from "./scripting";
 
 type BidResponseProps = {
   className?: string;
