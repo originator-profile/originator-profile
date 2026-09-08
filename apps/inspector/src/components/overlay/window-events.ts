@@ -1,9 +1,9 @@
 import {
   FramesVerifiedCas,
   SupportedVerifiedCa,
+  listCas,
 } from "@originator-profile/extension-common";
 import { WebMediaProfile } from "@originator-profile/model";
-import { listCas } from "../credentials/cas";
 import { defineWindowMessaging } from "../windowMessaging";
 
 export type CaFilterType = Parameters<typeof listCas>[1];

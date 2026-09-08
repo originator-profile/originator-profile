@@ -1,7 +1,10 @@
-import type {
+import {
   FramesVerifiedCas,
   SupportedVerifiedCa,
   SupportedVerifiedCas,
+  getContentType,
+  isArticleLike,
+  listCas,
 } from "@originator-profile/extension-common";
 import {
   AdvertisementTable,
@@ -28,9 +31,6 @@ import ReliabilityGuide from "../ReliabilityGuide";
 import WebMediaProfileSummaryCard from "../WebMediaProfileSummaryCard";
 import { overlayExtensionMessenger } from "../overlay/extension-events";
 import { BidResponse } from "../rtb";
-import { listCas } from "./cas";
-import { getContentType } from "./get-content-type";
-import { isArticleLike } from "./is-articlelike";
 type CredentialsProps = {
   ca: SupportedVerifiedCa;
   cas: SupportedVerifiedCas;

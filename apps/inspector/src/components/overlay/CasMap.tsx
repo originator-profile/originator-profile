@@ -1,10 +1,10 @@
 import {
   FramesVerifiedCas,
   SupportedVerifiedCa,
+  listCas,
 } from "@originator-profile/extension-common";
 import { WebMediaProfile } from "@originator-profile/model";
 import { useMemo } from "react";
-import { listCas } from "../credentials/cas";
 import { ElementCaMarker } from "./ElementCaMarker";
 import { FrameCaMarker } from "./FrameCaMarker";
 import type { CaFilterType } from "./window-events";

@@ -1,4 +1,5 @@
 import {
+  deduplicateCas,
   fetchTabCredentials,
   fetchVerificationResult,
   FrameIntegrityVerifier,
@@ -12,7 +13,6 @@ import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
 import { toLegacyDocuments } from "../../utils/to-legacy-result";
 import { useSiteProfile } from "../siteProfile";
-import { deduplicateCas } from "./deduplicate-cas";
 
 const CREDENTIALS_KEY = "credentials";
 
