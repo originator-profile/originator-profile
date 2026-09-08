@@ -10,12 +10,12 @@ import {
   verifyIntegrity,
 } from "@originator-profile/verify";
 
-import { activeTabMessenger } from "./components/activeTab/events";
 import {
   credentialsMessenger,
   FrameLocation,
   FrameResponse,
-} from "./components/credentials";
+} from "@originator-profile/extension-common";
+import { activeTabMessenger } from "./components/activeTab/events";
 import {
   frameCasWindowMessenger,
   isFrameVisible,

@@ -1,4 +1,7 @@
-import { getRegistry } from "@originator-profile/extension-common";
+import {
+  fetchTabSiteProfile,
+  getRegistry,
+} from "@originator-profile/extension-common";
 import type { SiteProfile } from "@originator-profile/model";
 import {
   SiteProfileFetchFailed,
@@ -14,7 +17,6 @@ import {
   type WebsiteOutcome,
 } from "@originator-profile/verify";
 import { codeOf } from "../../utils/problem-code";
-import { fetchTabSiteProfile } from "./messaging";
 
 /** タブが表示している Web サイトの検証結果 */
 export type TabWebsiteVerification = {

@@ -1,10 +1,13 @@
-import { getRegistry } from "@originator-profile/extension-common";
+import {
+  FrameIntegrityVerifier,
+  type SupportedVerifiedCas,
+  fetchTabCredentials,
+  getRegistry,
+} from "@originator-profile/extension-common";
 import type { OriginatorProfileSet } from "@originator-profile/model";
 import { verifyDocuments } from "@originator-profile/verify";
 import { toLegacyDocuments } from "../../utils/to-legacy-result";
-import { fetchTabCredentials, FrameIntegrityVerifier } from "../credentials";
 import { deduplicateCas } from "../credentials/deduplicate-cas";
-import type { SupportedVerifiedCas } from "../credentials/types";
 import {
   isSiteProfileFetchError,
   verifyTabWebsite,

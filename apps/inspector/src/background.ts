@@ -1,7 +1,9 @@
-import { normalizeUrl } from "@originator-profile/extension-common";
+import {
+  type LinkVerificationResult,
+  credentialsMessenger,
+  normalizeUrl,
+} from "@originator-profile/extension-common";
 import { activeTabMessenger } from "./components/activeTab/events";
-import { credentialsMessenger } from "./components/credentials/events";
-import type { LinkVerificationResult } from "./components/credentials/types";
 import { frameCasExtensionMessenger } from "./components/frameCas";
 import {
   handleAdClicked,

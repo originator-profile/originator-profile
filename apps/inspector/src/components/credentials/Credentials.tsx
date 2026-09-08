@@ -1,3 +1,8 @@
+import type {
+  FramesVerifiedCas,
+  SupportedVerifiedCa,
+  SupportedVerifiedCas,
+} from "@originator-profile/extension-common";
 import {
   AdvertisementTable,
   ArticleTable,
@@ -10,7 +15,9 @@ import {
   AdvertisementCA,
   AdvertorialCA,
   ArticleCA,
+  WebMediaProfile,
 } from "@originator-profile/model";
+import type { VerifiedOps } from "@originator-profile/verify";
 import flush from "just-flush";
 import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
@@ -24,7 +31,14 @@ import { BidResponse } from "../rtb";
 import { listCas } from "./cas";
 import { getContentType } from "./get-content-type";
 import { isArticleLike } from "./is-articlelike";
-import { CredentialsProps, SupportedVerifiedCa } from "./types";
+type CredentialsProps = {
+  ca: SupportedVerifiedCa;
+  cas: SupportedVerifiedCas;
+  ops: VerifiedOps;
+  orgPath?: { pathname: string; search: string };
+  wmp?: WebMediaProfile;
+  framesCas: FramesVerifiedCas;
+};
 
 export function Credentials(props: CredentialsProps) {
   const [caListType, setCaListType] =

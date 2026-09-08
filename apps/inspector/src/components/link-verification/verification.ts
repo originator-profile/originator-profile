@@ -1,5 +1,5 @@
+import type { LinkVerificationResult } from "@originator-profile/extension-common";
 import type { ProblemDetails } from "@originator-profile/verify";
-import type { LinkVerificationResult } from "../credentials/types";
 import {
   isSiteProfileFetchError,
   verifyTabWebsite,

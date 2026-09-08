@@ -1,5 +1,8 @@
+import {
+  FramesVerifiedCas,
+  SupportedVerifiedCa,
+} from "@originator-profile/extension-common";
 import { WebMediaProfile } from "@originator-profile/model";
-import { FramesVerifiedCas, SupportedVerifiedCa } from "../credentials";
 import { listCas } from "../credentials/cas";
 import { defineWindowMessaging } from "../windowMessaging";
 

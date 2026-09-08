@@ -1,10 +1,10 @@
-import { WebMediaProfile } from "@originator-profile/model";
-import { useEffect, useRef, useState } from "react";
-import { useMount } from "react-use";
 import {
   FramesVerifiedCas,
   SupportedVerifiedCa,
-} from "../components/credentials";
+} from "@originator-profile/extension-common";
+import { WebMediaProfile } from "@originator-profile/model";
+import { useEffect, useRef, useState } from "react";
+import { useMount } from "react-use";
 import {
   CasMap,
   ContentsArea,

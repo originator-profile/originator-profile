@@ -1,6 +1,9 @@
+import {
+  FramesVerifiedCas,
+  SupportedVerifiedCa,
+} from "@originator-profile/extension-common";
 import { WebMediaProfile } from "@originator-profile/model";
 import { useMemo } from "react";
-import { FramesVerifiedCas, SupportedVerifiedCa } from "../credentials";
 import { listCas } from "../credentials/cas";
 import { ElementCaMarker } from "./ElementCaMarker";
 import { FrameCaMarker } from "./FrameCaMarker";

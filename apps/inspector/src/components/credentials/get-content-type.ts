@@ -1,4 +1,4 @@
-import { SupportedVerifiedCa } from "./types";
+import { SupportedVerifiedCa } from "@originator-profile/extension-common";
 
 export const getContentType = (ca: SupportedVerifiedCa): string => {
   if (ca.main) return "ContentType_MainContent";

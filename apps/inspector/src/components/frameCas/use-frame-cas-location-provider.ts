@@ -1,5 +1,5 @@
+import { type FrameVerifiedCas } from "@originator-profile/extension-common";
 import { useEffect } from "react";
-import { type FrameVerifiedCas } from "../credentials";
 import { frameCasExtensionMessenger } from "./extension-events";
 
 export function useFrameCasLocationProvider(

@@ -394,6 +394,9 @@ importers:
       '@originator-profile/model':
         specifier: workspace:*
         version: link:../model
+      '@originator-profile/presentation':
+        specifier: workspace:*
+        version: link:../presentation
       '@originator-profile/securing-mechanism':
         specifier: workspace:*
         version: link:../securing-mechanism
@@ -412,6 +415,9 @@ importers:
       '@types/react-dom':
         specifier: 19.2.3
         version: 19.2.3(@types/react@19.2.14)
+      '@webext-core/messaging':
+        specifier: 2.3.0
+        version: 2.3.0
       dompurify:
         specifier: 3.4.13
         version: 3.4.13

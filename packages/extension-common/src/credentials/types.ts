@@ -6,27 +6,17 @@ import type {
   ContentAttestationSet,
   OpMeta,
   OriginatorProfileSet,
-  WebMediaProfile,
 } from "@originator-profile/model";
 import type { FetchCredentialSetResult } from "@originator-profile/presentation";
 import type {
   IntegrityVerifyResult,
   VerifiedCas,
-  VerifiedOps,
 } from "@originator-profile/verify";
 
 /** 表示に対応している CA */
 export type SupportedCa = ArticleCA | AdvertisementCA | AdvertorialCA;
 export type SupportedVerifiedCas = VerifiedCas<SupportedCa>;
 export type SupportedVerifiedCa = SupportedVerifiedCas[number];
-export type CredentialsProps = {
-  ca: SupportedVerifiedCa;
-  cas: SupportedVerifiedCas;
-  ops: VerifiedOps;
-  orgPath?: { pathname: string; search: string };
-  wmp?: WebMediaProfile;
-  framesCas: FramesVerifiedCas;
-};
 export type FrameLocation = { origin: string; url: string };
 
 export type FetchCredentialsMessageResponse = FrameLocation & {
