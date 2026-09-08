@@ -110,8 +110,8 @@
   "Unsupported_ReliabilityInformationRetrievalFailed": {
     "message": "Failed to retrieve organization reliability information and publication distribution channel"
   },
-  "Unsupported_NotVerified": {
-    "message": "The originator of this web page is unverified. Please exercise caution"
+  "Unsupported_OpNotSupported": {
+    "message": "This site does not support OP yet"
   },
   "Unsupported_FollowingCausesConsidered": {
     "message": "The following causes are considered"
