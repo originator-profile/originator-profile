@@ -1,4 +1,4 @@
-import { buildWarningSearchParams } from "../../utils/warning-params";
+import { buildWarningSearchParams } from "@originator-profile/extension-common";
 import {
   pendingOpIdVerification,
   recentlyOpenedTabs,

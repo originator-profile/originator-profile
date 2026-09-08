@@ -1,9 +1,9 @@
-import type { LinkVerificationResult } from "@originator-profile/extension-common";
-import type { ProblemDetails } from "@originator-profile/verify";
 import {
+  LinkVerificationResult,
   isSiteProfileFetchError,
   verifyTabWebsite,
-} from "../siteProfile/verify-website";
+} from "@originator-profile/extension-common";
+import type { ProblemDetails } from "@originator-profile/verify";
 import { getDestinationOrgName, isMatched } from "./matching";
 import type { CreateMismatchResultParams, VerificationContext } from "./types";
 

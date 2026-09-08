@@ -1,3 +1,4 @@
+import { codeOf } from "@originator-profile/extension-common/utils/problem-code";
 import {
   CasVerifyFailed,
   childPointer,
@@ -18,7 +19,6 @@ import {
   type VerifiedSp,
   type WebsiteOutcome,
 } from "@originator-profile/verify";
-import { codeOf } from "./problem-code";
 import { toError } from "./to-error";
 
 /**

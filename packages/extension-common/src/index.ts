@@ -3,4 +3,6 @@ export * from "./i18n";
 export * from "./site-profile";
 export * from "./utils/navigation-state";
 export * from "./utils/persistent-map";
+export * from "./utils/problem-code";
 export * from "./utils/registry-ops";
+export * from "./utils/warning-params";

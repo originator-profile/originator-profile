@@ -4,14 +4,12 @@ import {
   deduplicateCas,
   fetchTabCredentials,
   getRegistry,
+  isSiteProfileFetchError,
+  verifyTabWebsite,
 } from "@originator-profile/extension-common";
 import type { OriginatorProfileSet } from "@originator-profile/model";
 import { verifyDocuments } from "@originator-profile/verify";
 import { toLegacyDocuments } from "../../utils/to-legacy-result";
-import {
-  isSiteProfileFetchError,
-  verifyTabWebsite,
-} from "../siteProfile/verify-website";
 
 /**
  * Web サイトを検証し、文書の検証で検証鍵に加える発信者を得る

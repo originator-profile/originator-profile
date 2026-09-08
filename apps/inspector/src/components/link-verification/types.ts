@@ -1,5 +1,7 @@
-import type { LinkVerificationResult } from "@originator-profile/extension-common";
-import type { WarningSearchParams } from "../../utils/warning-params";
+import type {
+  LinkVerificationResult,
+  WarningSearchParams,
+} from "@originator-profile/extension-common";
 
 /** 広告リンク検証の共通コンテキスト情報 */
 export interface VerificationContext {

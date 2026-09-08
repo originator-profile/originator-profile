@@ -15,6 +15,9 @@
     ".": {
       "default": "./src/index.ts"
     },
+    "./utils/*": {
+      "default": "./src/utils/*.ts"
+    },
     "./ui": {
       "default": "./src/ui/index.ts"
     },
