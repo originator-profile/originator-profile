@@ -5,6 +5,7 @@ import {
   getContentType,
   isArticleLike,
   listCas,
+  overlayExtensionMessenger,
 } from "@originator-profile/extension-common";
 import {
   AdvertisementTable,
@@ -29,7 +30,6 @@ import CaFilter from "../CaFilter";
 import CaSelector from "../CaSelector";
 import ReliabilityGuide from "../ReliabilityGuide";
 import WebMediaProfileSummaryCard from "../WebMediaProfileSummaryCard";
-import { overlayExtensionMessenger } from "../overlay/extension-events";
 import { BidResponse } from "../rtb";
 type CredentialsProps = {
   ca: SupportedVerifiedCa;

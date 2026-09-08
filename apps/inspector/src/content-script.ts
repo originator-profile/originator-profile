@@ -1,19 +1,15 @@
 import { serializeIfError } from "@originator-profile/core";
 import {
   type FrameVerifiedCas,
+  OverlayProtocolMap,
+  frameCasExtensionMessenger,
+  frameCasWindowMessenger,
+  overlayExtensionMessenger,
+  overlayWindowMessenger,
   siteProfileMessenger,
 } from "@originator-profile/extension-common";
 import { fetchSiteProfile } from "@originator-profile/presentation";
-import {
-  frameCasExtensionMessenger,
-  frameCasWindowMessenger,
-} from "./components/frameCas";
-import {
-  Overlay,
-  OverlayProtocolMap,
-  overlayWindowMessenger,
-} from "./components/overlay";
-import { overlayExtensionMessenger } from "./components/overlay/extension-events";
+import { Overlay } from "./components/overlay";
 
 const overlay = new Overlay();
 let enter: Parameters<OverlayProtocolMap["enter"]>[0] = {

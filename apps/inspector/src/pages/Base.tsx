@@ -2,6 +2,7 @@ import {
   FetchCredentialsMessagingFailed,
   FramesVerifiedCas,
   SupportedVerifiedCas,
+  overlayExtensionMessenger,
 } from "@originator-profile/extension-common";
 import { _ } from "@originator-profile/extension-common/ui";
 import {
@@ -25,7 +26,6 @@ import { useCredentials } from "../components/credentials";
 import { formatBuildModeTitle } from "../components/environment";
 import { useFrameCasLocationProvider } from "../components/frameCas";
 import Loading from "../components/Loading";
-import { overlayExtensionMessenger } from "../components/overlay/extension-events";
 import { useSiteProfile } from "../components/siteProfile";
 import Unsupported from "../components/Unsupported";
 import { buildPublUrl, routes } from "../utils/routes";

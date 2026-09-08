@@ -1,8 +1,5 @@
-import type {
-  FrameLocation,
-  FrameResponse,
-} from "@originator-profile/extension-common";
-import { defineWindowMessaging } from "../windowMessaging";
+import type { FrameLocation, FrameResponse } from "../credentials/types";
+import { defineWindowMessaging } from "../window-messaging";
 import { type FrameCasCoordinate } from "./types";
 
 export type FrameCasWindowProtocolMap = {

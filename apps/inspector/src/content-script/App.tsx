@@ -1,16 +1,13 @@
 import {
+  type CaFilterType,
   FramesVerifiedCas,
   SupportedVerifiedCa,
+  overlayWindowMessenger,
 } from "@originator-profile/extension-common";
 import { WebMediaProfile } from "@originator-profile/model";
 import { useEffect, useRef, useState } from "react";
 import { useMount } from "react-use";
-import {
-  CasMap,
-  ContentsArea,
-  overlayWindowMessenger,
-  type CaFilterType,
-} from "../components/overlay";
+import { CasMap, ContentsArea } from "../components/overlay";
 
 function Panel(props: { children?: React.ReactNode }) {
   const handleClick = (e: React.MouseEvent) => {

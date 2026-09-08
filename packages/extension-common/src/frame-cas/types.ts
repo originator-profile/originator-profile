@@ -1,5 +1,5 @@
-import type { FrameResponse } from "@originator-profile/extension-common";
 import { type ContentAttestation } from "@originator-profile/model";
+import type { FrameResponse } from "../credentials/types";
 
 export type AncestorFrameCoordinate = FrameResponse & {
   /** 親フレームを原点とするフレームの座標 */

@@ -1,9 +1,9 @@
+import { defineExtensionMessaging } from "@webext-core/messaging";
 import type {
   FrameLocation,
   FrameResponse,
   FrameVerifiedCas,
-} from "@originator-profile/extension-common";
-import { defineExtensionMessaging } from "@webext-core/messaging";
+} from "../credentials/types";
 
 export type FrameCasExtensionProtocolMap = {
   prepareLocate(message: {

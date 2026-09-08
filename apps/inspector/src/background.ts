@@ -1,8 +1,11 @@
 import {
   type LinkVerificationResult,
+  activeTabMessenger,
   createLinkVerificationHandlers,
   credentialsMessenger,
+  frameCasExtensionMessenger,
   normalizeUrl,
+  overlayExtensionMessenger,
   pendingOpIdVerification,
   recentlyOpenedTabs,
   restoreVerificationFromCache,
@@ -10,9 +13,6 @@ import {
   verificationCache,
   verificationResults,
 } from "@originator-profile/extension-common";
-import { activeTabMessenger } from "./components/activeTab/events";
-import { frameCasExtensionMessenger } from "./components/frameCas";
-import { overlayExtensionMessenger } from "./components/overlay/extension-events";
 import { updateBadge, verifyTabCredentials } from "./components/tabBadge";
 import "./utils/cors-basic-auth";
 

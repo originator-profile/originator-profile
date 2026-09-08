@@ -11,19 +11,17 @@ import {
 } from "@originator-profile/verify";
 
 import {
+  activeTabMessenger,
+  type AncestorFrameCoordinate,
+  type CasCoordinate,
   credentialsMessenger,
+  type FrameCasCoordinate,
+  frameCasExtensionMessenger,
+  frameCasWindowMessenger,
   FrameLocation,
   FrameResponse,
 } from "@originator-profile/extension-common";
-import { activeTabMessenger } from "./components/activeTab/events";
-import {
-  frameCasWindowMessenger,
-  isFrameVisible,
-  type AncestorFrameCoordinate,
-  type CasCoordinate,
-  type FrameCasCoordinate,
-} from "./components/frameCas";
-import { frameCasExtensionMessenger } from "./components/frameCas/extension-events";
+import { isFrameVisible } from "./components/frameCas";
 import "./utils/cors-basic-auth";
 
 credentialsMessenger.onMessage("fetchCredentials", async () => {

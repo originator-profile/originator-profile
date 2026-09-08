@@ -1,4 +1,5 @@
 import {
+  type CaFilterType,
   FramesVerifiedCas,
   SupportedVerifiedCa,
   listCas,
@@ -7,7 +8,6 @@ import { WebMediaProfile } from "@originator-profile/model";
 import { useMemo } from "react";
 import { ElementCaMarker } from "./ElementCaMarker";
 import { FrameCaMarker } from "./FrameCaMarker";
-import type { CaFilterType } from "./window-events";
 
 type CaMapFragmentProps = {
   ca: SupportedVerifiedCa;
