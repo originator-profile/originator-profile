@@ -21,8 +21,8 @@ import {
   FrameLocation,
   FrameResponse,
 } from "@originator-profile/extension-common";
+import "@originator-profile/extension-common/utils/cors-basic-auth";
 import { isFrameVisible } from "./components/frameCas";
-import "./utils/cors-basic-auth";
 
 credentialsMessenger.onMessage("fetchCredentials", async () => {
   const { ops, cas } = await fetchCredentials(document);

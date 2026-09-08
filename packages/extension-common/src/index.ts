@@ -9,6 +9,7 @@ export * from "./link-verification";
 export * from "./overlay/extension-events";
 export * from "./overlay/window-events";
 export * from "./site-profile";
+export * from "./tab-badge/update-badge";
 export * from "./utils/navigation-state";
 export * from "./utils/persistent-map";
 export * from "./utils/problem-code";

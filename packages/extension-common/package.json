@@ -10,10 +10,15 @@
     "directory": "packages/extension-common"
   },
   "type": "module",
-  "sideEffects": false,
+  "sideEffects": [
+    "./src/utils/cors-basic-auth.ts"
+  ],
   "exports": {
     ".": {
       "default": "./src/index.ts"
+    },
+    "./background": {
+      "default": "./src/background.ts"
     },
     "./utils/*": {
       "default": "./src/utils/*.ts"

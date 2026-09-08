@@ -2,12 +2,12 @@ import {
   activeTabMessenger,
   overlayExtensionMessenger,
 } from "@originator-profile/extension-common";
+import "@originator-profile/extension-common/utils/cors-basic-auth";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { HashRouter } from "react-router";
 import App from "./App";
 import "./style.css";
-import "./utils/cors-basic-auth";
 
 // サイドパネルが非表示になったとき、アクティブタブのオーバーレイを解除する。
 // React のライフサイクルに依存せず、サイドパネルが存在する限り有効。
