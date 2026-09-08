@@ -19,23 +19,17 @@
     "format": "prettier --write .",
     "update": "run-s update:pnpm update:dedupe",
     "update:pnpm": "pnpm --recursive update --latest",
-    "update:dedupe": "pnpm dedupe",
-    "docs": "run-s docs:ts docs:build",
-    "docs:ts": "typedoc",
-    "docs:build": "astro build",
-    "docs:preview": "astro preview"
+    "update:dedupe": "pnpm dedupe"
   },
   "devDependencies": {
     "@lerna-lite/cli": "4.11.5",
     "@lerna-lite/version": "4.11.5",
     "@types/jsdom": "28.0.1",
-    "astro": "7.1.0",
     "js-yaml": "5.2.2",
     "npm-run-all2": "8.0.4",
     "prettier": "3.8.2",
     "prettier-plugin-organize-imports": "4.3.0",
-    "turbo": "2.9.14",
-    "typedoc": "0.28.19"
+    "turbo": "2.9.14"
   },
   "engines": {
     "node": "^22.18.0 || ^24.10.0 || ^26.2.0"
