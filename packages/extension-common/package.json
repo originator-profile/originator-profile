@@ -20,6 +20,9 @@
     "./background": {
       "default": "./src/background.ts"
     },
+    "./content-script": {
+      "default": "./src/content-script.ts"
+    },
     "./utils/*": {
       "default": "./src/utils/*.ts"
     },

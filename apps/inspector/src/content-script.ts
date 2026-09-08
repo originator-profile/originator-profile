@@ -1,4 +1,3 @@
-import { serializeIfError } from "@originator-profile/core";
 import {
   type FrameVerifiedCas,
   OverlayProtocolMap,
@@ -6,10 +5,11 @@ import {
   frameCasWindowMessenger,
   overlayExtensionMessenger,
   overlayWindowMessenger,
-  siteProfileMessenger,
 } from "@originator-profile/extension-common";
-import { fetchSiteProfile } from "@originator-profile/presentation";
+import { setupTopFrameHandlers } from "@originator-profile/extension-common/content-script";
 import { Overlay } from "./components/overlay";
+
+setupTopFrameHandlers();
 
 const overlay = new Overlay();
 let enter: Parameters<OverlayProtocolMap["enter"]>[0] = {
@@ -38,11 +38,6 @@ overlayWindowMessenger.onMessage("leave", () => {
 
 overlayWindowMessenger.onMessage("select", ({ data }) => {
   void overlayExtensionMessenger.sendMessage("select", data);
-});
-
-siteProfileMessenger.onMessage("fetchSiteProfile", async () => {
-  const data = await fetchSiteProfile(document);
-  return serializeIfError(data);
 });
 
 let tabId: number;
