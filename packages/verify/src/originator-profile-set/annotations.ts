@@ -14,6 +14,7 @@ import { z } from "zod";
 import { verifyImageDigestSri } from "../integrity";
 import { type MappedKeys } from "../keys";
 import type { Logger } from "../logger";
+import { childPointer } from "../result/pointer";
 import { CertificateExpired } from "./errors";
 import { OpVerifier } from "./op-verifier";
 import type { Certificate } from "./types";
@@ -48,12 +49,14 @@ export async function verifyAnnotations(
     validator?: VcValidatorFactory;
     /** ロガー (デフォルト: `console`) */
     logger?: Logger;
+    /** 対象の Originator Profile の位置を指す JSONPath */
+    at?: string;
   } = {},
 ) {
-  const { validator, logger = console } = options;
+  const { validator, logger = console, at } = options;
   if (!annotations) return;
   return await Promise.all(
-    annotations.map(async (annotation) => {
+    annotations.map(async (annotation, index) => {
       const verify = OpVerifier<Certificate>(
         paIssuerKeys,
         annotation,
@@ -81,6 +84,7 @@ export async function verifyAnnotations(
 
       await verifyImageDigestSri(valid.doc.credentialSubject.image, {
         logger,
+        ...(at && { at: childPointer(at, "annotations", index) }),
       });
 
       return valid;

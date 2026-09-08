@@ -1,12 +1,9 @@
-import {
-  VerifiedOps,
-  VerifiedSp,
-  verifyDocuments,
-} from "@originator-profile/verify";
+import type { OriginatorProfileSet } from "@originator-profile/model";
+import { verifyDocuments, type VerifiedOps } from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
-import { createCollectingLogger } from "../../utils/collecting-logger";
 import { getRegistry } from "../../utils/registry-ops";
+import { toLegacyDocuments } from "../../utils/to-legacy-result";
 import { useSiteProfile } from "../siteProfile";
 import { deduplicateCas } from "./deduplicate-cas";
 import {
@@ -14,11 +11,7 @@ import {
   fetchVerificationResult,
   FrameIntegrityVerifier,
 } from "./messaging";
-import type {
-  FramesVerifiedCas,
-  SupportedCa,
-  SupportedVerifiedCas,
-} from "./types";
+import type { FramesVerifiedCas, SupportedVerifiedCas } from "./types";
 
 const CREDENTIALS_KEY = "credentials";
 
@@ -37,12 +30,11 @@ type FetchVerifiedCredentialsResult = {
  * @param tabId タブID
  * @returns 検証済みクレデンシャルおよびタブのorigin,url
  */
-async function fetchVerifiedCredentials([, tabId, sp]: [
+async function fetchVerifiedCredentials([, tabId, websiteOriginators]: [
   _: typeof CREDENTIALS_KEY,
   tabId: number,
-  sp?: VerifiedSp,
+  websiteOriginators?: OriginatorProfileSet,
 ]): Promise<FetchVerifiedCredentialsResult> {
-  const { logger, warnings, info } = createCollectingLogger();
   const [registry, { frames, ...page }] = await Promise.all([
     getRegistry(),
     fetchTabCredentials(tabId),
@@ -53,29 +45,32 @@ async function fetchVerifiedCredentials([, tabId, sp]: [
     verifyIntegrity: FrameIntegrityVerifier(tabId, frame.frameId),
   }));
 
-  const result = await verifyDocuments<SupportedCa, (typeof targets)[number]>(
-    targets,
-    { registry, website: sp, logger },
-  );
+  const result = await verifyDocuments(targets, {
+    registry,
+    websiteOriginators,
+  });
 
-  if (result instanceof Error) {
-    throw result;
+  const legacy = toLegacyDocuments(result);
+  if (legacy instanceof Error) {
+    throw legacy;
   }
 
   return {
-    ops: result.originators,
-    cas: deduplicateCas(result.documents.flatMap(({ cas }) => cas)),
+    ops: legacy.ops,
+    cas: deduplicateCas(
+      legacy.documents.flatMap(({ cas }) => cas),
+    ) as SupportedVerifiedCas,
     origin: page.origin,
     url: page.url,
-    framesCas: result.documents.map(({ target, cas }) => ({
-      cas,
+    framesCas: legacy.documents.map(({ target, cas }) => ({
+      cas: cas as SupportedVerifiedCas,
       url: target.url,
       origin: target.origin,
       frameId: target.frameId,
       parentFrameId: target.parentFrameId,
     })),
-    warnings,
-    info,
+    warnings: result.warnings.map(({ title }) => title),
+    info: result.info.map(({ title }) => title),
   };
 }
 
@@ -120,7 +115,7 @@ type UseCredentialsResult =
 export function useCredentials() {
   const params = useParams<{ tabId: string }>();
   const tabId = Number(params.tabId);
-  const { siteProfile } = useSiteProfile();
+  const { originators } = useSiteProfile();
   const {
     data: credentials,
     error,
@@ -128,8 +123,8 @@ export function useCredentials() {
   } = useSWRImmutable<
     FetchVerifiedCredentialsResult,
     Error,
-    [typeof CREDENTIALS_KEY, number, VerifiedSp?]
-  >([CREDENTIALS_KEY, tabId, siteProfile], fetchVerifiedCredentials);
+    [typeof CREDENTIALS_KEY, number, OriginatorProfileSet?]
+  >([CREDENTIALS_KEY, tabId, originators], fetchVerifiedCredentials);
   const { ops, cas, origin, framesCas, warnings, info } = credentials ?? {};
 
   return {
