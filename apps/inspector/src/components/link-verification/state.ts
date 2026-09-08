@@ -1,4 +1,4 @@
-import { PersistentMap } from "../../utils/persistent-map";
+import { PersistentMap } from "@originator-profile/extension-common";
 import type { LinkVerificationResult } from "../credentials/types";
 import type { PendingVerificationData, VerificationCacheData } from "./types";
 

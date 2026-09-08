@@ -1,3 +1,4 @@
+import { normalizeUrl } from "@originator-profile/extension-common";
 import { activeTabMessenger } from "./components/activeTab/events";
 import { credentialsMessenger } from "./components/credentials/events";
 import type { LinkVerificationResult } from "./components/credentials/types";
@@ -15,7 +16,6 @@ import {
 import { overlayExtensionMessenger } from "./components/overlay/extension-events";
 import { updateBadge, verifyTabCredentials } from "./components/tabBadge";
 import "./utils/cors-basic-auth";
-import { normalizeUrl } from "./utils/navigation-state";
 
 /** バッジ更新のデバウンス時間（ミリ秒） */
 const BADGE_UPDATE_DEBOUNCE_MS = 300;
