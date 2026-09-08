@@ -103,3 +103,41 @@ test("verifyIntegrity() should verify ExternalResourceTargetIntegrity", async fu
 
   expect((await handle.jsonValue()).valid).toBe(true);
 });
+
+test("verifyIntegrity() should verify ExternalResourceTargetIntegrity by cssSelector", async function ({
+  page,
+}) {
+  await page.goto("/");
+
+  const content: Target = {
+    type: "ExternalResourceTargetIntegrity",
+    cssSelector: ".css-selected",
+    integrity: "sha256-P0hnTtzozTl+5h4CpQdOK+5dwpuINHNaZEahrlrNkSQ=",
+  };
+
+  const handle = await page.evaluateHandle(
+    (content) => verifyIntegrity(content),
+    content,
+  );
+
+  expect((await handle.jsonValue()).valid).toBe(true);
+});
+
+test("verifyIntegrity() should not verify ExternalResourceTargetIntegrity if any element matched by cssSelector has a different resource", async function ({
+  page,
+}) {
+  await page.goto("/");
+
+  const content: Target = {
+    type: "ExternalResourceTargetIntegrity",
+    cssSelector: ".css-selected, .css-mixed",
+    integrity: "sha256-P0hnTtzozTl+5h4CpQdOK+5dwpuINHNaZEahrlrNkSQ=",
+  };
+
+  const handle = await page.evaluateHandle(
+    (content) => verifyIntegrity(content),
+    content,
+  );
+
+  expect((await handle.jsonValue()).valid).toBe(false);
+});

@@ -1,0 +1,125 @@
+import {
+  getCcspAccessToken,
+  parseCcspConfig,
+  type CcspAuthConfig,
+  type CcspTokenResponse,
+} from "./ccsp-auth";
+import { getJwtExpiration } from "./jwt";
+
+interface CachedToken {
+  accessToken: string;
+  expiresAt: number;
+  bufferSeconds: number;
+}
+
+export interface TokenOperations {
+  getCcspAccessToken: (config: CcspAuthConfig) => Promise<CcspTokenResponse>;
+  now: () => number;
+}
+
+const DEFAULT_TTL_SECONDS = 3600;
+
+const resolveExpiresAt = (response: CcspTokenResponse, now: number): number => {
+  if (typeof response.expires_in === "number" && response.expires_in > 0) {
+    return now + response.expires_in;
+  }
+
+  const jwtExp = getJwtExpiration(response.access_token);
+  if (jwtExp && jwtExp > 0) {
+    return jwtExp;
+  }
+
+  return now + DEFAULT_TTL_SECONDS;
+};
+
+const resolveBufferSeconds = (
+  ttlSeconds: number,
+  configuredBufferSeconds: number,
+): number =>
+  Math.min(configuredBufferSeconds, Math.max(0, Math.floor(ttlSeconds / 2)));
+
+const defaultTokenOperations: TokenOperations = {
+  getCcspAccessToken,
+  now: () => Math.floor(Date.now() / 1000),
+};
+
+export class TokenManager {
+  private cachedToken: CachedToken | null = null;
+  private refreshPromise: Promise<string> | null = null;
+  private readonly config: CcspAuthConfig;
+  private readonly bufferSeconds: number;
+  private readonly tokenOps: TokenOperations;
+
+  constructor(
+    config: CcspAuthConfig,
+    bufferSeconds: number = 300,
+    tokenOps: TokenOperations = defaultTokenOperations,
+  ) {
+    this.config = config;
+    this.bufferSeconds = bufferSeconds;
+    this.tokenOps = tokenOps;
+  }
+
+  async getAccessToken(): Promise<string> {
+    if (this.refreshPromise) {
+      return await this.refreshPromise;
+    }
+
+    if (this.cachedToken && this.isTokenValid()) {
+      return this.cachedToken.accessToken;
+    }
+
+    return await this.refreshToken();
+  }
+
+  async refreshToken(): Promise<string> {
+    if (this.refreshPromise) {
+      return await this.refreshPromise;
+    }
+
+    this.refreshPromise = (async () => {
+      try {
+        const response = await this.tokenOps.getCcspAccessToken(this.config);
+
+        const now = this.tokenOps.now();
+        const expiresAt = resolveExpiresAt(response, now);
+
+        this.cachedToken = {
+          accessToken: response.access_token,
+          expiresAt,
+          bufferSeconds: resolveBufferSeconds(
+            expiresAt - now,
+            this.bufferSeconds,
+          ),
+        };
+
+        return response.access_token;
+      } finally {
+        this.refreshPromise = null;
+      }
+    })();
+
+    return await this.refreshPromise;
+  }
+
+  clearCache(): void {
+    this.cachedToken = null;
+    this.refreshPromise = null;
+  }
+
+  isTokenValid(): boolean {
+    if (!this.cachedToken) {
+      return false;
+    }
+
+    return (
+      this.cachedToken.expiresAt >
+      this.tokenOps.now() + this.cachedToken.bufferSeconds
+    );
+  }
+}
+
+export const createTokenManager = (
+  ccspConfig: string,
+  bufferSeconds?: number,
+): TokenManager => new TokenManager(parseCcspConfig(ccspConfig), bufferSeconds);

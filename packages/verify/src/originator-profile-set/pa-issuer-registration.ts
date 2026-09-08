@@ -4,7 +4,7 @@ import {
   ProfileAnnotationPolicy,
 } from "@originator-profile/model";
 import { VerifiedJwtVc } from "@originator-profile/securing-mechanism";
-import type { WarnHandler } from "../warn";
+import type { Logger } from "../logger";
 import type { Certificate, VerifiedOps } from "./types";
 
 /** 認可された Profile Annotation Policy ID の集合 */
@@ -41,19 +41,19 @@ export function isProfileAnnotationIssuerRegistration(
 
 /**
  * 認可される対象の OP ID ごとの Profile Annotation Policy を集約
- * (Core Profile Issuer が発行した登録証 PA のみを採用)
+ * (PA Issuer Registration Issuer が発行した登録証 PA のみを採用)
  */
 function buildProfileAnnotationPolicy(
   /** 検証済みの OP の集合 */
   verifiedOps: VerifiedOps,
-  /** Core Profile Issuer の OP ID の集合 */
-  cpIssuers: ReadonlySet<string>,
+  /** PA Issuer Registration Issuer の OP ID の集合 */
+  paIssuerRegistrationIssuers: ReadonlySet<string>,
 ): ProfileAnnotationPolicyMap {
   const policy: ProfileAnnotationPolicyMap = new Map();
   const annotations = verifiedOps.flatMap((op) => op.annotations ?? []);
   for (const { doc } of annotations) {
     if (!isProfileAnnotationIssuerRegistration(doc)) continue;
-    if (!cpIssuers.has(doc.issuer)) continue;
+    if (!paIssuerRegistrationIssuers.has(doc.issuer)) continue;
     const { id: registrationIssuer, annotationScheme } = doc.credentialSubject;
     const allowedPolicy = policy.get(registrationIssuer) ?? new Set<string>();
     for (const scheme of annotationScheme) allowedPolicy.add(scheme);
@@ -62,14 +62,13 @@ function buildProfileAnnotationPolicy(
   return policy;
 }
 
-/** 認可外の Profile Annotation を検出した際に警告 */
+/** 認可外の Profile Annotation を検出した際の通知 */
 function reportUnauthorizedAnnotation({
   annotation,
   opIndex,
   paIndex,
   policy,
-  cpIssuers,
-  warn,
+  logger,
 }: {
   /** 対象の PA */
   annotation: VerifiedJwtVc<Certificate>;
@@ -79,24 +78,15 @@ function reportUnauthorizedAnnotation({
   paIndex: number;
   /** 認可された Profile Annotation Policy の集合 */
   policy: ProfileAnnotationPolicyMap;
-  /** Core Profile Issuer の OP ID の集合 */
-  cpIssuers: ReadonlySet<string>;
-  /** 警告ハンドラー */
-  warn: WarnHandler;
+  /** ロガー */
+  logger: Logger;
 }): void {
   const { doc } = annotation;
   const { issuer: profileAnnotationIssuer } = doc;
   const location = `OP[${opIndex}].PA[${paIndex}]`;
 
   if (!isProfileAnnotation(doc)) {
-    warn(`Certificate is deprecated (${location})`);
-    return;
-  }
-
-  if (
-    isProfileAnnotationIssuerRegistration(doc) &&
-    cpIssuers.has(profileAnnotationIssuer)
-  ) {
+    logger.warn(`Certificate is deprecated (${location})`);
     return;
   }
 
@@ -104,7 +94,7 @@ function reportUnauthorizedAnnotation({
   const isAllowed =
     policyId && policy.get(profileAnnotationIssuer)?.has(policyId);
   if (!isAllowed) {
-    warn(
+    logger.info(
       `Profile Annotation Issuer is not registered for this annotation scheme (${location} issuer: ${profileAnnotationIssuer}, scheme: ${policyId ?? "unknown"})`,
     );
   }
@@ -113,23 +103,26 @@ function reportUnauthorizedAnnotation({
 /**
  * Profile Annotation Issuer 登録証 PA に基づく発行者の認可を確認
  *
- * 各 Profile Annotation の発行者が、Core Profile Issuer から発行された登録証 PA によって、その PA が準拠する 認証制度（Profile Annotation Policy）の発行を認可されているかを検証
- *
- * (2027年まで) 後方互換性のため、認可を確認できない場合も検証は失敗させず warn に留める。
+ * 各 Profile Annotation の発行者が、基底となる Profile Annotation Issuer 登録証 PA によって、その PA が準拠する 認証制度（Profile Annotation Policy）の発行を認可されているかを検証
  *
  * @param verifiedOps 検証済み Originator Profile Set
- * @param cpIssuer 基底となる Core Profile Issuer の OP ID
- * @param warn 警告ハンドラー (デフォルト: `console.warn`)
+ * @param paIssuerRegistrationIssuer 基底となる Profile Annotation Issuer 登録証 PA Issuer の OP ID
+ * @param logger ロガー (デフォルト: `console`)
  *
  * @see https://docs.originator-profile.org/opb/pa-model/profile-annotation-issuer-registration/
  */
 export function verifyAnnotationIssuerRegistration(
   verifiedOps: VerifiedOps,
-  cpIssuer: string | string[],
-  warn: WarnHandler = console.warn,
+  paIssuerRegistrationIssuer: string | string[],
+  logger: Logger = console,
 ): VerifiedOps {
-  const cpIssuers = new Set([cpIssuer].flat());
-  const policy = buildProfileAnnotationPolicy(verifiedOps, cpIssuers);
+  const paIssuerRegistrationIssuers = new Set(
+    [paIssuerRegistrationIssuer].flat(),
+  );
+  const policy = buildProfileAnnotationPolicy(
+    verifiedOps,
+    paIssuerRegistrationIssuers,
+  );
   for (const [opIndex, op] of verifiedOps.entries()) {
     for (const [paIndex, annotation] of op.annotations?.entries() ?? []) {
       reportUnauthorizedAnnotation({
@@ -137,8 +130,7 @@ export function verifyAnnotationIssuerRegistration(
         opIndex,
         paIndex,
         policy,
-        cpIssuers,
-        warn,
+        logger,
       });
     }
   }

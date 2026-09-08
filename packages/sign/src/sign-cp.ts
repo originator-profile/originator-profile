@@ -1,20 +1,25 @@
-import { CoreProfile, Jwk } from "@originator-profile/model";
-import { signJwtVc } from "@originator-profile/securing-mechanism";
+import { CoreProfile } from "@originator-profile/model";
+import {
+  type JwtSigner,
+  type KeyMaterial,
+  signJwtVc,
+} from "@originator-profile/securing-mechanism";
 
 /**
  * CP への署名
  * @param cp CoreProfile オブジェクト
- * @param privateKey プライベート鍵
+ * @param signer プライベート鍵、または HSM・KMS・WebAuthn等の外部署名者 (JwtSigner)
  * @return JWT でエンコードされた CP
  */
 export async function signCp(
   cp: CoreProfile,
-  privateKey: Jwk,
+  signer: KeyMaterial | JwtSigner,
   options: {
     alg?: string;
+    kid?: string;
     issuedAt: Date;
     expiredAt: Date;
   },
 ): Promise<string> {
-  return signJwtVc(cp, privateKey, options);
+  return signJwtVc(cp, signer, options);
 }

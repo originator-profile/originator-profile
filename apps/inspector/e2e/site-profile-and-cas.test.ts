@@ -23,11 +23,15 @@ test("SiteProfile/CASの検証に成功するが、htmlに記載されたOPSの�
   missingOps: _,
   credentialsPage,
 }) => {
-  await validSiteProfile({ privateKey, publicKey }, credentialsPage.issuer);
+  await validSiteProfile(
+    { privateKey, publicKey },
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
   await validCas(
     { privateKey },
     credentialsPage.contents,
-    credentialsPage.issuer,
+    credentialsPage.holder,
   );
   await page.goto(credentialsPage.endpoint);
   const ext = await sidepanel(context);
@@ -55,11 +59,12 @@ test("CASの検証に成功するが、SiteProfileのWMPの取得に失敗した
   await missingMediaSiteProfile(
     { privateKey, publicKey },
     credentialsPage.issuer,
+    credentialsPage.holder,
   );
   await validCas(
     { privateKey },
     credentialsPage.contents,
-    credentialsPage.issuer,
+    credentialsPage.holder,
   );
 
   await page.goto(credentialsPage.endpoint);

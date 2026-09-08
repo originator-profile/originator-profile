@@ -5,7 +5,7 @@ import {
 } from "@originator-profile/model";
 import {
   JwtVcDecoder,
-  VcValidator,
+  type VcValidatorFactory,
 } from "@originator-profile/securing-mechanism";
 import {
   CaInvalid,
@@ -50,7 +50,7 @@ export async function verifyCas<
   verifiedOps: VerifiedOps,
   url: string,
   verifyIntegrity: VerifyIntegrity,
-  validator?: typeof VcValidator,
+  validator?: VcValidatorFactory,
 ): Promise<CasVerificationResult<T>> {
   const decodeCa = JwtVcDecoder<ContentAttestation>();
   const resultCas = await Promise.all(

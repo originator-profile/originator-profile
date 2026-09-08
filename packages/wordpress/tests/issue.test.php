@@ -9,6 +9,7 @@ use const Profile\Config\PROFILE_DEFAULT_CA_TARGET_HTML;
 
 require_once __DIR__ . '/../includes/issue.php';
 use function Profile\Issue\content_to_html;
+use function Profile\Issue\find_images_without_integrity;
 
 final class Issue extends TestCase {
 	public function test_content_to_html_関数はHTMLを返す() {
@@ -65,5 +66,47 @@ EOD
 		$this->assertStringNotContainsString( '<h1', $text );
 		$this->assertStringNotContainsString( 'タイトル', $text );
 		$this->assertSame( '<body class="wp-block-post-content"><p>本文</p></body>', $text );
+	}
+
+	public function test_find_images_without_integrity関数はintegrity属性の無い画像のsrcを返す() {
+		$html = <<<'EOD'
+<div class="wp-block-post-content">
+<figure class="wp-block-image size-full"><img src="https://example.com/a.png" /></figure>
+</div>
+EOD;
+
+		$this->assertSame(
+			array( 'https://example.com/a.png' ),
+			find_images_without_integrity( $html )
+		);
+	}
+
+	public function test_find_images_without_integrity関数はintegrity属性のある画像を除外する() {
+		$html = <<<'EOD'
+<div class="wp-block-post-content">
+<figure class="wp-block-image size-full"><img src="https://example.com/a.png" integrity="sha256-xxx" /></figure>
+</div>
+EOD;
+
+		$this->assertSame( array(), find_images_without_integrity( $html ) );
+	}
+
+	public function test_find_images_without_integrity関数はwp_block_image外の画像を除外する() {
+		$html = '<img src="https://example.com/outside.png" />';
+
+		$this->assertSame( array(), find_images_without_integrity( $html ) );
+	}
+
+	public function test_find_images_without_integrity関数はハッシュ部分が空のintegrity値を検出する() {
+		$html = <<<'EOD'
+<div class="wp-block-post-content">
+<figure class="wp-block-image size-full"><img src="https://example.com/a.png" integrity="sha256-" /></figure>
+</div>
+EOD;
+
+		$this->assertSame(
+			array( 'https://example.com/a.png' ),
+			find_images_without_integrity( $html )
+		);
 	}
 }

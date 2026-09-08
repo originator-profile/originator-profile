@@ -54,4 +54,14 @@ describe("fetchAndSetDigestSri()", () => {
     expect(result).toHaveProperty("digestSRI", "existing-digest");
     expect(result).not.toHaveProperty("content");
   });
+
+  it("should return undefined when content is missing", async () => {
+    await expect(
+      fetchAndSetDigestSri("sha256", undefined),
+    ).resolves.toBeUndefined();
+  });
+
+  it("should return null when content is null", async () => {
+    await expect(fetchAndSetDigestSri("sha256", null)).resolves.toBeNull();
+  });
 });

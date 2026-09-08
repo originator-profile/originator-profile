@@ -1,4 +1,5 @@
-import { Icon } from "@iconify/react";
+import IconFa6SolidCheck from "@iconify-react/fa6-solid/check";
+import IconIonFilter from "@iconify-react/ion/filter";
 import { _ } from "@originator-profile/ui";
 import { useMemo } from "react";
 import { twMerge } from "tailwind-merge";
@@ -69,7 +70,7 @@ function CaFilter({ caListType, setCaListType, cas }: Props) {
         onKeyDown={handleButtonKeyDown}
         {...buttonProps}
       >
-        <Icon icon="ion:filter" />
+        <IconIonFilter height="1em" />
       </MenuButton>
 
       <Menu
@@ -96,7 +97,7 @@ function CaFilter({ caListType, setCaListType, cas }: Props) {
             >
               <div className="flex items-center w-full">
                 {isSelected && (
-                  <Icon className="mx-2 absolute" icon="fa6-solid:check" />
+                  <IconFa6SolidCheck className="mx-2 absolute" height="1em" />
                 )}
                 <p className="ml-8">{option.title}</p>
               </div>

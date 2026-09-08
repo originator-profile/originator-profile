@@ -20,13 +20,17 @@ test("OnlineAd Content Attestation の表示が正しく行われていること
   validCas,
   onlineAdPage,
 }) => {
-  await validOps({ publicKey, privateKey }, onlineAdPage.issuer);
+  await validOps(
+    { publicKey, privateKey },
+    onlineAdPage.issuer,
+    onlineAdPage.holder,
+  );
 
   // OnlineAd Content Attestationを署名
   await validCas(
     { privateKey },
     onlineAdPage.contents,
-    onlineAdPage.issuer,
+    onlineAdPage.holder,
     "OnlineAd",
   );
 

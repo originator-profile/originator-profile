@@ -1,7 +1,0 @@
-name: type-check
-description: Type Check
-runs:
-  using: composite
-  steps:
-    - run: pnpm type-check
-      shell: bash

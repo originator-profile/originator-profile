@@ -23,6 +23,7 @@ test("複数ロケールのSite Profile - 日本語ロケールで日本語コ�
   await multiLocaleSiteProfile(
     { privateKey, publicKey },
     credentialsMissingPage.issuer,
+    credentialsMissingPage.holder,
   );
   await page.goto(credentialsMissingPage.endpoint);
   const ext = await sidepanel(context);
@@ -56,6 +57,7 @@ test("複数ロケールのSite Profile - 英語ロケールで英語コンテ�
   await multiLocaleSiteProfile(
     { privateKey, publicKey },
     credentialsMissingPage.issuer,
+    credentialsMissingPage.holder,
   );
   await page.goto(credentialsMissingPage.endpoint);
   const ext = await sidepanel(context);
@@ -91,6 +93,7 @@ test("複数ロケールのSite Profile - 未対応ロケールで英語フォ�
   await multiLocaleSiteProfile(
     { privateKey, publicKey },
     credentialsMissingPage.issuer,
+    credentialsMissingPage.holder,
   );
   await page.goto(credentialsMissingPage.endpoint);
   const ext = await sidepanel(context);

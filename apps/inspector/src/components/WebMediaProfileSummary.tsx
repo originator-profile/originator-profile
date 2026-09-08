@@ -1,4 +1,4 @@
-import { Icon } from "@iconify/react";
+import IconGgCheckO from "@iconify-react/gg/check-o";
 import { WebMediaProfile } from "@originator-profile/model";
 import { Image, _ } from "@originator-profile/ui";
 import logomarkUrl from "@originator-profile/ui/src/assets/logomark.svg";
@@ -27,19 +27,19 @@ function WebMediaProfileSummary({ wmp }: Props) {
         <div className="flex flex-row flex-wrap gap-1">
           {wmp.credentialSubject.informationTransmissionPolicy && (
             <p className="jumpu-tag rounded-full px-2 text-xs text-gray-600">
-              <Icon className="inline mr-1" icon="gg:check-o" />
+              <IconGgCheckO className="inline mr-1" height="1em" />
               {_("WebMediaProfileSummary_InformationTransmissionPolicy")}
             </p>
           )}
           {wmp.credentialSubject.publishingPrinciple && (
             <p className="jumpu-tag rounded-full px-2 text-xs text-gray-600">
-              <Icon className="inline mr-1" icon="gg:check-o" />
+              <IconGgCheckO className="inline mr-1" height="1em" />
               {_("WebMediaProfileSummary_EditorialGuidelines")}
             </p>
           )}
           {wmp.credentialSubject.privacyPolicy && (
             <p className="jumpu-tag rounded-full px-2 text-xs text-gray-600">
-              <Icon className="inline mr-1" icon="gg:check-o" />
+              <IconGgCheckO className="inline mr-1" height="1em" />
               {_("WebMediaProfileSummary_PrivacyPolicy")}
             </p>
           )}

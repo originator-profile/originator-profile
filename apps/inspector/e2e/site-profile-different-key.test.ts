@@ -23,9 +23,18 @@ test("異なる鍵ペアによる署名のとき検証失敗", async ({
   credentialsPage,
   validCredentials,
 }) => {
-  await validSiteProfile({ privateKey, publicKey }, credentialsPage.issuer);
+  await validSiteProfile(
+    { privateKey, publicKey },
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
   const key = await generateKey();
-  await validCredentials(key, credentialsPage.contents, credentialsPage.issuer);
+  await validCredentials(
+    key,
+    credentialsPage.contents,
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
   await page.goto(credentialsPage.endpoint);
 
   const ext = await sidepanel(context);

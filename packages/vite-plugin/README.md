@@ -169,11 +169,21 @@ Entries without `main: true` are serialized as bare JWT strings. Entries with `m
 
 ## Limitations
 
-### `ExternalResourceTargetIntegrity` requires manual `integrity` attribute
+### `ExternalResourceTargetIntegrity` requires `cssSelector` or a manual `integrity` attribute
 
-When using [`ExternalResourceTargetIntegrity`](https://docs.originator-profile.org/en/opb/content-integrity-descriptor/external-resource/), verifiers [locate target elements by matching the `integrity` HTML attribute](https://docs.originator-profile.org/en/opb/content-integrity-descriptor/external-resource/#how-to-identify-element-location). This plugin computes the `integrity` value and includes it in the signed CA, but **does not** automatically add the `integrity` attribute to the corresponding HTML elements.
+When using [`ExternalResourceTargetIntegrity`](https://docs.originator-profile.org/en/opb/content-integrity-descriptor/external-resource/), verifiers [locate target elements by the `cssSelector` property, and fall back to matching the `integrity` HTML attribute when it is absent](https://docs.originator-profile.org/en/opb/content-integrity-descriptor/external-resource/#how-to-identify-element-location). This plugin computes the `integrity` value and includes it in the signed CA, but **does not** automatically add the `integrity` attribute to the corresponding HTML elements.
 
-You must manually set the `integrity` attribute on each `<img>`, `<source>`, or other resource element to match the signed value:
+Set `cssSelector` on the target so that it matches the resource element. Every element it matches must reference a resource matching the signed `integrity`, otherwise verification fails.
+
+```json
+{
+  "type": "ExternalResourceTargetIntegrity",
+  "cssSelector": "#hero-image",
+  "content": "https://example.com/image.png"
+}
+```
+
+Without `cssSelector`, you must manually set the `integrity` attribute on each `<img>`, `<source>`, or other resource element to match the signed value:
 
 ```html
 <img src="https://example.com/image.png" integrity="sha256-..." />

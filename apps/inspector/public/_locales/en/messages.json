@@ -362,6 +362,9 @@
   "DetailInfo_Warnings": {
     "message": "Warnings"
   },
+  "DetailInfo_Info": {
+    "message": "Info"
+  },
   "Link_OriginatorProfile": {
     "message": "Learn more about Originator Profile (external site)"
   },
@@ -488,15 +491,15 @@
   "Warning_Destination": {
     "message": "Destination: "
   },
-  "Verification_InvalidOps": {
-    "message": "Invalid OPS (decode failed)"
+  "Verification_SiteProfileVerifyFailed": {
+    "message": "Could not verify the destination Site Profile"
   },
-  "Verification_InvalidOpsDetail": {
-    "message": "Invalid OPS (decode failed): $error$",
+  "Verification_SiteProfileVerifyFailedDetail": {
+    "message": "Could not verify the destination Site Profile: $error$",
     "placeholders": {
       "error": {
         "content": "$1",
-        "example": "Invalid JWT format"
+        "example": "Website Profile verify failed"
       }
     }
   },
@@ -506,10 +509,13 @@
   "Verification_OpidMismatch": {
     "message": "OPID mismatch"
   },
-  "Verification_FetchFailed": {
-    "message": "Credentials not found (fetch failed)"
-  },
   "GlobalHeader_Reload": {
     "message": "Reload"
+  },
+  "SiteProfile_Missing": {
+    "message": "Site Profile not found"
+  },
+  "SiteProfile_Missing_Reason": {
+    "message": "It is possible that the site profile could not be retrieved. This does not indicate any issues regarding the site's safety."
   }
 }

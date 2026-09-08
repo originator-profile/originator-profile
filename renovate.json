@@ -6,5 +6,13 @@
     "schedule:monthly",
     ":gitSignOff"
   ],
-  "postUpdateOptions": ["pnpmDedupe"]
+  "postUpdateOptions": ["pnpmDedupe"],
+  "packageRules": [
+    {
+      "description": "packages/wordpress's base image PHP version (pinned in Dockerfile/Dockerfile.dev) is managed manually per #472; exclude it from Renovate so automated updates can't drift off that PHP line.",
+      "matchDatasources": ["docker"],
+      "matchPackageNames": ["wordpress"],
+      "enabled": false
+    }
+  ]
 }

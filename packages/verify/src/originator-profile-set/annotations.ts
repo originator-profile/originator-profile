@@ -5,15 +5,15 @@ import {
   ProfileAnnotation,
   ProfileAnnotationIssuerRegistration,
 } from "@originator-profile/model";
-import {
+import type {
   UnverifiedJwtVc,
-  VcValidator,
+  VcValidatorFactory,
   VerifiedJwtVc,
 } from "@originator-profile/securing-mechanism";
 import { z } from "zod";
 import { verifyImageDigestSri } from "../integrity";
 import { type MappedKeys } from "../keys";
-import type { WarnHandler } from "../warn";
+import type { Logger } from "../logger";
 import { CertificateExpired } from "./errors";
 import { OpVerifier } from "./op-verifier";
 import type { Certificate } from "./types";
@@ -45,12 +45,12 @@ export async function verifyAnnotations(
   annotations?: UnverifiedJwtVc<Certificate>[],
   options: {
     /** バリデーター */
-    validator?: typeof VcValidator;
-    /** 警告ハンドラー (デフォルト: `console.warn`) */
-    warn?: WarnHandler;
+    validator?: VcValidatorFactory;
+    /** ロガー (デフォルト: `console`) */
+    logger?: Logger;
   } = {},
 ) {
-  const { validator, warn } = options;
+  const { validator, logger = console } = options;
   if (!annotations) return;
   return await Promise.all(
     annotations.map(async (annotation) => {
@@ -79,7 +79,9 @@ export async function verifyAnnotations(
         return valid;
       }
 
-      await verifyImageDigestSri(valid.doc.credentialSubject.image, { warn });
+      await verifyImageDigestSri(valid.doc.credentialSubject.image, {
+        logger,
+      });
 
       return valid;
     }),

@@ -14,7 +14,7 @@ WordPress での記事の公開時の Content Attestation (CA) の発行に役�
 ### Verified
 
 - OS: Ubuntu 24.04
-- Base image: `wordpress:6.9.4-php8.5`
+- Base image: `wordpress:6.9.4-php8.2`
 
 ### Development
 
@@ -28,6 +28,16 @@ WordPress での記事の公開時の Content Attestation (CA) の発行に役�
 
 - Non-Apache servers (e.g. nginx): .htaccess is generated only for Apache; configure access control manually.
 - Autoptimize (incl. Pro): HTML/image minification can break signature verification. See "Known issues".
+
+### PHP のサポート方針
+
+このプラグインは、PHP のバージョンについて[アクティブなセキュリティサポートのある環境](https://endoflife.date/php)を下限としてサポートします。
+この下限を下回る PHP は、正式なサポート対象外です。
+
+CA Manager が動作を検証しているのは、現時点では [Verified](#verified) に記載の Docker イメージのみです。
+
+PHP 7.4 のように下限を下回る環境では、現在のコードのままでは動作しません。
+動作させるには、コードの一部を書き換える必要があります (詳細は後述の[もっと古い PHP でも動かせますか?](#もっと古い-php-74-など-でも動かせますか)を参照してください)。
 
 ## 機能
 
@@ -79,7 +89,7 @@ dns:media.example.com
 例:
 
 ```
-dprexpt.originator-profile.org
+playground.originator-profile.org
 ```
 
 **[認証情報]: CAサーバーへのアクセスに必要な情報を指定**
@@ -398,6 +408,33 @@ Pro版では、画像がCDN経由で変換され、URLが変化する場合が�
 メタデータ `_profile_post_cas` に CAS が保存されている状態で、 CA サーバー側のデータが手動で削除された場合、記事更新時に UUID を指定した新規登録が試みられます。これはサーバー側でエラーとなる可能性があります。
 
 **回避策**： 一度記事を非公開にすることで、メタデータがクリアされます。その後再度公開することで UUID を指定しない新規登録となり、正常に登録されます。
+
+### 他の投稿に添付済みの画像を再利用した場合、Integrityが正しく付与されないことがある
+
+WordPressの `get_attached_media()` は、`post_parent`（画像がどの投稿にアップロードされたか）が対象の投稿と一致する添付ファイルのみを返します。
+
+そのため、画像ブロックの「メディアライブラリ」タブから、既に他の投稿にアップロード済みの画像を選択して挿入した場合、その画像は `get_attached_media()` で取得されず、Integrityメタデータ（`_profile_attachment_integrity`）が生成されないことがあります。この場合、該当する画像は CA の署名対象（External Resource）に含まれません。
+
+また、画像をアップロードした時点でIntegrityメタデータの計算自体には成功していても、何らかの理由で値が壊れた状態（例: `integrity="sha256-"` のようにハッシュ部分が空）で保存されている場合、`get_attached_media()` で再取得・再検証されない限りその状態が残り続け、CA検証エラー（`ERR_CONTENT_ATTESTATION_SET_VERIFY_FAILED`）の原因になることがあります。
+
+**確認方法**: ログ出力を有効にすると、Integrityが欠落または不正な状態の画像のURLが記録されます。
+
+```
+Post ID <投稿ID>, page <ページ番号>: image(s) with missing or invalid integrity (possibly not returned by get_attached_media(), or hash could not be computed): <画像URL>, ...
+```
+
+**回避策**: 該当する画像をメディアライブラリから直接アップロードし直すことで、その投稿に添付され、Integrityメタデータが生成されます。
+
+### もっと古い PHP (7.4 など) でも動かせますか?
+
+現在のコードのままでは動きません。
+ただし 3 箇所を書き換えれば動く可能性はあります (実際に PHP 7.4 上での動作確認はしていません)。
+
+1. コンストラクタプロパティプロモーション (PHP 8.0+): `includes/class-uca.php` クラスコンストラクタ引数 `public string $issuer`
+2. ユニオン型 (PHP 8.0+): `includes/class-uca.php` メソッド戻り値の型 `string|false`
+3. `mixed` 型 (PHP 8.0+): `includes/issue.php` と `includes/class-uca.php` の一部
+
+なお PHP 7.4 は 2022年11月にセキュリティ更新が終了しており、本番サイトでの利用はおすすめできません。
 
 ## 開発ガイド
 

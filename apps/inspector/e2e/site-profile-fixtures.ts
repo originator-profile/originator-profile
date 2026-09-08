@@ -22,21 +22,29 @@ type TestFixtures = {
   validSiteProfile: (
     key: { publicKey: Jwk; privateKey: Jwk },
     issuer: string,
+    holder: string,
   ) => Promise<void>;
   invalidSiteProfile: void;
   missingSiteProfile: void;
-  evilSiteProfile: (key: { publicKey: Jwk }, issuer: string) => Promise<void>;
+  evilSiteProfile: (
+    key: { publicKey: Jwk },
+    issuer: string,
+    holder: string,
+  ) => Promise<void>;
   missingMediaSiteProfile: (
     key: { publicKey: Jwk; privateKey: Jwk },
     issuer: string,
+    holder: string,
   ) => Promise<void>;
   expiringSoonSiteProfile: (
     key: { publicKey: Jwk; privateKey: Jwk },
     issuer: string,
+    holder: string,
   ) => Promise<void>;
   multiLocaleSiteProfile: (
     key: { publicKey: Jwk; privateKey: Jwk },
     issuer: string,
+    holder: string,
   ) => Promise<void>;
 };
 
@@ -47,15 +55,20 @@ const WELL_KKNOWN_SP_URL = "http://localhost:8080/.well-known/sp.json";
 async function createSiteProfile(
   key: KeyPair,
   issuer: string,
+  holder: string,
   includeMedia: boolean = true,
   expiredAt: Date = addYears(new Date(), 1),
 ): Promise<SiteProfile> {
   const { publicKey, privateKey } = key;
   const issuedAt: Date = new Date(Date.now());
 
-  const coreProfile: CoreProfile = generateCoreProfileData(publicKey, issuer);
-  const certificate: Certificate = generateCertificateData(issuer);
-  const websiteProfile: WebsiteProfile = generateWebsiteProfileData(issuer);
+  const coreProfile: CoreProfile = generateCoreProfileData(
+    publicKey,
+    issuer,
+    holder,
+  );
+  const certificate: Certificate = generateCertificateData(issuer, holder);
+  const websiteProfile: WebsiteProfile = generateWebsiteProfileData(holder);
   const signedCoreProfile = await signJwtVc(coreProfile, privateKey, {
     issuedAt,
     expiredAt,
@@ -70,8 +83,10 @@ async function createSiteProfile(
   };
 
   if (includeMedia) {
-    const webMediaProfile: WebMediaProfile =
-      generateWebMediaProfileData(issuer);
+    const webMediaProfile: WebMediaProfile = generateWebMediaProfileData(
+      issuer,
+      holder,
+    );
     const signedMediaProfile = await signJwtVc(webMediaProfile, privateKey, {
       issuedAt,
       expiredAt,
@@ -114,8 +129,12 @@ async function cleanupRoute(page: Page) {
 export const test = base.extend<TestFixtures>({
   validSiteProfile: async ({ page }: { page: Page }, use) => {
     await use(
-      async (key: { publicKey: Jwk; privateKey: Jwk }, issuer: string) => {
-        const sp: SiteProfile = await createSiteProfile(key, issuer);
+      async (
+        key: { publicKey: Jwk; privateKey: Jwk },
+        issuer: string,
+        holder: string,
+      ) => {
+        const sp: SiteProfile = await createSiteProfile(key, issuer, holder);
         await setupRoute(page, sp, 200);
       },
     );
@@ -145,23 +164,35 @@ export const test = base.extend<TestFixtures>({
     await cleanupRoute(page);
   },
   evilSiteProfile: async ({ page }: { page: Page }, use) => {
-    await use(async (key: { publicKey: Jwk }, issuer: string) => {
-      const { publicKey } = key;
-      const { privateKey } = await generateKey();
-      const sp: SiteProfile = await createSiteProfile(
-        { publicKey, privateKey },
-        issuer,
-      );
+    await use(
+      async (key: { publicKey: Jwk }, issuer: string, holder: string) => {
+        const { publicKey } = key;
+        const { privateKey } = await generateKey();
+        const sp: SiteProfile = await createSiteProfile(
+          { publicKey, privateKey },
+          issuer,
+          holder,
+        );
 
-      await setupRoute(page, sp, 200);
-    });
+        await setupRoute(page, sp, 200);
+      },
+    );
 
     await cleanupRoute(page);
   },
   missingMediaSiteProfile: async ({ page }: { page: Page }, use) => {
     await use(
-      async (key: { publicKey: Jwk; privateKey: Jwk }, issuer: string) => {
-        const sp: SiteProfile = await createSiteProfile(key, issuer, false);
+      async (
+        key: { publicKey: Jwk; privateKey: Jwk },
+        issuer: string,
+        holder: string,
+      ) => {
+        const sp: SiteProfile = await createSiteProfile(
+          key,
+          issuer,
+          holder,
+          false,
+        );
 
         await setupRoute(page, sp, 200);
       },
@@ -171,10 +202,15 @@ export const test = base.extend<TestFixtures>({
   },
   expiringSoonSiteProfile: async ({ page }: { page: Page }, use) => {
     await use(
-      async (key: { publicKey: Jwk; privateKey: Jwk }, issuer: string) => {
+      async (
+        key: { publicKey: Jwk; privateKey: Jwk },
+        issuer: string,
+        holder: string,
+      ) => {
         const sp: SiteProfile = await createSiteProfile(
           key,
           issuer,
+          holder,
           true,
           addDays(new Date(), 1),
         );
@@ -187,7 +223,11 @@ export const test = base.extend<TestFixtures>({
   },
   multiLocaleSiteProfile: async ({ page }: { page: Page }, use) => {
     await use(
-      async (key: { publicKey: Jwk; privateKey: Jwk }, issuer: string) => {
+      async (
+        key: { publicKey: Jwk; privateKey: Jwk },
+        issuer: string,
+        holder: string,
+      ) => {
         const { publicKey, privateKey } = key;
         const issuedAt: Date = new Date(Date.now());
         const expiredAt: Date = addYears(new Date(), 1);
@@ -195,8 +235,12 @@ export const test = base.extend<TestFixtures>({
         const coreProfile: CoreProfile = generateCoreProfileData(
           publicKey,
           issuer,
+          holder,
         );
-        const certificate: Certificate = generateCertificateData(issuer);
+        const certificate: Certificate = generateCertificateData(
+          issuer,
+          holder,
+        );
         const signedCoreProfile = await signJwtVc(coreProfile, privateKey, {
           issuedAt,
           expiredAt,
@@ -207,8 +251,10 @@ export const test = base.extend<TestFixtures>({
         });
 
         // 複数言語のWebMediaProfileを作成
-        const webMediaProfileJa: WebMediaProfile =
-          generateWebMediaProfileData(issuer);
+        const webMediaProfileJa: WebMediaProfile = generateWebMediaProfileData(
+          issuer,
+          holder,
+        );
         const webMediaProfileEn: WebMediaProfile = {
           ...webMediaProfileJa,
           "@context": [
@@ -250,7 +296,7 @@ export const test = base.extend<TestFixtures>({
 
         // 複数言語のWebsiteProfileを作成
         const websiteProfileJa: WebsiteProfile =
-          generateWebsiteProfileData(issuer);
+          generateWebsiteProfileData(holder);
         const websiteProfileEn: WebsiteProfile = {
           ...websiteProfileJa,
           "@context": [

@@ -39,16 +39,18 @@ if (verified instanceof Error) {
 verified; // VerifiedOps
 ```
 
-### Profile Annotation Issuer の認可
+### Profile Annotation Issuer の認可確認
 
-`OpsVerifier` は検証成功後に、各 Profile Annotation の発行者が
-[Profile Annotation Issuer 登録証 PA](https://docs.originator-profile.org/ja/opb/pa-model/profile-annotation-issuer-registration/)
-によってその PA の認証制度（Profile Annotation Policy）の発行を認可されているかを確認します。
+`OpsVerifier` は検証成功後、各 Profile Annotation の発行者が OP レジストリによって認可された Profile Annotation Issuer であるかどうかを、発行者が保有する [Profile Annotation Issuer 登録証 PA](https://docs.originator-profile.org/opb/pa-model/profile-annotation-issuer-registration/) を用いて確認します。
+確認は次の手順で行います。
 
-- 登録証 PA は、トラストアンカーとなる OP レジストリ（= `issuer`）が発行したもののみを認可の根拠とします。配布経路は Core Profile と同様に `REGISTRY_OPS` から配布されます。
-- 認可は発行者ごとに、その発行者自身の登録証 PA で付与された `annotationScheme` の範囲に限定され、複数の発行者間で横断しません（発行者ごとの和集合）。
-- OP レジストリ発行の登録証 PA 自身は認可確認の対象外で、トラストアンカー由来の基底ケースとして扱われます。
-- 後方互換性のため、認可を確認できない場合も検証は失敗させず `console.error` で警告するに留めます。
+1. 登録証 PA の `issuer` が、`OpsVerifier` に渡した OP ID（トラストアンカーとなる OP レジストリ）と一致することを確認します
+2. 検証対象の PA が準拠する認証制度の ID が、その登録証 PA の `credentialSubject.annotationScheme` に含まれることを確認します
+
+- 認可は発行者ごとに、その発行者自身の登録証 PA で付与された `annotationScheme` の範囲に限定されます。発行者間で横断せず、同じ発行者に複数の登録証 PA がある場合は和集合をとります。
+- OP レジストリ自身が発行する登録証 PA も、例外なく本チェックの対象です。OP レジストリが自身に対して登録証 PA を発行し、その `annotationScheme` に登録証 PA 自体が準拠する認証制度の ID を含めることで、基底ケースを構成します。
+- 認可は連鎖しません。OP レジストリが certifier に付与した認可は certifier 自身が発行する登録証 PA を有効にしますが、certifier が発行する通常の PA には継承されません。
+- 登録証 PA 自体の署名検証が一意の結果を返すのに対し、この認可確認の結果は一意ではなく検証者ごとに異なることがあります。そのため認可を確認できない場合も検証エラーとはせず、`console.info` で通知するにとどめます（[Logger](../logger.ts) 参照）。認可を確認できた場合は何も通知しません。
 
 ```ts
 import { verifyAnnotationIssuerRegistration } from "@originator-profile/verify";

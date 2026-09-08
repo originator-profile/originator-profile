@@ -24,6 +24,7 @@ test("クレデンシャルが存在するページでバッジに正しい数�
     { publicKey, privateKey },
     credentialsPage.contents,
     credentialsPage.issuer,
+    credentialsPage.holder,
   );
 
   // service workerを先に起動させる（別のページにアクセスしてトリガー）

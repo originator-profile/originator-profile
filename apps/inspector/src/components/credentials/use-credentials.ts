@@ -1,10 +1,24 @@
-import { VerifiedOps, VerifiedSp } from "@originator-profile/verify";
+import {
+  VerifiedOps,
+  VerifiedSp,
+  verifyDocuments,
+} from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
+import { createCollectingLogger } from "../../utils/collecting-logger";
+import { getRegistry } from "../../utils/registry-ops";
 import { useSiteProfile } from "../siteProfile";
-import { fetchTabCredentials, fetchVerificationResult } from "./messaging";
-import type { FramesVerifiedCas, SupportedVerifiedCas } from "./types";
-import { verifyAllCredentials } from "./verify-credentials";
+import { deduplicateCas } from "./deduplicate-cas";
+import {
+  fetchTabCredentials,
+  fetchVerificationResult,
+  FrameIntegrityVerifier,
+} from "./messaging";
+import type {
+  FramesVerifiedCas,
+  SupportedCa,
+  SupportedVerifiedCas,
+} from "./types";
 
 const CREDENTIALS_KEY = "credentials";
 
@@ -15,6 +29,7 @@ type FetchVerifiedCredentialsResult = {
   url: string;
   framesCas: FramesVerifiedCas;
   warnings: string[];
+  info: string[];
 };
 
 /**
@@ -27,26 +42,40 @@ async function fetchVerifiedCredentials([, tabId, sp]: [
   tabId: number,
   sp?: VerifiedSp,
 ]): Promise<FetchVerifiedCredentialsResult> {
-  const { frames, ...page } = await fetchTabCredentials(tabId);
-  const result = await verifyAllCredentials(tabId, page, frames, sp);
+  const { logger, warnings, info } = createCollectingLogger();
+  const [registry, { frames, ...page }] = await Promise.all([
+    getRegistry(),
+    fetchTabCredentials(tabId),
+  ]);
+
+  const targets = [page, ...frames].map((frame) => ({
+    ...frame,
+    verifyIntegrity: FrameIntegrityVerifier(tabId, frame.frameId),
+  }));
+
+  const result = await verifyDocuments<SupportedCa, (typeof targets)[number]>(
+    targets,
+    { registry, website: sp, logger },
+  );
 
   if (result instanceof Error) {
     throw result;
   }
 
   return {
-    ops: result.ops,
-    cas: result.cas,
+    ops: result.originators,
+    cas: deduplicateCas(result.documents.flatMap(({ cas }) => cas)),
     origin: page.origin,
     url: page.url,
-    framesCas: result.casResults.map(({ result: cas, frame }) => ({
-      cas: cas as SupportedVerifiedCas,
-      url: frame.url,
-      origin: frame.origin,
-      frameId: frame.frameId,
-      parentFrameId: frame.parentFrameId,
+    framesCas: result.documents.map(({ target, cas }) => ({
+      cas,
+      url: target.url,
+      origin: target.origin,
+      frameId: target.frameId,
+      parentFrameId: target.parentFrameId,
     })),
-    warnings: result.warnings,
+    warnings,
+    info,
   };
 }
 
@@ -60,6 +89,7 @@ type UseCredentialsResult =
       origin: undefined;
       tabId: number;
       warnings: undefined;
+      info: undefined;
     }
   | {
       cas: undefined;
@@ -70,6 +100,7 @@ type UseCredentialsResult =
       origin: undefined;
       tabId: number;
       warnings: undefined;
+      info: undefined;
     }
   | {
       cas: SupportedVerifiedCas;
@@ -80,6 +111,7 @@ type UseCredentialsResult =
       origin: string;
       tabId: number;
       warnings: string[];
+      info: string[];
     };
 
 /**
@@ -98,7 +130,7 @@ export function useCredentials() {
     Error,
     [typeof CREDENTIALS_KEY, number, VerifiedSp?]
   >([CREDENTIALS_KEY, tabId, siteProfile], fetchVerifiedCredentials);
-  const { ops, cas, origin, framesCas, warnings } = credentials ?? {};
+  const { ops, cas, origin, framesCas, warnings, info } = credentials ?? {};
 
   return {
     cas,
@@ -109,6 +141,7 @@ export function useCredentials() {
     origin,
     tabId,
     warnings,
+    info,
   } as UseCredentialsResult;
 }
 

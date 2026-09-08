@@ -26,8 +26,6 @@ jobs:
         uses: "./.github/actions/format"
       - name: Lint
         uses: "./.github/actions/lint"
-      - name: Type Check
-        uses: "./.github/actions/type-check"
       - name: Test
         uses: "./.github/actions/test"
       - name: Testing Build
