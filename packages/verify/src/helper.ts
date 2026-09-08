@@ -30,8 +30,8 @@ export const patch = <T extends object>(
 /**
  * VerifyResult ファクトリー
  *
- * @link https://reference.originator-profile.org/ts/types/_originator-profile_securing-mechanism.UnverifiedJwtVc
- * @link https://reference.originator-profile.org/ts/types/_originator-profile_securing-mechanism.VerifiedJwtVc
+ * @link UnverifiedJwtVc
+ * @link VerifiedJwtVc
  */
 export const VerifyResultFactory = (issuedAt: Date, expiredAt: Date) => ({
   create: (
