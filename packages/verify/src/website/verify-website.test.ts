@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { assert, describe, expect, test } from "vitest";
 import { buildOpsFixture } from "../originator-profile-set/helper";
 import { prepareRegistry } from "../registry";
 import { problemType } from "../result/problem-types";
@@ -22,7 +22,7 @@ describe("verifyWebsite", () => {
     });
 
     // originators の検証は通り、Website Profile がないことだけが失敗の理由になる
-    expect(result.status).toBe(false);
+    assert(!result.status, "検証は失敗するはず");
     expect(result.errors[0]).toEqual({
       type: problemType(SiteProfileInvalid.code),
       title: "No Website Profile found",
@@ -42,7 +42,7 @@ describe("verifyWebsite", () => {
       logger: silent,
     });
 
-    expect(result.status).toBe(false);
+    assert(!result.status, "検証は失敗するはず");
     expect(result.errors[0]?.type).toBe(
       problemType(SiteProfileVerifyFailed.code),
     );

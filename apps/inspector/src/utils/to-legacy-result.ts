@@ -37,10 +37,10 @@ type Index = {
 
 function createIndex(result: {
   securingResults: SecuringResult[];
-  errors: ProblemDetails[];
+  errors?: ProblemDetails[];
 }): Index {
   const problems = new Map<string, ProblemDetails[]>();
-  for (const problem of result.errors) {
+  for (const problem of result.errors ?? []) {
     if (!problem.pointer) continue;
     const list = problems.get(problem.pointer) ?? [];
     list.push(problem);
@@ -166,7 +166,7 @@ function toLegacyOps(payloads: OriginatorPayload[], index: Index): unknown {
 export function toLegacyWebsite(
   result: VerificationResult<WebsiteOutcome>,
 ): VerifiedSp | Error {
-  if (!result.outcome) return toError(result.errors[0]);
+  if (!result.outcome) return toError(result.errors?.[0]);
 
   const index = createIndex(result);
   const value = {
@@ -226,7 +226,7 @@ function toLegacyDocumentsFailure(
 export function toLegacyDocuments<Target extends VerificationTarget>(
   result: VerificationResult<DocumentsOutcome<Target>>,
 ): LegacyDocuments<Target> | Error {
-  if (!result.outcome) return toError(result.errors[0]);
+  if (!result.outcome) return toError(result.errors?.[0]);
 
   const index = createIndex(result);
   const ops = toLegacyOps(result.outcome.originators, index);

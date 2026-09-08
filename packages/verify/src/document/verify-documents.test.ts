@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { assert, describe, expect, test } from "vitest";
 import { CasVerifyFailed } from "../content-attestation-set";
 import { opId } from "../helper";
 import type { VerifyIntegrity } from "../integrity";
@@ -44,7 +44,6 @@ describe("verifyDocuments", () => {
     const result = await verifyDocuments(targets, { registry, logger: silent });
 
     expect(result.status).toBe(true);
-    expect(result.errors).toEqual([]);
     // 文書ごとの結果が入力とペアで返る
     expect(result.outcome?.documents.map(({ target }) => target.url)).toEqual([
       "https://www.example.org/a",
@@ -96,7 +95,7 @@ describe("verifyDocuments", () => {
       { registry, logger: silent },
     );
 
-    expect(result.status).toBe(false);
+    assert(!result.status, "検証は失敗するはず");
     expect(result.errors[0]).toMatchObject({
       type: problemType(CasVerifyFailed.code),
       pointer: "$.documents[1]",
@@ -125,7 +124,7 @@ describe("verifyDocuments", () => {
       { registry, logger: silent },
     );
 
-    expect(result.status).toBe(false);
+    assert(!result.status, "検証は失敗するはず");
     expect(result.errors[0]?.type).toBe(problemType(OpsVerifyFailed.code));
     // 失敗しても復号できた発信者は outcome に含まれる
     expect(result.outcome?.originators).not.toHaveLength(0);

@@ -162,6 +162,5 @@ export async function verifyDocuments<
         securingResults: collect.securingResults,
         warnings,
         info,
-        errors: [],
       };
 }

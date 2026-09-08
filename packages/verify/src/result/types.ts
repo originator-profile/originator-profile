@@ -66,8 +66,8 @@ export type VerificationResult<T> =
       warnings: ProblemDetails[];
       /** システムの正常な動作記録 */
       info: ProblemDetails[];
-      /** 検証を通過しているため常に空 */
-      errors: never[];
+      /** 検証を通過しているため参照しない */
+      errors?: never;
     }
   | {
       status: false;
