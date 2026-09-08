@@ -210,7 +210,7 @@ export function setupFrameHandlers() {
       const isModifierKey =
         e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1;
       // href="javascript:..." は window.open() 等で新規タブを開くパターン
-      const isJavascriptHref = anchor.href.startsWith("javascript:");
+      const isJavascriptHref = anchor.protocol === "javascript:";
       const isNewTab =
         anchor.target === "_blank" || isModifierKey || isJavascriptHref;
       void sendAdClicked(opMeta, isNewTab);
