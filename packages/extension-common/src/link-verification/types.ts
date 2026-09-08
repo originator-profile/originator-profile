@@ -1,7 +1,12 @@
-import type {
-  LinkVerificationResult,
-  WarningSearchParams,
-} from "@originator-profile/extension-common";
+import type { LinkVerificationResult } from "../credentials/types";
+import type { WarningSearchParams } from "../utils/warning-params";
+
+/**
+ * 警告ページの URL を組み立てる
+ *
+ * 警告ページの場所はアプリごとに異なるため、呼び出し側から与える。
+ */
+export type WarningUrlBuilder = (params: URLSearchParams) => string;
 
 /** 広告リンク検証の共通コンテキスト情報 */
 export interface VerificationContext {

@@ -1,23 +1,25 @@
 import {
   type LinkVerificationResult,
+  createLinkVerificationHandlers,
   credentialsMessenger,
   normalizeUrl,
-} from "@originator-profile/extension-common";
-import { activeTabMessenger } from "./components/activeTab/events";
-import { frameCasExtensionMessenger } from "./components/frameCas";
-import {
-  handleAdClicked,
-  handleVerification,
   pendingOpIdVerification,
   recentlyOpenedTabs,
   restoreVerificationFromCache,
   stateReady,
   verificationCache,
   verificationResults,
-} from "./components/link-verification";
+} from "@originator-profile/extension-common";
+import { activeTabMessenger } from "./components/activeTab/events";
+import { frameCasExtensionMessenger } from "./components/frameCas";
 import { overlayExtensionMessenger } from "./components/overlay/extension-events";
 import { updateBadge, verifyTabCredentials } from "./components/tabBadge";
 import "./utils/cors-basic-auth";
+
+const { handleAdClicked, handleVerification } = createLinkVerificationHandlers(
+  (params) =>
+    `${chrome.runtime.getURL("index.html")}#/warning?${params.toString()}`,
+);
 
 /** バッジ更新のデバウンス時間（ミリ秒） */
 const BADGE_UPDATE_DEBOUNCE_MS = 300;

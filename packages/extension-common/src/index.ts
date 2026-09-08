@@ -1,5 +1,6 @@
 export * from "./credentials";
 export * from "./i18n";
+export * from "./link-verification";
 export * from "./site-profile";
 export * from "./utils/navigation-state";
 export * from "./utils/persistent-map";

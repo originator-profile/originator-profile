@@ -1,7 +1,5 @@
-import {
-  type LinkVerificationResult,
-  PersistentMap,
-} from "@originator-profile/extension-common";
+import type { LinkVerificationResult } from "../credentials/types";
+import { PersistentMap } from "../utils/persistent-map";
 import type { PendingVerificationData, VerificationCacheData } from "./types";
 
 export const pendingOpIdVerification =

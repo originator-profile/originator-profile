@@ -5,6 +5,7 @@ export type {
   PendingVerificationData,
   VerificationCacheData,
   VerificationContext,
+  WarningUrlBuilder,
 } from "./types";
 
 export {
@@ -17,8 +18,6 @@ export {
 } from "./state";
 
 export {
-  executeWarningRedirect,
-  handleAdClicked,
-  handleVerification,
+  createLinkVerificationHandlers,
   restoreVerificationFromCache,
 } from "./handlers";
