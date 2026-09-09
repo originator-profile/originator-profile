@@ -6,7 +6,6 @@ const BADGE_UPDATE_DEBOUNCE_MS = 300;
 /**
  * タブのバッジ更新の Service Worker 側イベント配線を登録する
  * @param countCredentials タブのバッジに表示するクレデンシャルの件数を数える
- * @returns バッジ更新をデバウンス付きで要求する関数
  */
 export function setupTabBadge(
   countCredentials: (tabId: number) => Promise<number>,
