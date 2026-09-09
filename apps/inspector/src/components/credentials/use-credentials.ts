@@ -1,7 +1,6 @@
 import {
   deduplicateCas,
   fetchTabCredentials,
-  fetchVerificationResult,
   FrameIntegrityVerifier,
   getRegistry,
   type FramesVerifiedCas,
@@ -140,5 +139,3 @@ export function useCredentials() {
     info,
   } as UseCredentialsResult;
 }
-
-export { fetchVerificationResult };
