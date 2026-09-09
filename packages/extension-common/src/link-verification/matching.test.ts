@@ -8,16 +8,20 @@ import {
   resolveName,
 } from "./matching";
 
-/** テスト用の発信者ペイロード (照合に必要なプロパティのみ) */
+/**
+ * テスト用の発信者ペイロード (照合に必要なプロパティのみ)
+ *
+ * mediaNames の undefined は復号できなかった WMP を表す。
+ */
 function op(
   id: string,
-  annotationNames?: (string | undefined)[],
+  mediaNames?: (string | undefined)[],
 ): OriginatorPayload {
   return {
     core: { credentialSubject: { id } },
-    annotations: annotationNames?.map((name) => ({
-      credentialSubject: name === undefined ? {} : { name },
-    })),
+    media: mediaNames?.map((name) =>
+      name === undefined ? null : { credentialSubject: { name } },
+    ),
   } as unknown as OriginatorPayload;
 }
 
@@ -50,23 +54,27 @@ describe("isMatched", () => {
 });
 
 describe("getOrgNameFromOp", () => {
-  test("name を持つ Profile Annotation の name を返す", () => {
+  test("Web Media Profile の name を返す", () => {
+    expect(getOrgNameFromOp(op("dns:example", ["組織名"]))).toBe("組織名");
+  });
+
+  test("復号できなかった WMP は使わない", () => {
     expect(getOrgNameFromOp(op("dns:example", [undefined, "組織名"]))).toBe(
       "組織名",
     );
   });
 
-  test("name を持つ Profile Annotation がなければ undefined", () => {
+  test("すべての WMP が復号できなければ undefined", () => {
     expect(getOrgNameFromOp(op("dns:example", [undefined]))).toBeUndefined();
   });
 
-  test("Profile Annotation を持たなければ undefined", () => {
+  test("Web Media Profile を持たなければ undefined", () => {
     expect(getOrgNameFromOp(op("dns:example"))).toBeUndefined();
   });
 });
 
 describe("resolveName", () => {
-  test("WSP の issuer に対応する OP の Profile Annotation 名を優先する", () => {
+  test("WSP の issuer に対応する OP の組織名を優先する", () => {
     const originators = [op("dns:example", ["OP の組織名"])];
     expect(resolveName(wsp("dns:example", "WSP の名前"), originators)).toBe(
       "OP の組織名",
@@ -104,8 +112,15 @@ describe("getDestinationOrgName", () => {
     );
   });
 
-  test("一致する WSP がなければ先頭の WSP から解決する", () => {
+  test("一致する WSP がなければ他の WSP から解決する", () => {
     const sites = [wsp("dns:other"), wsp("dns:example")];
+    expect(getDestinationOrgName(originators, sites, "dns:unknown")).toBe(
+      "Other 組織",
+    );
+  });
+
+  test("復号できなかった WSP はフォールバックの対象にしない", () => {
+    const sites = [null, wsp("dns:other")];
     expect(getDestinationOrgName(originators, sites, "dns:unknown")).toBe(
       "Other 組織",
     );
