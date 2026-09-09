@@ -4,7 +4,7 @@ import {
   ContentAttestationSet,
   ContentAttestationSetItem,
   OpMeta,
-  OpVc,
+  WebMediaProfile,
 } from "@originator-profile/model";
 import {
   CredentialsFetchFailed,
@@ -55,19 +55,8 @@ const isAdCaType = (type: string | undefined): type is AdCaType => {
   return type !== undefined && AD_CA_TYPES.includes(type as AdCaType);
 };
 
-/**
- * 組織名を読むために広げた OP VC
- *
- * NOTE: name は Core Profile のスキーマにはなく Web Media Profile 側にある
- */
-type NamedOpVc = OpVc & {
-  credentialSubject: OpVc["credentialSubject"] & {
-    name?: string;
-  };
-};
-
 const decodeCa = JwtVcDecoder<ContentAttestation>();
-const decodeOp = JwtVcDecoder<NamedOpVc>();
+const decodeWmp = JwtVcDecoder<WebMediaProfile>();
 
 const decodeCasItem = (casItem: ContentAttestationSetItem) => {
   const jwt = normalizeCasItem(casItem).attestation;
@@ -91,48 +80,31 @@ const getAdCaIssuer = (cas: ContentAttestationSet): string | undefined => {
   return undefined;
 };
 
-const decodeOpJwt = (jwt: string | undefined): NamedOpVc | undefined => {
-  if (!jwt) return undefined;
-  const decoded = decodeOp(jwt);
-  if (decoded instanceof Error) {
-    console.error("[ContentScript] Failed to decode OP", decoded);
-    return undefined;
-  }
-  return decoded.doc;
-};
-
-const getOpMetaProperty = (opMeta: OpMeta, key: string): string | undefined => {
-  const value = opMeta[key];
-  return typeof value === "string" ? value : undefined;
-};
-
 /** 広告リンクのクリックとともに送る組織名 */
 type OrgNames = { sourceOrgName?: string; expectedOrgName?: string };
 
 const updateOrgNames = (
-  decodedPayload: NamedOpVc | undefined,
+  mediaToken: string | undefined,
   adCaIssuer: string | undefined,
   hasCas: boolean,
   targetopid: string | undefined,
   currentNames: OrgNames,
 ) => {
-  if (!decodedPayload?.credentialSubject?.name) {
-    return;
-  }
+  if (!mediaToken) return;
 
-  const isMatch = (targetId: string) => {
-    return (
-      decodedPayload.issuer === targetId ||
-      decodedPayload.credentialSubject?.id === targetId
-    );
-  };
+  const decoded = decodeWmp(mediaToken);
+  if (decoded instanceof Error) return;
+
+  const wmp = decoded.doc;
+  const isMatch = (targetId: string) =>
+    wmp.issuer === targetId || wmp.credentialSubject.id === targetId;
 
   if (!currentNames.sourceOrgName && adCaIssuer && isMatch(adCaIssuer)) {
-    currentNames.sourceOrgName = decodedPayload.credentialSubject.name;
+    currentNames.sourceOrgName = wmp.credentialSubject.name;
   }
 
   if (hasCas && targetopid && isMatch(targetopid)) {
-    currentNames.expectedOrgName = decodedPayload.credentialSubject.name;
+    currentNames.expectedOrgName = wmp.credentialSubject.name;
   }
 };
 
@@ -182,16 +154,9 @@ export function setupFrameHandlers() {
 
         if (Array.isArray(ops)) {
           for (const op of ops) {
-            const mediaJwt = Array.isArray(op.media) ? op.media[0] : op.media;
+            const mediaToken = Array.isArray(op.media) ? op.media[0] : op.media;
             updateOrgNames(
-              decodeOpJwt(mediaJwt),
-              adCaIssuer,
-              hasCas,
-              opMeta.targetopid,
-              names,
-            );
-            updateOrgNames(
-              decodeOpJwt(op.core),
+              mediaToken,
               adCaIssuer,
               hasCas,
               opMeta.targetopid,
@@ -202,10 +167,7 @@ export function setupFrameHandlers() {
 
         cachedNames = {
           sourceOrgName: names.sourceOrgName,
-          expectedOrgName:
-            names.expectedOrgName ??
-            getOpMetaProperty(opMeta, "targetOrgName") ??
-            getOpMetaProperty(opMeta, "targetname"),
+          expectedOrgName: names.expectedOrgName,
         };
       })
       .catch((e) => {
@@ -221,16 +183,12 @@ export function setupFrameHandlers() {
   }
 
   const sendAdClicked = (opMeta: OpMeta, isNewTab: boolean) => {
-    const names = cachedNames ?? {
-      expectedOrgName:
-        getOpMetaProperty(opMeta, "targetOrgName") ??
-        getOpMetaProperty(opMeta, "targetname"),
-    };
+    const names = cachedNames;
 
     void credentialsMessenger.sendMessage("adClicked", {
       targetopid: opMeta.targetopid,
-      sourceOrgName: names.sourceOrgName,
-      expectedOrgName: names.expectedOrgName,
+      sourceOrgName: names?.sourceOrgName,
+      expectedOrgName: names?.expectedOrgName,
       isNewTab,
     });
   };
