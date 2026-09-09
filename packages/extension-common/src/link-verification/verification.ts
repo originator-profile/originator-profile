@@ -13,12 +13,11 @@ import type { CreateMismatchResultParams, VerificationContext } from "./types";
  * @param problem - 検証失敗の理由
  */
 export const createErrorResult = (
-  { targetOpId, sourceOrgName, expectedOrgName }: VerificationContext,
+  { sourceOrgName, expectedOrgName }: VerificationContext,
   problem?: ProblemDetails,
 ): LinkVerificationResult => {
   return {
     status: "error",
-    expectedOpId: targetOpId,
     sourceOrgName,
     expectedOrgName,
     reason:
@@ -36,7 +35,6 @@ export const createErrorResult = (
  * @param params - 不一致結果の生成に必要な情報
  */
 export const createMismatchResult = ({
-  targetOpId,
   sourceOrgName,
   expectedOrgName,
   destinationOrgName,
@@ -47,7 +45,6 @@ export const createMismatchResult = ({
     : chrome.i18n.getMessage("Verification_OpidMismatch");
   return {
     status: isMissing ? "missing_opid" : "mismatched",
-    expectedOpId: targetOpId,
     sourceOrgName,
     expectedOrgName,
     destinationOrgName,
@@ -74,7 +71,6 @@ export const getVerificationResult = async (
     const problem = result.errors[0];
     if (isSiteProfileFetchError(problem)) {
       return createMismatchResult({
-        targetOpId,
         sourceOrgName,
         expectedOrgName,
         isMissing: true,
@@ -93,7 +89,6 @@ export const getVerificationResult = async (
   if (isMatched(sites, targetOpId)) {
     return {
       status: "matched",
-      expectedOpId: targetOpId,
       sourceOrgName,
       expectedOrgName,
       destinationOrgName,
@@ -101,7 +96,6 @@ export const getVerificationResult = async (
   }
 
   return createMismatchResult({
-    targetOpId,
     sourceOrgName,
     expectedOrgName,
     destinationOrgName,

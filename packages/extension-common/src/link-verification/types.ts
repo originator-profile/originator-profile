@@ -47,7 +47,10 @@ export interface HandleVerificationParams extends VerificationContext {
 }
 
 /** OPID 不一致・未設定の結果を組み立てる引数 */
-export interface CreateMismatchResultParams extends VerificationContext {
+export interface CreateMismatchResultParams extends Omit<
+  VerificationContext,
+  "targetOpId"
+> {
   /** 遷移先の組織名 */
   destinationOrgName?: string;
   /** OPID未設定か（不一致ではなく） */
