@@ -1,8 +1,8 @@
+import { overlayExtensionMessenger } from "@originator-profile/extension-common";
 import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router";
 import { useNavigationRefetch, useTabTracking } from "./components/activeTab";
 import { EnvironmentBanner } from "./components/environment";
-import { overlayExtensionMessenger } from "./components/overlay/extension-events";
 import Base from "./pages/Base";
 import Credentials from "./pages/Credentials";
 import DetailInfo from "./pages/DetailInfo";

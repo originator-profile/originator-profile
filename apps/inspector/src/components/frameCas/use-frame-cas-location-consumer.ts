@@ -1,7 +1,7 @@
+import { frameCasWindowMessenger } from "@originator-profile/extension-common";
 import { startTransition } from "react";
 import { useEvent, useMount, useUnmount } from "react-use";
 import { useDebouncedCallback } from "use-debounce";
-import { frameCasWindowMessenger } from "./window-events";
 
 type DebounceOptions = {
   debounceMs: number;

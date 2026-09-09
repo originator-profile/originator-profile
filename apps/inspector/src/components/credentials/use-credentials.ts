@@ -1,17 +1,18 @@
+import {
+  deduplicateCas,
+  fetchTabCredentials,
+  fetchVerificationResult,
+  FrameIntegrityVerifier,
+  getRegistry,
+  type FramesVerifiedCas,
+  type SupportedVerifiedCas,
+} from "@originator-profile/extension-common";
 import type { OriginatorProfileSet } from "@originator-profile/model";
 import { verifyDocuments, type VerifiedOps } from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
-import { getRegistry } from "../../utils/registry-ops";
 import { toLegacyDocuments } from "../../utils/to-legacy-result";
 import { useSiteProfile } from "../siteProfile";
-import { deduplicateCas } from "./deduplicate-cas";
-import {
-  fetchTabCredentials,
-  fetchVerificationResult,
-  FrameIntegrityVerifier,
-} from "./messaging";
-import type { FramesVerifiedCas, SupportedVerifiedCas } from "./types";
 
 const CREDENTIALS_KEY = "credentials";
 

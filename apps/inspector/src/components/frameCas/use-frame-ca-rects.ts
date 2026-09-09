@@ -1,5 +1,8 @@
+import {
+  CaCoordinate,
+  FrameCoordinate,
+} from "@originator-profile/extension-common";
 import { useMemo } from "react";
-import { CaCoordinate, FrameCoordinate } from "./types";
 
 export function useFrameCaRects(
   frameCoordinate: FrameCoordinate,

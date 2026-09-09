@@ -1,0 +1,17 @@
+# Extension Common
+
+ブラウザー拡張機能が共有するコードのパッケージです。
+
+## エントリポイント
+
+- `@originator-profile/extension-common` — 拡張機能の足回り
+- `@originator-profile/extension-common/ui` — Originator Profile プロジェクトに一貫性のある見た目を提供する UI コンポーネント
+
+## Usage
+
+UI コンポーネントを利用する場合、[TailwindCSS をインストール](https://tailwindcss.com/docs/installation)したのち、次のような設定をおこないます。TailwindCSS をインストールする方法の詳細は[公式ドキュメント](https://tailwindcss.com/docs/installation/)を参照してください。
+
+```css
+@import "tailwindcss";
+@import "tailwind-config-originator-profile";
+```

@@ -1,11 +1,11 @@
 import { selectByLocale } from "@originator-profile/core";
+import { getContentType } from "@originator-profile/extension-common";
 import { useParams, useSearchParams } from "react-router";
-import Loading from "../components/Loading";
 import {
   Credentials as Template,
-  getContentType,
   useCredentials,
 } from "../components/credentials";
+import Loading from "../components/Loading";
 import { routes } from "../utils/routes";
 
 export default function Credentials() {

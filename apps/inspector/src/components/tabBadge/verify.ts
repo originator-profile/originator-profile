@@ -1,14 +1,15 @@
-import type { OriginatorProfileSet } from "@originator-profile/model";
-import { verifyDocuments } from "@originator-profile/verify";
-import { getRegistry } from "../../utils/registry-ops";
-import { toLegacyDocuments } from "../../utils/to-legacy-result";
-import { fetchTabCredentials, FrameIntegrityVerifier } from "../credentials";
-import { deduplicateCas } from "../credentials/deduplicate-cas";
-import type { SupportedVerifiedCas } from "../credentials/types";
 import {
+  FrameIntegrityVerifier,
+  type SupportedVerifiedCas,
+  deduplicateCas,
+  fetchTabCredentials,
+  getRegistry,
   isSiteProfileFetchError,
   verifyTabWebsite,
-} from "../siteProfile/verify-website";
+} from "@originator-profile/extension-common";
+import type { OriginatorProfileSet } from "@originator-profile/model";
+import { verifyDocuments } from "@originator-profile/verify";
+import { toLegacyDocuments } from "../../utils/to-legacy-result";
 
 /**
  * Web サイトを検証し、文書の検証で検証鍵に加える発信者を得る

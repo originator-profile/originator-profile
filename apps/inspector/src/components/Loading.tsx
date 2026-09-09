@@ -1,4 +1,4 @@
-import { Spinner, _ } from "@originator-profile/ui";
+import { Spinner, _ } from "@originator-profile/extension-common/ui";
 import { useCredentials } from "../components/credentials/use-credentials";
 
 function Loading() {

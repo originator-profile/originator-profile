@@ -3,7 +3,8 @@ import IconIcRoundCheck from "@iconify-react/ic/round-check";
 import IconIcRoundWarning from "@iconify-react/ic/round-warning";
 import IconSolarAltArrowRightBold from "@iconify-react/solar/alt-arrow-right-bold";
 import { stringifyWithError } from "@originator-profile/core";
-import { _, ExternalLink } from "@originator-profile/ui";
+import { SupportedVerifiedCas } from "@originator-profile/extension-common";
+import { _, ExternalLink } from "@originator-profile/extension-common/ui";
 import {
   CasVerificationFailure,
   CasVerifyFailed,
@@ -27,7 +28,6 @@ import JsonView from "@uiw/react-json-view";
 import get from "just-safe-get";
 import React from "react";
 import { twMerge } from "tailwind-merge";
-import { SupportedVerifiedCas } from "./credentials";
 
 interface CodedError extends Error {
   code: string;
