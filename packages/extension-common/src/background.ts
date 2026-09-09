@@ -255,9 +255,11 @@ export function setupBackground(config: BackgroundConfig) {
     if (sender.tab?.id) {
       handleAdClicked({
         tabId: sender.tab.id,
-        targetOpId: data.targetopid,
-        sourceOrgName: data.sourceOrgName,
-        expectedOrgName: data.expectedOrgName,
+        context: {
+          targetOpId: data.targetopid,
+          sourceOrgName: data.sourceOrgName,
+          expectedOrgName: data.expectedOrgName,
+        },
         isNewTab: data.isNewTab,
         sourceUrl: sender.tab.url,
       });
@@ -333,9 +335,7 @@ export function setupBackground(config: BackgroundConfig) {
       await handleVerification({
         tabId: details.tabId,
         url: details.url,
-        targetOpId: pending.targetOpId,
-        sourceOrgName: pending.sourceOrgName,
-        expectedOrgName: pending.expectedOrgName,
+        context: pending,
         sourceUrl: pending.sourceUrl,
         isNewTab: pending.isNewTab,
       });

@@ -10,7 +10,6 @@ import type {
   ExecuteWarningRedirectParams,
   HandleAdClickedParams,
   HandleVerificationParams,
-  VerificationContext,
   WarningUrlBuilder,
 } from "./types";
 import { getVerificationResult } from "./verification";
@@ -47,20 +46,13 @@ export function createLinkVerificationHandlers(
   const handleVerification = async ({
     tabId,
     url,
-    targetOpId,
-    sourceOrgName,
-    expectedOrgName,
+    context,
     sourceUrl,
     isNewTab,
   }: HandleVerificationParams) => {
     if (verificationInProgress.has(tabId)) return;
     verificationInProgress.add(tabId);
     try {
-      const context: VerificationContext = {
-        targetOpId,
-        sourceOrgName,
-        expectedOrgName,
-      };
       const result = await getVerificationResult(tabId, context);
       verificationResults.set(tabId, result);
 
@@ -84,9 +76,7 @@ export function createLinkVerificationHandlers(
         });
         // 警告を出したURLを記録し、ユーザーが手動で別のURLへ移動した際にpendingを解除できるようにする
         pendingOpIdVerification.set(tabId, {
-          targetOpId,
-          sourceOrgName,
-          expectedOrgName,
+          ...context,
           warnedUrl: url,
           sourceUrl,
           isNewTab,
@@ -106,20 +96,13 @@ export function createLinkVerificationHandlers(
    */
   const handleAdClicked = ({
     tabId,
-    targetOpId,
-    sourceOrgName,
-    expectedOrgName,
+    context,
     isNewTab,
     sourceUrl,
   }: HandleAdClickedParams) => {
     // 新規タブでのクリックでなければ、元タブの検証状態を更新
     if (!isNewTab) {
-      pendingOpIdVerification.set(tabId, {
-        targetOpId,
-        sourceOrgName,
-        expectedOrgName,
-        sourceUrl,
-      });
+      pendingOpIdVerification.set(tabId, { ...context, sourceUrl });
       return;
     }
 
@@ -134,9 +117,7 @@ export function createLinkVerificationHandlers(
       recentlyOpenedTabs.delete(tabId);
     }
     pendingOpIdVerification.set(newTabId, {
-      targetOpId,
-      sourceOrgName,
-      expectedOrgName,
+      ...context,
       sourceUrl,
       isNewTab: true,
     });
@@ -154,9 +135,7 @@ export function createLinkVerificationHandlers(
           await handleVerification({
             tabId: newTabId,
             url: tab.url,
-            targetOpId,
-            sourceOrgName,
-            expectedOrgName,
+            context,
             sourceUrl,
             isNewTab: true,
           });
@@ -168,7 +147,7 @@ export function createLinkVerificationHandlers(
 
     // 元タブ側の検証情報をクリア
     const currentMainPending = pendingOpIdVerification.get(tabId);
-    if (currentMainPending?.targetOpId === targetOpId) {
+    if (currentMainPending?.targetOpId === context.targetOpId) {
       pendingOpIdVerification.delete(tabId);
     }
   };

@@ -19,9 +19,11 @@ export interface VerificationContext {
 }
 
 /** 広告クリックのハンドラの引数 */
-export interface HandleAdClickedParams extends VerificationContext {
+export interface HandleAdClickedParams {
   /** 対象タブID */
   tabId: number;
+  /** 検証コンテキスト */
+  context: VerificationContext;
   /** 新規タブで開かれたクリックか */
   isNewTab?: boolean;
   /** 広告元ページのURL */
@@ -35,11 +37,13 @@ export interface ExecuteWarningRedirectParams extends WarningSearchParams {
 }
 
 /** リンク検証のハンドラの引数 */
-export interface HandleVerificationParams extends VerificationContext {
+export interface HandleVerificationParams {
   /** 検証対象のタブID */
   tabId: number;
   /** 検証対象のURL */
   url: string;
+  /** 検証コンテキスト */
+  context: VerificationContext;
   /** 広告元のURL */
   sourceUrl?: string;
   /** 新規タブからの遷移か */
@@ -58,10 +62,7 @@ export interface CreateMismatchResultParams extends Omit<
 }
 
 /** pendingOpIdVerification に格納されるデータ */
-export interface PendingVerificationData {
-  targetOpId: string;
-  sourceOrgName?: string;
-  expectedOrgName?: string;
+export interface PendingVerificationData extends VerificationContext {
   warnedUrl?: string;
   sourceUrl?: string;
   isNewTab?: boolean;
