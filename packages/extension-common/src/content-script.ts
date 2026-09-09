@@ -86,7 +86,6 @@ type OrgNames = { sourceOrgName?: string; expectedOrgName?: string };
 const updateOrgNames = (
   mediaToken: string | undefined,
   adCaIssuer: string | undefined,
-  hasCas: boolean,
   targetopid: string | undefined,
   currentNames: OrgNames,
 ) => {
@@ -96,14 +95,14 @@ const updateOrgNames = (
   if (decoded instanceof Error) return;
 
   const wmp = decoded.doc;
-  const isMatch = (targetId: string) =>
-    wmp.issuer === targetId || wmp.credentialSubject.id === targetId;
+  const isMatchAdCaIssuer = wmp.credentialSubject.id === adCaIssuer;
+  const isMatchTargetOpHolder = wmp.credentialSubject.id === targetopid;
 
-  if (!currentNames.sourceOrgName && adCaIssuer && isMatch(adCaIssuer)) {
+  if (!currentNames.sourceOrgName && adCaIssuer && isMatchAdCaIssuer) {
     currentNames.sourceOrgName = wmp.credentialSubject.name;
   }
 
-  if (hasCas && targetopid && isMatch(targetopid)) {
+  if (targetopid && isMatchTargetOpHolder) {
     currentNames.expectedOrgName = wmp.credentialSubject.name;
   }
 };
@@ -150,18 +149,11 @@ export function setupFrameHandlers() {
 
         if (cas instanceof CredentialsFetchFailed) return;
         const adCaIssuer = getAdCaIssuer(cas);
-        const hasCas = cas.length > 0;
 
         if (Array.isArray(ops)) {
           for (const op of ops) {
             const mediaToken = Array.isArray(op.media) ? op.media[0] : op.media;
-            updateOrgNames(
-              mediaToken,
-              adCaIssuer,
-              hasCas,
-              opMeta.targetopid,
-              names,
-            );
+            updateOrgNames(mediaToken, adCaIssuer, opMeta.targetopid, names);
           }
         }
 
