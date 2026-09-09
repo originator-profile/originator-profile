@@ -27,9 +27,22 @@ export function createLinkVerificationHandlers(
    */
   const executeWarningRedirect = ({
     tabId,
-    ...warningParams
+    result,
+    target,
+    original,
+    isNewTab,
   }: ExecuteWarningRedirectParams) => {
-    const warningUrl = buildWarningUrl(buildWarningSearchParams(warningParams));
+    const warningUrl = buildWarningUrl(
+      buildWarningSearchParams({
+        target,
+        reason: result.reason ?? "Unknown Error",
+        sourceOrg: result.sourceOrgName,
+        destOrg: result.destinationOrgName,
+        expectedOrg: result.expectedOrgName,
+        original,
+        isNewTab,
+      }),
+    );
     void chrome.scripting.executeScript({
       target: { tabId },
       func: (destination) => {
@@ -63,14 +76,10 @@ export function createLinkVerificationHandlers(
       }));
 
       if (result.status !== "matched") {
-        const reason = result.reason ?? "Unknown Error";
         executeWarningRedirect({
           tabId,
+          result,
           target: url,
-          reason,
-          sourceOrg: result.sourceOrgName,
-          destOrg: result.destinationOrgName,
-          expectedOrg: result.expectedOrgName,
           original: sourceUrl,
           isNewTab,
         });

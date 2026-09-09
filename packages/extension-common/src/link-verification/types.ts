@@ -1,5 +1,4 @@
 import type { LinkVerificationResult } from "../credentials/types";
-import type { WarningSearchParams } from "../utils/warning-params";
 
 /**
  * 警告ページの URL を組み立てる
@@ -31,9 +30,17 @@ export interface HandleAdClickedParams {
 }
 
 /** 警告ページへのリダイレクトの引数 */
-export interface ExecuteWarningRedirectParams extends WarningSearchParams {
+export interface ExecuteWarningRedirectParams {
   /** リダイレクト対象のタブID */
   tabId: number;
+  /** 警告の根拠となる検証結果 */
+  result: LinkVerificationResult;
+  /** 警告対象の遷移先 URL */
+  target: string;
+  /** 広告元のURL（戻るボタン用） */
+  original?: string;
+  /** 新規タブで開かれたか */
+  isNewTab?: boolean;
 }
 
 /** リンク検証のハンドラの引数 */
