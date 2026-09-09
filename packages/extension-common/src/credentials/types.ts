@@ -39,14 +39,6 @@ export type FrameCredentials = FrameResponse &
   };
 export type TabCredentials = FrameCredentials & { frames: FrameCredentials[] };
 
-export type LinkVerificationResult = {
-  status: "matched" | "mismatched" | "missing_opid" | "error" | "none";
-  expectedOrgName?: string;
-  sourceOrgName?: string;
-  destinationOrgName?: string;
-  reason?: string;
-};
-
 export type FrameVerifiedCas = FrameResponse &
   FrameLocation & { cas: SupportedVerifiedCas };
 export type FramesVerifiedCas = FrameVerifiedCas[];

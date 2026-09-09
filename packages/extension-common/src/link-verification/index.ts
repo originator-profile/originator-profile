@@ -2,6 +2,7 @@ export type {
   ExecuteWarningRedirectParams,
   HandleAdClickedParams,
   HandleVerificationParams,
+  LinkVerificationResult,
   PendingVerificationData,
   VerificationCacheData,
   VerificationContext,
@@ -21,3 +22,7 @@ export {
   createLinkVerificationHandlers,
   restoreVerificationFromCache,
 } from "./handlers";
+
+export { linkVerificationMessenger } from "./events";
+
+export { fetchVerificationResult } from "./messaging";

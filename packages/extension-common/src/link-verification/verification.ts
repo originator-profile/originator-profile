@@ -1,11 +1,14 @@
 import type { ProblemDetails } from "@originator-profile/verify";
-import type { LinkVerificationResult } from "../credentials/types";
 import {
   isSiteProfileFetchError,
   verifyTabWebsite,
 } from "../site-profile/verify-website";
 import { getDestinationOrgName, isMatched } from "./matching";
-import type { CreateMismatchResultParams, VerificationContext } from "./types";
+import type {
+  CreateMismatchResultParams,
+  LinkVerificationResult,
+  VerificationContext,
+} from "./types";
 
 /**
  * Site Profile 検証エラー時の結果オブジェクトを生成する

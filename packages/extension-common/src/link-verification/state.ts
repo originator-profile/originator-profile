@@ -1,6 +1,9 @@
-import type { LinkVerificationResult } from "../credentials/types";
 import { PersistentMap } from "../utils/persistent-map";
-import type { PendingVerificationData, VerificationCacheData } from "./types";
+import type {
+  LinkVerificationResult,
+  PendingVerificationData,
+  VerificationCacheData,
+} from "./types";
 
 export const pendingOpIdVerification =
   new PersistentMap<PendingVerificationData>("pendingOpIdVerification");

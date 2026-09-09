@@ -14,7 +14,7 @@ import {
 } from "@originator-profile/presentation";
 import { JwtVcDecoder } from "@originator-profile/securing-mechanism";
 import { decodeOps, normalizeCasItem } from "@originator-profile/verify";
-import { credentialsMessenger } from "../credentials/events";
+import { linkVerificationMessenger } from "./events";
 
 /**
  * 同一タブでの通常のナビゲーションを起こさないスキーム
@@ -159,7 +159,7 @@ export function setupAdClickDetection() {
   }
 
   const sendAdClicked = (opMeta: OpMeta, isNewTab: boolean) => {
-    void credentialsMessenger.sendMessage("adClicked", {
+    void linkVerificationMessenger.sendMessage("adClicked", {
       targetopid: opMeta.targetopid,
       sourceOrgName: cachedNames?.sourceOrgName,
       expectedOrgName: cachedNames?.expectedOrgName,

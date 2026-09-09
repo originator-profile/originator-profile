@@ -129,9 +129,3 @@ export const FrameIntegrityVerifier =
     const parsed = deserializeIfError(messageResult);
     return parsed as FetchIntegrityResult;
   };
-
-/**
- * リンク検証結果を取得する
- */
-export const fetchVerificationResult = (tabId: number) =>
-  credentialsMessenger.sendMessage("getVerificationResult", tabId);

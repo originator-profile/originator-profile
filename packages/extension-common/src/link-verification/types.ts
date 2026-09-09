@@ -1,4 +1,11 @@
-import type { LinkVerificationResult } from "../credentials/types";
+/** 広告リンク検証の結果 */
+export type LinkVerificationResult = {
+  status: "matched" | "mismatched" | "missing_opid" | "error" | "none";
+  expectedOrgName?: string;
+  sourceOrgName?: string;
+  destinationOrgName?: string;
+  reason?: string;
+};
 
 /**
  * 警告ページの URL を組み立てる

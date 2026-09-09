@@ -1,7 +1,6 @@
 import { activeTabMessenger } from "./active-tab/events";
-import { credentialsMessenger } from "./credentials/events";
-import type { LinkVerificationResult } from "./credentials/types";
 import { frameCasExtensionMessenger } from "./frame-cas/extension-events";
+import { linkVerificationMessenger } from "./link-verification/events";
 import {
   createLinkVerificationHandlers,
   restoreVerificationFromCache,
@@ -13,7 +12,10 @@ import {
   verificationCache,
   verificationResults,
 } from "./link-verification/state";
-import type { WarningUrlBuilder } from "./link-verification/types";
+import type {
+  LinkVerificationResult,
+  WarningUrlBuilder,
+} from "./link-verification/types";
 import { overlayExtensionMessenger } from "./overlay/extension-events";
 import { updateBadge } from "./tab-badge/update-badge";
 import "./utils/cors-basic-auth";
@@ -250,7 +252,7 @@ export function setupBackground(config: BackgroundConfig) {
     }
   });
 
-  credentialsMessenger.onMessage("adClicked", async ({ data, sender }) => {
+  linkVerificationMessenger.onMessage("adClicked", async ({ data, sender }) => {
     await ensureStateLoaded();
     if (sender.tab?.id) {
       handleAdClicked({
@@ -266,7 +268,7 @@ export function setupBackground(config: BackgroundConfig) {
     }
   });
 
-  credentialsMessenger.onMessage(
+  linkVerificationMessenger.onMessage(
     "getVerificationResult",
     async ({ data: tabId }) => {
       await ensureStateLoaded();
