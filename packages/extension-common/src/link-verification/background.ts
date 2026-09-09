@@ -13,10 +13,7 @@ import {
 } from "./state";
 import type { LinkVerificationResult, WarningUrlBuilder } from "./types";
 
-/**
- * 広告リンク検証の Service Worker 側イベント配線を登録する
- * @param buildWarningUrl 警告ページの URL を組み立てる関数
- */
+/** 広告リンク検証の Service Worker 側イベント配線を登録する */
 export function setupLinkVerification(buildWarningUrl: WarningUrlBuilder) {
   const { handleAdClicked, handleVerification } =
     createLinkVerificationHandlers(buildWarningUrl);

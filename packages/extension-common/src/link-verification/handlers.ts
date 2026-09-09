@@ -14,10 +14,7 @@ import type {
 } from "./types";
 import { getVerificationResult } from "./verification";
 
-/**
- * リンク検証のハンドラを作る
- * @param buildWarningUrl 警告ページの URL を組み立てる関数
- */
+/** リンク検証のハンドラを作る */
 export function createLinkVerificationHandlers(
   buildWarningUrl: WarningUrlBuilder,
 ) {

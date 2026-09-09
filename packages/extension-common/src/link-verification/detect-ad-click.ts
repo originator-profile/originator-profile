@@ -28,11 +28,7 @@ const NON_NAVIGATING_SCHEMES: readonly string[] = [
   "vbscript:",
 ];
 
-/**
- * リンクの活性化が新規タブを開くとみなせるか
- * @param anchor 活性化されたリンク
- * @param e 活性化のきっかけとなったイベント
- */
+/** リンクの活性化が新規タブを開くとみなせるか */
 const opensInNewTab = (
   anchor: HTMLAnchorElement,
   e: MouseEvent | KeyboardEvent,
@@ -78,10 +74,7 @@ const getAdCaIssuer = (cas: ContentAttestationSet): string | undefined => {
 /** 広告リンクのクリックとともに送る組織名 */
 type OrgNames = { sourceOrgName?: string; expectedOrgName?: string };
 
-/**
- * OP ごとに、閲覧者のロケールに合う Web Media Profile を選ぶ
- * @param ops Originator Profile Set
- */
+/** OP ごとに、閲覧者のロケールに合う Web Media Profile を選ぶ */
 const selectWebMediaProfiles = (
   ops: OriginatorProfileSet,
 ): WebMediaProfile[] => {
