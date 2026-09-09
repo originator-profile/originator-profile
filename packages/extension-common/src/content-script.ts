@@ -25,6 +25,22 @@ const NON_NAVIGATING_SCHEMES: readonly string[] = [
 ];
 
 /**
+ * リンクの活性化が新規タブを開くとみなせるか
+ * @param anchor 活性化されたリンク
+ * @param e 活性化のきっかけとなったイベント
+ */
+const opensInNewTab = (
+  anchor: HTMLAnchorElement,
+  e: MouseEvent | KeyboardEvent,
+): boolean =>
+  anchor.target === "_blank" ||
+  e.ctrlKey ||
+  e.metaKey ||
+  e.shiftKey ||
+  ("button" in e && e.button === 1) ||
+  NON_NAVIGATING_SCHEMES.includes(anchor.protocol);
+
+/**
  * 全フレームで登録するハンドラ
  *
  * クレデンシャルの取得、Target Integrity の検証、広告リンクのクリック検知、
@@ -214,40 +230,21 @@ export function setupFrameHandlers() {
     });
   };
 
-  const handleLinkClick = (e: MouseEvent) => {
-    const target = e.target as HTMLElement;
-    const anchor = target.closest("a");
-    const opMeta = anchor ? fetchOpMeta(document) : undefined;
-    if (anchor && opMeta) {
-      const isModifierKey =
-        e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1;
-      const isNewTab =
-        anchor.target === "_blank" ||
-        isModifierKey ||
-        NON_NAVIGATING_SCHEMES.includes(anchor.protocol);
-      void sendAdClicked(opMeta, isNewTab);
-    }
+  const handleAnchorActivation = (e: MouseEvent | KeyboardEvent) => {
+    const anchor = (e.target as HTMLElement).closest("a");
+    if (!anchor) return;
+    const opMeta = fetchOpMeta(document);
+    if (!opMeta) return;
+    sendAdClicked(opMeta, opensInNewTab(anchor, e));
   };
 
-  document.addEventListener("click", handleLinkClick);
+  document.addEventListener("click", handleAnchorActivation);
   document.addEventListener("mousedown", (e: MouseEvent) => {
-    // ミドルクリック（button === 1）のみを処理
-    // 左クリックは click イベントで処理済みのため、二重送信を防止
+    // ミドルクリックは click を発火せず auxclick を発火するため、ここで拾う
     if (e.button === 1) {
-      handleLinkClick(e);
+      handleAnchorActivation(e);
     }
   });
-
-  const handleEnterKey = (e: KeyboardEvent) => {
-    const target = e.target as HTMLElement;
-    const anchor = target.closest("a");
-    const opMeta = anchor ? fetchOpMeta(document) : undefined;
-    if (anchor && opMeta) {
-      const isModifierKey = e.ctrlKey || e.metaKey || e.shiftKey;
-      const isNewTab = anchor.target === "_blank" || isModifierKey;
-      void sendAdClicked(opMeta, isNewTab);
-    }
-  };
 
   const handleSpaceKey = (e: KeyboardEvent) => {
     const target = e.target as HTMLElement;
@@ -270,7 +267,7 @@ export function setupFrameHandlers() {
 
   document.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-      handleEnterKey(e);
+      handleAnchorActivation(e);
       return;
     }
     if (e.key === " " || e.key === "Spacebar") {
