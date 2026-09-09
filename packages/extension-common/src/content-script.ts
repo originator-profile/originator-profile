@@ -1,9 +1,10 @@
-import { serializeIfError } from "@originator-profile/core";
+import { selectByLocale, serializeIfError } from "@originator-profile/core";
 import {
   ContentAttestation,
   ContentAttestationSet,
   ContentAttestationSetItem,
   OpMeta,
+  OriginatorProfileSet,
   WebMediaProfile,
 } from "@originator-profile/model";
 import {
@@ -13,7 +14,11 @@ import {
   fetchSiteProfile,
 } from "@originator-profile/presentation";
 import { JwtVcDecoder } from "@originator-profile/securing-mechanism";
-import { normalizeCasItem, verifyIntegrity } from "@originator-profile/verify";
+import {
+  decodeOps,
+  normalizeCasItem,
+  verifyIntegrity,
+} from "@originator-profile/verify";
 import { activeTabMessenger } from "./active-tab/events";
 import { credentialsMessenger } from "./credentials/events";
 import type { FrameLocation } from "./credentials/types";
@@ -56,7 +61,6 @@ const isAdCaType = (type: string | undefined): type is AdCaType => {
 };
 
 const decodeCa = JwtVcDecoder<ContentAttestation>();
-const decodeWmp = JwtVcDecoder<WebMediaProfile>();
 
 const decodeCasItem = (casItem: ContentAttestationSetItem) => {
   const jwt = normalizeCasItem(casItem).attestation;
@@ -83,28 +87,49 @@ const getAdCaIssuer = (cas: ContentAttestationSet): string | undefined => {
 /** 広告リンクのクリックとともに送る組織名 */
 type OrgNames = { sourceOrgName?: string; expectedOrgName?: string };
 
-const updateOrgNames = (
-  mediaToken: string | undefined,
+/**
+ * OP ごとに、閲覧者のロケールに合う Web Media Profile を選ぶ
+ * @param ops Originator Profile Set
+ */
+const selectWebMediaProfiles = (
+  ops: OriginatorProfileSet,
+): WebMediaProfile[] => {
+  const decoded = decodeOps(ops);
+  if (decoded instanceof Error) {
+    console.error(
+      "[ContentScript] Failed to decode Originator Profile Set",
+      decoded,
+    );
+    return [];
+  }
+  return decoded.flatMap((op) => {
+    const wmp = op.media && selectByLocale(op.media.map(({ doc }) => doc));
+    return wmp ? [wmp] : [];
+  });
+};
+
+/**
+ * 広告リンクのクリックとともに送る組織名を解決する
+ *
+ * NOTE: 突き合わせる相手は WMP の credentialSubject.id である。issuer は OP の
+ * 発行者を指すため、広告 CA の issuer とも targetopid とも一致しない
+ * @param wmps OP ごとに選ばれた Web Media Profile
+ * @param adCaIssuer 広告 CA の issuer
+ * @param targetopid 広告が宣言する遷移先の OP ID
+ */
+const resolveOrgNames = (
+  wmps: WebMediaProfile[],
   adCaIssuer: string | undefined,
-  targetopid: string | undefined,
-  currentNames: OrgNames,
-) => {
-  if (!mediaToken) return;
+  targetopid: string,
+): OrgNames => {
+  const nameOf = (opId: string) =>
+    wmps.find((wmp) => wmp.credentialSubject.id === opId)?.credentialSubject
+      .name;
 
-  const decoded = decodeWmp(mediaToken);
-  if (decoded instanceof Error) return;
-
-  const wmp = decoded.doc;
-  const isMatchAdCaIssuer = wmp.credentialSubject.id === adCaIssuer;
-  const isMatchTargetOpHolder = wmp.credentialSubject.id === targetopid;
-
-  if (!currentNames.sourceOrgName && adCaIssuer && isMatchAdCaIssuer) {
-    currentNames.sourceOrgName = wmp.credentialSubject.name;
-  }
-
-  if (targetopid && isMatchTargetOpHolder) {
-    currentNames.expectedOrgName = wmp.credentialSubject.name;
-  }
+  return {
+    sourceOrgName: adCaIssuer ? nameOf(adCaIssuer) : undefined,
+    expectedOrgName: nameOf(targetopid),
+  };
 };
 
 /**
@@ -145,22 +170,14 @@ export function setupFrameHandlers() {
 
     void fetchCredentials(document)
       .then(({ ops, cas }) => {
-        const names: OrgNames = {};
-
-        if (cas instanceof CredentialsFetchFailed) return;
-        const adCaIssuer = getAdCaIssuer(cas);
-
-        if (Array.isArray(ops)) {
-          for (const op of ops) {
-            const mediaToken = Array.isArray(op.media) ? op.media[0] : op.media;
-            updateOrgNames(mediaToken, adCaIssuer, opMeta.targetopid, names);
-          }
-        }
-
-        cachedNames = {
-          sourceOrgName: names.sourceOrgName,
-          expectedOrgName: names.expectedOrgName,
-        };
+        if (ops instanceof CredentialsFetchFailed) return;
+        cachedNames = resolveOrgNames(
+          selectWebMediaProfiles(ops),
+          cas instanceof CredentialsFetchFailed
+            ? undefined
+            : getAdCaIssuer(cas),
+          opMeta.targetopid,
+        );
       })
       .catch((e) => {
         console.error("[ContentScript] Pre-fetch credentials failed", e);
