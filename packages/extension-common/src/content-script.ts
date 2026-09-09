@@ -47,7 +47,6 @@ const isAdCaType = (type: string | undefined): type is AdCaType => {
   return type !== undefined && AD_CA_TYPES.includes(type as AdCaType);
 };
 
-// JWTペイロードのBase64デコード
 const decodeJwtPayload = <T = unknown>(jwt: string): T | undefined => {
   try {
     const payload = jwt.split(".")[1];
@@ -97,7 +96,6 @@ const decodeOpJwt = (jwt: string | undefined): DecodedOpPayload | undefined => {
   return decodeJwtPayload<DecodedOpPayload>(jwt);
 };
 
-// opMetaオブジェクトからプロパティを文字列として取得
 const getOpMetaProperty = (opMeta: OpMeta, key: string): string | undefined => {
   const value = opMeta[key];
   return typeof value === "string" ? value : undefined;

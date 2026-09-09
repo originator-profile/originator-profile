@@ -25,7 +25,6 @@ const BADGE_UPDATE_DEBOUNCE_MS = 300;
 /** Firefox のサイドバーの開閉を検知するポーリング間隔（ミリ秒） */
 const SIDEBAR_POLL_INTERVAL_MS = 500;
 
-/** 既存タブに Content Script を注入する */
 async function injectContentScriptsToExistingTabs(): Promise<void> {
   const manifest = chrome.runtime.getManifest();
   const tabs = await chrome.tabs.query({});
@@ -131,10 +130,6 @@ export function setupBackground(config: BackgroundConfig) {
     });
   }
 
-  /**
-   * タブのバッジを更新する
-   * @param tabId タブID
-   */
   async function updateTabBadge(tabId: number): Promise<void> {
     try {
       await updateBadge(tabId, await config.countCredentials(tabId));
@@ -152,10 +147,7 @@ export function setupBackground(config: BackgroundConfig) {
     ReturnType<typeof setTimeout>
   >();
 
-  /**
-   * タブのバッジ更新をデバウンス付きで要求する
-   * @param tabId タブID
-   */
+  /** タブのバッジ更新をデバウンス付きで要求する */
   function requestTabBadgeUpdate(tabId: number): void {
     const existingTimer = pendingBadgeUpdateTimers.get(tabId);
     if (existingTimer !== undefined) {
