@@ -1,10 +1,11 @@
 import { serializeIfError } from "@originator-profile/core";
-import { OpMeta, OpVc } from "@originator-profile/model";
+import { ContentAttestation, OpMeta, OpVc } from "@originator-profile/model";
 import {
   fetchCredentials,
   fetchOpMeta,
   fetchSiteProfile,
 } from "@originator-profile/presentation";
+import { JwtVcDecoder } from "@originator-profile/securing-mechanism";
 import { normalizeCasItem, verifyIntegrity } from "@originator-profile/verify";
 import { activeTabMessenger } from "./active-tab/events";
 import { credentialsMessenger } from "./credentials/events";
@@ -47,53 +48,51 @@ const isAdCaType = (type: string | undefined): type is AdCaType => {
   return type !== undefined && AD_CA_TYPES.includes(type as AdCaType);
 };
 
-const decodeJwtPayload = <T = unknown>(jwt: string): T | undefined => {
-  try {
-    const payload = jwt.split(".")[1];
-    if (payload) {
-      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-      const padded = base64.padEnd(
-        base64.length + ((4 - (base64.length % 4)) % 4),
-        "=",
-      );
-      const binaryString = atob(padded);
-      const bytes = Uint8Array.from(binaryString, (c) => c.codePointAt(0) ?? 0);
-      return JSON.parse(new TextDecoder().decode(bytes)) as T;
-    }
-  } catch (e) {
-    console.error("[ContentScript] Failed to decode JWT payload", e);
-  }
-  return undefined;
+/**
+ * 組織名を読むために広げた OP VC
+ *
+ * NOTE: name は Core Profile のスキーマにはなく Web Media Profile 側にある
+ */
+type NamedOpVc = OpVc & {
+  credentialSubject: OpVc["credentialSubject"] & {
+    name?: string;
+  };
 };
 
-const decodeCasJwtPayload = (
-  casItem: unknown,
-): { issuer?: string; credentialSubject?: { type?: string } } | undefined => {
+const decodeCa = JwtVcDecoder<ContentAttestation>();
+const decodeOp = JwtVcDecoder<NamedOpVc>();
+
+const decodeCasItem = (casItem: unknown) => {
   const jwt = normalizeCasItem(casItem).attestation;
-  return typeof jwt === "string" ? decodeJwtPayload(jwt) : undefined;
+  if (typeof jwt !== "string") return undefined;
+  const decoded = decodeCa(jwt);
+  if (decoded instanceof Error) {
+    console.error("[ContentScript] Failed to decode CA", decoded);
+    return undefined;
+  }
+  return decoded.doc;
 };
 
 // 広告関連CAS(OnlineAd/Advertorial)のissuerを取得
 const getCasIssuer = (cas: unknown): string | undefined => {
   if (!Array.isArray(cas)) return undefined;
   for (const casItem of cas) {
-    const decoded = decodeCasJwtPayload(casItem);
-    if (decoded && isAdCaType(decoded.credentialSubject?.type)) {
-      return decoded.issuer;
+    const doc = decodeCasItem(casItem);
+    if (doc && isAdCaType(doc.credentialSubject.type)) {
+      return doc.issuer;
     }
   }
   return undefined;
 };
 
-type DecodedOpPayload = Omit<OpVc, "credentialSubject"> & {
-  credentialSubject: OpVc["credentialSubject"] & {
-    name?: string;
-  };
-};
-
-const decodeOpJwt = (jwt: string | undefined): DecodedOpPayload | undefined => {
+const decodeOpJwt = (jwt: string | undefined): NamedOpVc | undefined => {
   if (!jwt) return undefined;
-  return decodeJwtPayload<DecodedOpPayload>(jwt);
+  const decoded = decodeOp(jwt);
+  if (decoded instanceof Error) {
+    console.error("[ContentScript] Failed to decode OP", decoded);
+    return undefined;
+  }
+  return decoded.doc;
 };
 
 const getOpMetaProperty = (opMeta: OpMeta, key: string): string | undefined => {
@@ -105,7 +104,7 @@ const getOpMetaProperty = (opMeta: OpMeta, key: string): string | undefined => {
 type OrgNames = { sourceOrgName?: string; expectedOrgName?: string };
 
 const updateOrgNames = (
-  decodedPayload: DecodedOpPayload | undefined,
+  decodedPayload: NamedOpVc | undefined,
   casIssuer: string | undefined,
   hasCas: boolean,
   targetopid: string | undefined,

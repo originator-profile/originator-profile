@@ -372,6 +372,9 @@ importers:
       '@originator-profile/presentation':
         specifier: workspace:*
         version: link:../presentation
+      '@originator-profile/securing-mechanism':
+        specifier: workspace:*
+        version: link:../securing-mechanism
       '@originator-profile/verify':
         specifier: workspace:*
         version: link:../verify
