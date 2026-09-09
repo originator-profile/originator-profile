@@ -7,9 +7,9 @@ import {
   restoreVerificationFromCache,
 } from "./link-verification/handlers";
 import {
+  ensureStateLoaded,
   pendingOpIdVerification,
   recentlyOpenedTabs,
-  stateReady,
   verificationCache,
   verificationResults,
 } from "./link-verification/state";
@@ -205,7 +205,7 @@ export function setupBackground(config: BackgroundConfig) {
       pendingBadgeUpdateTimers.delete(tabId);
     }
 
-    await stateReady;
+    await ensureStateLoaded();
     pendingOpIdVerification.delete(tabId);
     verificationResults.delete(tabId);
     verificationCache.delete(tabId);
@@ -234,7 +234,7 @@ export function setupBackground(config: BackgroundConfig) {
   });
 
   chrome.tabs.onCreated.addListener(async (tab) => {
-    await stateReady;
+    await ensureStateLoaded();
     const openerId = tab.openerTabId;
     if (openerId !== undefined && tab.id !== undefined) {
       // opener → new tab のマッピングを記録（FIFOキューで複数クリック時の順序を維持）
@@ -251,7 +251,7 @@ export function setupBackground(config: BackgroundConfig) {
   });
 
   credentialsMessenger.onMessage("adClicked", async ({ data, sender }) => {
-    await stateReady;
+    await ensureStateLoaded();
     if (sender.tab?.id) {
       handleAdClicked({
         tabId: sender.tab.id,
@@ -269,7 +269,7 @@ export function setupBackground(config: BackgroundConfig) {
   credentialsMessenger.onMessage(
     "getVerificationResult",
     async ({ data: tabId }) => {
-      await stateReady;
+      await ensureStateLoaded();
       return (
         verificationResults.get(tabId) ??
         ({ status: "none" } satisfies LinkVerificationResult)
@@ -278,7 +278,7 @@ export function setupBackground(config: BackgroundConfig) {
   );
 
   chrome.webNavigation.onCommitted.addListener(async (details) => {
-    await stateReady;
+    await ensureStateLoaded();
     if (details.frameId !== 0) return;
 
     const isFromAddressBar =
@@ -313,7 +313,7 @@ export function setupBackground(config: BackgroundConfig) {
   });
 
   chrome.webNavigation.onCompleted.addListener(async (details) => {
-    await stateReady;
+    await ensureStateLoaded();
     if (details.frameId !== 0) return;
     if (details.url.startsWith(chrome.runtime.getURL(""))) return;
 

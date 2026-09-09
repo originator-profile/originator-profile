@@ -9,9 +9,9 @@ export type {
 } from "./types";
 
 export {
+  ensureStateLoaded,
   pendingOpIdVerification,
   recentlyOpenedTabs,
-  stateReady,
   verificationCache,
   verificationInProgress,
   verificationResults,
