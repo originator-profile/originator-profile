@@ -1,6 +1,13 @@
 import { serializeIfError } from "@originator-profile/core";
-import { ContentAttestation, OpMeta, OpVc } from "@originator-profile/model";
 import {
+  ContentAttestation,
+  ContentAttestationSet,
+  ContentAttestationSetItem,
+  OpMeta,
+  OpVc,
+} from "@originator-profile/model";
+import {
+  CredentialsFetchFailed,
   fetchCredentials,
   fetchOpMeta,
   fetchSiteProfile,
@@ -62,7 +69,7 @@ type NamedOpVc = OpVc & {
 const decodeCa = JwtVcDecoder<ContentAttestation>();
 const decodeOp = JwtVcDecoder<NamedOpVc>();
 
-const decodeCasItem = (casItem: unknown) => {
+const decodeCasItem = (casItem: ContentAttestationSetItem) => {
   const jwt = normalizeCasItem(casItem).attestation;
   if (typeof jwt !== "string") return undefined;
   const decoded = decodeCa(jwt);
@@ -73,9 +80,8 @@ const decodeCasItem = (casItem: unknown) => {
   return decoded.doc;
 };
 
-// 広告関連CAS(OnlineAd/Advertorial)のissuerを取得
-const getCasIssuer = (cas: unknown): string | undefined => {
-  if (!Array.isArray(cas)) return undefined;
+// 広告関連CA(OnlineAd/Advertorial)のissuerを取得
+const getAdCaIssuer = (cas: ContentAttestationSet): string | undefined => {
   for (const casItem of cas) {
     const doc = decodeCasItem(casItem);
     if (doc && isAdCaType(doc.credentialSubject.type)) {
@@ -105,7 +111,7 @@ type OrgNames = { sourceOrgName?: string; expectedOrgName?: string };
 
 const updateOrgNames = (
   decodedPayload: NamedOpVc | undefined,
-  casIssuer: string | undefined,
+  adCaIssuer: string | undefined,
   hasCas: boolean,
   targetopid: string | undefined,
   currentNames: OrgNames,
@@ -121,7 +127,7 @@ const updateOrgNames = (
     );
   };
 
-  if (!currentNames.sourceOrgName && casIssuer && isMatch(casIssuer)) {
+  if (!currentNames.sourceOrgName && adCaIssuer && isMatch(adCaIssuer)) {
     currentNames.sourceOrgName = decodedPayload.credentialSubject.name;
   }
 
@@ -170,22 +176,23 @@ export function setupFrameHandlers() {
       .then(({ ops, cas }) => {
         const names: OrgNames = {};
 
-        const casIssuer = getCasIssuer(cas);
-        const hasCas = Array.isArray(cas) && cas.length > 0;
+        if (cas instanceof CredentialsFetchFailed) return;
+        const adCaIssuer = getAdCaIssuer(cas);
+        const hasCas = cas.length > 0;
 
         if (Array.isArray(ops)) {
           for (const op of ops) {
             const mediaJwt = Array.isArray(op.media) ? op.media[0] : op.media;
             updateOrgNames(
               decodeOpJwt(mediaJwt),
-              casIssuer,
+              adCaIssuer,
               hasCas,
               opMeta.targetopid,
               names,
             );
             updateOrgNames(
               decodeOpJwt(op.core),
-              casIssuer,
+              adCaIssuer,
               hasCas,
               opMeta.targetopid,
               names,
