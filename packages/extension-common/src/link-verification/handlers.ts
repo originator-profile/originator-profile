@@ -173,7 +173,7 @@ export function createLinkVerificationHandlers(
     }
   };
 
-  return { executeWarningRedirect, handleAdClicked, handleVerification };
+  return { handleAdClicked, handleVerification };
 }
 
 export const restoreVerificationFromCache = (tabId: number, url: string) => {
