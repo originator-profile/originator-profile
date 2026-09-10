@@ -50,7 +50,10 @@ export const test = base.extend<{
 
 export const expect = test.expect;
 
-export async function sidepanel(ctx: BrowserContext): Promise<Page> {
+export async function sidepanel(
+  ctx: BrowserContext,
+  forTabId?: number,
+): Promise<Page> {
   let [backgroundWorker] = ctx.serviceWorkers();
   if (!backgroundWorker) {
     // backgroundWorker がまだない場合、新しい Service Worker が作られるのを待つ。
@@ -62,13 +65,15 @@ export async function sidepanel(ctx: BrowserContext): Promise<Page> {
   const extensionId = backgroundWorker.url().split("/")[2];
 
   // アクティブタブのIDを取得
-  const tabId = await backgroundWorker.evaluate(async () => {
-    const [tab] = await chrome.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-    return tab?.id;
-  });
+  const tabId =
+    forTabId ??
+    (await backgroundWorker.evaluate(async () => {
+      const [tab] = await chrome.tabs.query({
+        active: true,
+        currentWindow: true,
+      });
+      return tab?.id;
+    }));
   if (tabId === undefined) {
     throw new Error("No active tab found");
   }
