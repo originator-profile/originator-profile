@@ -95,8 +95,6 @@ const selectWebMediaProfiles = (
 /**
  * OP ID に組織名を添える
  *
- * NOTE: 突き合わせる相手は WMP の credentialSubject.id である。issuer は OP の
- * 発行者を指すため、広告 CA の issuer とも targetopid とも一致しない
  * @param wmps OP ごとに選ばれた Web Media Profile
  * @param id OP ID
  */
