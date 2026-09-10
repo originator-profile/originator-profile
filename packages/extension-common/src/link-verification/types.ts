@@ -66,9 +66,9 @@ export interface ExecuteWarningRedirectParams {
   /** 警告の根拠となる検証結果 */
   result: LinkVerificationResult;
   /** 警告対象の遷移先 URL */
-  target: string;
-  /** 広告元のURL（戻るボタン用） */
-  original?: string;
+  destinationUrl: string;
+  /** リンク元ページの URL（戻るボタン用） */
+  sourceUrl?: string;
   /** 新規タブで開かれたか */
   isNewTab?: boolean;
 }

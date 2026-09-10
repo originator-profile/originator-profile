@@ -63,14 +63,19 @@ CAS のうち `credentialSubject.type` が `OnlineAd` または `Advertorial` �
 いずれも `OrgRef { id, name }`。`id` は OP ID、`name` は Web Media Profile から
 解決した組織名で、解決できなければ `undefined`。
 
-| 値                 | 何者か                           | 出所                                                                | 署名検証 |
-| ------------------ | -------------------------------- | ------------------------------------------------------------------- | -------- |
-| `source`           | リンク元コンテンツを表明した組織 | リンク元の OPS のうち、広告 CA の issuer に対応する WMP             | **なし** |
-| `expectedOperator` | `targetopid` が表明する運営者    | リンク元の OPS のうち、`targetopid` に対応する WMP                  | **なし** |
-| `actualOperator` | 実際にサイトを運営している組織   | 遷移先の検証済み Website Profile の `issuer` と、それに対応する WMP | あり     |
+| 値                 | 何者か                                    | 出所                                                                |
+| ------------------ | ----------------------------------------- | ------------------------------------------------------------------- |
+| `source`           | リンク元コンテンツを表明した組織          | リンク元の OPS のうち、広告 CA の issuer に対応する WMP             |
+| `expectedOperator` | `targetopid` が表明する、期待される運営者 | リンク元の OPS のうち、`targetopid` に対応する WMP                  |
+| `actualOperator`   | 遷移先サイトが署名で示す、実際の運営者    | 遷移先の検証済み Website Profile の `issuer` と、それに対応する WMP |
 
 **判定に使うのは `expectedOperator.id` と `actualOperator.id` だけ**である。
 組織名は警告ページと詳細情報の表示にのみ使う。
+
+`expected` と `actual` は「誰が主張しているか」で分かれる。リンク元が言っている
+運営者と、遷移先が自ら示している運営者である。署名検証の有無は現状この軸に重なって
+いるが、名前の根拠にはしていない。`source` と `expectedOperator` を検証済みの結果と
+照合できるようになれば重ならなくなるためである。
 
 > **Note**\
 > `source` と `expectedOperator` は、リンク元ページが自ら埋め込んだ値を復号した
@@ -132,13 +137,13 @@ URL の search params で渡す
 ([warning-params.ts](../utils/warning-params.ts))。警告ページの場所はアプリごとに
 異なるため `buildWarningUrl` で組み立てる。
 
-| パラメータ                              | 内容                              |
-| --------------------------------------- | --------------------------------- |
-| `target`                                | 警告対象の遷移先 URL              |
-| `reason`                                | 警告理由                          |
-| `sourceOrg` / `expectedOrg` / `destOrg` | 組織名                            |
-| `original`                              | 広告元ページの URL (戻るボタン用) |
-| `isNewTab`                              | 新規タブで開かれたか              |
+| パラメータ                                | 内容                                |
+| ----------------------------------------- | ----------------------------------- |
+| `destinationUrl`                          | 警告対象の遷移先 URL                |
+| `reason`                                  | 警告理由                            |
+| `sourceOrg` / `expectedOrg` / `actualOrg` | それぞれの組織名                    |
+| `sourceUrl`                               | リンク元ページの URL (戻るボタン用) |
+| `isNewTab`                                | 新規タブで開かれたか                |
 
 ## 既知の限界
 

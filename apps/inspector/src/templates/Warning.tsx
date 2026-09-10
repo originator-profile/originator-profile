@@ -3,9 +3,9 @@ import { _ } from "@originator-profile/extension-common/ui";
 
 type Props = {
   sourceOrg: string | undefined;
-  destOrg: string | undefined;
   expectedOrg: string | undefined;
-  target: string | null;
+  actualOrg: string | undefined;
+  destinationUrl: string | null;
   backButtonLabel: string;
   onBack: () => void;
   onProceed: () => void;
@@ -13,9 +13,9 @@ type Props = {
 
 function Warning({
   sourceOrg,
-  destOrg,
   expectedOrg,
-  target,
+  actualOrg,
+  destinationUrl,
   backButtonLabel,
   onBack,
   onProceed,
@@ -28,14 +28,14 @@ function Warning({
           {_("Warning_Title")}
         </h1>
         <p className="text-gray-600 mb-6">
-          {expectedOrg || sourceOrg || destOrg ? (
+          {expectedOrg || sourceOrg || actualOrg ? (
             <>
               {expectedOrg ? _("Warning_IntendedSite", expectedOrg) : ""}
               {sourceOrg
                 ? _("Warning_ClickedAd", sourceOrg)
                 : _("Warning_ClickedAdGeneric")}
-              {destOrg
-                ? _("Warning_OperatedBy", destOrg)
+              {actualOrg
+                ? _("Warning_OperatedBy", actualOrg)
                 : _("Warning_CannotVerify")}
             </>
           ) : (
@@ -51,9 +51,9 @@ function Warning({
           </button>
           <button
             onClick={onProceed}
-            disabled={!target}
+            disabled={!destinationUrl}
             className={`w-full py-2 px-4 rounded transition duration-200 ${
-              target
+              destinationUrl
                 ? "bg-gray-200 text-gray-700 hover:bg-gray-300"
                 : "bg-gray-100 text-gray-400 cursor-not-allowed"
             }`}
@@ -61,10 +61,10 @@ function Warning({
             {_("Warning_Proceed")}
           </button>
         </div>
-        {target && (
+        {destinationUrl && (
           <div className="mt-6 text-xs text-gray-400 break-all">
             {_("Warning_Destination")}
-            {target}
+            {destinationUrl}
           </div>
         )}
       </div>

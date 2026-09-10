@@ -405,9 +405,9 @@
     "message": "You clicked an ad, but "
   },
   "Warning_OperatedBy": {
-    "message": "the destination is operated by $dest_org$.",
+    "message": "the destination is operated by $actual_org$.",
     "placeholders": {
-      "dest_org": {
+      "actual_org": {
         "content": "$1",
         "example": "Example Corp"
       }

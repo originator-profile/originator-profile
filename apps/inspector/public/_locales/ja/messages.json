@@ -405,9 +405,9 @@
     "message": "広告をクリックしましたが、"
   },
   "Warning_OperatedBy": {
-    "message": "リンク先は$dest_org$が運営しています。",
+    "message": "リンク先は$actual_org$が運営しています。",
     "placeholders": {
-      "dest_org": {
+      "actual_org": {
         "content": "$1",
         "example": "Example Corp"
       }

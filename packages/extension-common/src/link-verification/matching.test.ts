@@ -4,8 +4,8 @@ import { describe, expect, test } from "vitest";
 import {
   getOrgNameFromOp,
   isMatched,
-  resolveName,
   resolveActualOperator,
+  resolveName,
 } from "./matching";
 
 /**

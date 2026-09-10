@@ -25,18 +25,18 @@ export function createLinkVerificationHandlers(
   const executeWarningRedirect = ({
     tabId,
     result,
-    target,
-    original,
+    destinationUrl,
+    sourceUrl,
     isNewTab,
   }: ExecuteWarningRedirectParams) => {
     const warningUrl = buildWarningUrl(
       buildWarningSearchParams({
-        target,
+        destinationUrl,
         reason: result.reason ?? "Unknown Error",
         sourceOrg: result.source?.name,
-        destOrg: result.actualOperator?.name,
         expectedOrg: result.expectedOperator?.name,
-        original,
+        actualOrg: result.actualOperator?.name,
+        sourceUrl,
         isNewTab,
       }),
     );
@@ -76,8 +76,8 @@ export function createLinkVerificationHandlers(
         executeWarningRedirect({
           tabId,
           result,
-          target: url,
-          original: sourceUrl,
+          destinationUrl: url,
+          sourceUrl,
           isNewTab,
         });
         // 警告を出したURLを記録し、ユーザーが手動で別のURLへ移動した際にpendingを解除できるようにする
