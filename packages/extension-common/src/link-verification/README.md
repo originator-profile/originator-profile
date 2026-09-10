@@ -56,24 +56,36 @@ CAS のうち `credentialSubject.type` が `OnlineAd` または `Advertorial` �
 | `none`         | まだ検証していない                                  |
 
 照合は [matching.ts](./matching.ts) の `isMatched` が
-`sites.some((wsp) => wsp.issuer === targetOpId)` でおこなう。
+`sites.some((wsp) => wsp.issuer === expectedOpId)` でおこなう。
 
-## 組織名の解決
+## 扱う 3 つの組織
 
-警告ページと詳細情報の**表示にのみ**使う。判定には関与しない。
+いずれも `OrgRef { id, name }`。`id` は OP ID、`name` は Web Media Profile から
+解決した組織名で、解決できなければ `undefined`。
 
-| 値                   | 出所                                                |
-| -------------------- | --------------------------------------------------- |
-| `sourceOrgName`      | 広告の OPS のうち、広告 CA の issuer に対応する WMP |
-| `expectedOrgName`    | 広告の OPS のうち、`targetopid` に対応する WMP      |
-| `destinationOrgName` | 遷移先の検証済み Site Profile                       |
+| 値                 | 何者か                           | 出所                                                                | 署名検証 |
+| ------------------ | -------------------------------- | ------------------------------------------------------------------- | -------- |
+| `source`           | リンク元コンテンツを表明した組織 | リンク元の OPS のうち、広告 CA の issuer に対応する WMP             | **なし** |
+| `expectedOperator` | `targetopid` が表明する運営者    | リンク元の OPS のうち、`targetopid` に対応する WMP                  | **なし** |
+| `actualOperator` | 実際にサイトを運営している組織   | 遷移先の検証済み Website Profile の `issuer` と、それに対応する WMP | あり     |
+
+**判定に使うのは `expectedOperator.id` と `actualOperator.id` だけ**である。
+組織名は警告ページと詳細情報の表示にのみ使う。
+
+> **Note**\
+> `source` と `expectedOperator` は、リンク元ページが自ら埋め込んだ値を復号した
+> だけで署名を検証していない。ページを支配している側は任意の組織名を名乗れるため
+> 自称値として扱うこと。バッジ更新などで既に検証済みの結果と照合できるようにする
+> のが望ましいが、現状はその経路がない。
 
 > **Note**\
 > OP ID と突き合わせる相手は WMP の `credentialSubject.id` である。`issuer` は OP の
 > 発行者 (レジストラ) を指すため全 OP で同じ値になり、広告 CA の issuer とも
 > `targetopid` とも一致しない。
 
-組織名は Web Media Profile から参照する。WMP が言語ごとに複数あるときは
+`actualOperator` の名前も WMP から取る。Website Profile の `credentialSubject`
+はサイトの属性で、その `name` はサイト名、`id` はサイトの URL である。運営者は
+`issuer` が指す OP の側にある。WMP が言語ごとに複数あるときは
 `@originator-profile/core` の `selectByLocale` で選ぶ。
 
 ## 実装
@@ -84,7 +96,7 @@ CAS のうち `credentialSubject.type` が `OnlineAd` または `Advertorial` �
 | [background.ts](./background.ts)                          | Service Worker のイベント配線                               |
 | [handlers.ts](./handlers.ts)                              | クリックの受理と、遷移完了時の検証・警告リダイレクト        |
 | [verification.ts](./verification.ts)                      | 遷移先の検証と `LinkVerificationResult` の組み立て          |
-| [matching.ts](./matching.ts)                              | OP ID の照合と組織名の解決                                  |
+| [matching.ts](./matching.ts)                              | OP ID の照合と運営者の解決                                  |
 | [state.ts](./state.ts)                                    | タブごとの検証状態 (`chrome.storage.session` に永続化)      |
 | [events.ts](./events.ts) / [messaging.ts](./messaging.ts) | 拡張機能内メッセージ                                        |
 
