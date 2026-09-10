@@ -25,6 +25,113 @@ const NON_NAVIGATING_SCHEMES: readonly string[] = [
 ];
 
 /**
+ * リンクの活性化が新規タブを開くとみなせるか
+ * @param anchor 活性化されたリンク
+ * @param e 活性化のきっかけとなったイベント
+ */
+const opensInNewTab = (
+  anchor: HTMLAnchorElement,
+  e: MouseEvent | KeyboardEvent,
+): boolean =>
+  anchor.target === "_blank" ||
+  e.ctrlKey ||
+  e.metaKey ||
+  e.shiftKey ||
+  ("button" in e && e.button === 1) ||
+  NON_NAVIGATING_SCHEMES.includes(anchor.protocol);
+
+const AD_CA_TYPES = ["OnlineAd", "Advertorial"] as const;
+type AdCaType = (typeof AD_CA_TYPES)[number];
+
+const isAdCaType = (type: string | undefined): type is AdCaType => {
+  return type !== undefined && AD_CA_TYPES.includes(type as AdCaType);
+};
+
+const decodeJwtPayload = <T = unknown>(jwt: string): T | undefined => {
+  try {
+    const payload = jwt.split(".")[1];
+    if (payload) {
+      const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+      const padded = base64.padEnd(
+        base64.length + ((4 - (base64.length % 4)) % 4),
+        "=",
+      );
+      const binaryString = atob(padded);
+      const bytes = Uint8Array.from(binaryString, (c) => c.codePointAt(0) ?? 0);
+      return JSON.parse(new TextDecoder().decode(bytes)) as T;
+    }
+  } catch (e) {
+    console.error("[ContentScript] Failed to decode JWT payload", e);
+  }
+  return undefined;
+};
+
+const decodeCasJwtPayload = (
+  casItem: unknown,
+): { issuer?: string; credentialSubject?: { type?: string } } | undefined => {
+  const jwt = normalizeCasItem(casItem).attestation;
+  return typeof jwt === "string" ? decodeJwtPayload(jwt) : undefined;
+};
+
+// 広告関連CAS(OnlineAd/Advertorial)のissuerを取得
+const getCasIssuer = (cas: unknown): string | undefined => {
+  if (!Array.isArray(cas)) return undefined;
+  for (const casItem of cas) {
+    const decoded = decodeCasJwtPayload(casItem);
+    if (decoded && isAdCaType(decoded.credentialSubject?.type)) {
+      return decoded.issuer;
+    }
+  }
+  return undefined;
+};
+
+type DecodedOpPayload = Omit<OpVc, "credentialSubject"> & {
+  credentialSubject: OpVc["credentialSubject"] & {
+    name?: string;
+  };
+};
+
+const decodeOpJwt = (jwt: string | undefined): DecodedOpPayload | undefined => {
+  if (!jwt) return undefined;
+  return decodeJwtPayload<DecodedOpPayload>(jwt);
+};
+
+const getOpMetaProperty = (opMeta: OpMeta, key: string): string | undefined => {
+  const value = opMeta[key];
+  return typeof value === "string" ? value : undefined;
+};
+
+/** 広告リンクのクリックとともに送る組織名 */
+type OrgNames = { sourceOrgName?: string; expectedOrgName?: string };
+
+const updateOrgNames = (
+  decodedPayload: DecodedOpPayload | undefined,
+  casIssuer: string | undefined,
+  hasCas: boolean,
+  targetopid: string | undefined,
+  currentNames: OrgNames,
+) => {
+  if (!decodedPayload?.credentialSubject?.name) {
+    return;
+  }
+
+  const isMatch = (targetId: string) => {
+    return (
+      decodedPayload.issuer === targetId ||
+      decodedPayload.credentialSubject?.id === targetId
+    );
+  };
+
+  if (!currentNames.sourceOrgName && casIssuer && isMatch(casIssuer)) {
+    currentNames.sourceOrgName = decodedPayload.credentialSubject.name;
+  }
+
+  if (hasCas && targetopid && isMatch(targetopid)) {
+    currentNames.expectedOrgName = decodedPayload.credentialSubject.name;
+  }
+};
+
+/**
  * 全フレームで登録するハンドラ
  *
  * クレデンシャルの取得、Target Integrity の検証、広告リンクのクリック検知、
@@ -46,107 +153,15 @@ export function setupFrameHandlers() {
     };
   });
 
-  const AD_CA_TYPES = ["OnlineAd", "Advertorial"] as const;
-  type AdCaType = (typeof AD_CA_TYPES)[number];
+  credentialsMessenger.onMessage(
+    "verifyIntegrity",
+    async ({ data: content }) => {
+      const result = await verifyIntegrity(content);
+      return serializeIfError(result);
+    },
+  );
 
-  const isAdCaType = (type: string | undefined): type is AdCaType => {
-    return type !== undefined && AD_CA_TYPES.includes(type as AdCaType);
-  };
-
-  // JWTペイロードのBase64デコード
-  const decodeJwtPayload = <T = unknown>(jwt: string): T | undefined => {
-    try {
-      const payload = jwt.split(".")[1];
-      if (payload) {
-        const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
-        const padded = base64.padEnd(
-          base64.length + ((4 - (base64.length % 4)) % 4),
-          "=",
-        );
-        const binaryString = atob(padded);
-        const bytes = Uint8Array.from(
-          binaryString,
-          (c) => c.codePointAt(0) ?? 0,
-        );
-        return JSON.parse(new TextDecoder().decode(bytes)) as T;
-      }
-    } catch (e) {
-      console.error("[ContentScript] Failed to decode JWT payload", e);
-    }
-    return undefined;
-  };
-
-  const decodeCasJwtPayload = (
-    casItem: unknown,
-  ): { issuer?: string; credentialSubject?: { type?: string } } | undefined => {
-    const jwt = normalizeCasItem(casItem).attestation;
-    return typeof jwt === "string" ? decodeJwtPayload(jwt) : undefined;
-  };
-
-  // 広告関連CAS(OnlineAd/Advertorial)のissuerを取得
-  const getCasIssuer = (cas: unknown): string | undefined => {
-    if (!Array.isArray(cas)) return undefined;
-    for (const casItem of cas) {
-      const decoded = decodeCasJwtPayload(casItem);
-      if (decoded && isAdCaType(decoded.credentialSubject?.type)) {
-        return decoded.issuer;
-      }
-    }
-    return undefined;
-  };
-
-  type DecodedOpPayload = Omit<OpVc, "credentialSubject"> & {
-    credentialSubject: OpVc["credentialSubject"] & {
-      name?: string;
-    };
-  };
-
-  const decodeOpJwt = (
-    jwt: string | undefined,
-  ): DecodedOpPayload | undefined => {
-    if (!jwt) return undefined;
-    return decodeJwtPayload<DecodedOpPayload>(jwt);
-  };
-
-  // opMetaオブジェクトからプロパティを文字列として取得
-  const getOpMetaProperty = (
-    opMeta: OpMeta,
-    key: string,
-  ): string | undefined => {
-    const value = opMeta[key];
-    return typeof value === "string" ? value : undefined;
-  };
-
-  const updateOrgNames = (
-    decodedPayload: DecodedOpPayload | undefined,
-    casIssuer: string | undefined,
-    hasCas: boolean,
-    targetopid: string | undefined,
-    currentNames: { sourceOrgName?: string; expectedOrgName?: string },
-  ) => {
-    if (!decodedPayload?.credentialSubject?.name) {
-      return;
-    }
-
-    const isMatch = (targetId: string) => {
-      return (
-        decodedPayload.issuer === targetId ||
-        decodedPayload.credentialSubject?.id === targetId
-      );
-    };
-
-    if (!currentNames.sourceOrgName && casIssuer && isMatch(casIssuer)) {
-      currentNames.sourceOrgName = decodedPayload.credentialSubject.name;
-    }
-
-    if (hasCas && targetopid && isMatch(targetopid)) {
-      currentNames.expectedOrgName = decodedPayload.credentialSubject.name;
-    }
-  };
-
-  let cachedNames:
-    | { sourceOrgName?: string; expectedOrgName?: string }
-    | undefined;
+  let cachedNames: OrgNames | undefined;
 
   const tryCacheNames = () => {
     const opMeta = fetchOpMeta(document);
@@ -154,7 +169,7 @@ export function setupFrameHandlers() {
 
     void fetchCredentials(document)
       .then(({ ops, cas }) => {
-        const names: { sourceOrgName?: string; expectedOrgName?: string } = {};
+        const names: OrgNames = {};
 
         const casIssuer = getCasIssuer(cas);
         const hasCas = Array.isArray(cas) && cas.length > 0;
@@ -192,14 +207,14 @@ export function setupFrameHandlers() {
       });
   };
 
+  tryCacheNames();
   if (document.readyState === "loading") {
-    tryCacheNames();
-    document.addEventListener("DOMContentLoaded", tryCacheNames);
-  } else {
-    tryCacheNames();
+    document.addEventListener("DOMContentLoaded", tryCacheNames, {
+      once: true,
+    });
   }
 
-  const sendAdClicked = (opMeta: OpMeta, isNewTab: boolean = false) => {
+  const sendAdClicked = (opMeta: OpMeta, isNewTab: boolean) => {
     const names = cachedNames ?? {
       expectedOrgName:
         getOpMetaProperty(opMeta, "targetOrgName") ??
@@ -207,46 +222,19 @@ export function setupFrameHandlers() {
     };
 
     void credentialsMessenger.sendMessage("adClicked", {
-      targetopid: getOpMetaProperty(opMeta, "targetopid") as string,
+      targetopid: opMeta.targetopid,
       sourceOrgName: names.sourceOrgName,
       expectedOrgName: names.expectedOrgName,
       isNewTab,
     });
   };
 
-  const handleLinkClick = (e: MouseEvent) => {
-    const target = e.target as HTMLElement;
-    const anchor = target.closest("a");
-    const opMeta = anchor ? fetchOpMeta(document) : undefined;
-    if (anchor && opMeta) {
-      const isModifierKey =
-        e.ctrlKey || e.metaKey || e.shiftKey || e.button === 1;
-      const isNewTab =
-        anchor.target === "_blank" ||
-        isModifierKey ||
-        NON_NAVIGATING_SCHEMES.includes(anchor.protocol);
-      void sendAdClicked(opMeta, isNewTab);
-    }
-  };
-
-  document.addEventListener("click", handleLinkClick);
-  document.addEventListener("mousedown", (e: MouseEvent) => {
-    // ミドルクリック（button === 1）のみを処理
-    // 左クリックは click イベントで処理済みのため、二重送信を防止
-    if (e.button === 1) {
-      handleLinkClick(e);
-    }
-  });
-
-  const handleEnterKey = (e: KeyboardEvent) => {
-    const target = e.target as HTMLElement;
-    const anchor = target.closest("a");
-    const opMeta = anchor ? fetchOpMeta(document) : undefined;
-    if (anchor && opMeta) {
-      const isModifierKey = e.ctrlKey || e.metaKey || e.shiftKey;
-      const isNewTab = anchor.target === "_blank" || isModifierKey;
-      void sendAdClicked(opMeta, isNewTab);
-    }
+  const handleAnchorActivation = (e: MouseEvent | KeyboardEvent) => {
+    const anchor = (e.target as HTMLElement).closest("a");
+    if (!anchor) return;
+    const opMeta = fetchOpMeta(document);
+    if (!opMeta) return;
+    sendAdClicked(opMeta, opensInNewTab(anchor, e));
   };
 
   const handleSpaceKey = (e: KeyboardEvent) => {
@@ -263,14 +251,21 @@ export function setupFrameHandlers() {
     if (isButtonOrInput) {
       const opMeta = fetchOpMeta(document);
       if (opMeta) {
-        void sendAdClicked(opMeta, false);
+        sendAdClicked(opMeta, false);
       }
     }
   };
 
+  document.addEventListener("click", handleAnchorActivation);
+  document.addEventListener("mousedown", (e: MouseEvent) => {
+    // ミドルクリックは click を発火せず auxclick を発火するため、ここで拾う
+    if (e.button === 1) {
+      handleAnchorActivation(e);
+    }
+  });
   document.addEventListener("keydown", (e) => {
     if (e.key === "Enter") {
-      handleEnterKey(e);
+      handleAnchorActivation(e);
       return;
     }
     if (e.key === " " || e.key === "Spacebar") {
@@ -278,13 +273,6 @@ export function setupFrameHandlers() {
     }
   });
 
-  credentialsMessenger.onMessage(
-    "verifyIntegrity",
-    async ({ data: content }) => {
-      const result = await verifyIntegrity(content);
-      return serializeIfError(result);
-    },
-  );
   // Side Panel にコンテンツスクリプトの準備完了を通知する
   const notifyReady = () => {
     void activeTabMessenger.sendMessage("contentReady", null);

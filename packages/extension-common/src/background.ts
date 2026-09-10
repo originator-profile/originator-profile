@@ -22,6 +22,38 @@ import { normalizeUrl } from "./utils/navigation-state";
 /** バッジ更新のデバウンス時間（ミリ秒） */
 const BADGE_UPDATE_DEBOUNCE_MS = 300;
 
+/** Firefox のサイドバーの開閉を検知するポーリング間隔（ミリ秒） */
+const SIDEBAR_POLL_INTERVAL_MS = 500;
+
+async function injectContentScriptsToExistingTabs(): Promise<void> {
+  const manifest = chrome.runtime.getManifest();
+  const tabs = await chrome.tabs.query({});
+  const injectableTabs = tabs.filter(
+    (tab): tab is chrome.tabs.Tab & { id: number } =>
+      tab.id !== undefined &&
+      tab.url !== undefined &&
+      /^https?:\/\//.test(tab.url),
+  );
+
+  const injections = (manifest.content_scripts ?? []).flatMap((cs) => {
+    const files = cs.js;
+    if (!files || files.length === 0) return [];
+
+    return injectableTabs.map((tab) =>
+      chrome.scripting
+        .executeScript({
+          target: { tabId: tab.id, allFrames: cs.all_frames },
+          files,
+        })
+        .catch(() => {
+          // 注入できないページはスキップ
+        }),
+    );
+  });
+
+  await Promise.all(injections);
+}
+
 /** {@link setupBackground} に与えるアプリ固有の設定 */
 export type BackgroundConfig = {
   /** 警告ページの URL を組み立てる */
@@ -60,7 +92,6 @@ export function setupBackground(config: BackgroundConfig) {
     // Firefox: サイドバー閉じる検知。
     // sidebarAction.isOpen() ポーリングで close を検知する。
     // see: https://developer.mozilla.org/en-US/docs/Mozilla/Add-ons/WebExtensions/API/sidebarAction
-    const SIDEBAR_POLL_INTERVAL_MS = 500;
     const sidebarPollers = new Map<number, ReturnType<typeof setInterval>>();
 
     const stopPolling = (windowId: number) => {
@@ -99,10 +130,6 @@ export function setupBackground(config: BackgroundConfig) {
     });
   }
 
-  /**
-   * タブのバッジを更新する
-   * @param tabId タブID
-   */
   async function updateTabBadge(tabId: number): Promise<void> {
     try {
       await updateBadge(tabId, await config.countCredentials(tabId));
@@ -120,10 +147,7 @@ export function setupBackground(config: BackgroundConfig) {
     ReturnType<typeof setTimeout>
   >();
 
-  /**
-   * タブのバッジ更新をデバウンス付きで要求する
-   * @param tabId タブID
-   */
+  /** タブのバッジ更新をデバウンス付きで要求する */
   function requestTabBadgeUpdate(tabId: number): void {
     const existingTimer = pendingBadgeUpdateTimers.get(tabId);
     if (existingTimer !== undefined) {
@@ -150,45 +174,6 @@ export function setupBackground(config: BackgroundConfig) {
     }
   });
 
-  // タブ削除時にデバウンスタイマーをクリーンアップ
-  chrome.tabs.onRemoved.addListener((tabId) => {
-    const timer = pendingBadgeUpdateTimers.get(tabId);
-    if (timer !== undefined) {
-      clearTimeout(timer);
-      pendingBadgeUpdateTimers.delete(tabId);
-    }
-  });
-
-  // 既存タブにContent Scriptを注入
-  async function injectContentScriptsToExistingTabs(): Promise<void> {
-    const manifest = chrome.runtime.getManifest();
-    const tabs = await chrome.tabs.query({});
-    const injectableTabs = tabs.filter(
-      (tab): tab is chrome.tabs.Tab & { id: number } =>
-        tab.id !== undefined &&
-        tab.url !== undefined &&
-        /^https?:\/\//.test(tab.url),
-    );
-
-    const injections = (manifest.content_scripts ?? []).flatMap((cs) => {
-      const files = cs.js;
-      if (!files || files.length === 0) return [];
-
-      return injectableTabs.map((tab) =>
-        chrome.scripting
-          .executeScript({
-            target: { tabId: tab.id, allFrames: cs.all_frames },
-            files,
-          })
-          .catch(() => {
-            // 注入できないページはスキップ
-          }),
-      );
-    });
-
-    await Promise.all(injections);
-  }
-
   chrome.runtime.onInstalled.addListener(async ({ reason }) => {
     if (reason !== "install") return;
 
@@ -209,24 +194,25 @@ export function setupBackground(config: BackgroundConfig) {
     if (!granted) {
       // 権限が足らない場合は初期設定の説明を開く (Firefoxのみ)
       await chrome.tabs.create({ url: config.permissionGuideUrl });
-
-      // NOTE: "<all_urls>" 権限求められないようなのでコメントアウト
-      // const granted = await chrome.permissions.request({
-      //   origins: ["<all_urls>"],
-      // });
     }
   });
 
-  // --- 広告リンク検証リスナー ---
-
   // タブが閉じられたとき、メモリリーク防止のために状態をクリーンアップ
   chrome.tabs.onRemoved.addListener(async (tabId) => {
+    const timer = pendingBadgeUpdateTimers.get(tabId);
+    if (timer !== undefined) {
+      clearTimeout(timer);
+      pendingBadgeUpdateTimers.delete(tabId);
+    }
+
     await stateReady;
     pendingOpIdVerification.delete(tabId);
     verificationResults.delete(tabId);
     verificationCache.delete(tabId);
     recentlyOpenedTabs.delete(tabId);
   });
+
+  // --- 広告リンク検証リスナー ---
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
     if (message.type === "clearPendingVerification") {
@@ -367,13 +353,11 @@ export function setupBackground(config: BackgroundConfig) {
     const targetFramesCas = framesCas.filter(
       (frameCas) => frameCas.cas.length > 0,
     );
+    const frames = framesCas.map(({ cas: _, ...frame }) => frame);
     for (const frameCas of targetFramesCas) {
       void frameCasExtensionMessenger.sendMessage(
         "locating",
-        {
-          frameCas,
-          frames: framesCas.map(({ cas: _, ...frame }) => frame),
-        },
+        { frameCas, frames },
         {
           tabId,
           frameId: frameCas.frameId,

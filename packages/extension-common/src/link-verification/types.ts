@@ -18,7 +18,7 @@ export interface VerificationContext {
   expectedOrgName?: string;
 }
 
-/** {@link handleAdClicked} の引数 */
+/** 広告クリックのハンドラの引数 */
 export interface HandleAdClickedParams extends VerificationContext {
   /** 対象タブID */
   tabId: number;
@@ -28,13 +28,13 @@ export interface HandleAdClickedParams extends VerificationContext {
   sourceUrl?: string;
 }
 
-/** {@link executeWarningRedirect} の引数 */
+/** 警告ページへのリダイレクトの引数 */
 export interface ExecuteWarningRedirectParams extends WarningSearchParams {
   /** リダイレクト対象のタブID */
   tabId: number;
 }
 
-/** {@link handleVerification} の引数 */
+/** リンク検証のハンドラの引数 */
 export interface HandleVerificationParams extends VerificationContext {
   /** 検証対象のタブID */
   tabId: number;
@@ -46,7 +46,7 @@ export interface HandleVerificationParams extends VerificationContext {
   isNewTab?: boolean;
 }
 
-/** {@link createMismatchResult} の引数 */
+/** OPID 不一致・未設定の結果を組み立てる引数 */
 export interface CreateMismatchResultParams extends VerificationContext {
   /** 遷移先の組織名 */
   destinationOrgName?: string;
