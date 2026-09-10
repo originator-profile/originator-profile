@@ -3,11 +3,8 @@ import { frameCasExtensionMessenger } from "./frame-cas/extension-events";
 import { setupLinkVerification } from "./link-verification/background";
 import type { WarningUrlBuilder } from "./link-verification/types";
 import { overlayExtensionMessenger } from "./overlay/extension-events";
-import { updateBadge } from "./tab-badge/update-badge";
+import { setupTabBadge } from "./tab-badge/background";
 import "./utils/cors-basic-auth";
-
-/** バッジ更新のデバウンス時間（ミリ秒） */
-const BADGE_UPDATE_DEBOUNCE_MS = 300;
 
 /** Firefox のサイドバーの開閉を検知するポーリング間隔（ミリ秒） */
 const SIDEBAR_POLL_INTERVAL_MS = 500;
@@ -60,6 +57,7 @@ export type BackgroundConfig = {
  */
 export function setupBackground(config: BackgroundConfig) {
   setupLinkVerification(config.buildWarningUrl);
+  const { requestTabBadgeUpdate } = setupTabBadge(config.countCredentials);
 
   // Chromium: アクションクリック時にサイドパネルを開く
   if (chrome.sidePanel) {
@@ -116,50 +114,6 @@ export function setupBackground(config: BackgroundConfig) {
     });
   }
 
-  async function updateTabBadge(tabId: number): Promise<void> {
-    try {
-      await updateBadge(tabId, await config.countCredentials(tabId));
-    } catch (error) {
-      console.error(
-        `[updateTabBadge] Failed to update badge for tab ${tabId}:`,
-        error,
-      );
-    }
-  }
-
-  // デバウンス用のタイマーID（タブIDごとに管理）
-  const pendingBadgeUpdateTimers = new Map<
-    number,
-    ReturnType<typeof setTimeout>
-  >();
-
-  /** タブのバッジ更新をデバウンス付きで要求する */
-  function requestTabBadgeUpdate(tabId: number): void {
-    const existingTimer = pendingBadgeUpdateTimers.get(tabId);
-    if (existingTimer !== undefined) {
-      clearTimeout(existingTimer);
-    }
-
-    const timer = setTimeout(() => {
-      pendingBadgeUpdateTimers.delete(tabId);
-      void updateTabBadge(tabId);
-    }, BADGE_UPDATE_DEBOUNCE_MS);
-
-    pendingBadgeUpdateTimers.set(tabId, timer);
-  }
-
-  // タブ切り替え時にバッジを更新
-  chrome.tabs.onActivated.addListener(({ tabId }) => {
-    requestTabBadgeUpdate(tabId);
-  });
-
-  // ページ遷移完了時にバッジを更新（アクティブタブのみ）
-  chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-    if (changeInfo.status === "complete" && tab.active) {
-      requestTabBadgeUpdate(tabId);
-    }
-  });
-
   chrome.runtime.onInstalled.addListener(async ({ reason }) => {
     if (reason !== "install") return;
 
@@ -180,15 +134,6 @@ export function setupBackground(config: BackgroundConfig) {
     if (!granted) {
       // 権限が足らない場合は初期設定の説明を開く (Firefoxのみ)
       await chrome.tabs.create({ url: config.permissionGuideUrl });
-    }
-  });
-
-  // タブ削除時にデバウンスタイマーをクリーンアップ
-  chrome.tabs.onRemoved.addListener((tabId) => {
-    const timer = pendingBadgeUpdateTimers.get(tabId);
-    if (timer !== undefined) {
-      clearTimeout(timer);
-      pendingBadgeUpdateTimers.delete(tabId);
     }
   });
 
