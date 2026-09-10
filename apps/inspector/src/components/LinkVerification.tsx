@@ -1,4 +1,4 @@
-import { _ } from "@originator-profile/extension-common/ui";
+import { linkVerificationTitle } from "./credentials/link-verification-title";
 import { useLinkVerification } from "./credentials/use-link-verification";
 
 export default function LinkVerification({
@@ -14,11 +14,6 @@ export default function LinkVerification({
 
   const { status } = verificationResult;
   const isMatched = status === "matched";
-  const titleKey = isMatched
-    ? "LinkVerification_Matched_Title"
-    : status === "mismatched"
-      ? "LinkVerification_Mismatched_Title"
-      : "LinkVerification_MissingOpid_Title";
 
   return (
     <span
@@ -26,7 +21,7 @@ export default function LinkVerification({
         isMatched ? "text-green-700" : "text-red-700"
       } ${className ?? ""}`}
     >
-      {_(titleKey)}
+      {linkVerificationTitle(status)}
     </span>
   );
 }

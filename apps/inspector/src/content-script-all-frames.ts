@@ -7,7 +7,10 @@ import {
   FrameLocation,
   FrameResponse,
 } from "@originator-profile/extension-common";
-import { setupFrameHandlers } from "@originator-profile/extension-common/content-script";
+import {
+  setupAdClickDetection,
+  setupFrameHandlers,
+} from "@originator-profile/extension-common/content-script";
 import {
   normalizeCasItem,
   TargetIntegrityAlgorithm,
@@ -15,6 +18,7 @@ import {
 import { isFrameVisible } from "./components/frameCas";
 
 setupFrameHandlers();
+setupAdClickDetection();
 
 frameCasExtensionMessenger.onMessage(
   "locating",

@@ -353,11 +353,20 @@
   "DetailInfo_LinkVerification": {
     "message": "リンク先確認"
   },
+  "DetailInfo_LinkVerificationStatus": {
+    "message": "判定"
+  },
+  "DetailInfo_LinkVerificationReason": {
+    "message": "理由"
+  },
   "DetailInfo_ExpectedLinkDestination": {
     "message": "意図したリンク先"
   },
   "DetailInfo_SourceAdOrganization": {
     "message": "リンク元広告の組織"
+  },
+  "DetailInfo_ActualSiteOperator": {
+    "message": "実際のサイト運営者"
   },
   "DetailInfo_Warnings": {
     "message": "警告"
@@ -377,71 +386,8 @@
   "LinkVerification_MissingOpid_Title": {
     "message": "リンク先のサイト運営者の確認ができませんでした"
   },
-  "LinkVerification_Matched_IntendedSite": {
-    "message": "$expected_org$のサイトを開くことを意図した",
-    "placeholders": {
-      "expected_org": {
-        "content": "$1",
-        "example": "Example Corp"
-      }
-    }
-  },
-  "LinkVerification_Matched_ClickedAd": {
-    "message": "$source_org$の広告をクリックし、",
-    "placeholders": {
-      "source_org": {
-        "content": "$1",
-        "example": "Example Corp"
-      }
-    }
-  },
-  "LinkVerification_Matched_ClickedAdGeneric": {
-    "message": "広告をクリックし、"
-  },
-  "LinkVerification_Matched_DestConfirmed": {
-    "message": "正しいリンク先（$dest_org$のサイト）に遷移したことを確認できました。",
-    "placeholders": {
-      "dest_org": {
-        "content": "$1",
-        "example": "Example Corp"
-      }
-    }
-  },
-  "LinkVerification_Matched_Confirmed": {
-    "message": "正しいリンク先に遷移したことを確認できました。"
-  },
-  "LinkVerification_Mismatched_IntendedSite": {
-    "message": "$expected_org$のサイトを開くことを意図した",
-    "placeholders": {
-      "expected_org": {
-        "content": "$1",
-        "example": "Example Corp"
-      }
-    }
-  },
-  "LinkVerification_Mismatched_ClickedAd": {
-    "message": "$source_org$の広告をクリックしましたが、",
-    "placeholders": {
-      "source_org": {
-        "content": "$1",
-        "example": "Example Corp"
-      }
-    }
-  },
-  "LinkVerification_Mismatched_ClickedAdGeneric": {
-    "message": "広告をクリックしましたが、"
-  },
-  "LinkVerification_Mismatched_OperatedBy": {
-    "message": "リンク先は$dest_org$が運営しています。",
-    "placeholders": {
-      "dest_org": {
-        "content": "$1",
-        "example": "Example Corp"
-      }
-    }
-  },
-  "LinkVerification_Mismatched_CannotVerify": {
-    "message": "リンク先のサイト運営者の確認ができませんでした。"
+  "LinkVerification_Error_Title": {
+    "message": "リンク先の検証に失敗しました"
   },
   "Warning_Title": {
     "message": "サイトの身元を確認できません"
@@ -464,10 +410,13 @@
       }
     }
   },
+  "Warning_ClickedAdGeneric": {
+    "message": "広告をクリックしましたが、"
+  },
   "Warning_OperatedBy": {
-    "message": "リンク先は$dest_org$が運営しています。",
+    "message": "リンク先は$actual_org$が運営しています。",
     "placeholders": {
-      "dest_org": {
+      "actual_org": {
         "content": "$1",
         "example": "Example Corp"
       }

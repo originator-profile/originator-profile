@@ -15,15 +15,15 @@ const isValidUrl = (url: string) => {
 /**
  * 戻るボタンのナビゲーション処理
  */
-function navigateBack(isNewTab: boolean, safeOriginal: string | null): void {
+function navigateBack(isNewTab: boolean, safeSource: string | null): void {
   if (isNewTab) {
     window.close();
     return;
   }
-  if (safeOriginal) {
+  if (safeSource) {
     // location.replace で遷移されるため履歴が置き換わる場合がある。
-    // original パラメータ（広告クリック元ページのURL）があればそちらへ確実に戻る。
-    window.location.replace(safeOriginal);
+    // sourceUrl（リンク元ページの URL）があればそちらへ確実に戻る。
+    window.location.replace(safeSource);
   } else if (window.history.length > 1) {
     window.history.back();
   } else {
@@ -36,34 +36,35 @@ function navigateBack(isNewTab: boolean, safeOriginal: string | null): void {
  */
 function getBackButtonLabel(
   isNewTab: boolean,
-  safeOriginal: string | null,
+  safeSource: string | null,
 ): string {
   if (isNewTab) return _("Warning_CloseTab");
-  if (safeOriginal || window.history.length > 1) return _("Warning_GoBack");
+  if (safeSource || window.history.length > 1) return _("Warning_GoBack");
   return _("Warning_CloseTab");
 }
 
 export default function Warning() {
   const [searchParams] = useSearchParams();
   // NOTE: parseWarningSearchParams は reason も返すが、テンプレート側では
-  // sourceOrg / destOrg / expectedOrg を組み合わせて詳細なメッセージを構築するため、
-  // reason は表示に使用していない。
+  // sourceOrg / expectedOrg / actualOrg を組み合わせて詳細なメッセージを
+  // 構築するため、reason は表示に使用していない。
   const {
-    target,
+    destinationUrl,
     sourceOrg,
-    destOrg,
     expectedOrg,
-    original,
+    actualOrg,
+    sourceUrl,
     isNewTab: isNewTabParam,
   } = parseWarningSearchParams(searchParams);
 
-  const safeTarget = target && isValidUrl(target) ? target : null;
-  const safeOriginal = original && isValidUrl(original) ? original : null;
+  const safeDestination =
+    destinationUrl && isValidUrl(destinationUrl) ? destinationUrl : null;
+  const safeSource = sourceUrl && isValidUrl(sourceUrl) ? sourceUrl : null;
   const isNewTab = isNewTabParam ?? false;
 
   const handleProceed = () => {
     void (async () => {
-      if (safeTarget) {
+      if (safeDestination) {
         try {
           // 検証状態をクリアして、次の onCompleted で再検証されないようにする
           await chrome.runtime.sendMessage({
@@ -72,8 +73,8 @@ export default function Warning() {
         } catch (error) {
           console.warn("Failed to notify background script:", error);
         } finally {
-          // Navigate to the target URL regardless of message success
-          window.location.replace(safeTarget);
+          // Navigate to the destination regardless of message success
+          window.location.replace(safeDestination);
         }
       }
     })();
@@ -82,11 +83,11 @@ export default function Warning() {
   return (
     <Template
       sourceOrg={sourceOrg}
-      destOrg={destOrg}
       expectedOrg={expectedOrg}
-      target={safeTarget}
-      backButtonLabel={getBackButtonLabel(isNewTab, safeOriginal)}
-      onBack={() => navigateBack(isNewTab, safeOriginal)}
+      actualOrg={actualOrg}
+      destinationUrl={safeDestination}
+      backButtonLabel={getBackButtonLabel(isNewTab, safeSource)}
+      onBack={() => navigateBack(isNewTab, safeSource)}
       onProceed={handleProceed}
     />
   );

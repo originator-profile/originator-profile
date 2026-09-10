@@ -2,6 +2,8 @@ export type {
   ExecuteWarningRedirectParams,
   HandleAdClickedParams,
   HandleVerificationParams,
+  LinkVerificationResult,
+  OrgRef,
   PendingVerificationData,
   VerificationCacheData,
   VerificationContext,
@@ -9,9 +11,9 @@ export type {
 } from "./types";
 
 export {
+  ensureStateLoaded,
   pendingOpIdVerification,
   recentlyOpenedTabs,
-  stateReady,
   verificationCache,
   verificationInProgress,
   verificationResults,
@@ -21,3 +23,7 @@ export {
   createLinkVerificationHandlers,
   restoreVerificationFromCache,
 } from "./handlers";
+
+export { linkVerificationMessenger } from "./events";
+
+export { fetchVerificationResult } from "./messaging";

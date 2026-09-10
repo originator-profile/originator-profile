@@ -13,6 +13,15 @@ const WARNING_TITLE =
   /Unable to verify site identity|サイトの身元を確認できません/;
 const DESTINATION_LABEL = /Destination:|遷移先:/;
 
+// dns:localhost の Web Media Profile の組織名 (ja-JP / en どちらの版も同じ)
+const ORG_NAME = "Example OP Holder";
+const INTENDED_SITE = new RegExp(
+  `intended to open ${ORG_NAME}'s site|${ORG_NAME}のサイトを開くことを意図した`,
+);
+const CLICKED_AD = new RegExp(
+  `You clicked ${ORG_NAME}'s ad|${ORG_NAME}の広告をクリックしました`,
+);
+
 /**
  * Warning ページが表示されるまで待機する
  */
@@ -164,6 +173,27 @@ test.describe("リンク検証", () => {
     await expect(
       page.getByRole("button", { name: PROCEED_TEXT }),
     ).toBeVisible();
+  });
+
+  test("Warning ページに広告元と遷移先想定の組織名が表示される", async ({
+    context,
+    page,
+  }) => {
+    await page.goto(VERIFY_LINK_PAGE);
+    await ensureServiceWorker(context, page);
+
+    // iframe[2]「外部サイトへのリンク (OPID不一致)」をクリック → Warning 表示
+    const frame = page.frameLocator("iframe >> nth=2");
+    await frame.locator("a").first().click();
+    await waitForWarningPage(page);
+    await expect(page.getByText(WARNING_TITLE)).toBeVisible({ timeout: 5000 });
+
+    // 広告 CA の issuer と targetopid がどちらも dns:localhost のため、
+    // 広告元・遷移先想定ともに同じ OP の WMP から解決される
+    const description = page.locator("p").filter({ hasText: ORG_NAME });
+    await expect(description).toHaveCount(1);
+    await expect(description).toContainText(INTENDED_SITE);
+    await expect(description).toContainText(CLICKED_AD);
   });
 
   test("異常なケース (OPID不一致): Warning が表示される", async ({
