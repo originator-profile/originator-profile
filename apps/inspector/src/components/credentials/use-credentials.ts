@@ -73,9 +73,7 @@ async function fetchVerifiedCredentials([, tabId, websiteOriginators]: [
   const opsSources: OpOrigin[] = [
     ...registry.ops.map(registrySource),
     ...(websiteOriginators ?? []).map(siteProfileSource),
-    ...framesAndPage.flatMap((frame) =>
-      frame.ops.map(({ source }) => source),
-    ),
+    ...framesAndPage.flatMap((frame) => frame.ops.map(({ source }) => source)),
   ];
   const ops: VerifiedOpsWithSource = legacy.ops.map((op, i) => {
     const source = opsSources[i];
@@ -106,9 +104,7 @@ async function fetchVerifiedCredentials([, tabId, websiteOriginators]: [
 
   return {
     ops,
-    cas: deduplicateCas(
-      documents.flatMap(({ cas }) => cas),
-    ),
+    cas: deduplicateCas(documents.flatMap(({ cas }) => cas)),
     origin: page.origin,
     url: page.url,
     framesCas: documents.map(({ target, cas }) => ({
