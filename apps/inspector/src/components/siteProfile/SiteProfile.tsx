@@ -1,9 +1,17 @@
 import { Image, _ } from "@originator-profile/extension-common/ui";
 import placeholderLogoMainUrl from "@originator-profile/extension-common/ui/assets/placeholder-logo-main.png";
+import { WebMediaProfile, WebsiteProfile } from "@originator-profile/model";
+import { VerifiedSp } from "@originator-profile/verify";
 import GlobalHeader from "../GlobalHeader";
 import ReliabilityGuide from "../ReliabilityGuide";
 import WebMediaProfileSummaryCard from "../WebMediaProfileSummaryCard";
-import { SiteProfileProps } from "./types";
+
+type SiteProfileProps = {
+  orgPath?: { pathname: string; search: string };
+  siteProfile: VerifiedSp;
+  wmp?: WebMediaProfile;
+  wsp: WebsiteProfile;
+};
 
 export function SiteProfile(props: SiteProfileProps) {
   return (

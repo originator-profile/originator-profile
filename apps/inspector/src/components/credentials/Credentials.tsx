@@ -31,6 +31,7 @@ import CaSelector from "../CaSelector";
 import ReliabilityGuide from "../ReliabilityGuide";
 import WebMediaProfileSummaryCard from "../WebMediaProfileSummaryCard";
 import { BidResponse } from "../rtb";
+
 type CredentialsProps = {
   ca: SupportedVerifiedCa;
   cas: SupportedVerifiedCas;
