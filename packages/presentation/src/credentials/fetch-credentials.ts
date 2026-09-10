@@ -40,7 +40,7 @@ async function fetchCredentialSet<
           }
 
           const json = await res.json();
-          const items = (Array.isArray(json) ? json : [json]) as T;
+          const items = (Array.isArray(json) ? json : [json]) as T[number][];
           return items.map((credential) => ({
             credential,
             source: externalSource(endpoint),
