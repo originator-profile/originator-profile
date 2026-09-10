@@ -3,6 +3,7 @@ import type {
   OrgRef,
 } from "@originator-profile/extension-common";
 import { _, Table, TableRow } from "@originator-profile/extension-common/ui";
+import { linkVerificationTitle } from "./credentials/link-verification-title";
 import { useLinkVerification } from "./credentials/use-link-verification";
 
 /**
@@ -32,6 +33,16 @@ export default function LinkVerificationDetail() {
         {_("DetailInfo_LinkVerification")}
       </h2>
       <Table>
+        <TableRow
+          header={_("DetailInfo_LinkVerificationStatus")}
+          data={linkVerificationTitle(result.status)}
+        />
+        {result.reason && (
+          <TableRow
+            header={_("DetailInfo_LinkVerificationReason")}
+            data={result.reason}
+          />
+        )}
         <TableRow
           header={_("DetailInfo_ExpectedLinkDestination")}
           data={<Org org={result.expectedOperator} />}

@@ -353,6 +353,12 @@
   "DetailInfo_LinkVerification": {
     "message": "リンク先確認"
   },
+  "DetailInfo_LinkVerificationStatus": {
+    "message": "判定"
+  },
+  "DetailInfo_LinkVerificationReason": {
+    "message": "理由"
+  },
   "DetailInfo_ExpectedLinkDestination": {
     "message": "意図したリンク先"
   },
@@ -379,6 +385,9 @@
   },
   "LinkVerification_MissingOpid_Title": {
     "message": "リンク先のサイト運営者の確認ができませんでした"
+  },
+  "LinkVerification_Error_Title": {
+    "message": "リンク先の検証に失敗しました"
   },
   "Warning_Title": {
     "message": "サイトの身元を確認できません"

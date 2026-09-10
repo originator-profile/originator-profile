@@ -353,6 +353,12 @@
   "DetailInfo_LinkVerification": {
     "message": "Link Verification"
   },
+  "DetailInfo_LinkVerificationStatus": {
+    "message": "Status"
+  },
+  "DetailInfo_LinkVerificationReason": {
+    "message": "Reason"
+  },
   "DetailInfo_ExpectedLinkDestination": {
     "message": "Expected Link Destination"
   },
@@ -379,6 +385,9 @@
   },
   "LinkVerification_MissingOpid_Title": {
     "message": "Unable to verify link destination"
+  },
+  "LinkVerification_Error_Title": {
+    "message": "Link destination verification failed"
   },
   "Warning_Title": {
     "message": "Unable to verify site identity"

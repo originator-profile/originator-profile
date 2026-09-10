@@ -1,5 +1,6 @@
 import { _ } from "@originator-profile/extension-common/ui";
 import GlobalHeader from "../components/GlobalHeader";
+import { linkVerificationTitle } from "../components/credentials/link-verification-title";
 import { useLinkVerification } from "../components/credentials/use-link-verification";
 
 function Prohibition() {
@@ -9,10 +10,7 @@ function Prohibition() {
     verificationResult.status !== "none" &&
     verificationResult.status !== "matched";
 
-  const titleKey =
-    verificationResult?.status === "mismatched"
-      ? "LinkVerification_Mismatched_Title"
-      : "LinkVerification_MissingOpid_Title";
+  const title = linkVerificationTitle(verificationResult?.status);
 
   return (
     <>
@@ -28,7 +26,7 @@ function Prohibition() {
           {hasLinkVerification && (
             <p className="flex items-center flex-col gap-4 mt-2 mb-2">
               <span className="whitespace-pre-line text-red-700 text-sm tracking-normal text-center w-auto inline-block align-middle">
-                {_(titleKey)}
+                {title}
               </span>
             </p>
           )}
