@@ -86,7 +86,7 @@ test("Site Profile の JSON parse に失敗したときエラーが返る", asyn
     http.get(profileEndpoint, () => HttpResponse.text("<html></html>")),
   );
 
-  const window = new Window({ url: "https://not-json.example.org" });
+  const window = new Window({ url: "https://error.example.org" });
   window.document.body.innerHTML = `
     <body></body>`;
   const result = await fetchSiteProfile(window.document as unknown as Document);

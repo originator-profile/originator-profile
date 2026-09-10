@@ -4,6 +4,8 @@ import {
   fetchCredentials,
   fetchOpMeta,
   fetchSiteProfile,
+  type CredentialsFetchFailed,
+  type SourcedCredential,
 } from "@originator-profile/presentation";
 import { normalizeCasItem, verifyIntegrity } from "@originator-profile/verify";
 import { activeTabMessenger } from "./active-tab/events";
@@ -74,10 +76,12 @@ const decodeCasJwtPayload = (
 };
 
 // 広告関連CAS(OnlineAd/Advertorial)のissuerを取得
-const getCasIssuer = (cas: unknown): string | undefined => {
+const getCasIssuer = (
+  cas: SourcedCredential<unknown>[] | CredentialsFetchFailed,
+): string | undefined => {
   if (!Array.isArray(cas)) return undefined;
   for (const casItem of cas) {
-    const decoded = decodeCasJwtPayload(casItem);
+    const decoded = decodeCasJwtPayload(casItem.credential);
     if (decoded && isAdCaType(decoded.credentialSubject?.type)) {
       return decoded.issuer;
     }
@@ -176,7 +180,9 @@ export function setupFrameHandlers() {
 
         if (Array.isArray(ops)) {
           for (const op of ops) {
-            const mediaJwt = Array.isArray(op.media) ? op.media[0] : op.media;
+            const mediaJwt = Array.isArray(op.credential.media)
+              ? op.credential.media[0]
+              : op.credential.media;
             updateOrgNames(
               decodeOpJwt(mediaJwt),
               casIssuer,
@@ -185,7 +191,7 @@ export function setupFrameHandlers() {
               names,
             );
             updateOrgNames(
-              decodeOpJwt(op.core),
+              decodeOpJwt(op.credential.core),
               casIssuer,
               hasCas,
               opMeta.targetopid,

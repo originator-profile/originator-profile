@@ -60,6 +60,8 @@ export async function verifyTabCredentials(tabId: number): Promise<{
 
     const targets = [page, ...frames].map((frame) => ({
       ...frame,
+      ops: frame.ops.map(({ credential }) => credential),
+      cas: frame.cas.map(({ credential }) => credential),
       verifyIntegrity: FrameIntegrityVerifier(tabId, frame.frameId),
     }));
 
