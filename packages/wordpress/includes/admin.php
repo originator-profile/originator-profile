@@ -186,7 +186,7 @@ function profile_ca_target_type_field() {
 		<datalist id="target_integrity_type">
 			<option>HtmlTargetIntegrity</option>
 			<option>TextTargetIntegrity</option>
-			<option>VisibleTextTargetIntegrity</option>
+			<option value="VisibleTextTargetIntegrity">VisibleTextTargetIntegrity (deprecated)</option>
 		</datalist>
 	<?php
 }
