@@ -15,6 +15,7 @@ import {
 import { JwtVcDecoder } from "@originator-profile/securing-mechanism";
 import { decodeOps, normalizeCasItem } from "@originator-profile/verify";
 import { linkVerificationMessenger } from "./events";
+import type { OrgRef, VerificationContext } from "./types";
 
 /**
  * 同一タブでの通常のナビゲーションを起こさないスキーム
@@ -71,9 +72,6 @@ const getAdCaIssuer = (cas: ContentAttestationSet): string | undefined => {
   return undefined;
 };
 
-/** 広告リンクのクリックとともに送る組織名 */
-type OrgNames = { sourceOrgName?: string; expectedOrgName?: string };
-
 /** OP ごとに、閲覧者のロケールに合う Web Media Profile を選ぶ */
 const selectWebMediaProfiles = (
   ops: OriginatorProfileSet,
@@ -93,28 +91,18 @@ const selectWebMediaProfiles = (
 };
 
 /**
- * 広告リンクのクリックとともに送る組織名を解決する
+ * OP ID に組織名を添える
  *
  * NOTE: 突き合わせる相手は WMP の credentialSubject.id である。issuer は OP の
  * 発行者を指すため、広告 CA の issuer とも targetopid とも一致しない
  * @param wmps OP ごとに選ばれた Web Media Profile
- * @param adCaIssuer 広告 CA の issuer
- * @param targetopid 広告が宣言する遷移先の OP ID
+ * @param id OP ID
  */
-const resolveOrgNames = (
-  wmps: WebMediaProfile[],
-  adCaIssuer: string | undefined,
-  targetopid: string,
-): OrgNames => {
-  const nameOf = (opId: string) =>
-    wmps.find((wmp) => wmp.credentialSubject.id === opId)?.credentialSubject
-      .name;
-
-  return {
-    sourceOrgName: adCaIssuer ? nameOf(adCaIssuer) : undefined,
-    expectedOrgName: nameOf(targetopid),
-  };
-};
+const toOrgRef = (wmps: WebMediaProfile[], id: string): OrgRef => ({
+  id,
+  name: wmps.find((wmp) => wmp.credentialSubject.id === id)?.credentialSubject
+    .name,
+});
 
 /**
  * 広告リンクのクリックを検知して Service Worker へ通知する
@@ -122,40 +110,46 @@ const resolveOrgNames = (
  * 全フレームで呼ぶ。opmeta が設置されたフレームでのみ働く。
  */
 export function setupAdClickDetection() {
-  let cachedNames: OrgNames | undefined;
+  let cachedContext: VerificationContext | undefined;
 
-  const tryCacheNames = () => {
+  const tryCacheContext = () => {
     const opMeta = fetchOpMeta(document);
     if (!opMeta) return;
 
     void fetchCredentials(document)
       .then(({ ops, cas }) => {
         if (ops instanceof CredentialsFetchFailed) return;
-        cachedNames = resolveOrgNames(
-          selectWebMediaProfiles(ops),
+        const wmps = selectWebMediaProfiles(ops);
+        const adCaIssuer =
           cas instanceof CredentialsFetchFailed
             ? undefined
-            : getAdCaIssuer(cas),
-          opMeta.targetopid,
-        );
+            : getAdCaIssuer(cas);
+        cachedContext = {
+          source: adCaIssuer ? toOrgRef(wmps, adCaIssuer) : undefined,
+          expectedOperator: toOrgRef(wmps, opMeta.targetopid),
+        };
       })
       .catch((e) => {
         console.error("[ContentScript] Pre-fetch credentials failed", e);
       });
   };
 
-  tryCacheNames();
+  tryCacheContext();
   if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", tryCacheNames, {
+    document.addEventListener("DOMContentLoaded", tryCacheContext, {
       once: true,
     });
   }
 
   const sendAdClicked = (opMeta: OpMeta, isNewTab: boolean) => {
     void linkVerificationMessenger.sendMessage("adClicked", {
-      targetopid: opMeta.targetopid,
-      sourceOrgName: cachedNames?.sourceOrgName,
-      expectedOrgName: cachedNames?.expectedOrgName,
+      source: cachedContext?.source,
+      // NOTE: 先読みが間に合っていなくても照合はできるよう、OP ID はクリック時の
+      // opMeta から採る。組織名は先読みできていなければ付かない
+      expectedOperator: {
+        id: opMeta.targetopid,
+        name: cachedContext?.expectedOperator.name,
+      },
       isNewTab,
     });
   };

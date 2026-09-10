@@ -33,9 +33,9 @@ export function createLinkVerificationHandlers(
       buildWarningSearchParams({
         target,
         reason: result.reason ?? "Unknown Error",
-        sourceOrg: result.sourceOrgName,
-        destOrg: result.destinationOrgName,
-        expectedOrg: result.expectedOrgName,
+        sourceOrg: result.source?.name,
+        destOrg: result.actualOperator?.name,
+        expectedOrg: result.expectedOperator?.name,
         original,
         isNewTab,
       }),
@@ -153,7 +153,9 @@ export function createLinkVerificationHandlers(
 
     // 元タブ側の検証情報をクリア
     const currentMainPending = pendingOpIdVerification.get(tabId);
-    if (currentMainPending?.targetOpId === context.targetOpId) {
+    if (
+      currentMainPending?.expectedOperator.id === context.expectedOperator.id
+    ) {
       pendingOpIdVerification.delete(tabId);
     }
   };

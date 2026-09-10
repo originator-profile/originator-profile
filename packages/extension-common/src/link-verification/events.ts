@@ -1,11 +1,13 @@
 import { defineExtensionMessaging } from "@webext-core/messaging";
-import type { LinkVerificationResult } from "./types";
+import type { LinkVerificationResult, OrgRef } from "./types";
 
 type LinkVerificationProtocolMap = {
   adClicked(message: {
-    targetopid: string;
-    sourceOrgName?: string;
-    expectedOrgName?: string;
+    /** リンク元コンテンツを表明した組織 */
+    source?: OrgRef;
+    /** targetopid が表明する、期待される運営者 */
+    expectedOperator: OrgRef;
+    /** 新規タブで開かれたクリックか */
     isNewTab?: boolean;
   }): void;
   getVerificationResult(tabId: number): LinkVerificationResult;

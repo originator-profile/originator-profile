@@ -9,7 +9,7 @@ OP ID と突き合わせる。一致しなければ警告ページへ差し替�
 
 ### 広告
 
-広告 (多くは iframe で配信される画像広告) に 3 つを設置する。
+広告に 3 つを設置する。
 
 ```html
 <!-- 遷移先として宣言する OP ID -->
@@ -73,8 +73,7 @@ CAS のうち `credentialSubject.type` が `OnlineAd` または `Advertorial` �
 > 発行者 (レジストラ) を指すため全 OP で同じ値になり、広告 CA の issuer とも
 > `targetopid` とも一致しない。
 
-組織名を持つのは Web Media Profile だけである。Core Profile は `name` を持たず、
-Profile Annotation の `name` は PA 自体の名称を指す。WMP が言語ごとに複数あるときは
+組織名は Web Media Profile から参照する。WMP が言語ごとに複数あるときは
 `@originator-profile/core` の `selectByLocale` で選ぶ。
 
 ## 実装

@@ -3,7 +3,7 @@ import {
   isSiteProfileFetchError,
   verifyTabWebsite,
 } from "../site-profile/verify-website";
-import { getDestinationOrgName, isMatched } from "./matching";
+import { isMatched, resolveActualOperator } from "./matching";
 import type {
   CreateMismatchResultParams,
   LinkVerificationResult,
@@ -16,13 +16,13 @@ import type {
  * @param problem - 検証失敗の理由
  */
 export const createErrorResult = (
-  { sourceOrgName, expectedOrgName }: VerificationContext,
+  { source, expectedOperator }: VerificationContext,
   problem?: ProblemDetails,
 ): LinkVerificationResult => {
   return {
     status: "error",
-    sourceOrgName,
-    expectedOrgName,
+    source,
+    expectedOperator,
     reason:
       import.meta.env.MODE === "development"
         ? chrome.i18n.getMessage(
@@ -38,9 +38,9 @@ export const createErrorResult = (
  * @param params - 不一致結果の生成に必要な情報
  */
 export const createMismatchResult = ({
-  sourceOrgName,
-  expectedOrgName,
-  destinationOrgName,
+  source,
+  expectedOperator,
+  actualOperator,
   isMissing,
 }: CreateMismatchResultParams): LinkVerificationResult => {
   const reason = isMissing
@@ -48,9 +48,9 @@ export const createMismatchResult = ({
     : chrome.i18n.getMessage("Verification_OpidMismatch");
   return {
     status: isMissing ? "missing_opid" : "mismatched",
-    sourceOrgName,
-    expectedOrgName,
-    destinationOrgName,
+    source,
+    expectedOperator,
+    actualOperator,
     reason,
   };
 };
@@ -64,7 +64,7 @@ export const getVerificationResult = async (
   tabId: number,
   context: VerificationContext,
 ): Promise<LinkVerificationResult> => {
-  const { targetOpId, sourceOrgName, expectedOrgName } = context;
+  const { source, expectedOperator } = context;
 
   const { result } = await verifyTabWebsite(tabId);
 
@@ -74,8 +74,8 @@ export const getVerificationResult = async (
     const problem = result.errors[0];
     if (isSiteProfileFetchError(problem)) {
       return createMismatchResult({
-        sourceOrgName,
-        expectedOrgName,
+        source,
+        expectedOperator,
         isMissing: true,
       });
     }
@@ -83,25 +83,20 @@ export const getVerificationResult = async (
   }
 
   const { originators, sites } = result.outcome;
-  const destinationOrgName = getDestinationOrgName(
+  const actualOperator = resolveActualOperator(
     originators,
     sites,
-    targetOpId,
+    expectedOperator.id,
   );
 
-  if (isMatched(sites, targetOpId)) {
-    return {
-      status: "matched",
-      sourceOrgName,
-      expectedOrgName,
-      destinationOrgName,
-    };
+  if (isMatched(sites, expectedOperator.id)) {
+    return { status: "matched", source, expectedOperator, actualOperator };
   }
 
   return createMismatchResult({
-    sourceOrgName,
-    expectedOrgName,
-    destinationOrgName,
+    source,
+    expectedOperator,
+    actualOperator,
     isMissing: false,
   });
 };

@@ -1,6 +1,7 @@
 import { selectByLocale } from "@originator-profile/core";
 import type { WebsiteProfile } from "@originator-profile/model";
 import type { OriginatorPayload } from "@originator-profile/verify";
+import type { OrgRef } from "./types";
 
 /**
  * 発信者の組織名を得る
@@ -15,15 +16,7 @@ export const getOrgNameFromOp = (op: OriginatorPayload): string | undefined => {
   return selectByLocale(media)?.credentialSubject.name;
 };
 
-/**
- * Website Profile を発行した組織の名前を得る
- *
- * NOTE: WebsiteProfile.credentialSubject はサイトの属性であり、その name は
- * サイト名 (The name of the Web site) で組織名ではない。運営者は issuer が指す
- * OP の側にある
- * @param wsp Website Profile
- * @param originators 遷移先の復号済み発信者
- */
+/** Website Profile を発行した組織の名前を得る */
 export const resolveName = (
   wsp: WebsiteProfile,
   originators: OriginatorPayload[],
@@ -34,27 +27,28 @@ export const resolveName = (
   return op && getOrgNameFromOp(op);
 };
 
-export const getDestinationOrgName = (
+/**
+ * 実際にサイトを運営している組織を得る
+ * @param originators 遷移先の復号済み発信者
+ * @param sites 検証を通過した Website Profile
+ * @param expectedOpId targetopid が表明する、期待される運営者の OP ID
+ */
+export const resolveActualOperator = (
   originators: OriginatorPayload[],
   sites: (WebsiteProfile | null)[],
-  targetOpId: string,
-): string | undefined => {
+  expectedOpId: string,
+): OrgRef | undefined => {
   const present = sites.filter((wsp) => wsp !== null);
-  const matchedWsp = selectByLocale(
-    present.filter((wsp) => wsp.issuer === targetOpId),
-  );
-  if (matchedWsp) {
-    return resolveName(matchedWsp, originators);
-  }
-
-  // フォールバック: 一致するものがなければ他の WSP から取得を試みる
-  const fallbackWsp = selectByLocale(present);
-  return fallbackWsp ? resolveName(fallbackWsp, originators) : undefined;
+  const wsp =
+    selectByLocale(present.filter((w) => w.issuer === expectedOpId)) ??
+    // フォールバック: 一致するものがなければ他の WSP から取得を試みる
+    selectByLocale(present);
+  return wsp && { id: wsp.issuer, name: resolveName(wsp, originators) };
 };
 
 export const isMatched = (
   sites: (WebsiteProfile | null)[],
-  targetOpId: string,
+  expectedOpId: string,
 ): boolean => {
-  return sites.some((wsp) => wsp?.issuer === targetOpId);
+  return sites.some((wsp) => wsp?.issuer === expectedOpId);
 };

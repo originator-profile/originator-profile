@@ -2,10 +2,10 @@ import type { WebsiteProfile } from "@originator-profile/model";
 import type { OriginatorPayload } from "@originator-profile/verify";
 import { describe, expect, test } from "vitest";
 import {
-  getDestinationOrgName,
   getOrgNameFromOp,
   isMatched,
   resolveName,
+  resolveActualOperator,
 } from "./matching";
 
 /**
@@ -34,7 +34,7 @@ function wsp(issuer: string, name?: string): WebsiteProfile {
 }
 
 describe("isMatched", () => {
-  test("issuer が targetOpId に一致する WSP があれば true", () => {
+  test("issuer が宣言された OP ID に一致する WSP があれば true", () => {
     expect(
       isMatched([wsp("dns:other"), wsp("dns:example")], "dns:example"),
     ).toBe(true);
@@ -93,36 +93,45 @@ describe("resolveName", () => {
   });
 });
 
-describe("getDestinationOrgName", () => {
+describe("resolveActualOperator", () => {
   const originators = [
     op("dns:example", ["Example 組織"]),
     op("dns:other", ["Other 組織"]),
   ];
 
-  test("targetOpId に一致する WSP から解決する", () => {
+  test("宣言された OP ID に一致する WSP から解決する", () => {
     const sites = [wsp("dns:other"), wsp("dns:example")];
-    expect(getDestinationOrgName(originators, sites, "dns:example")).toBe(
-      "Example 組織",
-    );
+    expect(resolveActualOperator(originators, sites, "dns:example")).toEqual({
+      id: "dns:example",
+      name: "Example 組織",
+    });
   });
 
   test("一致する WSP がなければ他の WSP から解決する", () => {
     const sites = [wsp("dns:other"), wsp("dns:example")];
-    expect(getDestinationOrgName(originators, sites, "dns:unknown")).toBe(
-      "Other 組織",
-    );
+    expect(resolveActualOperator(originators, sites, "dns:unknown")).toEqual({
+      id: "dns:other",
+      name: "Other 組織",
+    });
   });
 
   test("復号できなかった WSP はフォールバックの対象にしない", () => {
     const sites = [null, wsp("dns:other")];
-    expect(getDestinationOrgName(originators, sites, "dns:unknown")).toBe(
-      "Other 組織",
-    );
+    expect(resolveActualOperator(originators, sites, "dns:unknown")).toEqual({
+      id: "dns:other",
+      name: "Other 組織",
+    });
+  });
+
+  test("組織名が解決できなくても OP ID は返す", () => {
+    expect(
+      resolveActualOperator([], [wsp("dns:nameless")], "dns:nameless"),
+    ).toEqual({ id: "dns:nameless", name: undefined });
   });
 
   test("WSP が空なら undefined", () => {
     expect(
-      getDestinationOrgName(originators, [], "dns:example"),
+      resolveActualOperator(originators, [], "dns:example"),
     ).toBeUndefined();
   });
 });

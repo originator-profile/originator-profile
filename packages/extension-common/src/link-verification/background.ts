@@ -75,9 +75,8 @@ export function setupLinkVerification(buildWarningUrl: WarningUrlBuilder) {
       handleAdClicked({
         tabId: sender.tab.id,
         context: {
-          targetOpId: data.targetopid,
-          sourceOrgName: data.sourceOrgName,
-          expectedOrgName: data.expectedOrgName,
+          source: data.source,
+          expectedOperator: data.expectedOperator,
         },
         isNewTab: data.isNewTab,
         sourceUrl: sender.tab.url,
