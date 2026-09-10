@@ -13,7 +13,7 @@ const extractTextIntegrity = async (
 ): Promise<string> => {
   const targets = await extractTargetsFromHtml(html, {
     textSelectors: [cssSelector],
-    externalSelector: ":not(*)",
+    externalSelectors: [":not(*)"],
   });
   const integrity = targets[0]?.integrity;
   if (integrity === undefined) {
@@ -245,6 +245,84 @@ test("detectDrift: extracts external resources from non-CIP markup via externalS
         html,
         filePath: dest,
         externalSelector: ".op-resource",
+      }),
+    ).resolves.toEqual({
+      status: "ok",
+      casFilePath: dest,
+    });
+  });
+});
+
+test("detectDrift: returns ok when the CAS external target records its cssSelector", async () => {
+  const html = `
+    <main>Body</main>
+    <img class="op-resource" integrity="sha256-img" src="/a.png" />
+  `;
+  const integrity = await extractTextIntegrity(html, "main");
+
+  await withTempDir(async (dir) => {
+    const dest = await writeCasTargets(
+      join(dir, "cas", "external-css-selector.cas.json"),
+      [
+        {
+          type: "TextTargetIntegrity",
+          cssSelector: "main",
+          integrity,
+        },
+        {
+          type: "ExternalResourceTargetIntegrity",
+          cssSelector: ".op-resource",
+          integrity: "sha256-img",
+        },
+      ],
+    );
+
+    await expect(
+      detectDrift({
+        html,
+        filePath: dest,
+      }),
+    ).resolves.toEqual({
+      status: "ok",
+      casFilePath: dest,
+    });
+  });
+});
+
+test("detectDrift: returns ok when the CAS external targets record different cssSelectors", async () => {
+  const html = `
+    <main>Body</main>
+    <img class="img-hero" integrity="sha256-hero" src="/hero.png" />
+    <img class="img-sidebar" integrity="sha256-sidebar" src="/side.png" />
+  `;
+  const integrity = await extractTextIntegrity(html, "main");
+
+  await withTempDir(async (dir) => {
+    const dest = await writeCasTargets(
+      join(dir, "cas", "multiple-external-selectors.cas.json"),
+      [
+        {
+          type: "TextTargetIntegrity",
+          cssSelector: "main",
+          integrity,
+        },
+        {
+          type: "ExternalResourceTargetIntegrity",
+          cssSelector: ".img-hero",
+          integrity: "sha256-hero",
+        },
+        {
+          type: "ExternalResourceTargetIntegrity",
+          cssSelector: ".img-sidebar",
+          integrity: "sha256-sidebar",
+        },
+      ],
+    );
+
+    await expect(
+      detectDrift({
+        html,
+        filePath: dest,
       }),
     ).resolves.toEqual({
       status: "ok",

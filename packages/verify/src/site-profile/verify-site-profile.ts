@@ -8,9 +8,9 @@ import {
   JwtVcDecoder,
   JwtVcVerificationResult,
   JwtVcVerifier,
-  UnverifiedJwtVc,
-  VcValidator,
-  VerifiedJwtVc,
+  type UnverifiedJwtVc,
+  type VcValidatorFactory,
+  type VerifiedJwtVc,
 } from "@originator-profile/securing-mechanism";
 import { verifyImageDigestSri } from "../integrity";
 import type { Logger } from "../logger";
@@ -21,6 +21,7 @@ import {
 } from "../originator-profile-set/errors";
 import { VerifiedOps } from "../originator-profile-set/types";
 import { OpsVerifier } from "../originator-profile-set/verify-ops";
+import { pointer } from "../result/pointer";
 import { verifyAllowedOrigin } from "../verify-allowed-origin";
 import { SpVerificationResult } from "./types";
 import { SiteProfileInvalid, SiteProfileVerifyFailed } from "./verify-errors";
@@ -77,7 +78,7 @@ export function SpVerifier(
     /** WSPが提示されたWebサイトのorigin引数との一致性検証の可否 (デフォルト: 有効) */
     verifyOrigin?: boolean;
     /** バリデーター */
-    validator?: typeof VcValidator;
+    validator?: VcValidatorFactory;
     /** ロガー (デフォルト: `console`) */
     logger?: Logger;
   } = {},
@@ -150,6 +151,7 @@ export function SpVerifier(
 
         await verifyImageDigestSri(verified.doc.credentialSubject.image, {
           logger,
+          at: pointer("sites", index),
         });
 
         return verified;

@@ -1,13 +1,15 @@
 {
   "name": "@originator-profile/ca-client",
-  "version": "0.7.0-beta.3",
+  "version": "0.7.0-beta.4",
   "license": "Apache-2.0",
-  "private": true,
   "homepage": "https://docs.originator-profile.org",
   "repository": {
     "type": "git",
     "url": "git+https://github.com/originator-profile/originator-profile.git",
     "directory": "packages/ca-client"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "type": "module",
   "exports": {
@@ -27,6 +29,7 @@
   },
   "dependencies": {
     "@originator-profile/model": "workspace:*",
+    "@originator-profile/securing-mechanism": "workspace:*",
     "@originator-profile/sign": "workspace:*",
     "jsdom": "^29.0.1"
   },

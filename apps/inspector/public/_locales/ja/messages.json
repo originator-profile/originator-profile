@@ -110,8 +110,8 @@
   "Unsupported_ReliabilityInformationRetrievalFailed": {
     "message": "組織の信頼性情報と出版物の流通経路の取得に失敗しました"
   },
-  "Unsupported_ContactSiteOperator": {
-    "message": "このWebページの発信者は\nサイト運営者にお問い合わせください"
+  "Unsupported_OpNotSupported": {
+    "message": "このサイトはまだOPに対応していません"
   },
   "Unsupported_FollowingCausesConsidered": {
     "message": "以下のような原因が考えられます"
@@ -491,15 +491,15 @@
   "Warning_Destination": {
     "message": "遷移先: "
   },
-  "Verification_InvalidOps": {
-    "message": "無効なOPS (デコード失敗)"
+  "Verification_SiteProfileVerifyFailed": {
+    "message": "遷移先のサイトプロファイルを検証できません"
   },
-  "Verification_InvalidOpsDetail": {
-    "message": "無効なOPS (デコード失敗): $error$",
+  "Verification_SiteProfileVerifyFailedDetail": {
+    "message": "遷移先のサイトプロファイルを検証できません: $error$",
     "placeholders": {
       "error": {
         "content": "$1",
-        "example": "Invalid JWT format"
+        "example": "Website Profile verify failed"
       }
     }
   },
@@ -508,9 +508,6 @@
   },
   "Verification_OpidMismatch": {
     "message": "OPID不一致"
-  },
-  "Verification_FetchFailed": {
-    "message": "クレデンシャルが見つかりません (取得失敗)"
   },
   "GlobalHeader_Reload": {
     "message": "再読み込み"

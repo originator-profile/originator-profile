@@ -43,6 +43,9 @@ export type OpOrigin =
   | { kind: "registry" }
   | { kind: "site-profile" };
 
+export const registrySource = (): OpOrigin => ({ kind: "registry" });
+export const siteProfileSource = (): OpOrigin => ({ kind: "site-profile" });
+
 /** 出所(取得経路)付き検証済み Originator Profile */
 export type VerifiedOpWithSource = VerifiedOp & { source: OpOrigin };
 export type VerifiedOpsWithSource = VerifiedOpWithSource[];

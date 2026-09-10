@@ -7,6 +7,7 @@ import {
   fetchHtmlContent,
   fetchTextContent,
   selectByCss,
+  selectByCssOrIntegrity,
   selectByIntegrity,
 } from "./target-integrity";
 
@@ -139,6 +140,26 @@ describe("createIntegrity()", () => {
 
     expect(result).toEqual({
       type: "ExternalResourceTargetIntegrity",
+      integrity: integrityMetadata.toString(),
+    });
+  });
+
+  it("should keep cssSelector for ExternalResourceTargetIntegrity", async () => {
+    const url = "data:text/plain,ok";
+    const integrityMetadata = await createIntegrityMetadata(
+      "sha256",
+      await fetch(url).then((res) => res.arrayBuffer()),
+    );
+
+    expect(
+      await createIntegrity("sha256", {
+        type: "ExternalResourceTargetIntegrity",
+        content: url,
+        cssSelector: "#hero-image",
+      }),
+    ).toEqual({
+      type: "ExternalResourceTargetIntegrity",
+      cssSelector: "#hero-image",
       integrity: integrityMetadata.toString(),
     });
   });
@@ -368,5 +389,61 @@ describe("selectByIntegrity()", () => {
     });
 
     expect(elements).toEqual([]);
+  });
+});
+
+describe("selectByCssOrIntegrity()", () => {
+  const src =
+    "data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciPjwvc3ZnPg==";
+
+  beforeEach(() => {
+    document.body.innerHTML = `\
+<img class="hero" integrity="sha256-yyy" src="${src}" />
+<img integrity="sha256-xxx" src="${src}" />
+<img class="hero" src="${src}" />
+`;
+  });
+
+  it("should select elements by CSS selector even if the integrity attribute does not match", () => {
+    const elements = selectByCssOrIntegrity({
+      cssSelector: ".hero",
+      integrity: "sha256-xxx",
+      document,
+    });
+
+    expect(elements).toHaveLength(2);
+    expect(
+      elements.every((element) => element.classList.contains("hero")),
+    ).toBe(true);
+  });
+
+  it("should select elements by the integrity attribute if no CSS selector is provided", () => {
+    const elements = selectByCssOrIntegrity({
+      integrity: "sha256-xxx",
+      document,
+    });
+
+    expect(elements).toHaveLength(1);
+    expect(elements[0].getAttribute("integrity")).toBe("sha256-xxx");
+  });
+
+  it("should throw if the CSS selector has a syntax error", () => {
+    expect(() =>
+      selectByCssOrIntegrity({
+        cssSelector: "[",
+        integrity: "sha256-xxx",
+        document,
+      }),
+    ).toThrow();
+  });
+
+  it("should throw if the CSS selector is an empty string", () => {
+    expect(() =>
+      selectByCssOrIntegrity({
+        cssSelector: "",
+        integrity: "sha256-xxx",
+        document,
+      }),
+    ).toThrow();
   });
 });

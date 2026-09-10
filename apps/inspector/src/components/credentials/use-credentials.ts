@@ -1,14 +1,24 @@
-import { VerifiedSp } from "@originator-profile/verify";
+import type { OriginatorProfileSet } from "@originator-profile/model";
+import { verifyDocuments } from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
+import { getRegistry } from "../../utils/registry-ops";
+import { toLegacyDocuments } from "../../utils/to-legacy-result";
 import { useSiteProfile } from "../siteProfile";
-import { fetchTabCredentials, fetchVerificationResult } from "./messaging";
-import type {
-  FramesVerifiedCas,
-  SupportedVerifiedCasWithSource,
-  VerifiedOpsWithSource,
+import { deduplicateCas } from "./deduplicate-cas";
+import {
+  fetchTabCredentials,
+  fetchVerificationResult,
+  FrameIntegrityVerifier,
+} from "./messaging";
+import {
+  registrySource,
+  siteProfileSource,
+  type FramesVerifiedCas,
+  type OpOrigin,
+  type SupportedVerifiedCasWithSource,
+  type VerifiedOpsWithSource,
 } from "./types";
-import { verifyAllCredentials } from "./verify-credentials";
 
 const CREDENTIALS_KEY = "credentials";
 
@@ -27,32 +37,89 @@ type FetchVerifiedCredentialsResult = {
  * @param tabId タブID
  * @returns 検証済みクレデンシャルおよびタブのorigin,url
  */
-async function fetchVerifiedCredentials([, tabId, sp]: [
+async function fetchVerifiedCredentials([, tabId, websiteOriginators]: [
   _: typeof CREDENTIALS_KEY,
   tabId: number,
-  sp?: VerifiedSp,
+  websiteOriginators?: OriginatorProfileSet,
 ]): Promise<FetchVerifiedCredentialsResult> {
-  const { frames, ...page } = await fetchTabCredentials(tabId);
-  const result = await verifyAllCredentials(tabId, page, frames, sp);
+  const [registry, { frames, ...page }] = await Promise.all([
+    getRegistry(),
+    fetchTabCredentials(tabId),
+  ]);
 
-  if (result instanceof Error) {
-    throw result;
+  const framesAndPage = [page, ...frames];
+  const targets = framesAndPage.map((frame) => ({
+    ...frame,
+    ops: frame.ops.map(({ credential }) => credential),
+    cas: frame.cas.map(({ credential }) => credential),
+    verifyIntegrity: FrameIntegrityVerifier(tabId, frame.frameId),
+  }));
+
+  const result = await verifyDocuments(targets, {
+    registry,
+    websiteOriginators,
+  });
+
+  const legacy = toLegacyDocuments(result);
+  if (legacy instanceof Error) {
+    throw legacy;
   }
 
+  // NOTE: verifyDocuments はレジストリ・Web サイト・各文書の OPS をこの順で
+  // 1本の配列にまとめて検証するため(packages/verify/src/document/verify-documents.ts
+  // 参照)、legacy.ops は入力と同じ順序・件数で返る契約になっている
+  // (packages/verify/src/originator-profile-set/verify-ops.ts 参照)。
+  // 取得元(source)の対応付けはこの順序を前提に行う。
+  const opsSources: OpOrigin[] = [
+    ...registry.ops.map(registrySource),
+    ...(websiteOriginators ?? []).map(siteProfileSource),
+    ...framesAndPage.flatMap((frame) =>
+      frame.ops.map(({ source }) => source),
+    ),
+  ];
+  const ops: VerifiedOpsWithSource = legacy.ops.map((op, i) => {
+    const source = opsSources[i];
+    if (!source) {
+      throw new Error(`opsSources[${i}] not found`);
+    }
+    return { ...op, source };
+  });
+
+  const documents = legacy.documents.map(({ target, cas }, i) => {
+    const frame = framesAndPage[i];
+    if (!frame) {
+      throw new Error(`framesAndPage[${i}] not found`);
+    }
+    // NOTE: verifyCas も同様に入力(frame.cas)と同じ順序・件数で返す契約
+    // (packages/verify/src/content-attestation-set/verify-cas.ts 参照)。
+    return {
+      target,
+      cas: cas.map((c, j) => {
+        const sourced = frame.cas[j];
+        if (!sourced) {
+          throw new Error(`frame.cas[${j}] not found`);
+        }
+        return { ...c, source: sourced.source };
+      }) as SupportedVerifiedCasWithSource,
+    };
+  });
+
   return {
-    ops: result.ops,
-    cas: result.cas,
+    ops,
+    cas: deduplicateCas(
+      documents.flatMap(({ cas }) => cas),
+    ),
     origin: page.origin,
     url: page.url,
-    framesCas: result.casResults.map(({ result: cas, frame }) => ({
-      cas: cas as SupportedVerifiedCasWithSource,
-      url: frame.url,
-      origin: frame.origin,
-      frameId: frame.frameId,
-      parentFrameId: frame.parentFrameId,
+    framesCas: documents.map(({ target, cas }) => ({
+      cas,
+      url: target.url,
+      origin: target.origin,
+      frameId: target.frameId,
+      parentFrameId: target.parentFrameId,
     })),
-    warnings: result.warnings,
-    info: result.info,
+    warnings: result.warnings.map(({ title }) => title),
+    info: result.info.map(({ title }) => title),
   };
 }
 
@@ -97,7 +164,7 @@ type UseCredentialsResult =
 export function useCredentials() {
   const params = useParams<{ tabId: string }>();
   const tabId = Number(params.tabId);
-  const { siteProfile } = useSiteProfile();
+  const { originators } = useSiteProfile();
   const {
     data: credentials,
     error,
@@ -105,8 +172,8 @@ export function useCredentials() {
   } = useSWRImmutable<
     FetchVerifiedCredentialsResult,
     Error,
-    [typeof CREDENTIALS_KEY, number, VerifiedSp?]
-  >([CREDENTIALS_KEY, tabId, siteProfile], fetchVerifiedCredentials);
+    [typeof CREDENTIALS_KEY, number, OriginatorProfileSet?]
+  >([CREDENTIALS_KEY, tabId, originators], fetchVerifiedCredentials);
   const { ops, cas, origin, framesCas, warnings, info } = credentials ?? {};
 
   return {

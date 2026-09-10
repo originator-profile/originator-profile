@@ -18,5 +18,14 @@
       alt="test"
       integrity="sha256-P0hnTtzozTl+5h4CpQdOK+5dwpuINHNaZEahrlrNkSQ="
     />
+    <!-- NOTE: 表示すると要素間の空白が body の innerText に入り
+         VisibleTextTargetIntegrity のテストが壊れるため非表示にしている -->
+    <img class="css-selected display-none" src="./test-16x16.webp" alt="a" />
+    <img class="css-selected display-none" src="./test-16x16.webp" alt="b" />
+    <img
+      class="css-mixed display-none"
+      src="data:image/gif;base64,R0lGODlhAQABAAAAACH5BAEKAAEALAAAAAABAAEAAAICTAEAOw=="
+      alt="other"
+    />
   </body>
 </html>

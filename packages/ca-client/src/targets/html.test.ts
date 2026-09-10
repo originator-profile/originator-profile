@@ -18,13 +18,13 @@ test("extractTargetsFromHtml: uses the given selector, not CIP itemprop defaults
 
   const fromMain = await extractTargetsFromHtml(html, {
     textSelectors: ["main"],
-    externalSelector: ":not(*)",
+    externalSelectors: [":not(*)"],
   });
   const fromItemprop = await extractTargetsFromHtml(html, {
     textSelectors: [
       "article [itemprop='headline'], article [itemprop='articleBody']",
     ],
-    externalSelector: ":not(*)",
+    externalSelectors: [":not(*)"],
   });
 
   expect(fromMain).toHaveLength(1);
@@ -47,7 +47,7 @@ test("extractTargetsFromHtml: returns empty when the selector matches nothing", 
   expect(
     await extractTargetsFromHtml(html, {
       textSelectors: ["main"],
-      externalSelector: ":not(*)",
+      externalSelectors: [":not(*)"],
     }),
   ).toEqual([]);
 });
@@ -64,7 +64,7 @@ test("extractTargetsFromHtml: matches createIntegrity for TextTargetIntegrity", 
 
   const extracted = await extractTargetsFromHtml(html, {
     textSelectors: [cssSelector],
-    externalSelector: ":not(*)",
+    externalSelectors: [":not(*)"],
   });
 
   expect(extracted).toEqual([
@@ -84,10 +84,35 @@ test("extractExternalTargetIntegrities: uses the given selector", () => {
   const document = new JSDOM(html).window.document;
 
   expect(extractExternalTargetIntegrities(document)).toEqual([
-    { type: "ExternalResourceTargetIntegrity", integrity: "sha256-default" },
+    {
+      type: "ExternalResourceTargetIntegrity",
+      integrity: "sha256-default",
+      cssSelector: DEFAULT_EXTERNAL_SELECTOR,
+    },
   ]);
-  expect(extractExternalTargetIntegrities(document, ".my-resource")).toEqual([
-    { type: "ExternalResourceTargetIntegrity", integrity: "sha256-custom" },
+  expect(extractExternalTargetIntegrities(document, [".my-resource"])).toEqual([
+    {
+      type: "ExternalResourceTargetIntegrity",
+      integrity: "sha256-custom",
+      cssSelector: ".my-resource",
+    },
+  ]);
+  expect(
+    extractExternalTargetIntegrities(document, [
+      DEFAULT_EXTERNAL_SELECTOR,
+      ".my-resource",
+    ]),
+  ).toEqual([
+    {
+      type: "ExternalResourceTargetIntegrity",
+      integrity: "sha256-default",
+      cssSelector: DEFAULT_EXTERNAL_SELECTOR,
+    },
+    {
+      type: "ExternalResourceTargetIntegrity",
+      integrity: "sha256-custom",
+      cssSelector: ".my-resource",
+    },
   ]);
   expect(DEFAULT_EXTERNAL_SELECTOR).toBe(".target-integrity");
 });

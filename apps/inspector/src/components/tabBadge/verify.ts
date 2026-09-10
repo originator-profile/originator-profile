@@ -1,64 +1,48 @@
-import { deserializeIfError } from "@originator-profile/core";
-import { SpVerifier, VerifiedSp } from "@originator-profile/verify";
-import { getRegistryOps } from "../../utils/registry-ops";
-import { fetchTabCredentials } from "../credentials";
+import type { OriginatorProfileSet } from "@originator-profile/model";
+import { verifyDocuments } from "@originator-profile/verify";
+import { getRegistry } from "../../utils/registry-ops";
+import { toLegacyDocuments } from "../../utils/to-legacy-result";
+import { fetchTabCredentials, FrameIntegrityVerifier } from "../credentials";
+import { deduplicateCas } from "../credentials/deduplicate-cas";
 import type { SupportedVerifiedCas } from "../credentials/types";
-import { verifyAllCredentials } from "../credentials/verify-credentials";
-import { siteProfileMessenger } from "../siteProfile/events";
+import {
+  isSiteProfileFetchError,
+  verifyTabWebsite,
+} from "../siteProfile/verify-website";
 
 /**
- * Site Profileを取得して検証する
+ * Web サイトを検証し、文書の検証で検証鍵に加える発信者を得る
  * @param tabId タブID
- * @returns 検証済みSite Profile、または取得・検証失敗時はnull
+ * @returns サイトが提示した発信者。取得・検証に失敗した場合は undefined
  */
-async function fetchVerifiedSiteProfile(
+async function fetchWebsiteOriginators(
   tabId: number,
-): Promise<VerifiedSp | null> {
+): Promise<OriginatorProfileSet | undefined> {
   try {
-    const result = await siteProfileMessenger.sendMessage(
-      "fetchSiteProfile",
-      null,
-      tabId,
-    );
-    const parsed = deserializeIfError(result);
+    const { result, siteProfile } = await verifyTabWebsite(tabId);
+    if (result.status) return siteProfile?.originators;
 
-    if (parsed instanceof Error) {
-      return null;
+    // NOTE: Site Profile 未設置は異常ではないため通知しない
+    if (!isSiteProfileFetchError(result.errors[0])) {
+      console.error(
+        `[fetchWebsiteOriginators] Failed to verify website for tab ${tabId}:`,
+        result.errors,
+      );
     }
-
-    const {
-      ops: registryOps,
-      keys: [cpIssuer, verificationKeys],
-    } = await getRegistryOps();
-
-    const verifySp = SpVerifier(
-      {
-        ...parsed.result,
-        originators: [...registryOps, ...parsed.result.originators],
-      },
-      verificationKeys,
-      cpIssuer,
-      parsed.origin,
-    );
-
-    const verifiedSp = await verifySp();
-    if (verifiedSp instanceof Error) {
-      return null;
-    }
-    return verifiedSp;
+    return undefined;
   } catch (error) {
     console.error(
-      `[fetchVerifiedSiteProfile] Failed to fetch site profile for tab ${tabId}:`,
+      `[fetchWebsiteOriginators] Failed to verify website for tab ${tabId}:`,
       error,
     );
-    return null;
+    return undefined;
   }
 }
 
 /**
  * タブのクレデンシャルを検証する
  * @param tabId タブID
- * @returns 検証成功時は検証済みCASとその件数。OPS検証失敗時、CAS検証失敗時、
+ * @returns 検証成功時は検証済みCASとその件数。検証に失敗した場合、
  *          または検証処理中にエラーが発生した場合はnull
  */
 export async function verifyTabCredentials(tabId: number): Promise<{
@@ -66,18 +50,32 @@ export async function verifyTabCredentials(tabId: number): Promise<{
   count: number;
 } | null> {
   try {
-    const [siteProfile, { frames, ...page }] = await Promise.all([
-      fetchVerifiedSiteProfile(tabId),
-      fetchTabCredentials(tabId),
-    ]);
-    const result = await verifyAllCredentials(tabId, page, frames, siteProfile);
+    const [websiteOriginators, { frames, ...page }, registry] =
+      await Promise.all([
+        fetchWebsiteOriginators(tabId),
+        fetchTabCredentials(tabId),
+        getRegistry(),
+      ]);
 
-    if (result instanceof Error) return null;
+    const targets = [page, ...frames].map((frame) => ({
+      ...frame,
+      ops: frame.ops.map(({ credential }) => credential),
+      cas: frame.cas.map(({ credential }) => credential),
+      verifyIntegrity: FrameIntegrityVerifier(tabId, frame.frameId),
+    }));
 
-    return {
-      verifiedCas: result.cas,
-      count: result.cas.length,
-    };
+    const result = await verifyDocuments(targets, {
+      registry,
+      websiteOriginators,
+    });
+
+    const legacy = toLegacyDocuments(result);
+    if (legacy instanceof Error) return null;
+
+    const verifiedCas = deduplicateCas(
+      legacy.documents.flatMap(({ cas }) => cas),
+    ) as SupportedVerifiedCas;
+    return { verifiedCas, count: verifiedCas.length };
   } catch (error) {
     console.error(
       `[verifyTabCredentials] Failed to verify credentials for tab ${tabId}:`,

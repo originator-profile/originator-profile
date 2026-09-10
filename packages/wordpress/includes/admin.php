@@ -148,7 +148,7 @@ function profile_ca_server_hostname_field() {
 		<input
 			name="profile_ca_server_hostname"
 			value="<?php echo \esc_attr( \get_option( 'profile_ca_server_hostname' ) ); ?>"
-			title="有効なドメイン名を入力してください (例: dprexpt.originator-profile.org)"
+			title="有効なドメイン名を入力してください (例: playground.originator-profile.org)"
 			placeholder="<?php echo \esc_attr( PROFILE_DEFAULT_CA_SERVER_HOSTNAME ); ?>"
 			required
 			style="width: 320px;"
@@ -306,7 +306,7 @@ function profile_ca_log_option_field() {
  */
 function add_action_links( array $actions ) {
 	$menu_settings_url = '<a href="' . \get_admin_url( null, '/options-general.php?page=ca-manager' ) . '">設定</a>';
-	$menu_auth_url     = '<a href="' . \get_home_url( null, '/oidc-callback/' ) . '" target="_blank">API認証(OIDC)</a>';
+	$menu_auth_url     = '<a href="' . \esc_url( \add_query_arg( \Profile\CasApiOidcCallback\OIDC_CALLBACK_ENDPOINT, '1', \home_url( '/' ) ) ) . '" target="_blank">API認証(OIDC)</a>';
 
 	array_unshift( $actions, $menu_auth_url );
 	array_unshift( $actions, $menu_settings_url );

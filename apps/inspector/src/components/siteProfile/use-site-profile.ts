@@ -1,17 +1,16 @@
-import {
-  type Logger,
-  SpVerifier,
-  VerifiedSp,
-} from "@originator-profile/verify";
+import type { OriginatorProfileSet } from "@originator-profile/model";
+import type { VerifiedSp } from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
-import { getRegistryOps } from "../../utils/registry-ops";
-import { fetchTabSiteProfile } from "./messaging";
+import { toLegacyWebsite } from "../../utils/to-legacy-result";
+import { verifyTabWebsite } from "./verify-website";
 
 const key = "site-profile";
 
 type FetchVerifiedSiteProfileResult = {
   siteProfile: VerifiedSp;
+  /** 文書の検証で検証鍵に加えるための、サイトが提示した発信者 */
+  originators: OriginatorProfileSet;
   warnings: string[];
   info: string[];
 };
@@ -20,42 +19,18 @@ async function fetchVerifiedSiteProfile([, tabId]: [
   _: typeof key,
   tabId: number,
 ]): Promise<FetchVerifiedSiteProfileResult> {
-  const data = await fetchTabSiteProfile(tabId);
-  const {
-    ops: registryOps,
-    keys: [cpIssuer, verificationKeys],
-  } = await getRegistryOps();
-
-  // 検証中の警告・情報を収集する (コンソールへの出力は維持)
-  const warnings: string[] = [];
-  const info: string[] = [];
-  const logger: Logger = {
-    warn: (message) => {
-      console.warn(message);
-      warnings.push(message);
-    },
-    info: (message) => {
-      console.info(message);
-      info.push(message);
-    },
-  };
-
-  const verifySp = SpVerifier(
-    {
-      ...data.result,
-      originators: [...registryOps, ...data.result.originators],
-    },
-    verificationKeys,
-    cpIssuer,
-    data.origin,
-    { logger },
-  );
-
-  const verifiedSp = await verifySp();
-  if (verifiedSp instanceof Error) {
-    throw verifiedSp;
+  const { result, siteProfile } = await verifyTabWebsite(tabId);
+  const legacy = toLegacyWebsite(result);
+  if (legacy instanceof Error) {
+    throw legacy;
   }
-  return { siteProfile: verifiedSp, warnings, info };
+
+  return {
+    siteProfile: legacy,
+    originators: siteProfile?.originators ?? [],
+    warnings: result.warnings.map(({ title }) => title),
+    info: result.info.map(({ title }) => title),
+  };
 }
 
 /**
@@ -76,6 +51,7 @@ export function useSiteProfile() {
     error,
     isLoading,
     siteProfile: data?.siteProfile,
+    originators: data?.originators,
     tabId,
     warnings: data?.warnings,
     info: data?.info,

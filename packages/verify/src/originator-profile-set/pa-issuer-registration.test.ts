@@ -139,9 +139,11 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     expect(result).not.instanceOf(OpsVerifyFailed);
     expect(infoSpy).toHaveBeenCalledWith(
       expect.stringContaining(NOT_REGISTERED),
+      expect.anything(),
     );
     expect(warnSpy).not.toHaveBeenCalledWith(
       expect.stringContaining(NOT_REGISTERED),
+      expect.anything(),
     );
   });
 
@@ -156,7 +158,10 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
 
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
-    expect(infoSpy).not.toHaveBeenCalledWith(expect.stringContaining("OP[2]"));
+    expect(infoSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining("OP[2]"),
+      expect.anything(),
+    );
   });
 
   test("登録証に含まれない場合は通知される", async () => {
@@ -172,6 +177,7 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     expect(result).not.instanceOf(OpsVerifyFailed);
     expect(infoSpy).toHaveBeenCalledWith(
       expect.stringContaining(NOT_REGISTERED),
+      expect.anything(),
     );
   });
 
@@ -192,6 +198,7 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     expect(result).not.instanceOf(OpsVerifyFailed);
     expect(infoSpy).toHaveBeenCalledWith(
       expect.stringContaining(NOT_REGISTERED),
+      expect.anything(),
     );
   });
 
@@ -207,6 +214,7 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     expect(result).not.instanceOf(OpsVerifyFailed);
     expect(infoSpy).toHaveBeenCalledWith(
       expect.stringContaining(NOT_REGISTERED),
+      expect.anything(),
     );
   });
 
@@ -252,6 +260,7 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     expect(result).not.instanceOf(OpsVerifyFailed);
     expect(infoSpy).not.toHaveBeenCalledWith(
       expect.stringContaining(NOT_REGISTERED),
+      expect.anything(),
     );
   });
 
@@ -274,8 +283,14 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
 
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
-    expect(infoSpy).toHaveBeenCalledWith(expect.stringContaining("OP[1]"));
-    expect(infoSpy).not.toHaveBeenCalledWith(expect.stringContaining("OP[2]"));
+    expect(infoSpy).toHaveBeenCalledWith(
+      expect.stringContaining("OP[1]"),
+      expect.anything(),
+    );
+    expect(infoSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining("OP[2]"),
+      expect.anything(),
+    );
   });
 
   test("認可の連鎖は再帰しない: CP→certifier 認可済みでも certifier 発行登録証は下流 PA を認可しない", async () => {
@@ -349,6 +364,7 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     expect(result).not.instanceOf(OpsVerifyFailed);
     expect(infoSpy).not.toHaveBeenCalledWith(
       expect.stringContaining(NOT_REGISTERED),
+      expect.anything(),
     );
   });
 });
