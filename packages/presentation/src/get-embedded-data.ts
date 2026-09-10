@@ -22,7 +22,7 @@ export function getEmbeddedData<T extends unknown[]>(
     } catch (e: unknown) {
       return [];
     }
-    const items = (Array.isArray(json) ? json : [json]) as T;
+    const items = (Array.isArray(json) ? json : [json]) as T[number][];
     return items.map((credential) => ({
       credential: credential,
       source: embeddedSource(elementIndex),
