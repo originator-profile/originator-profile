@@ -28,10 +28,12 @@ function Warning({
           {_("Warning_Title")}
         </h1>
         <p className="text-gray-600 mb-6">
-          {sourceOrg ? (
+          {expectedOrg || sourceOrg || destOrg ? (
             <>
               {expectedOrg ? _("Warning_IntendedSite", expectedOrg) : ""}
-              {_("Warning_ClickedAd", sourceOrg)}
+              {sourceOrg
+                ? _("Warning_ClickedAd", sourceOrg)
+                : _("Warning_ClickedAdGeneric")}
               {destOrg
                 ? _("Warning_OperatedBy", destOrg)
                 : _("Warning_CannotVerify")}

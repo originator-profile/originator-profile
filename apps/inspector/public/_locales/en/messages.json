@@ -467,6 +467,9 @@
       }
     }
   },
+  "Warning_ClickedAdGeneric": {
+    "message": "You clicked an ad, but "
+  },
   "Warning_OperatedBy": {
     "message": "the destination is operated by $dest_org$.",
     "placeholders": {
