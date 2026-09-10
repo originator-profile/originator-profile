@@ -28,22 +28,28 @@ export function setupLinkVerification(buildWarningUrl: WarningUrlBuilder) {
   });
 
   chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-    if (message.type === "clearPendingVerification") {
-      // 送信元が拡張機能の Warning ページであることを検証
-      const isFromExtension = sender.url?.startsWith(chrome.runtime.getURL(""));
-      if (!isFromExtension) {
-        sendResponse({ success: false, reason: "unauthorized sender" });
-        return;
-      }
-      if (sender.tab?.id) {
-        pendingOpIdVerification.delete(sender.tab.id);
-        sendResponse({ success: true });
-      } else {
-        sendResponse({ success: false, reason: "no tab id" });
-      }
+    if (message.type !== "clearPendingVerification") return false;
+
+    // 送信元が拡張機能の Warning ページであることを検証
+    const isFromExtension = sender.url?.startsWith(chrome.runtime.getURL(""));
+    if (!isFromExtension) {
+      sendResponse({ success: false, reason: "unauthorized sender" });
       return;
     }
-    return false;
+    const tabId = sender.tab?.id;
+    if (tabId === undefined) {
+      sendResponse({ success: false, reason: "no tab id" });
+      return;
+    }
+
+    // NOTE: 状態を読み込む前に delete しても PersistentMap は何もしないため、
+    // Service Worker が停止したあとに警告ページから届いた場合に待ち状態が消えず、
+    // 遷移先で再び警告が出る。true を返して非同期で応答する
+    void ensureStateLoaded().then(() => {
+      pendingOpIdVerification.delete(tabId);
+      sendResponse({ success: true });
+    });
+    return true;
   });
 
   chrome.tabs.onCreated.addListener(async (tab) => {
