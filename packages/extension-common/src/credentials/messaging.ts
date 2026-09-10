@@ -70,9 +70,11 @@ async function fetchAllFramesCredentials(
     )
     .map(({ value }) => value);
 
-  if (responses.length === 0) {
-    const error = errors[0]?.reason;
-    throw Object.assign(new Error(error.message), error);
+  // NOTE: 到達できないタブでは frames が空になり、成功も失敗も 0 件になる。空配列を
+  // 返せば、呼び出し元が最上位フレームの不在として扱う。
+  const failure = errors[0]?.reason;
+  if (responses.length === 0 && failure) {
+    throw Object.assign(new Error(failure.message), failure);
   }
   return responses;
 }
