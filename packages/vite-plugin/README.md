@@ -189,9 +189,9 @@ Without `cssSelector`, you must manually set the `integrity` attribute on each `
 <img src="https://example.com/image.png" integrity="sha256-..." />
 ```
 
-### `VisibleTextTargetIntegrity` may not match browser verification
+### `VisibleTextTargetIntegrity` may not match browser verification (deprecated)
 
-[`VisibleTextTargetIntegrity`](https://docs.originator-profile.org/en/opb/content-integrity-descriptor/visible-text/) computes integrity from the "as rendered" visible text (`element.innerText`), which depends on browser layout and CSS. This plugin computes integrity at build time using a DOM parser without rendering, so the result may differ from what the browser extension calculates. Use `TextTargetIntegrity` or `HtmlTargetIntegrity` for reliable build-time integrity computation.
+[`VisibleTextTargetIntegrity` ⚠](https://docs.originator-profile.org/en/opb/content-integrity-descriptor/visible-text/) computes integrity from the "as rendered" visible text (`element.innerText`), which depends on browser layout and CSS. This plugin computes integrity at build time using a DOM parser without rendering, so the result may differ from what the browser extension calculates. Use `TextTargetIntegrity` or `HtmlTargetIntegrity` for reliable build-time integrity computation.
 
 ### DOM target integrity is computed against the pre-transform HTML
 

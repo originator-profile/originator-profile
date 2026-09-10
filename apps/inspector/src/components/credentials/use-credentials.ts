@@ -3,11 +3,15 @@ import {
   fetchTabCredentials,
   FrameIntegrityVerifier,
   getRegistry,
+  registrySource,
+  siteProfileSource,
   type FramesVerifiedCas,
-  type SupportedVerifiedCas,
+  type OpOrigin,
+  type SupportedVerifiedCasWithSource,
+  type VerifiedOpsWithSource,
 } from "@originator-profile/extension-common";
 import type { OriginatorProfileSet } from "@originator-profile/model";
-import { verifyDocuments, type VerifiedOps } from "@originator-profile/verify";
+import { verifyDocuments } from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
 import { toLegacyDocuments } from "../../utils/to-legacy-result";
@@ -16,8 +20,8 @@ import { useSiteProfile } from "../siteProfile";
 const CREDENTIALS_KEY = "credentials";
 
 type FetchVerifiedCredentialsResult = {
-  ops: VerifiedOps;
-  cas: SupportedVerifiedCas;
+  ops: VerifiedOpsWithSource;
+  cas: SupportedVerifiedCasWithSource;
   origin: string;
   url: string;
   framesCas: FramesVerifiedCas;
@@ -40,8 +44,11 @@ async function fetchVerifiedCredentials([, tabId, websiteOriginators]: [
     fetchTabCredentials(tabId),
   ]);
 
-  const targets = [page, ...frames].map((frame) => ({
+  const framesAndPage = [page, ...frames];
+  const targets = framesAndPage.map((frame) => ({
     ...frame,
+    ops: frame.ops.map(({ credential }) => credential),
+    cas: frame.cas.map(({ credential }) => credential),
     verifyIntegrity: FrameIntegrityVerifier(tabId, frame.frameId),
   }));
 
@@ -55,15 +62,50 @@ async function fetchVerifiedCredentials([, tabId, websiteOriginators]: [
     throw legacy;
   }
 
+  // NOTE: verifyDocuments はレジストリ・Web サイト・各文書の OPS をこの順で
+  // 1本の配列にまとめて検証するため(packages/verify/src/document/verify-documents.ts
+  // 参照)、legacy.ops は入力と同じ順序・件数で返る契約になっている
+  // (packages/verify/src/originator-profile-set/verify-ops.ts 参照)。
+  // 取得元(source)の対応付けはこの順序を前提に行う。
+  const opsSources: OpOrigin[] = [
+    ...registry.ops.map(registrySource),
+    ...(websiteOriginators ?? []).map(siteProfileSource),
+    ...framesAndPage.flatMap((frame) => frame.ops.map(({ source }) => source)),
+  ];
+  const ops: VerifiedOpsWithSource = legacy.ops.map((op, i) => {
+    const source = opsSources[i];
+    if (!source) {
+      throw new Error(`opsSources[${i}] not found`);
+    }
+    return { ...op, source };
+  });
+
+  const documents = legacy.documents.map(({ target, cas }, i) => {
+    const frame = framesAndPage[i];
+    if (!frame) {
+      throw new Error(`framesAndPage[${i}] not found`);
+    }
+    // NOTE: verifyCas も同様に入力(frame.cas)と同じ順序・件数で返す契約
+    // (packages/verify/src/content-attestation-set/verify-cas.ts 参照)。
+    return {
+      target,
+      cas: cas.map((c, j) => {
+        const sourced = frame.cas[j];
+        if (!sourced) {
+          throw new Error(`frame.cas[${j}] not found`);
+        }
+        return { ...c, source: sourced.source };
+      }) as SupportedVerifiedCasWithSource,
+    };
+  });
+
   return {
-    ops: legacy.ops,
-    cas: deduplicateCas(
-      legacy.documents.flatMap(({ cas }) => cas),
-    ) as SupportedVerifiedCas,
+    ops,
+    cas: deduplicateCas(documents.flatMap(({ cas }) => cas)),
     origin: page.origin,
     url: page.url,
-    framesCas: legacy.documents.map(({ target, cas }) => ({
-      cas: cas as SupportedVerifiedCas,
+    framesCas: documents.map(({ target, cas }) => ({
+      cas,
       url: target.url,
       origin: target.origin,
       frameId: target.frameId,
@@ -98,11 +140,11 @@ type UseCredentialsResult =
       info: undefined;
     }
   | {
-      cas: SupportedVerifiedCas;
+      cas: SupportedVerifiedCasWithSource;
       error: undefined;
       framesCas: FramesVerifiedCas;
       isLoading: false;
-      ops: VerifiedOps;
+      ops: VerifiedOpsWithSource;
       origin: string;
       tabId: number;
       warnings: string[];

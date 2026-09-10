@@ -21,6 +21,10 @@ export const ProblemType = {
   CertificateDeprecated: problemType("WARN_CERTIFICATE_DEPRECATED"),
   /** Content Attestation の allowedOrigin は非推奨 */
   AllowedOriginDeprecated: problemType("WARN_ALLOWED_ORIGIN_DEPRECATED"),
+  /** Content Attestation の VisibleTextTargetIntegrity は非推奨 */
+  VisibleTextTargetIntegrityDeprecated: problemType(
+    "WARN_VISIBLE_TEXT_TARGET_INTEGRITY_DEPRECATED",
+  ),
   /** digestSRI が設定されていない */
   DigestSriMissing: problemType("WARN_DIGEST_SRI_MISSING"),
   /** digestSRI の検証に失敗した */

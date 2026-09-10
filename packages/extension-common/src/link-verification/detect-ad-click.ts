@@ -1,7 +1,6 @@
 import { selectByLocale } from "@originator-profile/core";
 import {
   ContentAttestation,
-  ContentAttestationSet,
   ContentAttestationSetItem,
   OpMeta,
   OriginatorProfileSet,
@@ -11,6 +10,7 @@ import {
   CredentialsFetchFailed,
   fetchCredentials,
   fetchOpMeta,
+  type SourcedCredential,
 } from "@originator-profile/presentation";
 import { JwtVcDecoder } from "@originator-profile/securing-mechanism";
 import { decodeOps, normalizeCasItem } from "@originator-profile/verify";
@@ -62,9 +62,11 @@ const decodeCasItem = (casItem: ContentAttestationSetItem) => {
 };
 
 // 広告関連CA(OnlineAd/Advertorial)のissuerを取得
-const getAdCaIssuer = (cas: ContentAttestationSet): string | undefined => {
-  for (const casItem of cas) {
-    const doc = decodeCasItem(casItem);
+const getAdCaIssuer = (
+  cas: SourcedCredential<ContentAttestationSetItem>[],
+): string | undefined => {
+  for (const { credential } of cas) {
+    const doc = decodeCasItem(credential);
     if (doc && isAdCaType(doc.credentialSubject.type)) {
       return doc.issuer;
     }
@@ -74,9 +76,9 @@ const getAdCaIssuer = (cas: ContentAttestationSet): string | undefined => {
 
 /** OP ごとに、閲覧者のロケールに合う Web Media Profile を選ぶ */
 const selectWebMediaProfiles = (
-  ops: OriginatorProfileSet,
+  ops: SourcedCredential<OriginatorProfileSet[number]>[],
 ): WebMediaProfile[] => {
-  const decoded = decodeOps(ops);
+  const decoded = decodeOps(ops.map(({ credential }) => credential));
   if (decoded instanceof Error) {
     console.error(
       "[ContentScript] Failed to decode Originator Profile Set",
