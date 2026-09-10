@@ -74,28 +74,22 @@ describe("getOrgNameFromOp", () => {
 });
 
 describe("resolveName", () => {
-  test("WSP の issuer に対応する OP の組織名を優先する", () => {
+  test("WSP の issuer に対応する OP の組織名を返す", () => {
     const originators = [op("dns:example", ["OP の組織名"])];
     expect(resolveName(wsp("dns:example", "WSP の名前"), originators)).toBe(
       "OP の組織名",
     );
   });
 
-  test("対応する OP がなければ WSP の名前にフォールバックする", () => {
-    expect(resolveName(wsp("dns:example", "WSP の名前"), [])).toBe(
-      "WSP の名前",
-    );
+  test("対応する OP がなければ undefined。サイト名は組織名ではないため使わない", () => {
+    expect(resolveName(wsp("dns:example", "WSP の名前"), [])).toBeUndefined();
   });
 
-  test("OP に名前がなければ WSP の名前にフォールバックする", () => {
+  test("OP に組織名がなければ undefined", () => {
     const originators = [op("dns:example", [undefined])];
-    expect(resolveName(wsp("dns:example", "WSP の名前"), originators)).toBe(
-      "WSP の名前",
-    );
-  });
-
-  test("どちらにも名前がなければ undefined", () => {
-    expect(resolveName(wsp("dns:example"), [])).toBeUndefined();
+    expect(
+      resolveName(wsp("dns:example", "WSP の名前"), originators),
+    ).toBeUndefined();
   });
 });
 

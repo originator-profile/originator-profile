@@ -15,6 +15,15 @@ export const getOrgNameFromOp = (op: OriginatorPayload): string | undefined => {
   return selectByLocale(media)?.credentialSubject.name;
 };
 
+/**
+ * Website Profile を発行した組織の名前を得る
+ *
+ * NOTE: WebsiteProfile.credentialSubject はサイトの属性であり、その name は
+ * サイト名 (The name of the Web site) で組織名ではない。運営者は issuer が指す
+ * OP の側にある
+ * @param wsp Website Profile
+ * @param originators 遷移先の復号済み発信者
+ */
 export const resolveName = (
   wsp: WebsiteProfile,
   originators: OriginatorPayload[],
@@ -22,14 +31,7 @@ export const resolveName = (
   const op = originators.find(
     (o) => o.core?.credentialSubject.id === wsp.issuer,
   );
-  if (op) {
-    const orgName = getOrgNameFromOp(op);
-    if (orgName) return orgName;
-  }
-  // WSP名のフォールバック
-  return "name" in wsp.credentialSubject
-    ? wsp.credentialSubject.name
-    : undefined;
+  return op && getOrgNameFromOp(op);
 };
 
 export const getDestinationOrgName = (
