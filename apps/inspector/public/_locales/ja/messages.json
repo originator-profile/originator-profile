@@ -359,6 +359,9 @@
   "DetailInfo_SourceAdOrganization": {
     "message": "リンク元広告の組織"
   },
+  "DetailInfo_ActualSiteOperator": {
+    "message": "実際のサイト運営者"
+  },
   "DetailInfo_Warnings": {
     "message": "警告"
   },

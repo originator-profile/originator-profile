@@ -3,6 +3,7 @@ export type {
   HandleAdClickedParams,
   HandleVerificationParams,
   LinkVerificationResult,
+  OrgRef,
   PendingVerificationData,
   VerificationCacheData,
   VerificationContext,

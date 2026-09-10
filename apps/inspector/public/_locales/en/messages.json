@@ -359,6 +359,9 @@
   "DetailInfo_SourceAdOrganization": {
     "message": "Source Ad Organization"
   },
+  "DetailInfo_ActualSiteOperator": {
+    "message": "Actual site operator"
+  },
   "DetailInfo_Warnings": {
     "message": "Warnings"
   },
