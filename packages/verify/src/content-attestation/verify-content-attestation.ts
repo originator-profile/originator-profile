@@ -46,6 +46,42 @@ function warnAllowedOriginDeprecated(
   });
 }
 
+/** VisibleTextTargetIntegrity の非推奨を通知する */
+function warnVisibleTextTargetIntegrityDeprecated(
+  logger: Logger,
+  subject: string,
+  at?: string,
+): void {
+  const message = `\
+[OP Warning] VisibleTextTargetIntegrity is deprecated in Content Attestation and will be removed after October 2027. \
+innerText-based rendering is platform-dependent and incompatible across browser implementations and cannot serve as a basis for integrity verification. \
+See: https://docs.originator-profile.org/opb/content-integrity-descriptor/visible-text/`;
+  logger.warn(message, {
+    type: ProblemType.VisibleTextTargetIntegrityDeprecated,
+    title: message,
+    detail: subject,
+    ...(at && { pointer: at }),
+  });
+}
+
+/** target 内の非推奨な Target Integrity を通知する */
+function warnDeprecatedTargets<T extends ContentAttestation>(
+  result: VerifiedCa<T>,
+  logger: Logger,
+  at?: string,
+): void {
+  const hasVisibleTextTarget = result.doc.target?.some(
+    (t) => t.type === "VisibleTextTargetIntegrity",
+  );
+  if (hasVisibleTextTarget) {
+    warnVisibleTextTargetIntegrityDeprecated(
+      logger,
+      result.doc.credentialSubject.id,
+      at,
+    );
+  }
+}
+
 async function checkUrlAndOrigin<T extends ContentAttestation>(
   result: VerifiedCa<T>,
   url: URL,
@@ -168,6 +204,8 @@ export function CaVerifier<T extends ContentAttestation>(
       if (urlResult.doc.target.length === 0) {
         return new CaInvalid("Target is empty", urlResult);
       }
+
+      warnDeprecatedTargets(urlResult, logger, at);
 
       const integrityResults: IntegrityResult[] = await Promise.all(
         urlResult.doc.target.map(async (t, index) => ({
