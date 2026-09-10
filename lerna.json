@@ -1,6 +1,7 @@
 {
   "$schema": "https://raw.githubusercontent.com/lerna-lite/lerna-lite/main/packages/cli/schemas/lerna-schema.json",
   "version": "0.7.0-beta.4",
+  "npmClient": "pnpm",
   "packages": [
     ".",
     "apps/*",
@@ -8,7 +9,8 @@
   ],
   "command": {
     "version": {
-      "forcePublish": true
+      "forcePublish": true,
+      "syncWorkspaceLock": true
     }
   }
 }
