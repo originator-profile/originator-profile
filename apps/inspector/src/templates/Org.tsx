@@ -1,5 +1,4 @@
 import IconFa6SolidArrowUpRightFromSquare from "@iconify-react/fa6-solid/arrow-up-right-from-square";
-import { WebMediaProfile, WebsiteProfile } from "@originator-profile/model";
 import {
   CertificateDetail,
   CertificateSummary,
@@ -8,7 +7,8 @@ import {
   _,
   sortCertificates,
   useModalDialog,
-} from "@originator-profile/ui";
+} from "@originator-profile/extension-common/ui";
+import { WebMediaProfile, WebsiteProfile } from "@originator-profile/model";
 import { Certificate, VerifiedOps } from "@originator-profile/verify";
 import { useMemo, useState } from "react";
 import { twMerge } from "tailwind-merge";

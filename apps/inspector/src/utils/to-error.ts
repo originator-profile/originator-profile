@@ -1,5 +1,5 @@
+import { codeOf } from "@originator-profile/extension-common/utils/problem-code";
 import type { ProblemDetails } from "@originator-profile/verify";
-import { codeOf } from "./problem-code";
 
 /**
  * 検証結果の問題を Error に戻す

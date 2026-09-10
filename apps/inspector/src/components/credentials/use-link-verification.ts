@@ -1,7 +1,9 @@
+import {
+  LinkVerificationResult,
+  fetchVerificationResult,
+} from "@originator-profile/extension-common";
 import { useParams } from "react-router";
 import useSWR from "swr";
-import { fetchVerificationResult } from "./messaging";
-import { LinkVerificationResult } from "./types";
 
 const VERIFICATION_KEY = "link_verification";
 

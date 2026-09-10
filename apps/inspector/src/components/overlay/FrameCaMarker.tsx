@@ -1,7 +1,10 @@
+import {
+  CaCoordinate,
+  FrameCoordinate,
+  SupportedVerifiedCa,
+} from "@originator-profile/extension-common";
 import { WebMediaProfile } from "@originator-profile/model";
 import { twMerge } from "tailwind-merge";
-import { SupportedVerifiedCa } from "../credentials";
-import { CaCoordinate, FrameCoordinate } from "../frameCas/types";
 import { useFrameCaRects } from "../frameCas/use-frame-ca-rects";
 import { useLocatedCasCoordinate } from "../frameCas/use-located-cas-coordinate";
 import { CaMarker } from "./CaMarker";

@@ -1,6 +1,6 @@
+import { SupportedVerifiedCa } from "@originator-profile/extension-common";
 import { WebMediaProfile } from "@originator-profile/model";
 import { useEffect } from "react";
-import { SupportedVerifiedCa } from "../credentials";
 import { CaMarker } from "./CaMarker";
 import useElements from "./use-elements";
 import useRect from "./use-rect";

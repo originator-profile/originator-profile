@@ -1,21 +1,21 @@
 import IconIcRoundInfo from "@iconify-react/ic/round-info";
 import IconIcRoundWarning from "@iconify-react/ic/round-warning";
 import { stringifyWithError } from "@originator-profile/core";
+import type {
+  FrameVerifiedCas,
+  SupportedVerifiedCas,
+} from "@originator-profile/extension-common";
 import {
   _,
   ProjectSummary,
   ProjectTitle,
   Table,
   TableRow,
-} from "@originator-profile/ui";
+} from "@originator-profile/extension-common/ui";
 import type { VerifiedOps, VerifiedSp } from "@originator-profile/verify";
 import JsonView from "@uiw/react-json-view";
 import BackHeader from "../components/BackHeader";
 import CheckList from "../components/CheckList";
-import type {
-  FrameVerifiedCas,
-  SupportedVerifiedCas,
-} from "../components/credentials";
 import { useLinkVerification } from "../components/credentials/use-link-verification";
 
 type DetailInfoProps = {

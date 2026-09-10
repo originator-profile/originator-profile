@@ -3,7 +3,9 @@ import { defineConfig } from "@playwright/test";
 export default defineConfig({
   webServer: {
     url: "http://localhost:8080",
-    command: "astro --root=dev dev",
+    // NOTE: astro dev はバックグラウンド起動時に cwd を root へ移したうえで --root を
+    // そのまま子プロセスへ渡すため、相対パスだと root が二重に解決される。絶対パスで渡す。
+    command: `astro --root=${import.meta.dirname}/dev dev`,
     reuseExistingServer: !process.env.CI,
   },
   globalSetup: "e2e/global-setup.ts",

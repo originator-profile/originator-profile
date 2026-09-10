@@ -1,5 +1,5 @@
 import IconFa6SolidTriangleExclamation from "@iconify-react/fa6-solid/triangle-exclamation";
-import { _ } from "@originator-profile/ui";
+import { _ } from "@originator-profile/extension-common/ui";
 
 type Props = {
   sourceOrg: string | undefined;

@@ -1,0 +1,65 @@
+{
+  "name": "@originator-profile/extension-common",
+  "version": "0.7.0-beta.4",
+  "license": "Apache-2.0",
+  "private": true,
+  "homepage": "https://docs.originator-profile.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/originator-profile/originator-profile.git",
+    "directory": "packages/extension-common"
+  },
+  "type": "module",
+  "sideEffects": [
+    "./src/utils/cors-basic-auth.ts"
+  ],
+  "exports": {
+    ".": {
+      "default": "./src/index.ts"
+    },
+    "./background": {
+      "default": "./src/background.ts"
+    },
+    "./content-script": {
+      "default": "./src/content-script.ts"
+    },
+    "./utils/*": {
+      "default": "./src/utils/*.ts"
+    },
+    "./ui": {
+      "default": "./src/ui/index.ts"
+    },
+    "./ui/assets/*": {
+      "default": "./src/ui/assets/*"
+    }
+  },
+  "scripts": {
+    "lint": "oxlint --fix .",
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "@iconify-react/fa6-solid": "1.0.2",
+    "@originator-profile/core": "workspace:*",
+    "@originator-profile/model": "workspace:*",
+    "@originator-profile/presentation": "workspace:*",
+    "@originator-profile/securing-mechanism": "workspace:*",
+    "@originator-profile/tsconfig": "workspace:*",
+    "@originator-profile/verify": "workspace:*",
+    "@types/chrome": "0.1.40",
+    "@types/react": "19.2.14",
+    "@types/react-dom": "19.2.3",
+    "@webext-core/messaging": "2.3.0",
+    "dompurify": "3.4.13",
+    "happy-dom": "20.8.9",
+    "oxlint": "^1.73.0",
+    "oxlint-tsgolint": "^0.24.0",
+    "swr": "2.4.1",
+    "tailwind-config-originator-profile": "workspace:*",
+    "tailwind-merge": "3.5.0",
+    "vitest": "4.1.4"
+  },
+  "peerDependencies": {
+    "react": "^19.2.0",
+    "tailwindcss": "^4.1.7"
+  }
+}

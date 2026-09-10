@@ -1,7 +1,7 @@
-import { _ } from "@originator-profile/ui";
+import { parseWarningSearchParams } from "@originator-profile/extension-common";
+import { _ } from "@originator-profile/extension-common/ui";
 import { useSearchParams } from "react-router";
 import Template from "../templates/Warning";
-import { parseWarningSearchParams } from "../utils/warning-params";
 
 const isValidUrl = (url: string) => {
   try {

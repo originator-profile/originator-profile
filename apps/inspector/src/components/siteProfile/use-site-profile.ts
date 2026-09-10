@@ -1,9 +1,9 @@
+import { verifyTabWebsite } from "@originator-profile/extension-common";
 import type { OriginatorProfileSet } from "@originator-profile/model";
 import type { VerifiedSp } from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
 import { toLegacyWebsite } from "../../utils/to-legacy-result";
-import { verifyTabWebsite } from "./verify-website";
 
 const key = "site-profile";
 

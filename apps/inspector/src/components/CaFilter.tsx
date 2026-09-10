@@ -1,11 +1,13 @@
 import IconFa6SolidCheck from "@iconify-react/fa6-solid/check";
 import IconIonFilter from "@iconify-react/ion/filter";
-import { _ } from "@originator-profile/ui";
+import {
+  SupportedVerifiedCas,
+  listCas,
+} from "@originator-profile/extension-common";
+import { _ } from "@originator-profile/extension-common/ui";
 import { useMemo } from "react";
 import { twMerge } from "tailwind-merge";
 import { Menu, MenuButton, MenuItem, useMenuButton } from "./Menu";
-import { listCas } from "./credentials";
-import type { SupportedVerifiedCas } from "./credentials/types";
 
 type Props = {
   caListType: Parameters<typeof listCas>[1];

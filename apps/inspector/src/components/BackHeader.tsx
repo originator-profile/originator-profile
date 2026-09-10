@@ -1,5 +1,5 @@
 import IconFa6SolidChevronLeft from "@iconify-react/fa6-solid/chevron-left";
-import { _, Header } from "@originator-profile/ui";
+import { _, Header } from "@originator-profile/extension-common/ui";
 import { Link } from "react-router";
 
 type Props = Parameters<typeof Link>[0];

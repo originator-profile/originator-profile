@@ -1,4 +1,4 @@
-import { _ } from "@originator-profile/ui";
+import { _ } from "@originator-profile/extension-common/ui";
 import GlobalHeader from "../components/GlobalHeader";
 import { useLinkVerification } from "../components/credentials/use-link-verification";
 

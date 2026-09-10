@@ -1,9 +1,11 @@
+import {
+  activeTabMessenger,
+  createFrameReadinessTracker,
+} from "@originator-profile/extension-common";
 import { useEffect, useEffectEvent } from "react";
 import { useLocation, useNavigate } from "react-router";
 import { useSWRConfig } from "swr";
 import { routes } from "../../utils/routes";
-import { activeTabMessenger } from "./events";
-import { createFrameReadinessTracker } from "./frame-readiness-tracker";
 import { matchTabCacheKey } from "./match-tab-cache-key";
 
 async function getExpectedFrameIds(tabId: number): Promise<Set<number>> {

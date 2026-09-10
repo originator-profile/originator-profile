@@ -1,24 +1,22 @@
-import type { OriginatorProfileSet } from "@originator-profile/model";
-import { verifyDocuments } from "@originator-profile/verify";
-import { useParams } from "react-router";
-import useSWRImmutable from "swr/immutable";
-import { getRegistry } from "../../utils/registry-ops";
-import { toLegacyDocuments } from "../../utils/to-legacy-result";
-import { useSiteProfile } from "../siteProfile";
-import { deduplicateCas } from "./deduplicate-cas";
 import {
+  deduplicateCas,
   fetchTabCredentials,
   fetchVerificationResult,
   FrameIntegrityVerifier,
-} from "./messaging";
-import {
+  getRegistry,
   registrySource,
   siteProfileSource,
   type FramesVerifiedCas,
   type OpOrigin,
   type SupportedVerifiedCasWithSource,
   type VerifiedOpsWithSource,
-} from "./types";
+} from "@originator-profile/extension-common";
+import type { OriginatorProfileSet } from "@originator-profile/model";
+import { verifyDocuments } from "@originator-profile/verify";
+import { useParams } from "react-router";
+import useSWRImmutable from "swr/immutable";
+import { toLegacyDocuments } from "../../utils/to-legacy-result";
+import { useSiteProfile } from "../siteProfile";
 
 const CREDENTIALS_KEY = "credentials";
 
