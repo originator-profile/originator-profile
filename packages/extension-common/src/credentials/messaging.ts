@@ -74,7 +74,7 @@ async function fetchAllFramesCredentials(
   // 返せば、呼び出し元が最上位フレームの不在として扱う。
   const failure = errors[0]?.reason;
   if (responses.length === 0 && failure) {
-    throw Object.assign(new Error(failure.message), failure);
+    throw failure;
   }
   return responses;
 }
