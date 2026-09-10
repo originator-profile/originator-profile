@@ -3,6 +3,11 @@ import GlobalHeader from "./GlobalHeader";
 import { linkVerificationTitle } from "./credentials/link-verification-title";
 import { useLinkVerification } from "./credentials/use-link-verification";
 
+// NOTE: getMessage は未定義のキーに空文字を返す。エラーコードは表示側の訳とは
+// 別々に増えるため、訳のないコードは種類を特定できないものとして扱う。
+const messageOf = (code: string): string =>
+  _(`Unsupported_${code}`) || _("Unsupported_UNSPECIFIED");
+
 function Messages({ errors }: { errors: Error[] }) {
   const errorWithCode = errors.filter((error) => "code" in error);
   const hasOtherErrors = errors.length !== errorWithCode.length;
@@ -11,7 +16,7 @@ function Messages({ errors }: { errors: Error[] }) {
     <ul className="list-disc list-inside text-sm max-w-xs mx-auto">
       {errorWithCode.length > 0 &&
         errorWithCode.map((error, index) => (
-          <li key={index}>{_(`Unsupported_${error.code as string}`)}</li>
+          <li key={index}>{messageOf(error.code as string)}</li>
         ))}
       {hasOtherErrors && <li>{_("Unsupported_UnknownError")}</li>}
     </ul>

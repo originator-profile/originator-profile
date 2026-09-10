@@ -101,6 +101,9 @@
   "Unsupported_ERR_FETCH_CREDENTIALS_MESSAGING_FAILED": {
     "message": "Failed to retrieve the data required to verify the content creator"
   },
+  "Unsupported_UNSPECIFIED": {
+    "message": "Could not verify the site operator or content creator"
+  },
   "Unsupported_UnknownError": {
     "message": "The data required to verify the site operator or content creator either does not exist or could not be retrieved"
   },
