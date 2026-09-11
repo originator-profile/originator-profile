@@ -1,0 +1,1 @@
+export { verifyTabCredentials } from "./verify";

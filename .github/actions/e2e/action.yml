@@ -17,4 +17,7 @@ runs:
           apps/inspector/playwright-report
           apps/inspector/test-results
           apps/inspector/screenshots
+          apps/lens/playwright-report
+          apps/lens/test-results
+          apps/lens/screenshots
         retention-days: 7

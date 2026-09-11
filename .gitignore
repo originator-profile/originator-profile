@@ -24,6 +24,12 @@ vendor
 /apps/inspector/web-ext-artifacts*
 /apps/inspector/\\\\wsl.localhost\\*
 /apps/inspector/.e2e-temp
+/apps/lens/credentials.json
+/apps/lens/dist*
+/apps/lens/screenshots
+/apps/lens/web-ext-artifacts*
+/apps/lens/\\\\wsl.localhost\\*
+/apps/lens/.e2e-temp
 /public/ts
 
 .claude/settings.local.json

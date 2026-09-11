@@ -92,7 +92,7 @@ import * as astro from "astro";
 import esbuild from "esbuild";
 import copy from "esbuild-copy-static-files";
 import { rm, writeFile } from "node:fs/promises";
-import { port as devSitePort } from "./dev/astro.config.ts";
+import { port as devSitePort } from "../inspector/dev/astro.config.ts";
 // @ts-expect-error: 型定義がない
 import webExt from "web-ext";
 import postcss from "./esbuild.postcss.ts";
@@ -168,12 +168,18 @@ async function isDevSiteRunning(url: string): Promise<boolean> {
 }
 
 if (watch) {
+  // NOTE: 検証用サイトは inspector 側の 1 つを共有する。複製すると署名済みフィクスチャが
+  // 二重管理になる。
   const devSiteUrl = `http://localhost:${devSitePort}`;
   const running = await isDevSiteRunning(devSiteUrl);
   if (running) {
     console.log(`reusing the dev site already running at ${devSiteUrl}`);
   }
-  const devServer = running ? undefined : await astro.dev({ root: "dev" });
+  const devServer = running
+    ? undefined
+    : await astro.dev({
+        root: path.join(import.meta.dirname, "../inspector/dev"),
+      });
   const ctx = await esbuild.context(buildOptions);
   await ctx.watch();
   console.log("watching...");
