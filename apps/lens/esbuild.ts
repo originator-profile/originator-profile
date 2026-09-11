@@ -62,25 +62,12 @@ const filename = `{name}-${args.values.target}-{version}.zip`;
 const artifactsDir = "web-ext-artifacts";
 const outdir = path.join(import.meta.dirname, `dist-${args.values.target}`);
 
-const credentials: ImportMeta["env"]["BASIC_AUTH_CREDENTIALS"] = process.env
-  .BASIC_AUTH_CREDENTIALS
-  ? JSON.parse(process.env.BASIC_AUTH_CREDENTIALS)
-  : [];
-
 const registryOps: { core: string; annotations?: string[]; media?: string }[] =
   process.env.REGISTRY_OPS ? JSON.parse(process.env.REGISTRY_OPS) : [];
 
 const env = {
   MODE: args.values.mode,
-  BASIC_AUTH: process.env.BASIC_AUTH === "true",
-  BASIC_AUTH_CREDENTIALS: process.env.BASIC_AUTH === "true" ? credentials : [],
 };
-
-if (env.BASIC_AUTH && env.BASIC_AUTH_CREDENTIALS.length === 0) {
-  throw new Error(
-    "BASIC_AUTH is enabled but BASIC_AUTH_CREDENTIALS is not set. Please set BASIC_AUTH_CREDENTIALS environment variable.",
-  );
-}
 
 if (registryOps.length === 0) {
   console.warn(
