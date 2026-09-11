@@ -5,7 +5,7 @@
 機能（Feature）ごとにファイルをまとめる構造を採用しています。
 
 > [!NOTE]
-> hooks, utils ディレクトリは機能別ディレクトリに移行予定です。新規の hooks や utils は機能フォルダ内に配置してください。
+> utils ディレクトリは機能別ディレクトリに移行予定です。新規の hooks や utils は機能フォルダ内に配置してください。hooks ディレクトリは移行済みです。
 > Issue: [components, utils, hooks ディレクトリを機能ディレクトリに集約する (機能駆動的な構成であることを明確にする) · Issue #219 · originator-profile/originator-profile](https://github.com/originator-profile/originator-profile/issues/219)
 
 ### 基本原則
@@ -34,6 +34,7 @@ apps/inspector/src/
 │   │   ├── Menu.css
 │   │   ├── MenuButton.tsx
 │   │   ├── MenuItem.tsx
+│   │   ├── use-menu-button.ts
 │   │   └── index.ts             # エクスポート定義
 │   │
 │   ├── credentials/             # 認証情報機能
@@ -56,9 +57,6 @@ apps/inspector/src/
 │       ├── types.ts
 │       └── index.ts
 │
-├── hooks/                       # 共有フック
-│   └── useMenuButton.ts
-│
 ├── pages/                       # ページコンポーネント
 │   ├── Base.tsx
 │   ├── Credentials.tsx
@@ -70,8 +68,9 @@ apps/inspector/src/
 │   └── Prohibition.tsx
 │
 └── utils/                       # 共有ユーティリティ
-    ├── get-profile-error-message.ts
-    └── get-registry-keys.ts
+    ├── routes.ts
+    ├── to-error.ts
+    └── to-legacy-result.ts
 ```
 
 ### packages/ui の構造
