@@ -78,6 +78,8 @@ $ pnpm dev --registry-url=https://oprexpt.originator-profile.org/ --url=https://
 - `BASIC_AUTH_CREDENTIALS`: Basic 認証の認証情報 (形式: JSON)
 - `REGISTRY_OPS`: Core Profile 発行者の Originator Profile Set
 
+`.env.development` と `.env.testing` は [OP Inspector](../inspector/) のものへのシンボリックリンクです。編集すると両方の拡張機能に効きます。
+
 ## 認証情報
 
 拡張機能をビルドする際、環境変数 `BASIC_AUTH_CREDENTIALS` があれば、その内容に基づいて拡張機能に認証情報を同梱し、Basic 認証に使用します。
