@@ -5,7 +5,7 @@ export default defineConfig({
     url: "http://localhost:8080",
     // NOTE: astro dev はバックグラウンド起動時に cwd を root へ移したうえで --root を
     // そのまま子プロセスへ渡すため、相対パスだと root が二重に解決される。絶対パスで渡す。
-    // NOTE: 検証用サイトは inspector 側の 1 つを共有する (複製すると署名済みフィクスチャが二重管理になる)。
+    // NOTE: 検証用サイトは inspector 側の 1 つを共有する。
     command: `astro --root=${import.meta.dirname}/../inspector/dev dev`,
     reuseExistingServer: !process.env.CI,
   },

@@ -157,7 +157,7 @@ await esbuild.build(buildOptions);
 
 const watch = Boolean(args.values.mode === "development" && args.values.url);
 
-/** 検証用サイトが既に応答するか (もう一方の拡張機能の dev が立てていることがある) */
+// NOTE: もう一方の拡張機能の pnpm dev が検証用サイトを既に立てていることがある。
 async function isDevSiteRunning(url: string): Promise<boolean> {
   try {
     await fetch(url, { signal: AbortSignal.timeout(1000) });
