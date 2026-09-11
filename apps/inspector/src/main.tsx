@@ -2,7 +2,6 @@ import {
   activeTabMessenger,
   overlayExtensionMessenger,
 } from "@originator-profile/extension-common";
-import "@originator-profile/extension-common/utils/cors-basic-auth";
 import React from "react";
 import ReactDOM from "react-dom/client";
 import { HashRouter } from "react-router";

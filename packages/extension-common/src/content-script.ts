@@ -9,7 +9,6 @@ import { activeTabMessenger } from "./active-tab/events";
 import { credentialsMessenger } from "./credentials/events";
 import type { FrameLocation } from "./credentials/types";
 import { siteProfileMessenger } from "./site-profile/events";
-import "./utils/cors-basic-auth";
 
 export { setupAdClickDetection } from "./link-verification/detect-ad-click";
 
