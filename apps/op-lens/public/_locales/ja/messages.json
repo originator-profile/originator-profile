@@ -1,0 +1,470 @@
+{
+  "extensionName": {
+    "message": "OP Lens"
+  },
+  "extensionDescription": {
+    "message": "OP Lensは、閲覧中のコンテンツを誰が作成し誰が掲載したのかをOriginator Profileで確認するためのブラウザー拡張機能です。"
+  },
+  "CaFilter_All": {
+    "message": "すべて"
+  },
+  "CaFilter_MainContent": {
+    "message": "メインコンテンツ"
+  },
+  "CaFilter_Article": {
+    "message": "記事"
+  },
+  "CaFilter_Advertorial": {
+    "message": "記事広告"
+  },
+  "CaFilter_Advertisements": {
+    "message": "広告"
+  },
+  "ContentType_MainContent": {
+    "message": "メインコンテンツ"
+  },
+  "ContentType_Article": {
+    "message": "記事"
+  },
+  "ContentType_Advertisement": {
+    "message": "広告"
+  },
+  "ContentType_Advertorial": {
+    "message": "記事広告"
+  },
+  "ContentType_Unknown": {
+    "message": "種別不明のコンテンツ"
+  },
+  "ContentType_Document": {
+    "message": "ドキュメント"
+  },
+  "ContentType_Site": {
+    "message": "ウェブサイト"
+  },
+  "WebMediaProfileSummary_InformationTransmissionPolicy": {
+    "message": "情報発信ポリシー"
+  },
+  "WebMediaProfileSummary_EditorialGuidelines": {
+    "message": "編集ガイドライン"
+  },
+  "WebMediaProfileSummary_PrivacyPolicy": {
+    "message": "プライバシーポリシー"
+  },
+  "Loading_RetrievingAndValidatingProfile": {
+    "message": "$of_origin$プロファイルを取得検証しています...",
+    "placeholders": {
+      "of_origin": {
+        "content": "$1",
+        "example": "https://example.com の"
+      }
+    }
+  },
+  "Loading_OfOrigin": {
+    "message": "$origin$の",
+    "placeholders": {
+      "origin": {
+        "content": "$1",
+        "example": "https://example.com"
+      }
+    }
+  },
+  "ReliabilityGuide_SiteOperator": {
+    "message": "このサイトは次の組織が運営しています"
+  },
+  "ReliabilityGuide_Publisher": {
+    "message": "この$content_type$は次の組織が発信しています",
+    "placeholders": {
+      "content_type": {
+        "content": "$1",
+        "example": "出版物"
+      }
+    }
+  },
+  "ReliabilityGuide_AboutReliabilityInformation": {
+    "message": "どのように確認されますか"
+  },
+  "ReliabilityGuide_VerifiedOrganizationStatementTitle": {
+    "message": "真正性・信頼性を確認する仕組み"
+  },
+  "ReliabilityGuide_VerifiedOrganizationStatement": {
+    "message": "表示されている画像、テキスト等は署名をともなうデータであり、署名の正しさによって改ざんされていないことが確認されました。この組織の信頼性の判断指標として、自ら定める情報発信ポリシーのほか、第三者によって発行された追加情報が閲覧できます。追加情報には、組織の実在性、業種・業態に応じた適格性等が示されます。"
+  },
+  "Unsupported_ERR_SITE_PROFILE_FETCH_FAILED": {
+    "message": "サイトの運営者またはコンテンツ作成者を検証するためのデータが取得できませんでした"
+  },
+  "Unsupported_ERR_SITE_PROFILE_FETCH_INVALID": {
+    "message": "サイトの運営者またはコンテンツ作成者を検証するためのデータの形式が無効です"
+  },
+  "Unsupported_ERR_ORIGINATOR_PROFILE_SET_INVALID": {
+    "message": "サイトの運営者またはコンテンツ作成者を検証するためのデータの形式が無効です"
+  },
+  "Unsupported_ERR_FETCH_CREDENTIALS_MESSAGING_FAILED": {
+    "message": "コンテンツ作成者を検証するためのデータが取得できませんでした"
+  },
+  "Unsupported_UnknownError": {
+    "message": "サイトの運営者またはコンテンツ作成者を検証するためのデータが存在しないか、取得できませんでした"
+  },
+  "Unsupported_NoReliabilityInformationYet": {
+    "message": "組織の信頼性情報と出版物の流通経路がまだありません"
+  },
+  "Unsupported_ReliabilityInformationRetrievalFailed": {
+    "message": "組織の信頼性情報と出版物の流通経路の取得に失敗しました"
+  },
+  "Unsupported_OpNotSupported": {
+    "message": "このサイトはまだOPに対応していません"
+  },
+  "Unsupported_FollowingCausesConsidered": {
+    "message": "以下のような原因が考えられます"
+  },
+  "ErrorCheckList_ErrorDetails": {
+    "message": "エラーの詳細"
+  },
+  "Unsupported_Message": {
+    "message": "メッセージ"
+  },
+  "Unsupported_ErrorCode": {
+    "message": "エラーコード"
+  },
+  "Unsupported_ReliabilityInformationContactStatement": {
+    "message": "このページにおける組織の信頼性情報と出版物の流通経路について\n知りたい場合はサイト内に記載されている\n運営管理者にお問い合わせください"
+  },
+  "Unsupported_ReliabilityResolvesFollowings": {
+    "message": "組織の信頼性情報と出版物の流通経路があることで\n以下の課題を解決できます"
+  },
+  "Unsupported_ChallengeInternetUser": {
+    "message": "一般的なネットユーザーの課題"
+  },
+  "Unsupported_ChallengeReliableInformation": {
+    "message": "ちゃんと事実を伝えているウェブ上の記事とか広告とかって、信頼できる情報だけ見る方法はないのかしら...？"
+  },
+  "Unsupported_ChallengeFakeNews": {
+    "message": "フェイクニュースや有害サイトってどうやってもなくならないの...？"
+  },
+  "Unsupported_ChallengeReliabilityProblemAndSolutionStatement": {
+    "message": "アテンションエコノミー（関心を引くことの価値化）を背景に、事実を伝える記事より例えフェイクニュースであっても目立つ記事の方が利益が上がる構造ができています。これはコンテンツ発信者とその信頼性を確認する一般的な手段が無いことが大きな原因の一つです。閲覧者や広告配信システムが良質な記事やメディアを識別可能にすれば、インターネットの情報流通はより健全化できます。"
+  },
+  "Unsupported_ChallengeAdAndMedia": {
+    "message": "広告・メディア関係者の課題"
+  },
+  "Unsupported_ChallengeSketchySite": {
+    "message": "えええー！？ こんな危険なサイトにウチの広告が！！"
+  },
+  "Unsupported_ChallengeAdClashWithArticle": {
+    "message": "あれ、この記事の内容にウチの広告は合わないのでは！？"
+  },
+  "Unsupported_ChallengeAdRiskAndSolutionStatement": {
+    "message": "不適切なサイト (メディア) に広告が掲載されたり、逆に、表示して欲しくない広告が掲載されることがあります。検索結果に偽サイトなどが表示されたり、SNS でもフェイクニュースが目立った形で拡散されたりしています。適切なサイトや広告主を識別し、適切なサイトと広告のマッチングをしたり、その配信記録を残すことでブランド毀損を防げます。"
+  },
+  "Unsupported_ChallengeHowever": {
+    "message": "一方で..."
+  },
+  "Unsupported_ChallengeInformationRegulation": {
+    "message": "でも、情報の規制は良くないよね、言論の自由も認められなければいけない"
+  },
+  "Unsupported_OPDisclaimer_HTML": {
+    "message": "そのとおりです。ただし、Originator Profile技術はメディアや広告主の<ruby>峻別<rp>(</rp><rt>しゅんべつ</rt><rp>)</rp></ruby>をおこなうものではありません。現存する認証機関などに活用してもらうことを考えています。"
+  },
+  "Unsupported_ChallengeIfThereWereInformation": {
+    "message": "もしも組織の信頼性情報と出版物の流通経路があると..."
+  },
+  "Unsupported_ChallengeReliabilityBenefits": {
+    "message": "このページやコンテンツが誰のもとで作成・出版されたのかが見える化されて、虚偽、悪質なサイトも判別できるようになり、安心、安全なインターネット活用が可能になります。"
+  },
+  "Unsupported_MoreDetailsOP": {
+    "message": "Originator Profile をもっと詳しく"
+  },
+  "Base_ContentsInformation": {
+    "message": "コンテンツ情報"
+  },
+  "Org_InformationTransmissionPolicy": {
+    "message": "情報発信ポリシー"
+  },
+  "Org_EditorialGuidelines": {
+    "message": "編集ガイドライン"
+  },
+  "Org_PrivacyPolicy": {
+    "message": "プライバシーポリシー"
+  },
+  "Org_CredentialInformation": {
+    "message": "検証済み属性"
+  },
+  "Org_OrganizationInformation": {
+    "message": "組織情報"
+  },
+  "Org_ReliabilityInformation": {
+    "message": "信頼性情報"
+  },
+  "Credentials_UntitledContent": {
+    "message": "タイトル未設定のコンテンツ"
+  },
+  "Prohibition_Warning": {
+    "message": "正規のコンテンツではない可能性があります"
+  },
+  "Prohibition_Site": {
+    "message": "発信者の詐称やコンテンツの改竄（かいざん）がされている可能性があります"
+  },
+  "CertificateDetail_Loading": {
+    "message": "証明書を読み込み中です..."
+  },
+  "CertificateDetail_Details": {
+    "message": "くわしくはこちら"
+  },
+  "CertificateDetail_IssuedBy": {
+    "message": "$ISSUER$ 発行",
+    "placeholders": {
+      "issuer": {
+        "content": "$1",
+        "example": "PA 発行者"
+      }
+    }
+  },
+  "CertificateSummary_IssuedBy": {
+    "message": "$ISSUER$ 発行",
+    "placeholders": {
+      "issuer": {
+        "content": "$1",
+        "example": "PA 発行者"
+      }
+    }
+  },
+  "Description_Description": {
+    "message": "説明"
+  },
+  "WebMediaProfileTable_Holder": {
+    "message": "所有者"
+  },
+  "WebMediaProfileTable_Address": {
+    "message": "所在地"
+  },
+  "WebMediaProfileTable_AddressData": {
+    "message": "〒$postal_code$ $region$$locality$$street_address$",
+    "placeholders": {
+      "postal_code": {
+        "content": "$1",
+        "example": "000-0123"
+      },
+      "region": {
+        "content": "$2",
+        "example": "〇〇県"
+      },
+      "locality": {
+        "content": "$3",
+        "example": "□□市"
+      },
+      "street_address": {
+        "content": "$4",
+        "example": "××町△△"
+      }
+    }
+  },
+  "WebMediaProfileTable_URL": {
+    "message": "URL"
+  },
+  "WebMediaProfileTable_PhoneNum": {
+    "message": "電話番号"
+  },
+  "WebMediaProfileTable_Email": {
+    "message": "メールアドレス"
+  },
+  "WebMediaProfileTable_CorpNum": {
+    "message": "法人番号"
+  },
+  "WebMediaProfileTable_Contact": {
+    "message": "問い合わせ"
+  },
+  "WebMediaProfileTable_PrivacyPolicy": {
+    "message": "プライバシーポリシー"
+  },
+  "WebMediaProfileTable_Principle": {
+    "message": "編集ガイドライン"
+  },
+  "WebMediaProfile_Missing": {
+    "message": "このサイト運営者に対応する組織情報を正しく読み取れませんでした"
+  },
+  "WebMediaProfile_Missing_Reason": {
+    "message": "サイト運営者に対応する組織情報が含まれていないか、取得できなかった可能性があります。\nサイト内に記載されている運営管理者にお問い合わせください。"
+  },
+  "ProjectSummary_Statement_1": {
+    "message": "Originator Profile 技術は、ウェブコンテンツの作成者や広告主などの情報を検証可能な形で付与することで、第三者認証済みの良質な記事やメディアを容易に見分けられるようにする技術です。"
+  },
+  "ProjectSummary_Statement_2": {
+    "message": "コンテンツ作成者や流通経路の透明性を高め、信頼できる発信者を識別可能にすることで、責任ある良質な記事やメディアの増加と価値向上を助けます。"
+  },
+  "ProjectTitle_TechSummary": {
+    "message": "良質な記事やメディアを容易に見分けられるようにする技術"
+  },
+  "TechInfo_TechInfo": {
+    "message": "技術情報"
+  },
+  "ArticleTable_PublishDate": {
+    "message": "公開日"
+  },
+  "ArticleTable_LastModified": {
+    "message": "最終更新日"
+  },
+  "ArticleTable_EditorInChief": {
+    "message": "編集責任者"
+  },
+  "ArticleTable_Author": {
+    "message": "記事執筆者"
+  },
+  "ArticleTable_Sponsor": {
+    "message": "スポンサー"
+  },
+  "ArticleTable_Category": {
+    "message": "ジャンル"
+  },
+  "AdvertisementTable_LandingPage": {
+    "message": "ランディングページ"
+  },
+  "AdvertisementTable_AdReportContact": {
+    "message": "広告に対する報告窓口"
+  },
+  "AdvertisementTable_AdReviewGuidelines": {
+    "message": "広告審査ガイドライン"
+  },
+  "AdvertisementTable_TargetingPolicy": {
+    "message": "ターゲティング広告に関するポリシー"
+  },
+  "AdvertisementTable_AdDataHandlingPolicy": {
+    "message": "広告配信に関する情報の取り扱いについての説明"
+  },
+  "AdvertisementTable_AdDisplayRationale": {
+    "message": "この広告が表示されている理由"
+  },
+  "Profile_Failed": {
+    "message": "失敗"
+  },
+  "Profile_Succeeded": {
+    "message": "成功"
+  },
+  "BackHeader_Back": {
+    "message": "戻る"
+  },
+  "DetailInfo": {
+    "message": "詳細情報"
+  },
+  "DetailInfo_VerificationResults": {
+    "message": "検証結果"
+  },
+  "OtherErrors": {
+    "message": "その他のエラー"
+  },
+  "DetailInfo_LinkVerification": {
+    "message": "リンク先確認"
+  },
+  "DetailInfo_LinkVerificationStatus": {
+    "message": "判定"
+  },
+  "DetailInfo_LinkVerificationReason": {
+    "message": "理由"
+  },
+  "DetailInfo_ExpectedLinkDestination": {
+    "message": "意図したリンク先"
+  },
+  "DetailInfo_SourceAdOrganization": {
+    "message": "リンク元広告の組織"
+  },
+  "DetailInfo_ActualSiteOperator": {
+    "message": "実際のサイト運営者"
+  },
+  "DetailInfo_Warnings": {
+    "message": "警告"
+  },
+  "DetailInfo_Info": {
+    "message": "情報"
+  },
+  "Link_OriginatorProfile": {
+    "message": "Originator Profile についてより詳しく（外部サイト）"
+  },
+  "LinkVerification_Matched_Title": {
+    "message": "リンク先確認成功"
+  },
+  "LinkVerification_Mismatched_Title": {
+    "message": "予期されたリンク先と異なります"
+  },
+  "LinkVerification_MissingOpid_Title": {
+    "message": "リンク先のサイト運営者の確認ができませんでした"
+  },
+  "LinkVerification_Error_Title": {
+    "message": "リンク先の検証に失敗しました"
+  },
+  "Warning_Title": {
+    "message": "サイトの身元を確認できません"
+  },
+  "Warning_IntendedSite": {
+    "message": "$expected_org$のサイトを開くことを意図した",
+    "placeholders": {
+      "expected_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "Warning_ClickedAd": {
+    "message": "$source_org$の広告をクリックしましたが、",
+    "placeholders": {
+      "source_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "Warning_ClickedAdGeneric": {
+    "message": "広告をクリックしましたが、"
+  },
+  "Warning_OperatedBy": {
+    "message": "リンク先は$actual_org$が運営しています。",
+    "placeholders": {
+      "actual_org": {
+        "content": "$1",
+        "example": "Example Corp"
+      }
+    }
+  },
+  "Warning_CannotVerify": {
+    "message": "リンク先のサイト運営者の確認ができませんでした。"
+  },
+  "Warning_OpidMismatch": {
+    "message": "予期されたOriginator Profile (OPID) と一致しませんでした。"
+  },
+  "Warning_GoBack": {
+    "message": "前のページに戻る"
+  },
+  "Warning_CloseTab": {
+    "message": "このタブを閉じる"
+  },
+  "Warning_Proceed": {
+    "message": "このままアクセスする"
+  },
+  "Warning_Destination": {
+    "message": "遷移先: "
+  },
+  "Verification_SiteProfileVerifyFailed": {
+    "message": "遷移先のサイトプロファイルを検証できません"
+  },
+  "Verification_SiteProfileVerifyFailedDetail": {
+    "message": "遷移先のサイトプロファイルを検証できません: $error$",
+    "placeholders": {
+      "error": {
+        "content": "$1",
+        "example": "Website Profile verify failed"
+      }
+    }
+  },
+  "Verification_OpidMissing": {
+    "message": "OPIDが存在しません"
+  },
+  "Verification_OpidMismatch": {
+    "message": "OPID不一致"
+  },
+  "GlobalHeader_Reload": {
+    "message": "再読み込み"
+  },
+  "SiteProfile_Missing": {
+    "message": "サイトプロファイルが見つかりませんでした"
+  },
+  "SiteProfile_Missing_Reason": {
+    "message": "サイトプロファイルを取得できなかった可能性があります。サイトの安全性を否定するものではありません。"
+  }
+}
