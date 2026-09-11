@@ -12,7 +12,6 @@ export function useMenuButton({ onItemSelect, items }: UseMenuButtonOptions) {
 
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLUListElement>(null);
-  const itemRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
   const buttonId = useId();
   const menuId = useId();
@@ -185,14 +184,6 @@ export function useMenuButton({ onItemSelect, items }: UseMenuButtonOptions) {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [isOpen, closeMenu]);
 
-  // Set item ref
-  const setItemRef = useCallback(
-    (index: number) => (el: HTMLButtonElement | null) => {
-      itemRefs.current[index] = el;
-    },
-    [],
-  );
-
   // Handle mouse enter for items
   const handleItemMouseEnter = useCallback((index: number) => {
     setActiveIndex(index);
@@ -208,15 +199,9 @@ export function useMenuButton({ onItemSelect, items }: UseMenuButtonOptions) {
     // Refs
     buttonRef,
     menuRef,
-    setItemRef,
-
-    // IDs
-    buttonId,
-    menuId,
 
     // Handlers
     toggleMenu,
-    selectItem,
     handleButtonKeyDown,
     handleMenuKeyDown,
     handleItemMouseEnter,

@@ -43,7 +43,6 @@ function CaFilter({ caListType, setCaListType, cas }: Props) {
     isKeyboardNavigation,
     buttonRef,
     menuRef,
-    setItemRef,
     buttonProps,
     menuProps,
     toggleMenu,
@@ -88,9 +87,6 @@ function CaFilter({ caListType, setCaListType, cas }: Props) {
           return (
             <MenuItem
               key={option.value}
-              ref={setItemRef(index)}
-              value={option.value}
-              selected={isSelected}
               active={isActive}
               onClick={() => setCaListType(option.value)}
               onKeyDown={(e) => handleMenuKeyDown(e, option.value)}
