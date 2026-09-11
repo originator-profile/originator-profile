@@ -70,7 +70,7 @@ $ pnpm dev --registry-url=https://oprexpt.originator-profile.org/ --url=https://
 2. `pnpm dev` コマンドを実行し、ローカル環境でChrome用拡張機能をプレビューします。
    - http://localhost:8080/examples/cas-1.html にアクセスし、ローカル環境の開発用サーバーでの動作を確認できます。
 
-開発用サーバーが配信する検証用サイトは [OP Inspector](../inspector/dev/) のものを共有しています (署名済みフィクスチャを二重管理しないため)。ポート 8080 も共有するので、両方を同時にプレビューすることはできません。
+開発用サーバーが配信する検証用サイトは [OP Inspector](../inspector/dev/) のものを共有しています (署名済みフィクスチャを二重管理しないため)。OP Inspector 側の `pnpm dev` が既に立てていればそれを再利用するので、両方を同時にプレビューしても検証用サイトは 1 つだけ起動します。
 
 ## 環境変数
 

@@ -92,6 +92,7 @@ import * as astro from "astro";
 import esbuild from "esbuild";
 import copy from "esbuild-copy-static-files";
 import { rm, writeFile } from "node:fs/promises";
+import { port as devSitePort } from "./dev/astro.config.ts";
 // @ts-expect-error: 型定義がない
 import webExt from "web-ext";
 import postcss from "./esbuild.postcss.ts";
@@ -156,8 +157,23 @@ await esbuild.build(buildOptions);
 
 const watch = Boolean(args.values.mode === "development" && args.values.url);
 
+/** 検証用サイトが既に応答するか (もう一方の拡張機能の dev が立てていることがある) */
+async function isDevSiteRunning(url: string): Promise<boolean> {
+  try {
+    await fetch(url, { signal: AbortSignal.timeout(1000) });
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 if (watch) {
-  const devServer = await astro.dev({ root: "dev" });
+  const devSiteUrl = `http://localhost:${devSitePort}`;
+  const running = await isDevSiteRunning(devSiteUrl);
+  if (running) {
+    console.log(`reusing the dev site already running at ${devSiteUrl}`);
+  }
+  const devServer = running ? undefined : await astro.dev({ root: "dev" });
   const ctx = await esbuild.context(buildOptions);
   await ctx.watch();
   console.log("watching...");
@@ -184,7 +200,7 @@ if (watch) {
   await new Promise((r) => {
     runner.registerCleanup(() => r(1));
   });
-  await devServer.stop();
+  await devServer?.stop();
 } else {
   await webExt.cmd.build({
     target: args.values.target,
