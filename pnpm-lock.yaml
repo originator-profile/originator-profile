@@ -187,7 +187,7 @@ importers:
         specifier: 0.20.27
         version: 0.20.27(@types/node@25.6.0)(eslint@9.39.4(jiti@2.7.0))(jiti@2.7.0)(rolldown@1.2.3)(rollup@4.62.3)(terser@5.49.0)(yaml@2.9.0)
 
-  apps/op-lens:
+  apps/lens:
     dependencies:
       react:
         specifier: ^19.2.4

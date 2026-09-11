@@ -1,5 +1,5 @@
 {
-  "name": "@originator-profile/op-lens",
+  "name": "@originator-profile/lens",
   "description": "OP Lens shows who created and who published the content you are viewing, based on Originator Profile.",
   "version": "0.7.0-beta.4",
   "license": "Apache-2.0",
@@ -9,7 +9,7 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/originator-profile/originator-profile.git",
-    "directory": "apps/op-lens"
+    "directory": "apps/lens"
   },
   "type": "module",
   "dependencies": {
@@ -84,7 +84,7 @@
     "test": "vitest run",
     "lint": "oxlint --fix .",
     "build-for-amo": "run-s build:firefox presubmit",
-    "presubmit": "git -C ../.. archive --format=zip --output=apps/op-lens/web-ext-artifacts/sources.zip HEAD",
+    "presubmit": "git -C ../.. archive --format=zip --output=apps/lens/web-ext-artifacts/sources.zip HEAD",
     "submit": "wxt submit --chrome-zip web-ext-artifacts/op_lens-chromium-*.zip --firefox-zip web-ext-artifacts/op_lens-firefox-desktop-*.zip --firefox-sources-zip web-ext-artifacts/sources.zip"
   }
 }

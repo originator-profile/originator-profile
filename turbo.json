@@ -41,7 +41,7 @@
         "REGISTRY_OPS"
       ]
     },
-    "@originator-profile/op-lens#build": {
+    "@originator-profile/lens#build": {
       "dependsOn": ["^build"],
       "env": [
         "NODE_ENV",

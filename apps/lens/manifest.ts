@@ -74,7 +74,7 @@ const firefox = {
   ...base,
   browser_specific_settings: {
     gecko: {
-      id: "op-lens@originator-profile.org",
+      id: "lens@originator-profile.org",
       strict_min_version: "140.0",
       data_collection_permissions: {
         required: ["none"],
