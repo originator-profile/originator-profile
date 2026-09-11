@@ -26,10 +26,6 @@ function Button({ className, children }: Props) {
 <Button className="bg-danger">削除</Button>;
 ```
 
-> [!NOTE]
-> clsx を使用している箇所は tailwind-merge へ移行予定です。新規コードでは `twMerge` を使用してください。
-> Issue: [clsx の代わりに tailwind-merge を導入する提案 · Issue #45 · originator-profile/originator-profile](https://github.com/originator-profile/originator-profile/issues/45)
-
 ## コンポーネントは自身より外側に影響を与えるスタイルをデフォルトで持たない
 
 コンポーネントの outer element に `margin` などの外部に影響を与えるプロパティをデフォルトで設定しない。余白の制御は親要素が行う。
