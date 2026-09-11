@@ -101,9 +101,6 @@
   "Unsupported_ERR_FETCH_CREDENTIALS_MESSAGING_FAILED": {
     "message": "コンテンツ作成者を検証するためのデータが取得できませんでした"
   },
-  "Unsupported_UNSPECIFIED": {
-    "message": "サイトの運営者またはコンテンツ作成者を検証できませんでした"
-  },
   "Unsupported_UnknownError": {
     "message": "サイトの運営者またはコンテンツ作成者を検証するためのデータが存在しないか、取得できませんでした"
   },

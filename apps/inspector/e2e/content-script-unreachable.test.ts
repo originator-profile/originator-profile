@@ -20,11 +20,11 @@ test("コンテンツスクリプトに到達できない場合も理由が表�
 
   const messages = ext.getByTestId("p-elm-unsupported-message");
   await expect(messages).toBeVisible();
-  await expect(messages).toContainText(
-    "サイトの運営者またはコンテンツ作成者を検証できませんでした",
-  );
-  const items = await messages.getByRole("listitem").allTextContents();
-  expect(items.filter((item) => item.trim() === "")).toEqual([]);
+  // 訳の引けない UNSPECIFIED とコードを持たないエラーが同じ文言に畳まれて 1 行に
+  // なる。ここに空の箇条書きが出ていたのが直した退行。
+  await expect(messages.getByRole("listitem")).toHaveText([
+    "サイトの運営者またはコンテンツ作成者を検証するためのデータが存在しないか、取得できませんでした",
+  ]);
 
   await gotoDetailPage(ext);
   const otherErrors = ext.getByTestId("other-errors");
