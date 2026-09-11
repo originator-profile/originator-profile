@@ -4,7 +4,6 @@ import {
   SupportedVerifiedCas,
   overlayExtensionMessenger,
 } from "@originator-profile/extension-common";
-import { _ } from "@originator-profile/extension-common/ui";
 import {
   SiteProfileFetchFailed,
   SiteProfileFetchInvalid,
@@ -21,9 +20,8 @@ import {
 } from "@originator-profile/verify";
 import flush from "just-flush";
 import { Navigate } from "react-router";
-import { useMount, useTitle } from "react-use";
+import { useMount } from "react-use";
 import { useCredentials } from "../components/credentials";
-import { formatBuildModeTitle } from "../components/environment";
 import { useFrameCasLocationProvider } from "../components/frameCas";
 import Loading from "../components/Loading";
 import { useSiteProfile } from "../components/siteProfile";
@@ -114,11 +112,6 @@ function Base() {
   const { tabId, siteProfile, error: spError } = useSiteProfile();
   const { ops, cas, framesCas, error: credentialsError } = useCredentials();
   useFrameCasLocationProvider(tabId, framesCas ?? []);
-
-  const title = [_("Base_ContentsInformation"), origin]
-    .filter(Boolean)
-    .join(" ― ");
-  useTitle(formatBuildModeTitle(import.meta.env.MODE, title));
 
   if (isLoading({ siteProfile, spError, ops, cas, credentialsError })) {
     return <Loading />;
