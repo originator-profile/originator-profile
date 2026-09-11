@@ -34,7 +34,7 @@ export class Overlay {
       padding: 0;
       opacity: 1;
       visibility: visible;
-      outilne: 0;
+      outline: 0;
       z-index: calc(infinity);
   `;
   }
