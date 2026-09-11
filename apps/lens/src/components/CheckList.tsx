@@ -645,12 +645,18 @@ function ContentAttestationSetCheck({
 
 function DisplayOtherErrors({ errors }: { errors: Error[] }) {
   return (
-    <div className="pl-4">
+    <div className="pl-4" data-testid="other-errors">
       <h2 className="mt-4 mb-4 text-sm font-bold text-gray-700">
         {_("OtherErrors")}
       </h2>
       {errors.map((error, index) => (
-        <DisplayResults key={index} payload={error} className="pl-2 mb-2" />
+        <DisplayResults
+          key={index}
+          code={isCodedError(error) ? error.code : undefined}
+          message={error.message}
+          payload={error}
+          className="pl-2 mb-2"
+        />
       ))}
     </div>
   );
@@ -669,7 +675,6 @@ function CheckList({
   errors: Error[];
 }) {
   const codedErrors = errors.filter(isCodedError);
-  const nonCodedErrors = errors.filter((e) => !isCodedError(e));
 
   const spError = findError(codedErrors, [
     "ERR_SITE_PROFILE_FETCH_INVALID",
@@ -693,6 +698,12 @@ function CheckList({
   ]);
 
   const contentAttestationSet = casError ?? cas;
+
+  // NOTE: 振り分けは code の有無ではなく「行に割り当てられたか」で決める。code を
+  // 持つかで分けると、どの行にも対応しないコードのエラーが表示から消える。
+  const assigned: (Error | undefined)[] = [spError, opsError, casError];
+  const otherErrors = errors.filter((error) => !assigned.includes(error));
+
   // 検証済みの CAS は配列として渡されますが、空配列はエラー扱いされない仕様です。
   // そのため、空配列であることを明示的に判定して扱いを分岐します。
   const isEmptyVerifiedCas =
@@ -739,9 +750,7 @@ function CheckList({
           <DisplayResults payload={cas} className="ml-7" />
         </DetailItem>
       )}
-      {nonCodedErrors.length !== 0 && (
-        <DisplayOtherErrors errors={nonCodedErrors} />
-      )}
+      {otherErrors.length !== 0 && <DisplayOtherErrors errors={otherErrors} />}
     </>
   );
 }
