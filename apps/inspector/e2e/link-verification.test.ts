@@ -143,7 +143,7 @@ test.describe("リンク検証", () => {
 
     // Proceed をクリック → 遷移先（example.com）へ進む
     await proceedButton.click();
-    await page.waitForURL((url) => url.href.includes("example.com"), {
+    await page.waitForURL((url) => url.hostname === "example.com", {
       timeout: 10_000,
     });
   });
