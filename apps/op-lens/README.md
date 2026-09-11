@@ -148,6 +148,12 @@ $ REGISTRY_OPS=$(cat registry-ops.json) pnpm build
 - `pnpm build-for-amo`: [addons.mozilla.org](https://addons.mozilla.org/) への提出に必要な成果物一式（Firefox 向けビルドと、審査でコードの照合に使われるソースコード一式の zip）を `web-ext-artifacts/` に生成します。
 - `pnpm submit`: ビルド済みの成果物を Chrome ウェブストアおよび AMO に提出します（`FIREFOX_JWT_ISSUER` 等の認証情報が必要です）。
 
+### e2e テストの範囲
+
+OP Lens 自身の配線 (拡張機能のロード、`_locales` の解決、VC の取得と検証、バッジ更新) を確かめるものだけを置いています。表示に依存するシナリオは、UI を作り込む段で書きます。Visual Regression Test も、サイドパネルの画面ができてから追加します。
+
+フィクスチャ一式 (`e2e/data.ts`, `e2e/*-fixtures.ts`, `e2e/fixtures.ts`) は揃えてあるので、シナリオはテストファイルを 1 つ足すだけで書き始められます。検証結果そのものを見るシナリオの書き方は `e2e/tab-badge.test.ts` が、サイドパネルを開いて画面を見るシナリオの書き方は `e2e/en/ui-language.test.ts` が例になります。
+
 ## ドキュメント
 
 [ブラウザー拡張機能 - Mozilla | MDN](https://developer.mozilla.org/ja/docs/Mozilla/Add-ons/WebExtensions)
