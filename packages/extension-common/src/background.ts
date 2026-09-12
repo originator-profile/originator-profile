@@ -4,7 +4,6 @@ import { setupLinkVerification } from "./link-verification/background";
 import type { WarningUrlBuilder } from "./link-verification/types";
 import { overlayExtensionMessenger } from "./overlay/extension-events";
 import { setupTabBadge } from "./tab-badge/background";
-import "./utils/cors-basic-auth";
 
 /** Firefox のサイドバーの開閉を検知するポーリング間隔（ミリ秒） */
 const SIDEBAR_POLL_INTERVAL_MS = 500;
@@ -157,30 +156,4 @@ export function setupBackground(config: BackgroundConfig) {
       );
     }
   });
-
-  // --- Basic Auth ---
-
-  if (import.meta.env.BASIC_AUTH) {
-    for (const credential of import.meta.env.BASIC_AUTH_CREDENTIALS) {
-      chrome.webRequest.onAuthRequired.addListener(
-        () => ({
-          authCredentials: {
-            username: credential.username,
-            password: credential.password,
-          },
-        }),
-        {
-          urls:
-            credential.domain === "localhost"
-              ? [
-                  "http://localhost:8080/*",
-                  // Firefox のため
-                  "http://localhost/*",
-                ]
-              : [`https://${credential.domain}/*`],
-        },
-        ["blocking"],
-      );
-    }
-  }
 }

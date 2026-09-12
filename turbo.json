@@ -34,21 +34,11 @@
     },
     "@originator-profile/inspector#build": {
       "dependsOn": ["^build"],
-      "env": [
-        "NODE_ENV",
-        "BASIC_AUTH",
-        "BASIC_AUTH_CREDENTIALS",
-        "REGISTRY_OPS"
-      ]
+      "env": ["NODE_ENV", "REGISTRY_OPS"]
     },
     "@originator-profile/lens#build": {
       "dependsOn": ["^build"],
-      "env": [
-        "NODE_ENV",
-        "BASIC_AUTH",
-        "BASIC_AUTH_CREDENTIALS",
-        "REGISTRY_OPS"
-      ]
+      "env": ["NODE_ENV", "REGISTRY_OPS"]
     },
     "demo-page#build": {
       "dependsOn": ["@originator-profile/vite-plugin#build"],
