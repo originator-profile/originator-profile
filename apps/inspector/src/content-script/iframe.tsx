@@ -4,7 +4,6 @@ import App from "./App";
 
 const init = () => {
   const root = document.createElement("div");
-  if (!root) return;
   document.body.appendChild(root);
   ReactDOM.createRoot(root).render(
     <React.StrictMode>

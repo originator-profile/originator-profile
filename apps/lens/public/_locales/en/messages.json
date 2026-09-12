@@ -104,77 +104,8 @@
   "Unsupported_UnknownError": {
     "message": "The data required to verify the site operator or content creator either does not exist or could not be retrieved"
   },
-  "Unsupported_NoReliabilityInformationYet": {
-    "message": "Organization reliability information and publication distribution channel are not available yet"
-  },
-  "Unsupported_ReliabilityInformationRetrievalFailed": {
-    "message": "Failed to retrieve organization reliability information and publication distribution channel"
-  },
   "Unsupported_OpNotSupported": {
     "message": "This site does not support OP yet"
-  },
-  "Unsupported_FollowingCausesConsidered": {
-    "message": "The following causes are considered"
-  },
-  "ErrorCheckList_ErrorDetails": {
-    "message": "Error details"
-  },
-  "Unsupported_Message": {
-    "message": "Message"
-  },
-  "Unsupported_ErrorCode": {
-    "message": "Error code"
-  },
-  "Unsupported_ReliabilityInformationContactStatement": {
-    "message": "If you want to know about the organization's reliability information and publication distribution channel on this page, please contact the site administrator listed on the site"
-  },
-  "Unsupported_ReliabilityResolvesFollowings": {
-    "message": "Having organization reliability information and publication distribution channel can solve the following issues"
-  },
-  "Unsupported_ChallengeInternetUser": {
-    "message": "Challenges for general internet users"
-  },
-  "Unsupported_ChallengeReliableInformation": {
-    "message": "Is there a way to see only reliable information in online articles and advertisements that actually convey facts...?"
-  },
-  "Unsupported_ChallengeFakeNews": {
-    "message": "Can't fake news and harmful sites be eliminated somehow...?"
-  },
-  "Unsupported_ChallengeReliabilityProblemAndSolutionStatement": {
-    "message": "Against the backdrop of the attention economy (valuing attention-grabbing), a structure has been created where articles that stand out, even if they are fake news, are more profitable than articles that convey facts. One major cause of this is the lack of a general means to verify the reliability of content publishers. By enabling viewers and ad delivery systems to identify quality articles and media, internet information distribution can be made healthier."
-  },
-  "Unsupported_ChallengeAdAndMedia": {
-    "message": "Challenges for advertising and media professionals"
-  },
-  "Unsupported_ChallengeSketchySite": {
-    "message": "What?! Our ad is on such a dangerous site!!"
-  },
-  "Unsupported_ChallengeAdClashWithArticle": {
-    "message": "Wait, doesn't our ad clash with the content of this article?!"
-  },
-  "Unsupported_ChallengeAdRiskAndSolutionStatement": {
-    "message": "Ads may be placed on inappropriate sites (media), or conversely, unwanted ads may be displayed. Fake sites may appear in search results, and fake news may be prominently spread on social media. By identifying appropriate sites and advertisers, matching appropriate sites and ads, and keeping records of their distribution, brand damage can be prevented."
-  },
-  "Unsupported_ChallengeHowever": {
-    "message": "However..."
-  },
-  "Unsupported_ChallengeInformationRegulation": {
-    "message": "But regulating information isn't good, freedom of speech must also be protected"
-  },
-  "Unsupported_OPDisclaimer_HTML": {
-    "message": "That's right. However, Originator Profile technology does not discriminate between media and advertisers. We are considering utilizing existing certification bodies."
-  },
-  "Unsupported_ChallengeIfThereWereInformation": {
-    "message": "If there were organization reliability information and publication distribution channel..."
-  },
-  "Unsupported_ChallengeReliabilityBenefits": {
-    "message": "It would become visible who created and published this page or content, making it possible to identify false and malicious sites, enabling safe and secure internet use."
-  },
-  "Unsupported_MoreDetailsOP": {
-    "message": "Learn more about Originator Profile"
-  },
-  "Base_ContentsInformation": {
-    "message": "Content Information"
   },
   "Org_InformationTransmissionPolicy": {
     "message": "Information Transmission Policy"
@@ -187,12 +118,6 @@
   },
   "Org_CredentialInformation": {
     "message": "Verified Attribute"
-  },
-  "Org_OrganizationInformation": {
-    "message": "Organization Information"
-  },
-  "Org_ReliabilityInformation": {
-    "message": "Reliability Information"
   },
   "Credentials_UntitledContent": {
     "message": "Untitled Content"
@@ -331,12 +256,6 @@
   },
   "AdvertisementTable_AdDisplayRationale": {
     "message": "Why this Ad"
-  },
-  "Profile_Failed": {
-    "message": "Failed"
-  },
-  "Profile_Succeeded": {
-    "message": "Succeeded"
   },
   "BackHeader_Back": {
     "message": "Back"

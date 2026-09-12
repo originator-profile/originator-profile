@@ -104,77 +104,8 @@
   "Unsupported_UnknownError": {
     "message": "サイトの運営者またはコンテンツ作成者を検証するためのデータが存在しないか、取得できませんでした"
   },
-  "Unsupported_NoReliabilityInformationYet": {
-    "message": "組織の信頼性情報と出版物の流通経路がまだありません"
-  },
-  "Unsupported_ReliabilityInformationRetrievalFailed": {
-    "message": "組織の信頼性情報と出版物の流通経路の取得に失敗しました"
-  },
   "Unsupported_OpNotSupported": {
     "message": "このサイトはまだOPに対応していません"
-  },
-  "Unsupported_FollowingCausesConsidered": {
-    "message": "以下のような原因が考えられます"
-  },
-  "ErrorCheckList_ErrorDetails": {
-    "message": "エラーの詳細"
-  },
-  "Unsupported_Message": {
-    "message": "メッセージ"
-  },
-  "Unsupported_ErrorCode": {
-    "message": "エラーコード"
-  },
-  "Unsupported_ReliabilityInformationContactStatement": {
-    "message": "このページにおける組織の信頼性情報と出版物の流通経路について\n知りたい場合はサイト内に記載されている\n運営管理者にお問い合わせください"
-  },
-  "Unsupported_ReliabilityResolvesFollowings": {
-    "message": "組織の信頼性情報と出版物の流通経路があることで\n以下の課題を解決できます"
-  },
-  "Unsupported_ChallengeInternetUser": {
-    "message": "一般的なネットユーザーの課題"
-  },
-  "Unsupported_ChallengeReliableInformation": {
-    "message": "ちゃんと事実を伝えているウェブ上の記事とか広告とかって、信頼できる情報だけ見る方法はないのかしら...？"
-  },
-  "Unsupported_ChallengeFakeNews": {
-    "message": "フェイクニュースや有害サイトってどうやってもなくならないの...？"
-  },
-  "Unsupported_ChallengeReliabilityProblemAndSolutionStatement": {
-    "message": "アテンションエコノミー（関心を引くことの価値化）を背景に、事実を伝える記事より例えフェイクニュースであっても目立つ記事の方が利益が上がる構造ができています。これはコンテンツ発信者とその信頼性を確認する一般的な手段が無いことが大きな原因の一つです。閲覧者や広告配信システムが良質な記事やメディアを識別可能にすれば、インターネットの情報流通はより健全化できます。"
-  },
-  "Unsupported_ChallengeAdAndMedia": {
-    "message": "広告・メディア関係者の課題"
-  },
-  "Unsupported_ChallengeSketchySite": {
-    "message": "えええー！？ こんな危険なサイトにウチの広告が！！"
-  },
-  "Unsupported_ChallengeAdClashWithArticle": {
-    "message": "あれ、この記事の内容にウチの広告は合わないのでは！？"
-  },
-  "Unsupported_ChallengeAdRiskAndSolutionStatement": {
-    "message": "不適切なサイト (メディア) に広告が掲載されたり、逆に、表示して欲しくない広告が掲載されることがあります。検索結果に偽サイトなどが表示されたり、SNS でもフェイクニュースが目立った形で拡散されたりしています。適切なサイトや広告主を識別し、適切なサイトと広告のマッチングをしたり、その配信記録を残すことでブランド毀損を防げます。"
-  },
-  "Unsupported_ChallengeHowever": {
-    "message": "一方で..."
-  },
-  "Unsupported_ChallengeInformationRegulation": {
-    "message": "でも、情報の規制は良くないよね、言論の自由も認められなければいけない"
-  },
-  "Unsupported_OPDisclaimer_HTML": {
-    "message": "そのとおりです。ただし、Originator Profile技術はメディアや広告主の<ruby>峻別<rp>(</rp><rt>しゅんべつ</rt><rp>)</rp></ruby>をおこなうものではありません。現存する認証機関などに活用してもらうことを考えています。"
-  },
-  "Unsupported_ChallengeIfThereWereInformation": {
-    "message": "もしも組織の信頼性情報と出版物の流通経路があると..."
-  },
-  "Unsupported_ChallengeReliabilityBenefits": {
-    "message": "このページやコンテンツが誰のもとで作成・出版されたのかが見える化されて、虚偽、悪質なサイトも判別できるようになり、安心、安全なインターネット活用が可能になります。"
-  },
-  "Unsupported_MoreDetailsOP": {
-    "message": "Originator Profile をもっと詳しく"
-  },
-  "Base_ContentsInformation": {
-    "message": "コンテンツ情報"
   },
   "Org_InformationTransmissionPolicy": {
     "message": "情報発信ポリシー"
@@ -187,12 +118,6 @@
   },
   "Org_CredentialInformation": {
     "message": "検証済み属性"
-  },
-  "Org_OrganizationInformation": {
-    "message": "組織情報"
-  },
-  "Org_ReliabilityInformation": {
-    "message": "信頼性情報"
   },
   "Credentials_UntitledContent": {
     "message": "タイトル未設定のコンテンツ"
@@ -331,12 +256,6 @@
   },
   "AdvertisementTable_AdDisplayRationale": {
     "message": "この広告が表示されている理由"
-  },
-  "Profile_Failed": {
-    "message": "失敗"
-  },
-  "Profile_Succeeded": {
-    "message": "成功"
   },
   "BackHeader_Back": {
     "message": "戻る"

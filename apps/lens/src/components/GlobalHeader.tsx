@@ -23,7 +23,6 @@ function GlobalHeader({ className, children }: Props) {
     isKeyboardNavigation,
     buttonRef,
     menuRef,
-    setItemRef,
     buttonProps,
     menuProps,
     toggleMenu,
@@ -80,8 +79,6 @@ function GlobalHeader({ className, children }: Props) {
             {...menuProps}
           >
             <MenuItem
-              ref={setItemRef(0)}
-              value="detail"
               active={activeIndex === 0}
               onKeyDown={(e) => handleMenuKeyDown(e, "detail")}
               onMouseEnter={() => handleItemMouseEnter(0)}
