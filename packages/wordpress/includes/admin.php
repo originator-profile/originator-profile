@@ -10,6 +10,10 @@ use const Profile\Config\PROFILE_DEFAULT_CA_TARGET_CSS_SELECTOR;
 use const Profile\Config\PROFILE_DEFAULT_CA_TARGET_HTML;
 use const Profile\Config\PROFILE_DEFAULT_CA_LOG_DIR;
 
+require_once __DIR__ . '/exclusion.php';
+use function Profile\Exclusion\parse_rules;
+use function Profile\Exclusion\is_excluded;
+
 /** 管理者画面の初期化 */
 function init() {
 	\add_action( 'admin_menu', '\Profile\Admin\add_options_page' );
@@ -70,11 +74,33 @@ function init() {
 
 /** 設定画面の追加 */
 function add_options_page() {
-	\add_options_page( 'CA Manager', 'CA Manager', 'manage_options', 'ca-manager', '\Profile\Admin\settings_page' );
+	$hook = \add_options_page( 'CA Manager', 'CA Manager', 'manage_options', 'ca-manager', '\Profile\Admin\settings_page' );
+	if ( $hook ) {
+		\add_action( 'load-' . $hook, '\Profile\Admin\validate_exclusion_request' );
+	}
+}
+
+/** HTML送信前に判定リクエストの権限・nonceを検証する。 */
+function validate_exclusion_request() {
+	if ( isset( $_POST['profile_ca_check_url'] ) ) {
+		if ( ! \current_user_can( 'manage_options' ) ) {
+			\wp_die( '権限がありません。', '', array( 'response' => 403 ) );
+		}
+		\check_admin_referer( 'profile_ca_check_exclusion' );
+	}
 }
 
 /** 設定項目の追加 */
 function register_settings() {
+	\register_setting(
+		'ca-manager-exclusion',
+		'profile_ca_excluded_urls',
+		array(
+			'type'              => 'array',
+			'default'           => array(),
+			'sanitize_callback' => '\\Profile\\Admin\\sanitize_excluded_urls',
+		)
+	);
 	\register_setting( 'ca-manager', 'profile_ca_server_hostname', array( 'default' => PROFILE_DEFAULT_CA_SERVER_HOSTNAME ) );
 	\register_setting( 'ca-manager', 'profile_ca_issuer_id' );
 	\register_setting( 'ca-manager', 'profile_ca_server_admin_secret' );
@@ -96,15 +122,89 @@ function register_settings() {
 
 /** 設定画面 */
 function settings_page() {
+	if ( ! \current_user_can( 'manage_options' ) ) {
+		\wp_die( '権限がありません。' );
+	}
 	?>
 		<div class="wrap">
 			<h1>CA Manager</h1>
+			<?php exclusion_settings(); ?>
 			<form method="post" action="options.php">
 				<?php \settings_fields( 'ca-manager' ); ?>
 				<?php \do_settings_sections( 'ca-manager' ); ?>
 				<?php \submit_button(); ?>
 			</form>
 		</div>
+	<?php
+}
+
+/**
+ * 除外ルールを検証し、不正な入力では保存済み設定を維持する。
+ *
+ * @param mixed $value 改行区切りのルール、または検証済み配列。
+ * @return mixed 検証済みルール、または保存済み設定。
+ */
+function sanitize_excluded_urls( $value ) {
+	try {
+		return parse_rules( $value );
+	} catch ( \InvalidArgumentException $error ) {
+		\add_settings_error( 'profile_ca_excluded_urls', 'invalid_exclusion_rules', $error->getMessage() . ' 保存済みの除外設定を維持しました。' );
+		return \get_option( 'profile_ca_excluded_urls', array() );
+	}
+}
+
+/** 除外設定と、保存済みルールによるURL判定フォーム。 */
+function exclusion_settings() {
+	$rules       = \get_option( 'profile_ca_excluded_urls', array() );
+	$rules_text  = is_array( $rules ) ? implode( "\n", array_filter( $rules, 'is_string' ) ) : '';
+	$check_url   = '';
+	$check_text  = '';
+	$check_error = false;
+	if ( isset( $_POST['profile_ca_check_url'] ) ) {
+		\check_admin_referer( 'profile_ca_check_exclusion' );
+		// URLは下の共通判定処理で検証する。%エンコードを除去せず、実際の発行時と同じ文字列で照合する。
+		// phpcs:ignore WordPress.Security.ValidatedSanitizedInput.InputNotSanitized
+		$check_url = is_string( $_POST['profile_ca_check_url'] ) ? \wp_unslash( $_POST['profile_ca_check_url'] ) : '';
+		try {
+			if ( ! is_array( $rules ) ) {
+				$check_text  = '保存済みの除外設定が不正です。設定を保存し直してください。';
+				$check_error = true;
+			} else {
+				$check_text = is_excluded( $check_url, $rules )
+					? '除外対象です。この記事のCA自動発行をスキップします。'
+					: '除外対象ではありません。CA発行には別途サーバー設定が必要です。';
+			}
+		} catch ( \InvalidArgumentException $error ) {
+			$check_text  = $error->getMessage();
+			$check_error = true;
+		}
+	}
+	?>
+	<section aria-labelledby="profile-ca-exclusion-heading">
+		<h2 id="profile-ca-exclusion-heading">CA発行対象の除外</h2>
+		<?php \settings_errors( 'profile_ca_excluded_urls' ); ?>
+		<form method="post" action="options.php">
+			<?php \settings_fields( 'ca-manager-exclusion' ); ?>
+			<p><label for="profile_ca_excluded_urls">除外するURL・パターン（1行に1件）</label></p>
+			<textarea id="profile_ca_excluded_urls" name="profile_ca_excluded_urls" rows="6" class="large-text code" aria-describedby="profile-ca-exclusion-help"><?php echo \esc_textarea( $rules_text ); ?></textarea>
+			<div id="profile-ca-exclusion-help">
+				<p>例：<code>/blog/*</code> は直下の記事、<code>/blog/**</code> は下の階層も除外します。公開URL全体や <code>/?p=123</code> も指定できます。</p>
+				<p>末尾の / の有無は同じ扱いです。大文字・小文字とクエリ文字列は区別します。空欄なら除外しません。最大200件、1件2048バイト、合計65536バイトです。</p>
+				<p>設定は次回の公開・更新から適用されます。分割記事は代表URLでまとめて判定します。発行済みCAの削除・失効・配信停止は行いません。</p>
+			</div>
+			<?php \submit_button( '除外設定を保存' ); ?>
+		</form>
+		<form method="post">
+			<?php \wp_nonce_field( 'profile_ca_check_exclusion' ); ?>
+			<p><label for="profile_ca_check_url">判定する公開URL（パーマリンク）</label></p>
+			<input type="url" id="profile_ca_check_url" name="profile_ca_check_url" class="large-text" value="<?php echo \esc_attr( $check_url ); ?>" placeholder="<?php echo \esc_attr( \home_url( '/?p=123' ) ); ?>" required>
+			<p>保存済みの除外ルールで確認します。記事の公開・CAの発行・設定の変更は行いません。</p>
+			<?php \submit_button( 'URLを判定', 'secondary', 'check_exclusion', false ); ?>
+		</form>
+		<?php if ( '' !== $check_text ) : ?>
+			<div role="status" class="notice <?php echo $check_error ? 'notice-error' : 'notice-info'; ?> inline"><p><?php echo \esc_html( $check_text ); ?></p></div>
+		<?php endif; ?>
+	</section>
 	<?php
 }
 
