@@ -229,7 +229,7 @@ function locked( callable $callback ) {
 		return $callback();
 	} catch ( \Throwable $error ) {
 		\Profile\Debug\debug( 'Bulk CA: ' . $error->getMessage() );
-		return new \WP_Error( 'bulk_failed', '処理を完了できませんでした。進捗を再読み込みして確認してください。' );
+		return new \WP_Error( 'bulk_failed', '処理を完了できませんでした。「状態を再取得」を押してください。' );
 	} finally {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery.DirectQuery, WordPress.DB.DirectDatabaseQuery.NoCaching -- Release the connection-scoped lock.
 		$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $name ) );
@@ -404,7 +404,7 @@ function step( array $job ): array {
 function change( string $operation, string $job_id ) {
 	$job = \get_option( JOB_OPTION );
 	if ( ! is_array( $job ) || $job['id'] !== $job_id ) {
-		return new \WP_Error( 'stale_job', '処理が切り替わっています。画面を再読み込みしてください。' );
+		return new \WP_Error( 'stale_job', '処理が切り替わっています。「状態を再取得」を押してください。' );
 	}
 	if ( 'step' === $operation ) {
 		return step( $job );

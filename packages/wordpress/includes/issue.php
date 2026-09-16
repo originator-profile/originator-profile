@@ -146,7 +146,7 @@ function issue_post( \WP_Post $post, bool $only_missing = false ): array {
 				debug( "Post ID {$post->ID}: CA issuance skipped by URL exclusion rules. Existing CAS preserved." );
 				return array(
 					'status'  => 'skipped',
-					'message' => 'CA発行対象外のURLのため、CA発行をスキップしました。',
+					'message' => '除外対象のURLのためスキップしました。',
 				);
 			}
 		} catch ( \InvalidArgumentException $error ) {
@@ -161,7 +161,7 @@ function issue_post( \WP_Post $post, bool $only_missing = false ): array {
 			debug( "Post ID {$post->ID}: CA issuance skipped because an existing non-empty CAS was found." );
 			return array(
 				'status'  => 'skipped',
-				'message' => 'CAが発行済みのため、CA発行をスキップしました。',
+				'message' => '発行済みのためスキップしました。',
 			);
 		}
 

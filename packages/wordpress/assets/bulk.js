@@ -484,7 +484,7 @@
       state.cancelSent = false;
       if (error && error.networkFailure) {
         setStatus(
-          "通信に失敗しました。サーバー側で処理済みの可能性があります。状態を再取得して確認してください。",
+          "通信に失敗しました。サーバー側で処理済みの可能性があります。「状態を再取得」を押してください。",
           "error",
         );
       } else {
@@ -551,10 +551,7 @@
         return;
       }
       if ("all" === filters.mode && !elements.reissueConfirm.checked) {
-        setStatus(
-          "全件再発行を開始するには確認欄にチェックしてください。",
-          "error",
-        );
+        setStatus("再発行の確認欄にチェックしてください。", "error");
         elements.reissueConfirm.focus();
         return;
       }
@@ -658,8 +655,8 @@
       state.running = false;
       setStatus(
         requestInFlight
-          ? "現在の1件の処理が完了してから一時停止します。再開する場合はボタンを押してください。"
-          : "一時停止しました。再開する場合はボタンを押してください。",
+          ? "処理中の記事が完了したら一時停止します。"
+          : "一時停止しました。",
         "warning",
       );
       updateButtons();
