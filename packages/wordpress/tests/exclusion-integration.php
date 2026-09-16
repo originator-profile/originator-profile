@@ -2,10 +2,8 @@
 /**
  * Real WordPress integration checks for CA issuance URL exclusions.
  *
- * This file intentionally does not use the .test.php suffix. It is run with
- * wp eval-file after WordPress and the CA Manager plugin have loaded:
- *
- * See README.md for the container command.
+ * Run with composer run test:integration:exclusion in the development container.
+ * The .test.php suffix is omitted to keep this separate from PHPUnit.
  *
  * @package Profile
  */
@@ -74,7 +72,7 @@ $option_values = array(
 );
 
 /**
- * Permalink format selected for the current process-only test run.
+ * Process-local permalink format under test; the saved site option is unchanged.
  *
  * @var string $permalink_structure
  */
