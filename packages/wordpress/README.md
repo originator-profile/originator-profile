@@ -517,11 +517,11 @@ $ docker compose run --rm -w /var/www/html/wp-content/plugins/ca-manager wordpre
 
 ## Composer スクリプト
 
-開発用イメージで依存関係を導入し、WordPress を起動して CA Manager を有効化した後、ホストの `packages/wordpress` から実行します。
+ホストの `packages/wordpress` からスクリプトの一覧を確認できます。
 
 ```sh
 docker compose exec -T --user www-data \
-  -w /var/www/html/wp-content/plugins/ca-manager wordpress composer run test:integration:exclusion
+  -w /var/www/html/wp-content/plugins/ca-manager wordpress composer run --list
 ```
 
 help
@@ -531,7 +531,7 @@ test
 : 単体テスト
 
 test:integration:exclusion
-: CA発行対象の除外に関する結合テスト
+: CA発行対象の除外に関する結合テスト。開発用イメージで依存関係を導入し、WordPress を起動して CA Manager を有効化してから実行します。
 
 lint
 : 静的コード解析
