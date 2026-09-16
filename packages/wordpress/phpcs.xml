@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <ruleset name="Profile">
+  <!-- PHP coding standards; JavaScript is checked by Prettier and browser tests. -->
+  <arg name="extensions" value="php" />
   <rule ref="WordPress" />
   <exclude-pattern>vendor</exclude-pattern>
   <exclude-pattern>node_modules</exclude-pattern>
