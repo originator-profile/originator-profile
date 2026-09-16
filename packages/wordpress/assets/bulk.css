@@ -1,0 +1,4 @@
+/* Keep conditional controls hidden despite WordPress button/notice styles. */
+#profile-ca-bulk [hidden] {
+  display: none !important;
+}
