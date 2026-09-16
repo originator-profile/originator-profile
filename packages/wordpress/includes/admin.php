@@ -80,12 +80,9 @@ function add_options_page() {
 	}
 }
 
-/** HTML送信前に判定リクエストの権限・nonceを検証する。 */
+/** HTML送信前に判定リクエストのnonceを検証する。 */
 function validate_exclusion_request() {
 	if ( isset( $_POST['profile_ca_check_url'] ) ) {
-		if ( ! \current_user_can( 'manage_options' ) ) {
-			\wp_die( '権限がありません。', '', array( 'response' => 403 ) );
-		}
 		\check_admin_referer( 'profile_ca_check_exclusion' );
 	}
 }
@@ -122,9 +119,6 @@ function register_settings() {
 
 /** 設定画面 */
 function settings_page() {
-	if ( ! \current_user_can( 'manage_options' ) ) {
-		\wp_die( '権限がありません。' );
-	}
 	?>
 		<div class="wrap">
 			<h1>CA Manager</h1>

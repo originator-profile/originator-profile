@@ -517,20 +517,21 @@ $ docker compose run --rm -w /var/www/html/wp-content/plugins/ca-manager wordpre
 
 ## Composer スクリプト
 
-除外判定の単体テストは `composer run test` に含まれます。実際の WordPress 公開・更新フックと CA リクエストの抑止は、開発用 WordPress で次の結合テストを実行して確認できます。
+開発用イメージで依存関係を導入し、WordPress を起動して CA Manager を有効化した後、ホストの `packages/wordpress` から実行します。
 
 ```sh
-docker compose exec -T --user www-data -w /var/www/html wordpress \
-  wp eval-file /var/www/html/wp-content/plugins/ca-manager/tests/exclusion-integration.php
+docker compose exec -T --user www-data \
+  -w /var/www/html/wp-content/plugins/ca-manager wordpress composer run test:integration:exclusion
 ```
-
-このテストは基本形式と投稿名形式のパーマリンクで検証します。URL形式は実行プロセス内だけで切り替え、一時的な記事を作成し、終了時に削除します。CA サーバー設定は実行プロセス内のフィルターで置き換え、外部 HTTP リクエストを模擬応答で止めます。保存済み設定や実サーバーには変更を加えません。模擬応答は実際の署名済み CA ではありません。
 
 help
 : このテキストの表示
 
 test
-: テスト
+: 単体テスト
+
+test:integration:exclusion
+: CA発行対象の除外に関する結合テスト
 
 lint
 : 静的コード解析
