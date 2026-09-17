@@ -2,14 +2,14 @@
   "use strict";
 
   function start() {
-    var config = window.profileCaBulk || {};
-    var form = document.getElementById("profile-ca-bulk-form");
+    const config = window.profileCaBulk || {};
+    const form = document.getElementById("profile-ca-bulk-form");
 
     if (!form) {
       return;
     }
 
-    var elements = {
+    const elements = {
       postType: document.getElementById("profile-ca-bulk-post-type"),
       category: document.getElementById("profile-ca-bulk-category"),
       dateFrom: document.getElementById("profile-ca-bulk-date-from"),
@@ -44,7 +44,7 @@
       previewBody: document.getElementById("profile-ca-bulk-preview-body"),
       logBody: document.getElementById("profile-ca-bulk-log-body"),
     };
-    var state = {
+    const state = {
       job: null,
       requestInFlight: false,
       requestSequence: 0,
@@ -56,7 +56,7 @@
     };
 
     function makeError(message, networkFailure) {
-      var error = new Error(message);
+      const error = new Error(message);
       error.bulkRequestError = true;
       error.networkFailure = Boolean(networkFailure);
       return error;
@@ -70,7 +70,7 @@
     }
 
     function formatCount(value) {
-      var count = Number(value);
+      const count = Number(value);
       if (!Number.isFinite(count)) {
         return "0";
       }
@@ -84,7 +84,7 @@
     }
 
     function setStatus(message, type) {
-      var paragraph = document.createElement("p");
+      const paragraph = document.createElement("p");
       paragraph.textContent = valueAsText(message);
       clearNode(elements.status);
       elements.status.appendChild(paragraph);
@@ -98,7 +98,7 @@
     }
 
     function safeHref(value) {
-      var href = valueAsText(value).trim();
+      const href = valueAsText(value).trim();
       if (/^https?:\/\//i.test(href)) {
         return href;
       }
@@ -109,21 +109,21 @@
     }
 
     function appendCell(row, value) {
-      var cell = document.createElement("td");
+      const cell = document.createElement("td");
       cell.textContent = valueAsText(value);
       row.appendChild(cell);
       return cell;
     }
 
     function appendLogRow(body, entry) {
-      var row = document.createElement("tr");
+      const row = document.createElement("tr");
       appendCell(row, entry && entry.id);
 
-      var titleCell = document.createElement("td");
-      var title = valueAsText(entry && entry.title) || "(無題)";
-      var href = safeHref(entry && entry.url);
+      const titleCell = document.createElement("td");
+      const title = valueAsText(entry && entry.title) || "(無題)";
+      const href = safeHref(entry && entry.url);
       if (href) {
-        var link = document.createElement("a");
+        const link = document.createElement("a");
         link.href = href;
         link.textContent = title;
         titleCell.appendChild(link);
@@ -138,13 +138,13 @@
     }
 
     function statusLabel(status) {
-      var labels = {
+      const labels = {
         ready: "発行対象",
         success: "成功",
         failed: "失敗",
         skipped: "スキップ",
       };
-      var key = valueAsText(status);
+      const key = valueAsText(status);
       return labels[key] || key;
     }
 
@@ -160,9 +160,9 @@
     }
 
     function renderPreview(data) {
-      var sample =
+      const sample =
         data && Array.isArray(data.sample) ? data.sample.slice(0, 20) : [];
-      var count =
+      const count =
         data && Number.isFinite(Number(data.count)) ? Number(data.count) : 0;
       elements.previewCount.textContent =
         "除外前の候補件数: " +
@@ -171,8 +171,8 @@
       clearNode(elements.previewBody);
 
       if (0 === sample.length) {
-        var emptyRow = document.createElement("tr");
-        var emptyCell = document.createElement("td");
+        const emptyRow = document.createElement("tr");
+        const emptyCell = document.createElement("td");
         emptyCell.colSpan = 4;
         emptyCell.textContent = "候補はありません。";
         emptyRow.appendChild(emptyCell);
@@ -191,6 +191,45 @@
       );
     }
 
+    function renderRunningJobStatus() {
+      if (state.running) {
+        setStatus("一括発行を実行しています。", "info");
+      } else if (state.cancelRequested) {
+        setStatus(
+          "処理中の1件が完了後に一括発行をキャンセルします。",
+          "warning",
+        );
+      } else {
+        setStatus(
+          "実行中のジョブがあります。「一括発行を再開」を押すと続行します。",
+          "warning",
+        );
+      }
+    }
+
+    function renderCompletedJobStatus(job) {
+      if (hasFailedIds(job)) {
+        setStatus(
+          "一括発行が完了しました。失敗した記事を再試行できます。",
+          "warning",
+        );
+      } else {
+        setStatus("一括発行が完了しました。", "success");
+      }
+    }
+
+    function renderJobStatus(job) {
+      if ("running" === job.status) {
+        renderRunningJobStatus();
+      } else if ("completed" === job.status) {
+        renderCompletedJobStatus(job);
+      } else if ("cancelled" === job.status) {
+        setStatus("一括発行をキャンセルしました。", "warning");
+      } else {
+        setStatus("ジョブの状態を確認できません。", "error");
+      }
+    }
+
     function renderJob(job) {
       if (!job || "object" !== typeof job) {
         elements.progress.textContent = "";
@@ -201,7 +240,7 @@
         return;
       }
 
-      var counts =
+      const counts =
         job.counts && "object" === typeof job.counts ? job.counts : {};
       elements.progress.textContent =
         "進捗: " +
@@ -214,42 +253,14 @@
       elements.skippedCount.textContent = formatCount(counts.skipped);
       elements.counts.hidden = false;
       renderLog(job.log);
-
-      if ("running" === job.status) {
-        if (state.running) {
-          setStatus("一括発行を実行しています。", "info");
-        } else if (state.cancelRequested) {
-          setStatus(
-            "処理中の1件が完了後に一括発行をキャンセルします。",
-            "warning",
-          );
-        } else {
-          setStatus(
-            "実行中のジョブがあります。「一括発行を再開」を押すと続行します。",
-            "warning",
-          );
-        }
-      } else if ("completed" === job.status) {
-        if (hasFailedIds(job)) {
-          setStatus(
-            "一括発行が完了しました。失敗した記事を再試行できます。",
-            "warning",
-          );
-        } else {
-          setStatus("一括発行が完了しました。", "success");
-        }
-      } else if ("cancelled" === job.status) {
-        setStatus("一括発行をキャンセルしました。", "warning");
-      } else {
-        setStatus("ジョブの状態を確認できません。", "error");
-      }
+      renderJobStatus(job);
       updateButtons();
     }
 
     function collectFilters() {
-      var postType = elements.postType.value;
-      var categoryValue = elements.category.value;
-      var category = /^\d+$/.test(categoryValue)
+      let postType = elements.postType.value;
+      const categoryValue = elements.category.value;
+      let category = /^\d+$/.test(categoryValue)
         ? parseInt(categoryValue, 10)
         : 0;
       if (!Number.isFinite(category) || category < 0) {
@@ -259,7 +270,7 @@
         postType = "all";
       }
 
-      var mode = elements.mode.value;
+      let mode = elements.mode.value;
       if (["missing", "all"].indexOf(mode) < 0) {
         mode = "missing";
       }
@@ -273,7 +284,7 @@
     }
 
     function validateFilters(filters) {
-      var datePattern = /^\d{4}-\d{2}-\d{2}$/;
+      const datePattern = /^\d{4}-\d{2}-\d{2}$/;
       if (filters.date_from && !datePattern.test(filters.date_from)) {
         return "開始日はYYYY-MM-DD形式で指定してください。";
       }
@@ -291,8 +302,8 @@
     }
 
     function getValidatedFilters() {
-      var filters = collectFilters();
-      var error = validateFilters(filters);
+      const filters = collectFilters();
+      const error = validateFilters(filters);
       if (error) {
         setStatus(error, "error");
         return null;
@@ -301,12 +312,18 @@
     }
 
     function updateModeVisibility() {
-      var reissue = "all" === elements.mode.value;
+      const reissue = "all" === elements.mode.value;
       elements.reissueWarning.hidden = !reissue;
       elements.reissueConfirmWrap.hidden = !reissue;
       if (!reissue) {
         elements.reissueConfirm.checked = false;
       }
+    }
+
+    function hasSelectOption(options, value) {
+      return Array.prototype.some.call(options, function (option) {
+        return option.value === value;
+      });
     }
 
     function applyJobFilters(filters) {
@@ -317,14 +334,11 @@
         elements.postType.value = filters.post_type;
       }
       if (undefined !== filters.category) {
-        var categoryValue = String(filters.category);
-        var categoryExists = false;
-        for (var index = 0; index < elements.category.options.length; index++) {
-          if (elements.category.options[index].value === categoryValue) {
-            categoryExists = true;
-            break;
-          }
-        }
+        const categoryValue = String(filters.category);
+        const categoryExists = hasSelectOption(
+          elements.category.options,
+          categoryValue,
+        );
         elements.category.value = categoryExists ? categoryValue : "0";
       }
       if ("string" === typeof filters.date_from) {
@@ -339,10 +353,7 @@
       updateModeVisibility();
     }
 
-    function updateButtons() {
-      var jobRunning = Boolean(state.job && "running" === state.job.status);
-      var busy = state.requestInFlight;
-      var filtersLocked = busy || state.running || jobRunning;
+    function setFilterControlsDisabled(disabled) {
       [
         elements.postType,
         elements.category,
@@ -351,10 +362,11 @@
         elements.mode,
         elements.reissueConfirm,
       ].forEach(function (control) {
-        control.disabled = filtersLocked;
+        control.disabled = disabled;
       });
-      elements.preview.disabled = busy || state.running || jobRunning;
-      elements.start.disabled = busy || state.running || jobRunning;
+    }
+
+    function updateRunningButtons(jobRunning, busy) {
       elements.resume.hidden = !(
         jobRunning &&
         !state.running &&
@@ -363,20 +375,34 @@
       elements.resume.disabled = busy;
       elements.pause.hidden = !state.running;
       elements.pause.disabled = state.requestInFlight && state.cancelRequested;
+      elements.cancel.hidden = !jobRunning;
+      elements.cancel.disabled = busy && state.cancelRequested;
+    }
+
+    function updateRetryButton(busy) {
       elements.retry.hidden = !(
         state.job &&
         "completed" === state.job.status &&
         hasFailedIds(state.job)
       );
       elements.retry.disabled = busy || state.running;
-      elements.cancel.hidden = !jobRunning;
-      elements.cancel.disabled = busy && state.cancelRequested;
+    }
+
+    function updateButtons() {
+      const jobRunning = Boolean(state.job && "running" === state.job.status);
+      const busy = state.requestInFlight;
+      const filtersLocked = busy || state.running || jobRunning;
+      setFilterControlsDisabled(filtersLocked);
+      elements.preview.disabled = filtersLocked;
+      elements.start.disabled = filtersLocked;
+      updateRunningButtons(jobRunning, busy);
+      updateRetryButton(busy);
       elements.refresh.disabled =
         busy || state.running || state.cancelRequested;
     }
 
     function appendFilters(params, filters) {
-      var values = filters || collectFilters();
+      const values = filters || collectFilters();
       params.set("post_type", values.post_type);
       params.set("category", values.category);
       params.set("date_from", values.date_from);
@@ -401,6 +427,58 @@
       return jobFromData(data);
     }
 
+    function requestJobId(operation) {
+      if (["step", "retry", "cancel"].indexOf(operation) < 0) {
+        return "";
+      }
+      if (!state.job || !state.job.id) {
+        throw makeError(
+          "操作対象のジョブがありません。状態を再取得してください。",
+          false,
+        );
+      }
+      return String(state.job.id);
+    }
+
+    function buildRequestParams(operation, options) {
+      const params = new URLSearchParams();
+      params.set("action", "profile_ca_bulk");
+      params.set("nonce", config.nonce);
+      params.set("operation", operation);
+      appendFilters(params, options && options.filters);
+
+      const jobId = requestJobId(operation);
+      if (jobId) {
+        params.set("job_id", jobId);
+      }
+      if (
+        options &&
+        Object.prototype.hasOwnProperty.call(options, "confirmReissue")
+      ) {
+        params.set("confirm_reissue", options.confirmReissue ? "1" : "0");
+      }
+      return params;
+    }
+
+    async function readResponsePayload(response) {
+      try {
+        return await response.json();
+      } catch (error) {
+        throw makeError("サーバーから不正な応答を受け取りました。", true);
+      }
+    }
+
+    function responseData(response, payload) {
+      if (!response.ok || !payload || true !== payload.success) {
+        const message =
+          payload && payload.data && payload.data.message
+            ? valueAsText(payload.data.message)
+            : "一括発行のリクエストに失敗しました。";
+        throw makeError(message, false);
+      }
+      return payload.data;
+    }
+
     async function request(operation, options) {
       if (state.requestInFlight) {
         throw makeError("別のリクエストを処理中です。", false);
@@ -409,38 +487,23 @@
         throw makeError("一括発行の通信設定を読み込めませんでした。", false);
       }
 
-      var requestId = state.requestSequence + 1;
+      const requestId = state.requestSequence + 1;
       state.requestSequence = requestId;
       state.latestRequest = requestId;
       state.requestInFlight = true;
       updateButtons();
 
-      var params = new URLSearchParams();
-      params.set("action", "profile_ca_bulk");
-      params.set("nonce", config.nonce);
-      params.set("operation", operation);
-      appendFilters(params, options && options.filters);
-
-      if (["step", "retry", "cancel"].indexOf(operation) >= 0) {
-        if (!state.job || !state.job.id) {
-          state.requestInFlight = false;
-          updateButtons();
-          throw makeError(
-            "操作対象のジョブがありません。状態を再取得してください。",
-            false,
-          );
-        }
-        params.set("job_id", String(state.job.id));
-      }
-      if (
-        options &&
-        Object.prototype.hasOwnProperty.call(options, "confirmReissue")
-      ) {
-        params.set("confirm_reissue", options.confirmReissue ? "1" : "0");
+      let params;
+      try {
+        params = buildRequestParams(operation, options);
+      } catch (error) {
+        state.requestInFlight = false;
+        updateButtons();
+        throw error;
       }
 
       try {
-        var response = await fetch(config.ajaxUrl, {
+        const response = await fetch(config.ajaxUrl, {
           method: "POST",
           credentials: "same-origin",
           headers: {
@@ -448,23 +511,11 @@
           },
           body: params,
         });
-        var payload;
-        try {
-          payload = await response.json();
-        } catch (error) {
-          throw makeError("サーバーから不正な応答を受け取りました。", true);
-        }
+        const payload = await readResponsePayload(response);
         if (requestId !== state.latestRequest) {
           return null;
         }
-        if (!response.ok || !payload || true !== payload.success) {
-          var message =
-            payload && payload.data && payload.data.message
-              ? valueAsText(payload.data.message)
-              : "一括発行のリクエストに失敗しました。";
-          throw makeError(message, false);
-        }
-        return payload.data;
+        return responseData(response, payload);
       } catch (error) {
         if (error && error.bulkRequestError) {
           throw error;
@@ -499,7 +550,7 @@
     async function loadStatus() {
       setStatus("状態を読み込んでいます。", "info");
       try {
-        var data = await request("status");
+        const data = await request("status");
         state.job = statusJobFromData(data);
         state.running = false;
         state.cancelRequested = false;
@@ -521,13 +572,13 @@
       ) {
         return;
       }
-      var filters = getValidatedFilters();
+      const filters = getValidatedFilters();
       if (!filters) {
         return;
       }
       setStatus("プレビューを取得しています。", "info");
       try {
-        var data = await request("preview", { filters: filters });
+        const data = await request("preview", { filters: filters });
         if (null === data) {
           return;
         }
@@ -538,21 +589,32 @@
       }
     }
 
-    async function begin() {
-      if (
+    function canStart() {
+      return !(
         state.requestInFlight ||
         state.running ||
         (state.job && "running" === state.job.status)
-      ) {
+      );
+    }
+
+    function confirmReissue(filters) {
+      if ("all" !== filters.mode || elements.reissueConfirm.checked) {
+        return true;
+      }
+      setStatus("再発行の確認欄にチェックしてください。", "error");
+      elements.reissueConfirm.focus();
+      return false;
+    }
+
+    async function begin() {
+      if (!canStart()) {
         return;
       }
-      var filters = getValidatedFilters();
+      const filters = getValidatedFilters();
       if (!filters) {
         return;
       }
-      if ("all" === filters.mode && !elements.reissueConfirm.checked) {
-        setStatus("再発行の確認欄にチェックしてください。", "error");
-        elements.reissueConfirm.focus();
+      if (!confirmReissue(filters)) {
         return;
       }
 
@@ -560,7 +622,7 @@
       state.cancelSent = false;
       setStatus("一括発行を開始しています。", "info");
       try {
-        var data = await request("start", {
+        const data = await request("start", {
           filters: filters,
           confirmReissue:
             "all" === filters.mode && elements.reissueConfirm.checked,
@@ -586,64 +648,82 @@
       }
     }
 
+    function shouldStopLoop() {
+      if (
+        state.cancelRequested ||
+        !state.job ||
+        "running" !== state.job.status
+      ) {
+        state.running = false;
+        return true;
+      }
+      return false;
+    }
+
+    async function processStep() {
+      try {
+        const data = await request("step");
+        if (null === data) {
+          return { stop: true, requestFailed: false };
+        }
+
+        const job = jobFromData(data);
+        if (!job) {
+          showRequestError(
+            makeError("サーバーからジョブ情報を受け取れませんでした。", false),
+          );
+          return { stop: true, requestFailed: true };
+        }
+        state.job = job;
+        renderJob(state.job);
+        if ("running" !== state.job.status || state.cancelRequested) {
+          state.running = false;
+        }
+        return { stop: false, requestFailed: false };
+      } catch (error) {
+        showRequestError(error);
+        return { stop: true, requestFailed: true };
+      }
+    }
+
+    async function runSteps() {
+      let requestFailed = false;
+      while (state.running && !shouldStopLoop()) {
+        // 一件ずつ順番に発行するため、ここは逐次処理にする。
+        // oxlint-disable-next-line no-await-in-loop
+        const result = await processStep();
+        requestFailed = result.requestFailed;
+        if (result.stop) {
+          break;
+        }
+      }
+      return requestFailed;
+    }
+
+    async function finishLoop(requestFailed) {
+      state.loopActive = false;
+      updateButtons();
+      if (
+        !requestFailed &&
+        state.cancelRequested &&
+        state.job &&
+        "running" === state.job.status &&
+        !state.cancelSent
+      ) {
+        await cancelJob();
+      }
+    }
+
     async function runLoop() {
       if (state.loopActive) {
         return;
       }
       state.loopActive = true;
-      var requestFailed = false;
+      let requestFailed = false;
       try {
-        while (state.running) {
-          if (
-            state.cancelRequested ||
-            !state.job ||
-            "running" !== state.job.status
-          ) {
-            state.running = false;
-            break;
-          }
-
-          var data;
-          try {
-            data = await request("step");
-          } catch (error) {
-            requestFailed = true;
-            showRequestError(error);
-            break;
-          }
-          if (null === data) {
-            break;
-          }
-
-          var job = jobFromData(data);
-          if (!job) {
-            requestFailed = true;
-            showRequestError(
-              makeError(
-                "サーバーからジョブ情報を受け取れませんでした。",
-                false,
-              ),
-            );
-            break;
-          }
-          state.job = job;
-          renderJob(state.job);
-          if ("running" !== state.job.status || state.cancelRequested) {
-            state.running = false;
-          }
-        }
+        requestFailed = await runSteps();
       } finally {
-        state.loopActive = false;
-        updateButtons();
-        if (
-          !requestFailed &&
-          state.cancelRequested &&
-          state.job &&
-          "running" === state.job.status &&
-          !state.cancelSent
-        ) {
-          await cancelJob();
-        }
+        await finishLoop(requestFailed);
       }
     }
 
@@ -651,7 +731,7 @@
       if (!state.running) {
         return;
       }
-      var requestInFlight = state.requestInFlight;
+      const requestInFlight = state.requestInFlight;
       state.running = false;
       setStatus(
         requestInFlight
@@ -675,7 +755,7 @@
       state.cancelSent = false;
       state.running = true;
       renderJob(state.job);
-      runLoop();
+      void runLoop().catch(showRequestError);
     }
 
     async function retry() {
@@ -692,7 +772,7 @@
       state.cancelSent = false;
       setStatus("失敗した記事を再試行する準備をしています。", "info");
       try {
-        var data = await request("retry");
+        const data = await request("retry");
         if (null === data) {
           return;
         }
@@ -727,7 +807,7 @@
       state.running = false;
       setStatus("一括発行をキャンセルしています。", "warning");
       try {
-        var data = await request("cancel");
+        const data = await request("cancel");
         if (null === data) {
           return;
         }
@@ -763,7 +843,7 @@
       );
       updateButtons();
       if (!state.requestInFlight && !state.loopActive) {
-        cancelJob();
+        void cancelJob().catch(showRequestError);
       }
     }
 
@@ -791,7 +871,7 @@
 
     updateModeVisibility();
     updateButtons();
-    loadStatus();
+    void loadStatus().catch(showRequestError);
   }
 
   if ("loading" === document.readyState) {

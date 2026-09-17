@@ -565,6 +565,25 @@ format
 
 ## npm scripts
 
+ホストの `packages/wordpress` で実行します。JS・TS は oxlint、JS・TS・CSS の整形は oxfmt を使用します。
+
+```sh
+node --run=lint
+node --run=format:check
+```
+
+lint
+: JS・TS の静的解析と型検査
+
+lint:fix
+: 自動修正可能な lint 指摘を修正
+
+format
+: JS・TS・CSS を整形（80文字幅）
+
+format:check
+: 整形状態を検査。CIでも実行します。
+
 e2e
 : E2E テスト
 

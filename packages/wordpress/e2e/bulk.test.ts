@@ -237,3 +237,134 @@ test("処理中ステップの通信失敗後に自動操作せず状態を再�
   await expect(resume).toBeVisible();
   expect(operations).toEqual(["status", "step", "status"]);
 });
+
+test("一時停止・再開後に処理中の記事を待ってキャンセルする", async ({
+  page,
+}) => {
+  const job = {
+    id: "ui-test-pause-cancel",
+    status: "running",
+    total: 3,
+    processed: 0,
+    counts: { success: 0, failed: 0, skipped: 0 },
+    failed_ids: [] as number[],
+    filters: {
+      post_type: "post",
+      category: 0,
+      date_from: "2025-01-01",
+      date_to: "2025-12-31",
+      mode: "missing",
+    },
+    log: [] as {
+      id: number;
+      title: string;
+      url: string;
+      status: string;
+      message: string;
+    }[],
+  };
+  const operations: string[] = [];
+  let resolveFirstStepStarted!: () => void;
+  const firstStepStarted = new Promise<void>((resolve) => {
+    resolveFirstStepStarted = resolve;
+  });
+  let releaseFirstStep!: () => void;
+  const firstStepGate = new Promise<void>((resolve) => {
+    releaseFirstStep = resolve;
+  });
+  let resolveFirstStepCompleted!: () => void;
+  const firstStepCompleted = new Promise<void>((resolve) => {
+    resolveFirstStepCompleted = resolve;
+  });
+  let resolveSecondStepStarted!: () => void;
+  const secondStepStarted = new Promise<void>((resolve) => {
+    resolveSecondStepStarted = resolve;
+  });
+  let releaseSecondStep!: () => void;
+  const secondStepGate = new Promise<void>((resolve) => {
+    releaseSecondStep = resolve;
+  });
+  let stepRequests = 0;
+
+  await page.route("**/wp-admin/admin-ajax.php", async (route) => {
+    const form = new URLSearchParams(route.request().postData() ?? "");
+    if (form.get("action") !== "profile_ca_bulk") return route.continue();
+    const operation = form.get("operation") ?? "";
+    operations.push(operation);
+
+    if (operation === "status") {
+      await route.fulfill({ json: { success: true, data: job } });
+      return;
+    }
+    if (operation === "step") {
+      stepRequests += 1;
+      if (stepRequests === 1) {
+        resolveFirstStepStarted();
+        await firstStepGate;
+        job.processed = 1;
+        await route.fulfill({ json: { success: true, data: job } });
+        resolveFirstStepCompleted();
+        return;
+      }
+      if (stepRequests === 2) {
+        resolveSecondStepStarted();
+        await secondStepGate;
+        job.processed = 2;
+        await route.fulfill({ json: { success: true, data: job } });
+        return;
+      }
+      await route.fulfill({
+        json: { success: true, data: { ...job, status: "completed" } },
+      });
+      return;
+    }
+    if (operation === "cancel") {
+      job.status = "cancelled";
+      await route.fulfill({ json: { success: true, data: job } });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto(url);
+  const resume = page.getByRole("button", {
+    name: "一括発行を再開",
+    exact: true,
+  });
+  const pause = page.getByRole("button", {
+    name: "一時停止",
+    exact: true,
+  });
+  const cancel = page.getByRole("button", {
+    name: "一括発行をキャンセル",
+    exact: true,
+  });
+  await expect(resume).toBeVisible();
+  expect(operations).toEqual(["status"]);
+
+  await resume.click();
+  await firstStepStarted;
+  await expect(pause).toBeVisible();
+  await pause.click();
+  releaseFirstStep();
+  await firstStepCompleted;
+  await expect(resume).toBeVisible();
+  await expect(resume).toBeEnabled();
+  await expect(page.locator("#profile-ca-bulk-progress")).toHaveText(
+    "進捗: 1 / 3件",
+  );
+  expect(stepRequests).toBe(1);
+  expect(operations).toEqual(["status", "step"]);
+
+  await resume.click();
+  await secondStepStarted;
+  await expect(cancel).toBeVisible();
+  await cancel.click();
+  releaseSecondStep();
+
+  await expect(page.getByRole("status")).toContainText(
+    "一括発行をキャンセルしました。",
+  );
+  expect(stepRequests).toBe(2);
+  expect(operations).toEqual(["status", "step", "step", "cancel"]);
+});
