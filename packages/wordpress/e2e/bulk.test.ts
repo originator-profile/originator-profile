@@ -2,6 +2,16 @@ import { expect, test } from "@wordpress/e2e-test-utils-playwright";
 
 const url = "/wp-admin/tools.php?page=ca-manager-bulk";
 
+const dateInputCases = [
+  { label: "開始日", requestKey: "date_from" },
+  { label: "終了日", requestKey: "date_to" },
+] as const;
+
+const dateActionCases = [
+  { operation: "preview", button: "プレビューを取得" },
+  { operation: "start", button: "一括発行を開始" },
+] as const;
+
 test("一括発行の対象確認と入力・nonce検証", async ({ page }) => {
   await page.goto(url);
   await expect(
@@ -53,6 +63,100 @@ test("一括発行の対象確認と入力・nonce検証", async ({ page }) => {
   expect(noConfirmation.status()).toBe(400);
   expect((await noConfirmation.json()).data.message).toContain("確認");
 });
+
+for (const dateInput of dateInputCases) {
+  for (const action of dateActionCases) {
+    test(`${dateInput.label}の${action.button}は入力途中だけ送信しない`, async ({
+      page,
+    }) => {
+      const operations: string[] = [];
+      await page.route("**/wp-admin/admin-ajax.php", async (route) => {
+        const form = new URLSearchParams(route.request().postData() ?? "");
+        if (form.get("action") !== "profile_ca_bulk") {
+          return route.continue();
+        }
+        const operation = form.get("operation") ?? "";
+        operations.push(operation);
+        if (operation === "status") {
+          await route.fulfill({
+            json: { success: true, data: { job: null } },
+          });
+          return;
+        }
+        if (operation === "preview") {
+          await route.fulfill({
+            json: { success: true, data: { count: 0, sample: [] } },
+          });
+          return;
+        }
+        if (operation === "start") {
+          await route.fulfill({
+            json: {
+              success: true,
+              data: {
+                id: "ui-test-date-validation",
+                status: "completed",
+                total: 0,
+                processed: 0,
+                counts: { success: 0, failed: 0, skipped: 0 },
+                failed_ids: [],
+                log: [],
+              },
+            },
+          });
+          return;
+        }
+        await route.fulfill({ json: { success: true, data: {} } });
+      });
+
+      await page.goto(url);
+      await expect(page.getByRole("status")).not.toContainText(
+        "読み込んでいます",
+      );
+      const input = page.getByLabel(dateInput.label, { exact: true });
+      const button = page.getByRole("button", {
+        name: action.button,
+        exact: true,
+      });
+      const waitForActionRequest = () =>
+        page.waitForRequest((request) => {
+          const form = new URLSearchParams(request.postData() ?? "");
+          return (
+            request.method() === "POST" &&
+            form.get("action") === "profile_ca_bulk" &&
+            form.get("operation") === action.operation
+          );
+        });
+      const send = async (value: string) => {
+        await input.fill(value);
+        const requestPromise = waitForActionRequest();
+        await button.click();
+        const request = await requestPromise;
+        await expect(button).toBeEnabled();
+        return new URLSearchParams(request.postData() ?? "");
+      };
+
+      await input.fill("");
+      await input.click();
+      // 部分入力はfillではなくキーボードで再現する。
+      await input.pressSequentially("2025-0");
+      await expect(input).toHaveValue("");
+      expect(
+        await input.evaluate(
+          (element) => (element as HTMLInputElement).validity.badInput,
+        ),
+      ).toBe(true);
+      await button.click();
+      await expect(input).toBeFocused();
+      expect(operations).toEqual(["status"]);
+
+      const emptyForm = await send("");
+      expect(emptyForm.get(dateInput.requestKey)).toBe("");
+      const validForm = await send("2025-01-01");
+      expect(validForm.get(dateInput.requestKey)).toBe("2025-01-01");
+    });
+  }
+}
 
 test("保存済みジョブを自動再開せず、明示操作で再開・失敗分を再試行する", async ({
   page,

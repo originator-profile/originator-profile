@@ -84,8 +84,16 @@
     }
 
     function setStatus(message, type) {
+      const text = valueAsText(message);
+      const noticeClass = "notice-" + (type || "info");
+      if (
+        elements.status.textContent === text &&
+        elements.status.classList.contains(noticeClass)
+      ) {
+        return;
+      }
       const paragraph = document.createElement("p");
-      paragraph.textContent = valueAsText(message);
+      paragraph.textContent = text;
       clearNode(elements.status);
       elements.status.appendChild(paragraph);
       elements.status.classList.remove(
@@ -94,7 +102,7 @@
         "notice-warning",
         "notice-info",
       );
-      elements.status.classList.add("notice-" + (type || "info"));
+      elements.status.classList.add(noticeClass);
     }
 
     function safeHref(value) {
@@ -302,6 +310,9 @@
     }
 
     function getValidatedFilters() {
+      if (!form.reportValidity()) {
+        return null;
+      }
       const filters = collectFilters();
       const error = validateFilters(filters);
       if (error) {
@@ -479,6 +490,11 @@
       return payload.data;
     }
 
+    function requestTimeout(operation) {
+      // 分割記事の逐次発行には長めの待機時間を設ける。
+      return "step" === operation ? 300000 : 60000;
+    }
+
     async function request(operation, options) {
       if (state.requestInFlight) {
         throw makeError("別のリクエストを処理中です。", false);
@@ -502,6 +518,11 @@
         throw error;
       }
 
+      const controller = new AbortController();
+      const timeoutId = setTimeout(
+        () => controller.abort(),
+        requestTimeout(operation),
+      );
       try {
         const response = await fetch(config.ajaxUrl, {
           method: "POST",
@@ -510,6 +531,7 @@
             Accept: "application/json",
           },
           body: params,
+          signal: controller.signal,
         });
         const payload = await readResponsePayload(response);
         if (requestId !== state.latestRequest) {
@@ -522,6 +544,7 @@
         }
         throw makeError("サーバーに接続できませんでした。", true);
       } finally {
+        clearTimeout(timeoutId);
         if (requestId === state.latestRequest) {
           state.requestInFlight = false;
           updateButtons();
