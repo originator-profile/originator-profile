@@ -28,6 +28,8 @@ use function Profile\Debug\debug;
 require_once __DIR__ . '/url.php';
 use function Profile\Url\add_page_query;
 
+require_once __DIR__ . '/ca-storage.php';
+
 require_once __DIR__ . '/exclusion.php';
 use function Profile\Exclusion\is_excluded;
 
@@ -165,7 +167,13 @@ function issue_post( \WP_Post $post, bool $only_missing = false ): array {
 			);
 		}
 
-		$initial_cas   = \get_post_meta( $post->ID, '_profile_post_cas', true );
+		$initial_cas = read_ca_snapshot( $post->ID );
+		if ( null === $initial_cas || count( $initial_cas ) > 1 ) {
+			return array(
+				'status'  => 'failed',
+				'message' => '保存済みのCAを確認できないため、CA発行を中止しました。',
+			);
+		}
 		$initial_state = array(
 			'status'       => $post->post_status,
 			'content'      => $post->post_content,
@@ -238,50 +246,12 @@ function issue_post( \WP_Post $post, bool $only_missing = false ): array {
 			$post_cas[] = $cas;
 		}
 
-		// 発行処理中に投稿が更新された場合、その時点の内容と異なる CAS を
-		// 保存しない。投稿キャッシュを破棄して DB の状態を読み直す。
-		\clean_post_cache( $post->ID );
-		$current_post = \get_post( $post->ID );
-		if ( ! $current_post instanceof \WP_Post ) {
-			debug( "Post ID {$post->ID}: post no longer exists when storing CA." );
+		if ( ! store_post_cas( $post->ID, $initial_state, $initial_cas, $post_cas ) ) {
+			debug( "Post ID {$post->ID}: CA storage failed or the post changed while issuing CA." );
 			return array(
 				'status'  => 'failed',
-				'message' => '発行中に投稿を確認できなくなったため、CAを保存しませんでした。',
+				'message' => '発行中の変更または保存エラーのため、CAを保存できませんでした。再試行してください。',
 			);
-		}
-
-		$current_permalink = \get_permalink( $current_post );
-		if (
-			$initial_state['status'] !== $current_post->post_status ||
-			$initial_state['content'] !== $current_post->post_content ||
-			$initial_state['title'] !== $current_post->post_title ||
-			$initial_state['excerpt'] !== $current_post->post_excerpt ||
-			$initial_state['author'] !== $current_post->post_author ||
-			$initial_state['date'] !== $current_post->post_date ||
-			\get_post_meta( $post->ID, '_profile_post_cas', true ) !== $initial_cas ||
-			$initial_state['modified'] !== $current_post->post_modified ||
-			$initial_state['modified_gmt'] !== $current_post->post_modified_gmt ||
-			$initial_state['permalink'] !== $current_permalink
-		) {
-			debug( "Post ID {$post->ID}: post changed while issuing CA; preserving existing CAS." );
-			return array(
-				'status'  => 'failed',
-				'message' => '発行中に投稿が変更されたため、CAを保存しませんでした。再試行してください。',
-			);
-		}
-
-		$storage_result = \update_post_meta( $post->ID, '_profile_post_cas', $post_cas, $initial_cas );
-		$stored_cas     = \get_post_meta( $post->ID, '_profile_post_cas', true );
-		if ( $stored_cas !== $post_cas ) {
-			debug( "Post ID {$post->ID}: failed to persist CA metadata." );
-			return array(
-				'status'  => 'failed',
-				'message' => 'CA発行結果の保存に失敗したため、既存のCAを保持しました。',
-			);
-		}
-
-		if ( false === $storage_result ) {
-			debug( "Post ID {$post->ID}: CA metadata was already up to date." );
 		}
 
 		return array(
@@ -426,7 +396,7 @@ function extract_uuid_from_jwt( string $jwt ) {
 function extract_uuid_from_cas( \WP_Post $post ) {
 	$cas  = \get_post_meta( $post->ID, '_profile_post_cas', true );
 	$page = \max( 1, \get_query_var( 'page' ) );
-	$cas  = is_array( $cas ) ? $cas[ $page - 1 ] : $cas;
+	$cas  = is_array( $cas ) ? ( $cas[ $page - 1 ] ?? null ) : $cas;
 
 	if ( is_array( $cas ) && isset( $cas[0] ) && is_string( $cas[0] ) ) {
 		$jwt = $cas[0];

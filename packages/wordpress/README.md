@@ -115,13 +115,15 @@ https://media.example.com/special/**
 
 記事本文、投稿者、公開日・更新日は変更しません。分割記事は全ページの応答を取得できた場合だけCAを保存し、失敗時は既存CAを保持します。ただし、サーバーで発行済みのCAを取り消す処理は行いません。通信中断などで結果が不明な場合は自動再送せず失敗として残すため、CAサーバー側の結果を確認してから再試行してください。
 
+CA保存には `posts` と `postmeta` テーブルが InnoDB である必要があります。外側のトランザクション実行中は安全のため保存を拒否します。
+
 応答の待機上限は通常60秒、記事の発行処理は5分です。時間切れでもサーバー側の処理は継続する場合があるため、「状態を再取得」で確認してください。自動再送は行いません。
 
-開発用WordPressで、通信を模擬応答に置き換えた結合テストを実行できます。テスト記事とカテゴリは終了時に削除し、保存済み設定・進捗を元に戻します。
+WordPressをインストールしてCA Managerを有効化した開発用環境で、通信を模擬応答に置き換えた結合テストを実行できます。テスト記事とカテゴリは終了時に削除し、保存済み設定・進捗を元に戻します。
 
 ```sh
-docker compose exec -T --user www-data -w /var/www/html wordpress \
-  wp eval-file /var/www/html/wp-content/plugins/ca-manager/tests/bulk-integration.php
+docker compose exec -T --user www-data \
+  -w /var/www/html/wp-content/plugins/ca-manager wordpress composer run test:integration:bulk
 ```
 
 ### CAサーバー・検証対象などの設定
@@ -550,14 +552,25 @@ docker compose exec -T --user www-data \
   -w /var/www/html/wp-content/plugins/ca-manager wordpress composer run --list
 ```
 
+結合テストは、開発用イメージで依存関係を導入し、WordPress をインストールして CA Manager を有効化してから実行します。テスト用の投稿・メタデータは削除しますが、サイト全体のDB初期化は行いません。
+
 help
 : このテキストの表示
 
 test
 : 単体テスト
 
+test:integration:bulk
+: 既存記事のCA一括発行に関する結合テスト
+
 test:integration:exclusion
-: CA発行対象の除外に関する結合テスト。開発用イメージで依存関係を導入し、WordPress を起動して CA Manager を有効化してから実行します。
+: CA発行対象の除外に関する結合テスト
+
+test:integration:storage
+: CA保存のトランザクションに関する結合テスト
+
+test:integration
+: 上記の結合テストを順番に実行。CIでもE2EのWordPress準備後に実行
 
 lint
 : 静的コード解析

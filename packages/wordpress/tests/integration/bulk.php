@@ -9,7 +9,7 @@ if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
 	return;
 }
 
-require_once __DIR__ . '/../includes/bulk.php';
+require_once __DIR__ . '/../../includes/bulk.php';
 
 /**
  * Check an integration assertion.
