@@ -96,7 +96,7 @@ function register_settings() {
 		array(
 			'type'              => 'array',
 			'default'           => array(),
-			'sanitize_callback' => '\\Profile\\Admin\\sanitize_excluded_urls',
+			'sanitize_callback' => '\Profile\Admin\sanitize_excluded_urls',
 		)
 	);
 	\register_setting( 'ca-manager', 'profile_ca_server_hostname', array( 'default' => PROFILE_DEFAULT_CA_SERVER_HOSTNAME ) );
