@@ -90,7 +90,8 @@ function parse_rules( mixed $input ): array {
  */
 function is_excluded( string $url, array $rules ): bool {
 	$target = parse_absolute_url( $url, false );
-	$rules  = parse_rules( $rules );
+	// 不正な保存値でも発行を停止できるよう、ルールを再検証する。
+	$rules = parse_rules( $rules );
 
 	foreach ( $rules as $rule ) {
 		$pattern = compile_rule( $rule );
@@ -342,5 +343,5 @@ function compile_rule( string $rule ): string {
 		}
 	}
 
-	return '~\\A' . $pattern . '\\z~D';
+	return '~\\A' . $pattern . '\\z~';
 }

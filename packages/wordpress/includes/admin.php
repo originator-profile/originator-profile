@@ -143,7 +143,7 @@ function sanitize_excluded_urls( $value ) {
 	try {
 		return parse_rules( $value );
 	} catch ( \InvalidArgumentException $error ) {
-		\add_settings_error( 'profile_ca_excluded_urls', 'invalid_exclusion_rules', $error->getMessage() . ' 保存済みの除外設定を維持しました。' );
+		\add_settings_error( 'profile_ca_excluded_urls', 'invalid_exclusion_rules', \esc_html( $error->getMessage() . ' 保存済みの除外設定を維持しました。' ) );
 		return \get_option( 'profile_ca_excluded_urls', array() );
 	}
 }
