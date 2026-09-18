@@ -410,8 +410,9 @@ function change( string $operation, string $job_id ) {
 		return step( $job );
 	}
 	if ( 'cancel' === $operation ) {
+		$job['status'] = 'cancelled';
 		if ( $job['pending'] ) {
-			$job = record(
+			return record(
 				$job,
 				(int) $job['pending'],
 				array(
@@ -420,7 +421,6 @@ function change( string $operation, string $job_id ) {
 				)
 			);
 		}
-		$job['status'] = 'cancelled';
 	} elseif ( 'retry' === $operation ) {
 		if ( 'completed' !== $job['status'] || empty( $job['failed_ids'] ) ) {
 			return new \WP_Error( 'invalid_retry', '処理完了後に失敗した記事だけを再試行できます。' );

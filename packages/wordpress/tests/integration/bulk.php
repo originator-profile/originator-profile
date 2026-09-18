@@ -33,16 +33,22 @@ $administrators = get_users(
 	)
 );
 wp_set_current_user( $administrators[0]->ID );
-$option_values  = array(
+$option_values    = array(
 	'profile_ca_server_hostname'     => 'example.test',
 	'profile_ca_issuer_id'           => 'dns:example.test',
 	'profile_ca_server_admin_secret' => 'test:secret',
 	'profile_ca_excluded_urls'       => array(),
 );
-$option_filters = array();
-$requests       = array();
-$fail_http      = false;
-$spy            = static function ( $pre, $args, $url ) use ( &$requests, &$fail_http ) {
+$option_filters   = array();
+$requests         = array();
+$fail_http        = false;
+$option_writes    = array();
+$option_write_spy = static function ( $option, $old_value, $new_value ) use ( &$option_writes ) {
+	if ( \Profile\Bulk\JOB_OPTION === $option ) {
+		$option_writes[] = $new_value;
+	}
+};
+$spy              = static function ( $pre, $args, $url ) use ( &$requests, &$fail_http ) {
 	$requests[] = array(
 		'url'  => $url,
 		'body' => $args['body'] ?? '',
@@ -60,11 +66,12 @@ $spy            = static function ( $pre, $args, $url ) use ( &$requests, &$fail
 		'cookies'  => array(),
 	);
 };
-$post_ids       = array();
-$term_id        = 0;
-$checks         = array();
+$post_ids         = array();
+$term_id          = 0;
+$checks           = array();
 try {
 	add_filter( 'pre_http_request', $spy, 10, 3 );
+	add_action( 'updated_option', $option_write_spy, 10, 3 );
 	foreach ( $option_values as $name => $value ) {
 		$option_filters[ $name ] = static function () use ( &$option_values, $name ) {
 			return $option_values[ $name ];
@@ -228,11 +235,32 @@ try {
 	$job['cursor']  = $missing;
 	\Profile\Bulk\save( $job );
 	$request_count = count( $requests );
+	$option_writes = array();
+	$job           = \Profile\Bulk\locked( static fn() => \Profile\Bulk\change( 'cancel', $job['id'] ) );
+	profile_bulk_assert( 'cancelled' === $job['status'] && 0 === $job['pending'], 'Cancel pending job' );
+	profile_bulk_assert( 1 === count( $option_writes ), 'Pending cancel writes the option once' );
+	profile_bulk_assert( $option_writes[0] === $job && get_option( \Profile\Bulk\JOB_OPTION ) === $job, 'Pending cancel persists the returned job' );
+	profile_bulk_assert( 1 === $job['processed'] && 1 === $job['counts']['failed'] && array( $missing ) === $job['failed_ids'], 'Pending cancel records one failed ID' );
+	profile_bulk_assert( 1 === count( $job['log'] ) && $missing === $job['log'][0]['id'] && 'failed' === $job['log'][0]['status'], 'Pending cancel records a failed log row' );
+	profile_bulk_assert( count( $requests ) === $request_count, 'Pending cancel makes no issuance request' );
+
+	$job            = \Profile\Bulk\locked( static fn() => \Profile\Bulk\start( $selection ) );
+	$job['pending'] = $missing;
+	$job['cursor']  = $missing;
+	\Profile\Bulk\save( $job );
+	$request_count = count( $requests );
+	$option_writes = array();
 	$job           = \Profile\Bulk\locked( static fn() => \Profile\Bulk\change( 'step', $job['id'] ) );
 	profile_bulk_assert( 1 === $job['counts']['failed'] && count( $requests ) === $request_count, 'Interrupted request not automatically resent' );
-	$job = \Profile\Bulk\locked( static fn() => \Profile\Bulk\change( 'cancel', $job['id'] ) );
-	profile_bulk_assert( 'cancelled' === $job['status'], 'Cancel' );
-	$checks[] = 'interruption recovery and cancel';
+	$option_writes = array();
+	$job           = \Profile\Bulk\locked( static fn() => \Profile\Bulk\change( 'cancel', $job['id'] ) );
+	profile_bulk_assert( 'cancelled' === $job['status'] && 0 === $job['pending'], 'Cancel job without pending request' );
+	profile_bulk_assert( 1 === count( $option_writes ), 'Cancel without pending request writes the option once' );
+	profile_bulk_assert( $option_writes[0] === $job && get_option( \Profile\Bulk\JOB_OPTION ) === $job, 'Cancel without pending request persists the returned job' );
+	profile_bulk_assert( 1 === $job['processed'] && 1 === $job['counts']['failed'] && array( $missing ) === $job['failed_ids'], 'Cancel preserves the failed ID and count' );
+	profile_bulk_assert( 1 === count( $job['log'] ) && $missing === $job['log'][0]['id'] && 'failed' === $job['log'][0]['status'], 'Cancel preserves the failed log row' );
+	profile_bulk_assert( count( $requests ) === $request_count, 'Cancel without pending request makes no issuance request' );
+	$checks[] = 'cancel persistence and interruption recovery';
 
 	$connection = new wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
 	$lock_name  = 'ca-bulk-' . md5( DB_NAME . $GLOBALS['wpdb']->prefix );
@@ -258,6 +286,7 @@ try {
 	foreach ( $option_filters as $name => $callback ) {
 		remove_filter( 'pre_option_' . $name, $callback );
 	}
+	remove_action( 'updated_option', $option_write_spy, 10 );
 	remove_filter( 'pre_http_request', $spy, 10 );
 	remove_shortcode( 'bulk_test_context' );
 	if ( null === $original_job ) {
