@@ -28,6 +28,9 @@ use function Profile\Debug\debug;
 require_once __DIR__ . '/url.php';
 use function Profile\Url\add_page_query;
 
+require_once __DIR__ . '/exclusion.php';
+use function Profile\Exclusion\is_excluded;
+
 /** 投稿への署名処理の初期化
  * transition_post_status について
  * sign_post: 公開への遷移時のみの処理。非公開遷移時は何もしない。
@@ -50,6 +53,23 @@ function init() {
 function sign_post( string $new_status, string $old_status, \WP_Post $post ) {
 	if ( 'publish' !== $new_status ) {
 		debug( "Post status is '{$new_status}', not 'publish'. Skipping CA signing." );
+		return;
+	}
+
+	// 記事の代表URLで判定し、分割ページもまとめて除外する。既存CASは保持する。
+	try {
+		$rules = \get_option( 'profile_ca_excluded_urls', array() );
+		$url   = \get_permalink( $post );
+		if ( ! is_array( $rules ) || ! is_string( $url ) || '' === $url ) {
+			debug( "Post ID {$post->ID}: CA issuance stopped because the public URL or exclusion settings are unavailable." );
+			return;
+		}
+		if ( is_excluded( $url, $rules ) ) {
+			debug( "Post ID {$post->ID}: CA issuance skipped by URL exclusion rules. Existing CAS preserved." );
+			return;
+		}
+	} catch ( \InvalidArgumentException $error ) {
+		debug( "Post ID {$post->ID}: CA issuance stopped because URL exclusion could not be evaluated: " . $error->getMessage() );
 		return;
 	}
 
