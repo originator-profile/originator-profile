@@ -9,6 +9,8 @@ runs:
     - name: E2E tests
       run: pnpm --filter @originator-profile/wordpress e2e
       shell: bash
+      env:
+        WORDPRESS_RUN_INTEGRATION_TESTS: "1"
     - name: テスト結果の保存(失敗時レポート)
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
       if: failure()

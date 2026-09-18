@@ -22,13 +22,15 @@ async function globalSetup(config: FullConfig) {
   process.env.WP_BASE_URL = config.projects[0].use.baseURL;
 
   const { RequestUtils } = await import("@wordpress/e2e-test-utils-playwright");
+  const storageState = config.projects[0].use.storageState;
   const requestUtils = await RequestUtils.setup({
     user: {
       username: process.env.WORDPRESS_ADMIN_USER,
       password: process.env.WORDPRESS_ADMIN_PASSWORD,
     },
     baseURL: config.projects[0].use.baseURL,
-    storageStatePath: config.projects[0].use.storageState?.toString(),
+    storageStatePath:
+      typeof storageState === "string" ? storageState : undefined,
   });
 
   // 認証後、storageStateを保存

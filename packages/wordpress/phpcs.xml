@@ -1,5 +1,7 @@
 <?xml version="1.0"?>
 <ruleset name="Profile">
+  <!-- JavaScript/CSS は oxlint・oxfmt で検査する。 -->
+  <arg name="extensions" value="php" />
   <rule ref="WordPress" />
   <exclude-pattern>vendor</exclude-pattern>
   <exclude-pattern>node_modules</exclude-pattern>

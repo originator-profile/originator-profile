@@ -3,6 +3,14 @@ description: Lint for WordPress plugin
 runs:
   using: composite
   steps:
+    - name: JavaScript lint
+      run: node --run=lint
+      working-directory: packages/wordpress
+      shell: bash
+    - name: JavaScript and CSS format check
+      run: node --run=format:check
+      working-directory: packages/wordpress
+      shell: bash
     - name: composer run lint
       run: docker compose exec -w /var/www/html/wp-content/plugins/ca-manager wordpress composer run lint
       working-directory: packages/wordpress

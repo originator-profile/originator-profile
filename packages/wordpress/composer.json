@@ -2,7 +2,14 @@
   "scripts": {
     "help": "cat README.md",
     "test": "phpunit",
-    "test:integration:exclusion": "wp --path=/var/www/html eval-file /var/www/html/wp-content/plugins/ca-manager/tests/exclusion-integration.php",
+    "test:integration:bulk": "wp --path=/var/www/html eval-file /var/www/html/wp-content/plugins/ca-manager/tests/integration/bulk.php",
+    "test:integration:exclusion": "wp --path=/var/www/html eval-file /var/www/html/wp-content/plugins/ca-manager/tests/integration/exclusion.php",
+    "test:integration:storage": "wp --path=/var/www/html eval-file /var/www/html/wp-content/plugins/ca-manager/tests/integration/issue-storage.php",
+    "test:integration": [
+      "@test:integration:bulk",
+      "@test:integration:exclusion",
+      "@test:integration:storage"
+    ],
     "lint": "phpcs .",
     "format": "phpcbf -v ."
   },

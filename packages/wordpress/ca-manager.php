@@ -23,6 +23,11 @@ require_once __DIR__ . '/includes/admin.php';
 require_once __DIR__ . '/includes/issue.php';
 \Profile\Issue\init();
 
+require_once __DIR__ . '/includes/bulk.php';
+\Profile\Bulk\init();
+require_once __DIR__ . '/includes/bulk-admin.php';
+\Profile\BulkAdmin\init();
+
 require_once __DIR__ . '/includes/post.php';
 \Profile\Post\init();
 
