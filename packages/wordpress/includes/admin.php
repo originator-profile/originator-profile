@@ -13,6 +13,7 @@ use const Profile\Config\PROFILE_DEFAULT_CA_LOG_DIR;
 require_once __DIR__ . '/exclusion.php';
 use function Profile\Exclusion\parse_rules;
 use function Profile\Exclusion\is_excluded;
+use function Profile\Exclusion\parse_absolute_url;
 
 /** 管理者画面の初期化 */
 function init() {
@@ -149,11 +150,12 @@ function sanitize_excluded_urls( $value ) {
 
 /** 除外設定と、保存済みルールによるURL判定フォーム。 */
 function exclusion_settings() {
-	$rules       = \get_option( 'profile_ca_excluded_urls', array() );
-	$rules_text  = is_array( $rules ) ? implode( "\n", array_filter( $rules, 'is_string' ) ) : '';
-	$check_url   = '';
-	$check_text  = '';
-	$check_error = false;
+	$rules           = \get_option( 'profile_ca_excluded_urls', array() );
+	$rules_text      = is_array( $rules ) ? implode( "\n", array_filter( $rules, 'is_string' ) ) : '';
+	$check_url       = '';
+	$check_text      = '';
+	$check_error     = false;
+	$check_url_error = false;
 	if ( isset( $_POST['profile_ca_check_url'] ) ) {
 		\check_admin_referer( 'profile_ca_check_exclusion' );
 		// URLは下の共通判定処理で検証する。%エンコードを除去せず、実際の発行時と同じ文字列で照合する。
@@ -171,6 +173,11 @@ function exclusion_settings() {
 		} catch ( \InvalidArgumentException $error ) {
 			$check_text  = $error->getMessage();
 			$check_error = true;
+			try {
+				parse_absolute_url( $check_url, false );
+			} catch ( \InvalidArgumentException $url_error ) {
+				$check_url_error = true;
+			}
 		}
 	}
 	?>
@@ -186,17 +193,17 @@ function exclusion_settings() {
 				<p>末尾の / の有無は同じ扱いです。大文字・小文字とクエリ文字列は区別します。空欄なら除外しません。最大200件、1件2048バイト、合計65536バイトです。</p>
 				<p>設定は次回の公開・更新から適用されます。分割記事は代表URLでまとめて判定します。発行済みCAの削除・失効・配信停止は行いません。</p>
 			</div>
-			<?php \submit_button( '除外設定を保存' ); ?>
+			<?php \submit_button( '除外設定を保存', 'primary', 'save_excluded_urls' ); ?>
 		</form>
 		<form method="post">
 			<?php \wp_nonce_field( 'profile_ca_check_exclusion' ); ?>
 			<p><label for="profile_ca_check_url">判定する公開URL（パーマリンク）</label></p>
-			<input type="url" id="profile_ca_check_url" name="profile_ca_check_url" class="large-text" value="<?php echo \esc_attr( $check_url ); ?>" placeholder="<?php echo \esc_attr( \home_url( '/?p=123' ) ); ?>" required>
-			<p>保存済みの除外ルールで確認します。記事の公開・CAの発行・設定の変更は行いません。</p>
+			<input type="url" id="profile_ca_check_url" name="profile_ca_check_url" class="large-text" value="<?php echo \esc_attr( $check_url ); ?>" placeholder="<?php echo \esc_attr( \home_url( '/?p=123' ) ); ?>" aria-describedby="profile-ca-check-url-help<?php echo $check_url_error ? ' profile-ca-check-url-error' : ''; ?>"<?php echo $check_url_error ? ' aria-invalid="true"' : ''; ?> required>
+			<p id="profile-ca-check-url-help">保存済みの除外ルールで確認します。記事の公開・CAの発行・設定の変更は行いません。</p>
 			<?php \submit_button( 'URLを判定', 'secondary', 'check_exclusion', false ); ?>
 		</form>
 		<?php if ( '' !== $check_text ) : ?>
-			<div role="status" class="notice <?php echo $check_error ? 'notice-error' : 'notice-info'; ?> inline"><p><?php echo \esc_html( $check_text ); ?></p></div>
+			<div<?php echo $check_url_error ? ' id="profile-ca-check-url-error"' : ''; ?> role="status" class="notice <?php echo $check_error ? 'notice-error' : 'notice-info'; ?> inline"><p><?php echo \esc_html( $check_text ); ?></p></div>
 		<?php endif; ?>
 	</section>
 	<?php
