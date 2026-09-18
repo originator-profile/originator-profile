@@ -325,6 +325,7 @@ function compile_rule( string $rule ): string {
 		$literal .= '?' . $reference['query'];
 	}
 
+	// ASCIIの記号だけを判別するため、文字分割が不要なバイト単位で処理する。
 	$pattern = '';
 	$length  = strlen( $literal );
 	for ( $index = 0; $index < $length; ++$index ) {
