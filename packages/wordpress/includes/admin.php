@@ -198,7 +198,7 @@ function exclusion_settings() {
 		<form method="post">
 			<?php \wp_nonce_field( 'profile_ca_check_exclusion' ); ?>
 			<p><label for="profile_ca_check_url">判定する公開URL（パーマリンク）</label></p>
-			<input type="url" id="profile_ca_check_url" name="profile_ca_check_url" class="large-text" value="<?php echo \esc_attr( $check_url ); ?>" placeholder="<?php echo \esc_attr( \home_url( '/?p=123' ) ); ?>" aria-describedby="profile-ca-check-url-help<?php echo $check_url_error ? ' profile-ca-check-url-error' : ''; ?>"<?php echo $check_url_error ? ' aria-invalid="true"' : ''; ?> required>
+			<input type="text" inputmode="url" id="profile_ca_check_url" name="profile_ca_check_url" class="large-text" value="<?php echo \esc_attr( $check_url ); ?>" placeholder="<?php echo \esc_attr( \home_url( '/?p=123' ) ); ?>" aria-describedby="profile-ca-check-url-help<?php echo $check_url_error ? ' profile-ca-check-url-error' : ''; ?>"<?php echo $check_url_error ? ' aria-invalid="true"' : ''; ?> required>
 			<p id="profile-ca-check-url-help">保存済みの除外ルールで確認します。記事の公開・CAの発行・設定の変更は行いません。</p>
 			<?php \submit_button( 'URLを判定', 'secondary', 'check_exclusion', false ); ?>
 		</form>

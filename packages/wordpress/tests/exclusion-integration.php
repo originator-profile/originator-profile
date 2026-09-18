@@ -22,7 +22,8 @@ if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
  */
 function profile_ca_exclusion_integration_assert( bool $condition, string $message ): void {
 	if ( ! $condition ) {
-		throw new \RuntimeException( esc_html( $message ) );
+		// phpcs:ignore WordPress.Security.EscapeOutput.ExceptionNotEscaped -- CLI専用のため、HTMLエスケープは不要。
+		throw new \RuntimeException( $message );
 	}
 }
 
