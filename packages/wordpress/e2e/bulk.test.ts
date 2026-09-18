@@ -32,7 +32,6 @@ test("一括発行の対象確認と入力・nonce検証", async ({ page }) => {
   await expect(page.locator("#profile-ca-bulk-preview-count")).toContainText(
     "候補件数",
   );
-  await page.screenshot({ path: "tmp/issue-120-preview.png", fullPage: true });
   await page.getByLabel("開始日", { exact: true }).fill("2025-12-31");
   await page.getByLabel("終了日", { exact: true }).fill("2025-01-01");
   await page

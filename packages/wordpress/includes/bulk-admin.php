@@ -35,7 +35,9 @@ function enqueue_assets( $hook_suffix ) {
 
 	$script_file    = __DIR__ . '/../assets/bulk.js';
 	$script_version = \file_exists( $script_file ) ? (string) \filemtime( $script_file ) : '1.0.0';
-	\wp_enqueue_style( SCRIPT_HANDLE, \plugins_url( '../assets/bulk.css', __FILE__ ), array(), (string) \filemtime( __DIR__ . '/../assets/bulk.css' ) );
+	$style_file     = __DIR__ . '/../assets/bulk.css';
+	$style_version  = \file_exists( $style_file ) ? (string) \filemtime( $style_file ) : '1.0.0';
+	\wp_enqueue_style( SCRIPT_HANDLE, \plugins_url( '../assets/bulk.css', __FILE__ ), array(), $style_version );
 	\wp_enqueue_script(
 		SCRIPT_HANDLE,
 		\plugins_url( '../assets/bulk.js', __FILE__ ),
