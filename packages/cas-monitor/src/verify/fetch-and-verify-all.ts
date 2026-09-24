@@ -70,7 +70,7 @@ export async function runVerificationPipeline(url: string) {
       cas.map((cas) => cas.credential),
       verfiedOps,
       url,
-      html,
+      doc,
     );
     result.casResult = casResult;
   } else {

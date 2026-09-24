@@ -4,19 +4,15 @@ import {
   verifyCas,
   verifyIntegrity,
 } from "@originator-profile/verify";
-import {
-  buildVerificationDocument,
-  transformEndpoint,
-} from "../fetch/fetch-html.js";
+import { transformEndpoint } from "../fetch/fetch-html.js";
 
 export async function runCasVerification(
   cas: ContentAttestationSet,
   ops: VerifiedOps,
   url: string,
-  html: string,
+  doc: Document,
 ) {
   if (!URL.canParse(url)) return new Error("URL Invalid");
-  const doc = buildVerificationDocument(html, url);
   const verifiedCas = await verifyCas(
     cas,
     ops,
