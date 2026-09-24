@@ -38,7 +38,7 @@ export async function runVerificationPipeline(url: string) {
   const sp = await fetchSiteProfile(doc);
   const { ops, cas } = await fetchCredentials(doc);
 
-  const verfiedOps: VerifiedOps = [];
+  const verifiedOps: VerifiedOps = [];
 
   // SP/OPS/CAS の検証
   if (!(sp instanceof Error)) {
@@ -46,7 +46,7 @@ export async function runVerificationPipeline(url: string) {
     result.spResult = spResult;
 
     if (!(spResult instanceof Error)) {
-      verfiedOps.push(...spResult.originators);
+      verifiedOps.push(...spResult.originators);
     }
   } else {
     result.spResult = sp;
@@ -59,7 +59,7 @@ export async function runVerificationPipeline(url: string) {
     result.opsResult = opsResult;
 
     if (!(opsResult instanceof Error)) {
-      verfiedOps.push(...opsResult);
+      verifiedOps.push(...opsResult);
     }
   } else {
     result.opsResult = ops;
@@ -68,7 +68,7 @@ export async function runVerificationPipeline(url: string) {
   if (!(cas instanceof Error)) {
     const casResult = await runCasVerification(
       cas.map((cas) => cas.credential),
-      verfiedOps,
+      verifiedOps,
       url,
       doc,
     );
