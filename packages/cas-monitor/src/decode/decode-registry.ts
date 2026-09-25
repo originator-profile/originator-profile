@@ -1,7 +1,4 @@
 import { decodeOps } from "@originator-profile/verify";
-import dotenv from "dotenv";
-
-dotenv.config();
 
 export async function decodeRegistry(
   /** Core Profile Issuers OPS (JSON 文字列) */
