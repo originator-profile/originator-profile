@@ -132,10 +132,6 @@ export function SpVerifier(
     // 全てのWSPを検証
     const verifiedWsps = await Promise.all(
       decodedWsps.map(async (decodedWsp, index) => {
-        if (decodedWsp instanceof Error) {
-          return decodedWsp;
-        }
-
         const wspIssuer = decodedWsp.doc.issuer;
         const cp = opsVerified.find(
           (op) => op.core.doc.credentialSubject.id === wspIssuer,
