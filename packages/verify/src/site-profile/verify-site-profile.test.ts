@@ -737,6 +737,10 @@ describe("Site Profileの検証", async () => {
 
     expect(decodedWspSources).toHaveLength(1);
     expect(decodedWspSources[0]).toEqual(validJwt);
+    expect(decodedWsps[0]).not.instanceOf(Error);
+    expect(decodedWsps[0].doc.credentialSubject).toMatchObject(
+      wsp.credentialSubject,
+    );
   });
 
   test("複数のWSPのうち一つだけオリジンが一致しない", async () => {
