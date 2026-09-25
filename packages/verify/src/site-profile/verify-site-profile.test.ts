@@ -35,7 +35,11 @@ import {
   CoreProfileNotFound,
   OpVerifyFailed,
 } from "../originator-profile-set/errors";
-import { SiteProfileInvalid, SiteProfileVerifyFailed } from "./verify-errors";
+import {
+  SiteProfileInvalid,
+  SiteProfileVerifyFailed,
+  WebsiteProfileDecodeFailed,
+} from "./verify-errors";
 import { SpVerifier } from "./verify-site-profile";
 
 const issuedAt = fromUnixTime(getUnixTime(new Date()));
@@ -653,6 +657,7 @@ describe("Site Profileの検証", async () => {
     );
     const resultSp = await verify();
 
+    console.log(resultSp);
     expect(resultSp).not.instanceOf(SiteProfileInvalid);
     expect(resultSp).not.instanceOf(SiteProfileVerifyFailed);
     expect(resultSp).toMatchObject({
@@ -707,6 +712,41 @@ describe("Site Profileの検証", async () => {
     expect(sites).toHaveLength(2);
     expect(sites[0]).toMatchObject({ doc: wsp });
     expect(sites[1]).instanceOf(VcVerifyFailed);
+  });
+
+  test("複数のWSPのうち一つだけ複合に失敗", async () => {
+    const evil = await generateKey();
+    const wspEn: WebsiteProfile = patch(wsp, [
+      {
+        op: "replace",
+        path: ["@context", 3, "@language"],
+        value: "en",
+      },
+    ]);
+
+    const validJwt = await signJwtVc(wsp, originator.privateKey, signOptions);
+    const multiSp: SiteProfile = {
+      originators: ops,
+      sites: [validJwt, "invalid-jwt"],
+    };
+
+    const verify = SpVerifier(
+      multiSp,
+      LocalKeys({ keys: [authority.publicKey] }),
+      opId.authority,
+      "https://originator.example.org",
+    );
+    const resultSp = await verify();
+
+    expect(resultSp).instanceOf(WebsiteProfileDecodeFailed);
+    const { sites, decodedWsps, wspSources } = (
+      resultSp as WebsiteProfileDecodeFailed
+    ).result;
+    expect(sites).toHaveLength(1);
+    expect(decodedWsps).toHaveLength(1);
+
+    expect(wspSources).toHaveLength(1);
+    expect(wspSources[0]).toEqual(validJwt);
   });
 
   test("複数のWSPのうち一つだけオリジンが一致しない", async () => {

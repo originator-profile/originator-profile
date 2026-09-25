@@ -9,7 +9,11 @@ import {
   OpsVerificationResult,
   VerifiedOps,
 } from "../originator-profile-set/types";
-import { SiteProfileInvalid, SiteProfileVerifyFailed } from "./verify-errors";
+import {
+  SiteProfileInvalid,
+  SiteProfileVerifyFailed,
+  WebsiteProfileDecodeFailed,
+} from "./verify-errors";
 
 /** Site Profile 検証失敗 */
 export type SpVerificationFailure = {
@@ -29,4 +33,5 @@ export type VerifiedSp = {
 export type SpVerificationResult =
   | VerifiedSp
   | SiteProfileInvalid
-  | SiteProfileVerifyFailed;
+  | SiteProfileVerifyFailed
+  | WebsiteProfileDecodeFailed;

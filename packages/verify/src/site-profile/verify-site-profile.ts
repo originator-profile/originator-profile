@@ -24,7 +24,11 @@ import { OpsVerifier } from "../originator-profile-set/verify-ops";
 import { pointer } from "../result/pointer";
 import { verifyAllowedOrigin } from "../verify-allowed-origin";
 import { SpVerificationResult } from "./types";
-import { SiteProfileInvalid, SiteProfileVerifyFailed } from "./verify-errors";
+import {
+  SiteProfileInvalid,
+  SiteProfileVerifyFailed,
+  WebsiteProfileDecodeFailed,
+} from "./verify-errors";
 
 /** WSPソースの取得と初期デコード */
 const decodeWebsiteProfiles = (
@@ -32,7 +36,8 @@ const decodeWebsiteProfiles = (
   opsVerified: VerifiedOps,
 ):
   | { decodedWsps: UnverifiedJwtVc<WebsiteProfile>[]; wspSources: string[] }
-  | SiteProfileInvalid => {
+  | SiteProfileInvalid
+  | WebsiteProfileDecodeFailed => {
   // NOTE: 2026-11-01 まで後方互換性のため、sitesが存在しない場合はcredentialを使用
   const wspSources = sp.sites || (sp.credential ? [sp.credential] : []);
   if (wspSources.length === 0) {
@@ -48,9 +53,19 @@ const decodeWebsiteProfiles = (
   // デコードエラーチェック（配列全体を確認）
   const decodeErrors = decodedWsps.filter((wsp) => wsp instanceof Error);
   if (decodeErrors.length > 0) {
-    return new SiteProfileInvalid("Website Profile invalid", {
+    const wspWithSources = decodedWsps
+      .map((wsp, index) => {
+        if (wsp instanceof Error) {
+          return null;
+        }
+        return { wsp, source: wspSources[index] };
+      })
+      .filter((item) => item !== null);
+    return new WebsiteProfileDecodeFailed("Website Profile invalid", {
       originators: opsVerified,
       sites: decodeErrors,
+      decodedWsps: wspWithSources.map((item) => item.wsp),
+      wspSources: wspWithSources.map((item) => item.source),
     });
   }
 
@@ -104,9 +119,13 @@ export function SpVerifier(
     }
 
     const decoded = decodeWebsiteProfiles(sp, opsVerified);
-    if (decoded instanceof SiteProfileInvalid) {
+    if (
+      decoded instanceof SiteProfileInvalid ||
+      decoded instanceof WebsiteProfileDecodeFailed
+    ) {
       return decoded;
     }
+
     const { decodedWsps, wspSources } = decoded;
 
     // 全てのWSPを検証
