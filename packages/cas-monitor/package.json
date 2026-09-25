@@ -2,6 +2,7 @@
   "name": "@originator-profile/cas-monitor",
   "version": "0.7.0-beta.5",
   "license": "Apache-2.0",
+  "private": true,
   "homepage": "https://docs.originator-profile.org",
   "repository": {
     "type": "git",
@@ -31,7 +32,6 @@
     "oclif": "4.23.0",
     "oxlint": "^1.73.0",
     "oxlint-tsgolint": "^0.24.0",
-    "tsdown": "0.21.7",
     "typescript": "6.0.2"
   }
 }
