@@ -53,19 +53,20 @@ const decodeWebsiteProfiles = (
   // デコードエラーチェック（配列全体を確認）
   const decodeErrors = decodedWsps.filter((wsp) => wsp instanceof Error);
   if (decodeErrors.length > 0) {
-    const wspWithSources = decodedWsps
-      .map((wsp, index) => {
-        if (wsp instanceof Error) {
-          return null;
-        }
-        return { wsp, source: wspSources[index] };
-      })
-      .filter((item) => item !== null);
+    const successPairs = decodedWsps.reduce<
+      { wsp: UnverifiedJwtVc<WebsiteProfile>; source: string }[]
+    >((acc, wsp, index) => {
+      if (!(wsp instanceof Error)) {
+        acc.push({ wsp, source: wspSources[index] });
+      }
+      return acc;
+    }, []);
+
     return new WebsiteProfileDecodeFailed("Website Profile invalid", {
       originators: opsVerified,
       sites: decodeErrors,
-      decodedWsps: wspWithSources.map((item) => item.wsp),
-      decodedWspSources: wspWithSources.map((item) => item.source),
+      decodedWsps: successPairs.map((item) => item.wsp),
+      decodedWspSources: successPairs.map((item) => item.source),
     });
   }
 
