@@ -715,15 +715,6 @@ describe("Site Profileの検証", async () => {
   });
 
   test("複数のWSPのうち一つだけ複合に失敗", async () => {
-    const evil = await generateKey();
-    const wspEn: WebsiteProfile = patch(wsp, [
-      {
-        op: "replace",
-        path: ["@context", 3, "@language"],
-        value: "en",
-      },
-    ]);
-
     const validJwt = await signJwtVc(wsp, originator.privateKey, signOptions);
     const multiSp: SiteProfile = {
       originators: ops,
