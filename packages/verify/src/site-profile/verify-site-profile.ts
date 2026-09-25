@@ -62,7 +62,7 @@ const decodeWebsiteProfiles = (
       return acc;
     }, []);
 
-    return new WebsiteProfileDecodeFailed("Website Profile invalid", {
+    return new WebsiteProfileDecodeFailed("Website Profile decoding failed", {
       originators: opsVerified,
       sites: decodeErrors,
       decodedWsps: successPairs.map((item) => item.wsp),
