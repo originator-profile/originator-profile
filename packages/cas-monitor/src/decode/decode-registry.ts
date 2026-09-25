@@ -8,7 +8,7 @@ export async function decodeRegistry(
   try {
     ops = JSON.parse(input);
   } catch (e) {
-    return e as SyntaxError;
+    return e instanceof SyntaxError ? e : new Error(String(e));
   }
 
   const decoded = decodeOps(ops);

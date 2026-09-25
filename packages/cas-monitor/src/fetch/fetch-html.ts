@@ -22,7 +22,7 @@ export async function prepareHtml(url: string) {
     const res = await fetch(contentUrl);
     return await res.text();
   } catch (e) {
-    return e as Error;
+    return e instanceof Error ? e : new Error(String(e));
   }
 }
 
