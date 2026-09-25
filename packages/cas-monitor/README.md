@@ -79,6 +79,7 @@ pnpm build
 
 ```
 {
+  "url": "http://localhost:8080/examples/cas-1.html",
   "registryOpsResult": "OK",
   "fetchHtmlResult": "OK",
   "spResult": "OK",
@@ -91,6 +92,7 @@ pnpm build
 
 ```
 {
+  "url": "http://localhost:8080/examples/cas-1.html",
   "registryOpsResult": "OK",
   "fetchHtmlResult": "OK",
   "spResult": "OK",
