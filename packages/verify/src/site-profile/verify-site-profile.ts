@@ -24,7 +24,11 @@ import { OpsVerifier } from "../originator-profile-set/verify-ops";
 import { pointer } from "../result/pointer";
 import { verifyAllowedOrigin } from "../verify-allowed-origin";
 import { SpVerificationResult } from "./types";
-import { SiteProfileInvalid, SiteProfileVerifyFailed } from "./verify-errors";
+import {
+  SiteProfileInvalid,
+  SiteProfileVerifyFailed,
+  WebsiteProfileDecodeFailed,
+} from "./verify-errors";
 
 /** WSPソースの取得と初期デコード */
 const decodeWebsiteProfiles = (
@@ -32,7 +36,8 @@ const decodeWebsiteProfiles = (
   opsVerified: VerifiedOps,
 ):
   | { decodedWsps: UnverifiedJwtVc<WebsiteProfile>[]; wspSources: string[] }
-  | SiteProfileInvalid => {
+  | SiteProfileInvalid
+  | WebsiteProfileDecodeFailed => {
   // NOTE: 2026-11-01 まで後方互換性のため、sitesが存在しない場合はcredentialを使用
   const wspSources = sp.sites || (sp.credential ? [sp.credential] : []);
   if (wspSources.length === 0) {
@@ -48,9 +53,20 @@ const decodeWebsiteProfiles = (
   // デコードエラーチェック（配列全体を確認）
   const decodeErrors = decodedWsps.filter((wsp) => wsp instanceof Error);
   if (decodeErrors.length > 0) {
-    return new SiteProfileInvalid("Website Profile invalid", {
+    const successPairs = decodedWsps.reduce<
+      { wsp: UnverifiedJwtVc<WebsiteProfile>; source: string }[]
+    >((acc, wsp, index) => {
+      if (!(wsp instanceof Error)) {
+        acc.push({ wsp, source: wspSources[index] });
+      }
+      return acc;
+    }, []);
+
+    return new WebsiteProfileDecodeFailed("Website Profile decoding failed", {
       originators: opsVerified,
       sites: decodeErrors,
+      decodedWsps: successPairs.map((item) => item.wsp),
+      decodedWspSources: successPairs.map((item) => item.source),
     });
   }
 
@@ -104,18 +120,18 @@ export function SpVerifier(
     }
 
     const decoded = decodeWebsiteProfiles(sp, opsVerified);
-    if (decoded instanceof SiteProfileInvalid) {
+    if (
+      decoded instanceof SiteProfileInvalid ||
+      decoded instanceof WebsiteProfileDecodeFailed
+    ) {
       return decoded;
     }
+
     const { decodedWsps, wspSources } = decoded;
 
     // 全てのWSPを検証
     const verifiedWsps = await Promise.all(
       decodedWsps.map(async (decodedWsp, index) => {
-        if (decodedWsp instanceof Error) {
-          return decodedWsp;
-        }
-
         const wspIssuer = decodedWsp.doc.issuer;
         const cp = opsVerified.find(
           (op) => op.core.doc.credentialSubject.id === wspIssuer,
