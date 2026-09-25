@@ -40,7 +40,7 @@ export class WebsiteProfileDecodeFailed extends Error {
     message: string,
     public result: SpVerificationFailure & {
       decodedWsps: UnverifiedJwtVc<WebsiteProfile>[];
-      wspSources: string[];
+      decodedWspSources: string[];
     },
   ) {
     super(message);

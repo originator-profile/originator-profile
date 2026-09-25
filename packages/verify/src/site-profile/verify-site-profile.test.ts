@@ -657,7 +657,6 @@ describe("Site Profileの検証", async () => {
     );
     const resultSp = await verify();
 
-    console.log(resultSp);
     expect(resultSp).not.instanceOf(SiteProfileInvalid);
     expect(resultSp).not.instanceOf(SiteProfileVerifyFailed);
     expect(resultSp).toMatchObject({
@@ -714,7 +713,7 @@ describe("Site Profileの検証", async () => {
     expect(sites[1]).instanceOf(VcVerifyFailed);
   });
 
-  test("複数のWSPのうち一つだけ複合に失敗", async () => {
+  test("複数のWSPのうち一つだけデコードに失敗", async () => {
     const validJwt = await signJwtVc(wsp, originator.privateKey, signOptions);
     const multiSp: SiteProfile = {
       originators: ops,
@@ -730,14 +729,14 @@ describe("Site Profileの検証", async () => {
     const resultSp = await verify();
 
     expect(resultSp).instanceOf(WebsiteProfileDecodeFailed);
-    const { sites, decodedWsps, wspSources } = (
+    const { sites, decodedWsps, decodedWspSources } = (
       resultSp as WebsiteProfileDecodeFailed
     ).result;
     expect(sites).toHaveLength(1);
     expect(decodedWsps).toHaveLength(1);
 
-    expect(wspSources).toHaveLength(1);
-    expect(wspSources[0]).toEqual(validJwt);
+    expect(decodedWspSources).toHaveLength(1);
+    expect(decodedWspSources[0]).toEqual(validJwt);
   });
 
   test("複数のWSPのうち一つだけオリジンが一致しない", async () => {

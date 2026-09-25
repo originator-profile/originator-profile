@@ -65,7 +65,7 @@ const decodeWebsiteProfiles = (
       originators: opsVerified,
       sites: decodeErrors,
       decodedWsps: wspWithSources.map((item) => item.wsp),
-      wspSources: wspWithSources.map((item) => item.source),
+      decodedWspSources: wspWithSources.map((item) => item.source),
     });
   }
 
