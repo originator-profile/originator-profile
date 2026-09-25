@@ -60,7 +60,7 @@ SP/OPS/CAS の検証を行います。`;
       // oxlint-disable no-await-in-loop
       const result = await runVerificationPipeline(url);
       const output = formatResult(result, flags.logAll);
-      this.log(JSON.stringify({url, ...output}, null, 2));
+      this.log(JSON.stringify({ url, ...output }, null, 2));
     }
   }
 }
