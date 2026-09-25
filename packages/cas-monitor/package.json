@@ -1,0 +1,37 @@
+{
+  "name": "@originator-profile/cas-monitor",
+  "version": "0.7.0-beta.5",
+  "license": "Apache-2.0",
+  "private": true,
+  "homepage": "https://docs.originator-profile.org",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/originator-profile/originator-profile.git",
+    "directory": "packages/cas-monitor"
+  },
+  "type": "module",
+  "bin": "./bin/run.js",
+  "oclif": {
+    "bin": "cas-monitor",
+    "commands": "./dist/commands"
+  },
+  "scripts": {
+    "build": "tsc",
+    "lint": "oxlint --fix ."
+  },
+  "devDependencies": {
+    "@oclif/core": "^4.10.3",
+    "@originator-profile/core": "workspace:*",
+    "@originator-profile/model": "workspace:*",
+    "@originator-profile/presentation": "workspace:*",
+    "@originator-profile/tsconfig": "workspace:*",
+    "@originator-profile/verify": "workspace:*",
+    "@types/node": "25.6.0",
+    "dotenv": "17.4.2",
+    "jsdom": "^29.0.1",
+    "oclif": "4.23.0",
+    "oxlint": "^1.73.0",
+    "oxlint-tsgolint": "^0.24.0",
+    "typescript": "6.0.2"
+  }
+}
