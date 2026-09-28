@@ -96,7 +96,9 @@ https://media.example.com/special/**
 
 除外判定は新規公開・公開済み記事の更新時に適用します。分割記事は代表 URL を使って記事全体を判定し、除外時は全ページの自動発行をスキップします。公開 URL が取得できない場合や設定を評価できない場合も CA 発行を停止して理由をログに記録します。記事の公開自体は停止しません。スキップ理由の確認には「ログの出力設定」を有効にしてください。
 
-**除外しても、発行済み CA の削除・失効・配信停止は行いません。** 除外中は CA を更新しないため、記事を変更すると残っている CA と内容が一致しなくなる場合があります。除外解除後は次回の公開・更新から発行を再開し、設定保存だけでは一括再発行しません。
+**除外設定を保存すると、対象記事の既存 CA も HTML 埋め込み・外部 URL の両方で配信を停止します。** 分割記事は代表 URL でまとめて判定します。保存済み CA（データベースの `_profile_post_cas`）は保持し、CA サーバー上の CA の削除・失効は行いません。除外解除だけでは配信を再開せず、次回の公開・更新で全ページの再発行・保存が成功してから再開します。設定保存だけでは一括再発行しません。
+
+既存の HTML や JSON がページキャッシュ・CDN に残っている場合、WordPress 側の配信停止だけでは消去できません。導入時と除外設定の変更時には、該当するページと CA の URL のキャッシュをパージしてください。この機能は取得済みの CA を撤回するものではありません。
 
 ### 既存記事のCA一括発行
 
@@ -205,36 +207,27 @@ h1.wp-block-post-title, .wp-block-post-content>*:not(.post-nav-links)
 </script>
 ```
 
-- External: CAS を静的ファイルとして生成し、リンク形式(External)にして記事を投稿します。
+- External: CAS を WordPress の REST API の URL で参照します。静的 JSON ファイルは生成しません。
 
-CA Presentaion Type が External 時、静的ファイルを生成するディレクトリとして下記のように定義されています。
-
-```
-const PROFILE_DEFAULT_CA_EXTERNAL_DIR = 'cas';
-```
-
-ドキュメントルートが /var/www/html の場合、以下のパスに静的ファイルが配置されます。
-
-```
-/var/www/html/cas/<ポストid>_cas.json
-```
+外部 URL は `/wp-json/ca-manager/v1/cas/<ポストid>/<ページ番号>` です。ページ番号は1から始まります。パーマリンク設定が「基本」の場合は `/?rest_route=/ca-manager/v1/cas/<ポストid>/<ページ番号>` 形式になります。
 
 例:
 
 ```html
 <script
-  src="https://example.com/cas/1_cas.json"
+  src="https://example.com/wp-json/ca-manager/v1/cas/1/1"
   type="application/cas+json"
 ></script>
 ```
 
-ドキュメントルート配下に cas ディレクトリが存在しない場合、 cas ディレクトリが作成されます。
-また、ポストidが同一の場合、静的ファイルは上書きされます。
+リクエストごとに記事の公開状態・保存済みの除外ルール・配信停止状態を確認し、配信できる CA のみ返します。レスポンスには `Cache-Control: no-store` を付与します。CDN 等でもこの URL をキャッシュしない設定にしてください。
+
+旧バージョンが生成した `ABSPATH/cas/<ポストid>_cas.json` は、初回ロード時の移行処理で削除します。削除に失敗した場合は管理画面に通知し、削除を再試行します。元ファイルの削除後も CDN 等に残ったコピーは別途パージが必要です。
 
 確認方法:
 
 ```
-$ curl -sSf https://example.com/cas/1_cas.json
+$ curl -sSf https://example.com/wp-json/ca-manager/v1/cas/1/1
 ```
 
 設定は WordPress 管理画面の「設定 > CA Manager」から行います。
@@ -564,13 +557,13 @@ test:integration:bulk
 : 既存記事のCA一括発行に関する結合テスト
 
 test:integration:exclusion
-: CA発行対象の除外に関する結合テスト
+: CA発行対象の除外と既存CAの配信停止に関する結合テスト
 
 test:integration:storage
 : CA保存のトランザクションに関する結合テスト
 
 test:integration
-: 上記の結合テストを順番に実行。CIでもE2EのWordPress準備後に実行
+: 上記の結合テストを順番に実行。CIでもE2EのWordPress準備後に実行。ローカルのE2Eでも実行する場合は `WORDPRESS_RUN_INTEGRATION_TESTS=1` を指定
 
 lint
 : 静的コード解析

@@ -33,6 +33,11 @@ require_once __DIR__ . '/ca-storage.php';
 require_once __DIR__ . '/exclusion.php';
 use function Profile\Exclusion\is_excluded;
 
+require_once __DIR__ . '/delivery.php';
+use function Profile\Delivery\suspend;
+use function Profile\Delivery\is_post_excluded;
+use const Profile\Delivery\BLOCKED_META;
+
 /** 投稿への署名処理の初期化
  * transition_post_status について
  * sign_post: 公開への遷移時のみの処理。非公開遷移時は何もしない。
@@ -122,6 +127,36 @@ function is_nonempty_ca_array( mixed $cas ): bool {
  * @return array{status: 'success'|'skipped'|'failed', message: string} 発行結果.
  */
 function issue_post( \WP_Post $post, bool $only_missing = false ): array {
+	// 通常発行と一括発行を、配信停止の再試行と同じ記事単位のロックで直列化する。
+	global $wpdb;
+	$lock = hash( 'sha256', DB_NAME . ':' . $wpdb->prefix . ':ca:' . $post->ID );
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- DB接続単位の排他ロック。結果はキャッシュしない。
+	$acquired = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) );
+	if ( 1 !== (int) $acquired ) {
+		suspend( $post->ID, true );
+		debug( "Post ID {$post->ID}: concurrent CA issuance; delivery remains suspended until a later successful update." );
+		return array(
+			'status'  => 'failed',
+			'message' => '別の処理がこの記事のCAを発行中です。完了後に再試行してください。',
+		);
+	}
+	try {
+		return sign_published_post( $post, $only_missing );
+	} finally {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- 必ず取得した接続のロックを解放する。
+		$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+	}
+}
+
+/**
+ * 排他ロック取得後に、全ページのCAを発行して配信を再開する。
+ *
+ * @param \WP_Post $post 投稿オブジェクト。
+ * @param bool     $only_missing 既存CASがある場合は発行をスキップするか。
+ * @return array{status: 'success'|'skipped'|'failed', message: string} 発行結果。
+ */
+function sign_published_post( \WP_Post $post, bool $only_missing = false ): array {
+	$signed_post = $post->to_array();
 	try {
 		if ( 'publish' !== $post->post_status ) {
 			debug( "Post ID {$post->ID}: post status is '{$post->post_status}', not 'publish'." );
@@ -136,6 +171,7 @@ function issue_post( \WP_Post $post, bool $only_missing = false ): array {
 		$rules = \get_option( 'profile_ca_excluded_urls', array() );
 		$url   = \get_permalink( $post );
 		if ( ! is_array( $rules ) || ! is_string( $url ) || '' === $url ) {
+			suspend( $post->ID );
 			debug( "Post ID {$post->ID}: CA issuance stopped because the public URL or exclusion settings are unavailable." );
 			return array(
 				'status'  => 'failed',
@@ -145,6 +181,7 @@ function issue_post( \WP_Post $post, bool $only_missing = false ): array {
 
 		try {
 			if ( is_excluded( $url, $rules ) ) {
+				suspend( $post->ID );
 				debug( "Post ID {$post->ID}: CA issuance skipped by URL exclusion rules. Existing CAS preserved." );
 				return array(
 					'status'  => 'skipped',
@@ -152,6 +189,7 @@ function issue_post( \WP_Post $post, bool $only_missing = false ): array {
 				);
 			}
 		} catch ( \InvalidArgumentException $error ) {
+			suspend( $post->ID );
 			debug( "Post ID {$post->ID}: CA issuance stopped because URL exclusion could not be evaluated: " . $error->getMessage() );
 			return array(
 				'status'  => 'failed',
@@ -166,6 +204,17 @@ function issue_post( \WP_Post $post, bool $only_missing = false ): array {
 				'message' => '発行済みのためスキップしました。',
 			);
 		}
+
+		// 再発行が失敗した場合も、更新前のCAを配信しない。保存済みCA自体は保持する。
+		if ( ! suspend( $post->ID, true ) ) {
+			debug( "Post ID {$post->ID}: could not suspend CA delivery before issuance." );
+			return array(
+				'status'  => 'failed',
+				'message' => 'CAの配信を停止できないため、CA発行を中止しました。',
+			);
+		}
+		// 発行中に作られた新しい停止状態を解除しないよう、開始時のトークンを保持する。
+		$blocked_token = \get_post_meta( $post->ID, BLOCKED_META, true );
 
 		$initial_cas = read_ca_snapshot( $post->ID );
 		if ( null === $initial_cas || count( $initial_cas ) > 1 ) {
@@ -246,12 +295,41 @@ function issue_post( \WP_Post $post, bool $only_missing = false ): array {
 			$post_cas[] = $cas;
 		}
 
+		// 本文保存は記事ロックの外で行われるため、全投稿状態と配信停止トークンを再確認する。
+		\clean_post_cache( $post->ID );
+		$current_post = \get_post( $post->ID );
+		if ( ! $current_post instanceof \WP_Post || $current_post->to_array() !== $signed_post || \get_post_meta( $post->ID, BLOCKED_META, true ) !== $blocked_token ) {
+			return array(
+				'status'  => 'failed',
+				'message' => '発行中に記事または配信停止状態が変更されたため、CAを保存しませんでした。',
+			);
+		}
+
 		if ( ! store_post_cas( $post->ID, $initial_state, $initial_cas, $post_cas ) ) {
 			debug( "Post ID {$post->ID}: CA storage failed or the post changed while issuing CA." );
 			return array(
 				'status'  => 'failed',
 				'message' => '発行中の変更または保存エラーのため、CAを保存できませんでした。再試行してください。',
 			);
+		}
+
+		try {
+			if ( is_post_excluded( $post ) ) {
+				suspend( $post->ID );
+				return array(
+					'status'  => 'skipped',
+					'message' => '除外対象のURLのため、CAの配信を停止しました。',
+				);
+			}
+		} catch ( \InvalidArgumentException $error ) {
+			suspend( $post->ID );
+			return array(
+				'status'  => 'failed',
+				'message' => 'CA除外設定または公開URLを確認できないため、CAの配信を停止しました。',
+			);
+		}
+		if ( $blocked_token ) {
+			\delete_post_meta( $post->ID, BLOCKED_META, $blocked_token );
 		}
 
 		return array(

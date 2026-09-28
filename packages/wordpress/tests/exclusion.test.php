@@ -134,6 +134,48 @@ final class Exclusion extends TestCase {
 		}
 	}
 
+	public function test繰り返すワイルドカードでも非一致を例外にせず判定する() {
+		foreach ( array( '*', '**' ) as $wildcard ) {
+			$rule = '/' . str_repeat( $wildcard . 'a', 10 ) . $wildcard . 'b';
+			$url  = 'https://example.com/' . str_repeat( 'a', 50 );
+			$this->assertFalse( is_excluded( $url . 'bc', array( $rule ) ) );
+			$this->assertTrue( is_excluded( $url . 'b', array( $rule ) ) );
+			// 先行ルールの非一致が、後続ルールの判定を妨げない.
+			$this->assertTrue( is_excluded( $url . 'bc', array( $rule, '/**' ) ) );
+		}
+	}
+
+	public function test異なるワイルドカードが混在してもスラッシュ境界を守る() {
+		$cases = array(
+			array( '/**a*b', '/aa/ab', true ),
+			array( '/**a*b', '/aa/b', false ),
+			array( '/*a**b', '/aa/x/b', true ),
+			array( '/*a**b', '/x/a/b', false ),
+			array( '/**a/*b', '/a/x/a/yb', true ),
+			array( '/**a/*b', '/a/x/b', false ),
+			array( '/a**b*c', '/a/x/bbc', true ),
+			array( '/a**b*c', '/a/x/b/c', false ),
+			array( '/a***b', '/a/x/b', true ),
+			array( '/a****b', '/ab', true ),
+			array( '/**', '/', true ),
+			array( '/*', '/a/b', false ),
+			array( '/日本*記事', '/日本語の記事', true ),
+			array( '/日本*記事', '/日本語/記事', false ),
+			array( '/a*?q=**', '/abc?q=x/y', true ),
+			array( '/a*?q=*', '/abc?q=x/y', false ),
+		);
+		foreach ( $cases as list( $rule, $path, $expected ) ) {
+			$this->assertSame( $expected, is_excluded( 'https://example.com' . $path, array( $rule ) ), $rule . ' : ' . $path );
+		}
+	}
+
+	public function test上限内の長いルールとURLを照合できる() {
+		$rule = '/' . str_repeat( '*', 2046 ) . 'b';
+		$url  = 'https://example.com/' . str_repeat( 'a', 60000 );
+		$this->assertFalse( is_excluded( $url . 'c', array( $rule ) ) );
+		$this->assertTrue( is_excluded( $url . 'b', array( $rule ) ) );
+	}
+
 	/**
 	 * InvalidArgumentException と、日本語の利用者向けメッセージを確認する。
 	 *

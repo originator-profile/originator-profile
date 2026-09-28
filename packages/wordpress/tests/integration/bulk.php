@@ -154,6 +154,7 @@ try {
 	$new_post = $make_post();
 	update_post_meta( $new_post, '_profile_post_cas', array( array() ) );
 	profile_bulk_assert( ! \Profile\Issue\has_post_cas( $new_post ), 'Empty nested CAS remains unissued' );
+	profile_bulk_assert( \Profile\Delivery\suspend( $existing, true ), 'Suspend existing CA before missing-only job' );
 	$before = get_post( $missing );
 	for ( $i = 0; $i < 10 && 'running' === $job['status']; ++$i ) {
 		$job = \Profile\Bulk\locked( static fn() => \Profile\Bulk\change( 'step', $job['id'] ) );
@@ -166,6 +167,8 @@ try {
 	profile_bulk_assert( get_post_meta( $existing, '_profile_post_cas', true ) === $old_cas, 'Existing CAS preserved' );
 	$after = get_post( $missing );
 	profile_bulk_assert( $before->post_content === $after->post_content && $before->post_modified === $after->post_modified && $before->post_author === $after->post_author, 'Post data unchanged' );
+	profile_bulk_assert( \Profile\Delivery\can_deliver( $after ), 'Successful bulk issuance resumes CA delivery' );
+	profile_bulk_assert( ! \Profile\Delivery\can_deliver( get_post( $existing ) ), 'Missing-only skip preserves the delivery block' );
 	$checks[] = 'cursor, resume, existing CA, exclusion and post data';
 
 	$selection['mode'] = 'all';
@@ -174,6 +177,7 @@ try {
 	$job               = \Profile\Bulk\locked( static fn() => \Profile\Bulk\change( 'step', $job['id'] ) );
 	profile_bulk_assert( 1 === $job['counts']['failed'], 'HTTP failure reported' );
 	profile_bulk_assert( \Profile\Issue\has_post_cas( $missing ), 'Failed reissue preserves CAS' );
+	profile_bulk_assert( ! \Profile\Delivery\can_deliver( get_post( $missing ) ), 'Failed bulk reissue keeps old CA delivery suspended' );
 	$fail_http = false;
 	for ( $i = 0; $i < 10 && 'running' === $job['status']; ++$i ) {
 		$job = \Profile\Bulk\locked( static fn() => \Profile\Bulk\change( 'step', $job['id'] ) );
@@ -183,6 +187,8 @@ try {
 		$job = \Profile\Bulk\locked( static fn() => \Profile\Bulk\change( 'step', $job['id'] ) );
 	}
 	profile_bulk_assert( 0 === $job['counts']['failed'] && 3 === $job['counts']['success'] && 1 === $job['counts']['skipped'], 'Retry only failed articles' );
+	profile_bulk_assert( \Profile\Delivery\can_deliver( get_post( $missing ) ), 'Successful retry resumes CA delivery' );
+	profile_bulk_assert( \Profile\Delivery\can_deliver( get_post( $existing ) ), 'Full reissue resumes previously blocked CA delivery' );
 	$checks[] = 'reissue failure and retry';
 
 	$split = $make_post( 'post', '2025-01-15 12:00:00', '<p>One.</p><!--nextpage--><p>Two.</p>' );

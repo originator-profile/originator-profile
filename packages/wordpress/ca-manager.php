@@ -20,6 +20,9 @@ require_once __DIR__ . '/includes/admin.php';
 \Profile\Admin\init();
 \add_filter( 'plugin_action_links_' . \plugin_basename( __FILE__ ), '\Profile\Admin\add_action_links' );
 
+require_once __DIR__ . '/includes/delivery.php';
+\Profile\Delivery\init();
+
 require_once __DIR__ . '/includes/issue.php';
 \Profile\Issue\init();
 
