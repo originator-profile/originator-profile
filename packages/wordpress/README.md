@@ -532,6 +532,7 @@ test
 
 test:integration:exclusion
 : CA発行対象の除外に関する結合テスト。開発用イメージで依存関係を導入し、WordPress を起動して CA Manager を有効化してから実行します。
+CI の E2E テストでは、WordPress の初期化とプラグイン有効化の直後に実行します。ローカルの E2E テストでも実行する場合は `WORDPRESS_RUN_INTEGRATION_TESTS=1` を指定してください。
 
 lint
 : 静的コード解析

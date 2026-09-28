@@ -94,15 +94,10 @@ function is_excluded( string $url, array $rules ): bool {
 	$rules = parse_rules( $rules );
 
 	foreach ( $rules as $rule ) {
-		$pattern = compile_rule( $rule );
 		$subject = '/' === $rule[0]
 			? $target['path'] . ( $target['query_present'] ? '?' . $target['query'] : '' )
 			: $target['value'];
-		$matched = preg_match( $pattern, $subject );
-		if ( false === $matched ) {
-			throw new \InvalidArgumentException( '除外ルールの照合に失敗しました。' );
-		}
-		if ( 1 === $matched ) {
+		if ( matches_rule( $rule, $subject ) ) {
 			return true;
 		}
 	}
@@ -312,12 +307,17 @@ function normalize_path( string $path ): string {
 }
 
 /**
- * ルールを安全な全体一致正規表現へ変換する。
+ * 正規化したルールを、バックトラックせずに全体一致で照合する。
+ *
+ * 各文字までの照合で到達できる対象文字列の位置を保持する動的計画法。
+ * 時間は O(ルール長 × 対象URL長)、追加メモリは O(対象URL長)。
+ * ワイルドカードだけがASCIIなので、文字列の表記を保ったバイト単位で扱う。
  *
  * @param string $rule 除外ルール。
- * @return string 正規表現。
+ * @param string $subject 正規化済みの対象文字列。
+ * @return bool ルール全体が一致した場合は true。
  */
-function compile_rule( string $rule ): string {
+function matches_rule( string $rule, string $subject ): bool {
 	$is_absolute = '/' !== $rule[0];
 	$reference   = $is_absolute ? parse_absolute_url( $rule, true ) : parse_path_reference( $rule );
 	$literal     = $is_absolute ? $reference['authority'] : '';
@@ -326,22 +326,39 @@ function compile_rule( string $rule ): string {
 		$literal .= '?' . $reference['query'];
 	}
 
-	// ASCIIの記号だけを判別するため、文字分割が不要なバイト単位で処理する。
-	$pattern = '';
-	$length  = strlen( $literal );
-	for ( $index = 0; $index < $length; ++$index ) {
-		$character = $literal[ $index ];
-		if ( '*' !== $character ) {
-			$pattern .= preg_quote( $character, '~' );
-			continue;
-		}
-		if ( $index + 1 < $length && '*' === $literal[ $index + 1 ] ) {
-			$pattern .= '.*';
-			++$index;
-		} else {
-			$pattern .= '[^/]*';
-		}
+	if ( false === strpos( $literal, '*' ) ) {
+		return $literal === $subject;
 	}
 
-	return '~\\A' . $pattern . '\\z~';
+	$positions      = array( 0 => true );
+	$subject_length = strlen( $subject );
+	$rule_length    = strlen( $literal );
+	for ( $index = 0; $index < $rule_length; ++$index ) {
+		$character = $literal[ $index ];
+		$next      = array();
+		if ( '*' === $character ) {
+			$cross_slash = $index + 1 < $rule_length && '*' === $literal[ $index + 1 ];
+			// 連続する2個以上の * は、まとめて ** と同じ意味になる。
+			while ( $index + 1 < $rule_length && '*' === $literal[ $index + 1 ] ) {
+				++$index;
+			}
+			for ( $offset = array_key_first( $positions ); $offset <= $subject_length; ++$offset ) {
+				if ( isset( $positions[ $offset ] ) || ( 0 < $offset && isset( $next[ $offset - 1 ] ) && ( $cross_slash || '/' !== $subject[ $offset - 1 ] ) ) ) {
+					$next[ $offset ] = true;
+				}
+			}
+		} else {
+			foreach ( $positions as $offset => $unused ) {
+				if ( $offset < $subject_length && $character === $subject[ $offset ] ) {
+					$next[ $offset + 1 ] = true;
+				}
+			}
+		}
+		if ( empty( $next ) ) {
+			return false;
+		}
+		$positions = $next;
+	}
+
+	return isset( $positions[ $subject_length ] );
 }
