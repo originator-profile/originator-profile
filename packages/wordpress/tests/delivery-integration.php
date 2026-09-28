@@ -348,12 +348,114 @@ try {
 	profile_delivery_assert( ! file_exists( $fixture ), 'Migration left the legacy static CA accessible.' );
 	profile_delivery_assert( '1' === get_option( 'profile_ca_delivery_version' ), 'Migration was not marked complete.' );
 	profile_delivery_assert( ! get_option( 'profile_ca_delivery_error' ), 'Successful retry did not clear the migration error.' );
+
+	// Failed metadata persistence must retry only the affected article after migration.
+	$retry_id      = $create( '<p>Retry fixture.</p>' );
+	$unaffected_id = $create( '<p>Unaffected fixture.</p>' );
+	$pending_key   = \Profile\Delivery\PENDING_PREFIX . $retry_id;
+	$retry_args    = array( $retry_id );
+	$failed_writes = 0;
+	$fail_metadata = static function ( $check, $object_id, $meta_key ) use ( $retry_id, &$failed_writes ) {
+		if ( $retry_id === (int) $object_id && \Profile\Delivery\BLOCKED_META === $meta_key ) {
+			++$failed_writes;
+			return false;
+		}
+		return $check;
+	};
+	add_filter( 'update_post_metadata', $fail_metadata, 10, 3 );
+	try {
+		update_option( 'profile_ca_excluded_urls', array( get_permalink( $retry_id ) ) );
+		profile_delivery_assert( $failed_writes > 0, 'The metadata failure was not exercised.' );
+		profile_delivery_assert( ! get_post_meta( $retry_id, \Profile\Delivery\BLOCKED_META, true ), 'Failed metadata write unexpectedly persisted.' );
+		profile_delivery_assert( (bool) get_option( $pending_key ), 'Failed metadata write did not record a pending block.' );
+		profile_delivery_assert( '1' === get_option( 'profile_ca_delivery_version' ), 'Rule failure invalidated completed migration.' );
+		$post_queries = 0;
+		$query_spy    = static function () use ( &$post_queries ): void {
+			++$post_queries;
+		};
+		add_action( 'pre_get_posts', $query_spy );
+		try {
+			\Profile\Delivery\migrate();
+			\Profile\Delivery\migrate();
+		} finally {
+			remove_action( 'pre_get_posts', $query_spy );
+		}
+		profile_delivery_assert( 0 === $post_queries, 'Completed migration rescanned articles after a rule failure.' );
+		update_option( 'profile_ca_excluded_urls', array() );
+		$dispatch( $retry_id, 1, 404 );
+		$assert_no_script( $retry_id );
+		$dispatch( $unaffected_id, 1, 200 );
+		$scheduled = wp_next_scheduled( \Profile\Delivery\RETRY_HOOK, $retry_args );
+		profile_delivery_assert( false !== $scheduled, 'Failed suspension did not schedule a retry.' );
+		// WordPress removes a single event before executing its callback.
+		wp_unschedule_event( $scheduled, \Profile\Delivery\RETRY_HOOK, $retry_args );
+		$before_retry = $failed_writes;
+		do_action( \Profile\Delivery\RETRY_HOOK, $retry_id );
+		profile_delivery_assert( $failed_writes === $before_retry + 1, 'Retry did not attempt the affected article exactly once.' );
+		profile_delivery_assert( (bool) get_option( $pending_key ), 'Continued failure lost the pending block.' );
+		profile_delivery_assert( false !== wp_next_scheduled( \Profile\Delivery\RETRY_HOOK, $retry_args ), 'Continued failure did not reschedule the retry.' );
+		profile_delivery_assert( ! get_post_meta( $unaffected_id, \Profile\Delivery\BLOCKED_META, true ), 'Retry blocked an unrelated article.' );
+		$dispatch( $retry_id, 1, 404 );
+	} finally {
+		remove_filter( 'update_post_metadata', $fail_metadata, 10 );
+	}
+	// An active issuer owns the article lock, so the retry must defer persistence.
+	$retry_database = new \wpdb( DB_USER, DB_PASSWORD, DB_NAME, DB_HOST );
+	$retry_lock     = hash( 'sha256', DB_NAME . ':' . $GLOBALS['wpdb']->prefix . ':ca:' . $retry_id );
+	try {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Test-only advisory lock on a separate connection.
+		$retry_acquired = $retry_database->get_var( $retry_database->prepare( 'SELECT GET_LOCK(%s, 0)', $retry_lock ) );
+		profile_delivery_assert( 1 === (int) $retry_acquired, 'Could not acquire the retry contention lock.' );
+		$pending_before_lock = get_option( $pending_key );
+		$scheduled           = wp_next_scheduled( \Profile\Delivery\RETRY_HOOK, $retry_args );
+		wp_unschedule_event( $scheduled, \Profile\Delivery\RETRY_HOOK, $retry_args );
+		do_action( \Profile\Delivery\RETRY_HOOK, $retry_id );
+		profile_delivery_assert( get_option( $pending_key ) === $pending_before_lock, 'Busy retry changed the pending failure.' );
+		profile_delivery_assert( ! get_post_meta( $retry_id, \Profile\Delivery\BLOCKED_META, true ), 'Busy retry wrote metadata despite the issuer lock.' );
+		profile_delivery_assert( false !== wp_next_scheduled( \Profile\Delivery\RETRY_HOOK, $retry_args ), 'Busy retry did not reschedule.' );
+	} finally {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- Release the test lock on its owning connection.
+		$retry_database->get_var( $retry_database->prepare( 'SELECT RELEASE_LOCK(%s)', $retry_lock ) );
+		$retry_database->close();
+	}
+	$scheduled = wp_next_scheduled( \Profile\Delivery\RETRY_HOOK, $retry_args );
+	wp_unschedule_event( $scheduled, \Profile\Delivery\RETRY_HOOK, $retry_args );
+	do_action( \Profile\Delivery\RETRY_HOOK, $retry_id );
+	profile_delivery_assert( (bool) get_post_meta( $retry_id, \Profile\Delivery\BLOCKED_META, true ), 'Successful retry did not persist the block.' );
+	profile_delivery_assert( ! get_option( $pending_key ), 'Successful retry did not clear its pending block.' );
+	$dispatch( $retry_id, 1, 404 );
+	\Profile\Issue\sign_post( 'publish', 'publish', get_post( $retry_id ) );
+	$dispatch( $retry_id, 1, 200 );
+	do_action( \Profile\Delivery\RETRY_HOOK, $retry_id );
+	profile_delivery_assert( ! get_post_meta( $retry_id, \Profile\Delivery\BLOCKED_META, true ), 'Stale retry event blocked successfully reissued CA.' );
+	$dispatch( $retry_id, 1, 200 );
+
+	// A newer pending failure must survive completion of an older suspension.
+	\Profile\Delivery\suspend( $retry_id, true );
+	update_option( $pending_key, 'older-pending-token', false );
+	$new_pending     = wp_generate_uuid4();
+	$replace_pending = static function ( $meta_id, $object_id, $meta_key ) use ( $retry_id, $pending_key, $new_pending ): void {
+		if ( $retry_id === (int) $object_id && \Profile\Delivery\BLOCKED_META === $meta_key ) {
+			update_option( $pending_key, $new_pending, false );
+		}
+	};
+	add_action( 'updated_post_meta', $replace_pending, 10, 3 );
+	try {
+		profile_delivery_assert( \Profile\Delivery\suspend( $retry_id, true ), 'Older suspension did not complete its metadata write.' );
+	} finally {
+		remove_action( 'updated_post_meta', $replace_pending, 10 );
+	}
+	profile_delivery_assert( get_option( $pending_key ) === $new_pending, 'Older suspension deleted a newer pending failure.' );
+	$dispatch( $retry_id, 1, 404 );
+
 } catch ( \Throwable $exception ) {
 	$failure = $exception;
 } finally {
 	// phpcs:ignore WordPress.WP.GlobalVariablesOverride.Prohibited -- Scoped filesystem failure injection or restoration.
 	$GLOBALS['wp_filesystem'] = $saved_filesystem;
 	foreach ( $post_ids as $cleanup_post_id ) {
+		delete_option( \Profile\Delivery\PENDING_PREFIX . $cleanup_post_id );
+		wp_clear_scheduled_hook( \Profile\Delivery\RETRY_HOOK, array( $cleanup_post_id ) );
 		wp_delete_post( $cleanup_post_id, true );
 	}
 	if ( null !== $fixture && file_exists( $fixture ) ) {
