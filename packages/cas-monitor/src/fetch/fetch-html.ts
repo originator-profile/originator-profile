@@ -20,6 +20,9 @@ export async function prepareHtml(url: string) {
   const contentUrl = transformEndpoint(url);
   try {
     const res = await fetch(contentUrl);
+    if (!res.ok) {
+      return new Error(`HTTP ${res.status}: ${res.statusText}`);
+    }
     return await res.text();
   } catch (e) {
     return e instanceof Error ? e : new Error(String(e));
