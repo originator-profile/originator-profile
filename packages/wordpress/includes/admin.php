@@ -167,8 +167,8 @@ function exclusion_settings() {
 				$check_error = true;
 			} else {
 				$check_text = is_excluded( $check_url, $rules )
-					? '除外対象です。この記事のCA自動発行をスキップします。'
-					: '除外対象ではありません。CA発行には別途サーバー設定が必要です。';
+					? '除外対象です。'
+					: '除外対象ではありません。';
 			}
 		} catch ( \InvalidArgumentException $error ) {
 			$check_text  = $error->getMessage();
@@ -190,8 +190,9 @@ function exclusion_settings() {
 			<textarea id="profile_ca_excluded_urls" name="profile_ca_excluded_urls" rows="6" class="large-text code" aria-describedby="profile-ca-exclusion-help"><?php echo \esc_textarea( $rules_text ); ?></textarea>
 			<div id="profile-ca-exclusion-help">
 				<p>例：<code>/blog/*</code> は直下の記事、<code>/blog/**</code> は下の階層も除外します。公開URL全体や <code>/?p=123</code> も指定できます。</p>
-				<p>末尾の / の有無は同じ扱いです。大文字・小文字とクエリ文字列は区別します。空欄なら除外しません。最大200件、1件2048バイト、合計65536バイトです。</p>
-				<p>設定は次回の公開・更新から適用されます。分割記事は代表URLでまとめて判定します。発行済みCAの削除・失効・配信停止は行いません。</p>
+				<p>末尾の / は区別しません。大文字・小文字とクエリ文字列は区別します。分割記事は代表URLで判定します。</p>
+				<p>保存すると対象記事のCA発行・配信を停止します。除外解除後は、記事を更新し、全ページのCA再発行が成功すると配信を再開します。</p>
+				<p>CDN・ページキャッシュを利用している場合は、設定変更後に対象ページとCAのキャッシュを削除してください。</p>
 			</div>
 			<?php \submit_button( '除外設定を保存', 'primary', 'save_excluded_urls' ); ?>
 		</form>
@@ -199,7 +200,7 @@ function exclusion_settings() {
 			<?php \wp_nonce_field( 'profile_ca_check_exclusion' ); ?>
 			<p><label for="profile_ca_check_url">判定する公開URL（パーマリンク）</label></p>
 			<input type="text" inputmode="url" id="profile_ca_check_url" name="profile_ca_check_url" class="large-text" value="<?php echo \esc_attr( $check_url ); ?>" placeholder="<?php echo \esc_attr( \home_url( '/?p=123' ) ); ?>" aria-describedby="profile-ca-check-url-help<?php echo $check_url_error ? ' profile-ca-check-url-error' : ''; ?>"<?php echo $check_url_error ? ' aria-invalid="true"' : ''; ?> required>
-			<p id="profile-ca-check-url-help">保存済みの除外ルールで確認します。記事の公開・CAの発行・設定の変更は行いません。</p>
+			<p id="profile-ca-check-url-help">保存済みのルールで判定します。記事や設定は変更しません。</p>
 			<?php \submit_button( 'URLを判定', 'secondary', 'check_exclusion', false ); ?>
 		</form>
 		<?php if ( '' !== $check_text ) : ?>
@@ -342,7 +343,7 @@ function profile_ca_embedded_or_external_field() {
 			id="external"
 			name="profile_ca_embedded_or_external"
 			value="external"
-			title="CASをURLで参照します 選択するとJSONファイルが定数で指定したディレクトリに生成されます"
+			title="CASをREST APIのURLで参照します リクエストごとに配信可否を確認します"
 			<?php checked( $format, 'external' ); ?>
 		/>
 		External (URLで参照)</label>
