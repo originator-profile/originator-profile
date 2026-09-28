@@ -217,10 +217,18 @@ function sign_published_post( \WP_Post $post, bool $only_missing = false ): arra
 		$blocked_token = \get_post_meta( $post->ID, BLOCKED_META, true );
 
 		$initial_cas = read_ca_snapshot( $post->ID );
-		if ( null === $initial_cas || count( $initial_cas ) > 1 ) {
+		if ( null === $initial_cas ) {
+			debug( "Post ID {$post->ID}: CA issuance stopped because the saved CA query failed." );
 			return array(
 				'status'  => 'failed',
-				'message' => '保存済みのCAを確認できないため、CA発行を中止しました。',
+				'message' => '保存済みのCAをデータベースから読み取れなかったため、CA発行を中止しました。',
+			);
+		}
+		if ( count( $initial_cas ) > 1 ) {
+			debug( "Post ID {$post->ID}: CA issuance stopped because duplicate CA metadata rows were found." );
+			return array(
+				'status'  => 'failed',
+				'message' => '同じ記事のCA保存レコードが複数あるため、CA発行を中止しました。',
 			);
 		}
 		$initial_state = array(

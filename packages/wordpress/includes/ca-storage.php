@@ -67,6 +67,8 @@ function store_post_cas( int $post_id, array $initial_state, array $initial_cas,
 
 	$committed = false;
 	try {
+		// 接続IDを照合し、wpdb による再接続を検出する。
+		// 再接続でトランザクションとロックが失われた場合に、保護されていない書き込みを防ぐ。
 		$row = $wpdb->get_row( $wpdb->prepare( "SELECT * FROM {$wpdb->posts} WHERE ID = %d AND CONNECTION_ID() = %d FOR UPDATE", $post_id, $connection_id ) );
 		if ( ! $row || '' !== $wpdb->last_error ) {
 			return false;
