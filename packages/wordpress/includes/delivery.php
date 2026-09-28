@@ -11,13 +11,16 @@ use function Profile\Exclusion\is_excluded;
 use function Profile\Debug\debug;
 use const Profile\Config\PROFILE_DEFAULT_CA_EXTERNAL_DIR;
 
-const BLOCKED_META = '_profile_ca_delivery_blocked';
+const BLOCKED_META   = '_profile_ca_delivery_blocked';
+const PENDING_PREFIX = 'profile_ca_delivery_pending_';
+const RETRY_HOOK     = 'profile_ca_delivery_retry';
 
 /** 配信の初期化。設定の初回保存と更新の両方を処理する。 */
 function init() {
 	\add_action( 'add_option_profile_ca_excluded_urls', '\Profile\Delivery\rules_changed', 10, 0 );
 	\add_action( 'update_option_profile_ca_excluded_urls', '\Profile\Delivery\rules_changed', 10, 0 );
 	\add_action( 'init', '\Profile\Delivery\migrate' );
+	\add_action( RETRY_HOOK, '\Profile\Delivery\retry_suspend' );
 	\add_action( 'rest_api_init', '\Profile\Delivery\register_routes' );
 	\add_action( 'admin_notices', '\Profile\Delivery\migration_notice' );
 }
@@ -30,6 +33,8 @@ function init() {
  * @return bool 停止状態を保存できた場合は true。
  */
 function suspend( int $post_id, bool $renew = false ): bool {
+	$pending_key = PENDING_PREFIX . $post_id;
+	$pending     = \get_option( $pending_key );
 	if ( ! $renew && \get_post_meta( $post_id, BLOCKED_META, true ) ) {
 		return true;
 	}
@@ -40,8 +45,61 @@ function suspend( int $post_id, bool $renew = false ): bool {
 		\add_post_meta( $post_id, BLOCKED_META, $token, true );
 	}
 	\clean_post_cache( $post_id );
-	$stored = \get_post_meta( $post_id, BLOCKED_META, true );
-	return $renew ? $token === $stored : (bool) $stored;
+	$stored  = \get_post_meta( $post_id, BLOCKED_META, true );
+	$success = $renew ? $token === $stored : (bool) $stored;
+	if ( ! $success ) {
+		\update_option( $pending_key, $token, false );
+		schedule_retry( $post_id );
+	} elseif ( $pending ) {
+		// 保存中に発生した新しい失敗の記録は消さない。
+		global $wpdb;
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- 値を比較して削除し、options APIと同じキャッシュを無効化する。
+		$wpdb->query( $wpdb->prepare( "DELETE FROM {$wpdb->options} WHERE option_name = %s AND option_value = %s", $pending_key, $pending ) );
+		\wp_cache_delete( $pending_key, 'options' );
+	}
+	return $success;
+}
+
+/**
+ * 全記事の再走査をせず、失敗した記事だけを遅延して再試行する。
+ *
+ * @param int $post_id 記事ID。
+ */
+function schedule_retry( int $post_id ) {
+	$args = array( $post_id );
+	if ( ! \wp_next_scheduled( RETRY_HOOK, $args ) ) {
+		\wp_schedule_single_event( time() + MINUTE_IN_SECONDS, RETRY_HOOK, $args );
+	}
+}
+
+/**
+ * 停止状態が未保存の記事だけを再試行する。
+ *
+ * @param int $post_id 記事ID。
+ */
+function retry_suspend( int $post_id ) {
+	if ( ! \get_option( PENDING_PREFIX . $post_id ) ) {
+		return;
+	}
+	// 発行処理と同じロックで、再発行完了直後のCAを再停止する競合を防ぐ。
+	global $wpdb;
+	$lock = hash( 'sha256', DB_NAME . ':' . $wpdb->prefix . ':ca:' . $post_id );
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- 発行処理と共有する接続単位の排他ロック。
+	$acquired = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) );
+	if ( 1 !== (int) $acquired ) {
+		schedule_retry( $post_id );
+		return;
+	}
+	try {
+		\wp_cache_delete( PENDING_PREFIX . $post_id, 'options' );
+		// 正常な再発行後に残った古いイベントで配信を停止しない。
+		if ( \get_option( PENDING_PREFIX . $post_id ) ) {
+			suspend( $post_id, true );
+		}
+	} finally {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- 取得した接続のロックを必ず解放する。
+		$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+	}
 }
 
 /**
@@ -68,6 +126,11 @@ function is_post_excluded( \WP_Post $post ): bool {
  */
 function can_deliver( \WP_Post $post ): bool {
 	if ( ! \is_post_publicly_viewable( $post ) || '' !== $post->post_password ) {
+		return false;
+	}
+	if ( \get_option( PENDING_PREFIX . $post->ID ) ) {
+		// 一時的にイベント登録も失敗していた場合に備える。
+		schedule_retry( $post->ID );
 		return false;
 	}
 	try {
@@ -138,8 +201,6 @@ function rules_changed(): bool {
 			}
 			if ( $excluded && ! suspend( $post->ID, true ) ) {
 				$success = false;
-				\update_option( 'profile_ca_delivery_error', true, false );
-				\delete_option( 'profile_ca_delivery_version' );
 			}
 		}
 		$count = count( $query->posts );
@@ -192,7 +253,13 @@ function migrate() {
 
 /** 旧JSONの停止に失敗したことを管理者へ知らせる。 */
 function migration_notice() {
-	if ( \current_user_can( 'manage_options' ) && \get_option( 'profile_ca_delivery_error' ) ) {
+	if ( ! \current_user_can( 'manage_options' ) ) {
+		return;
+	}
+	global $wpdb;
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- 管理画面で未完了の停止処理の有無だけを確認する。
+	$pending = $wpdb->get_var( $wpdb->prepare( "SELECT option_id FROM {$wpdb->options} WHERE option_name LIKE %s LIMIT 1", $wpdb->esc_like( PENDING_PREFIX ) . '%' ) );
+	if ( \get_option( 'profile_ca_delivery_error' ) || $pending ) {
 		echo '<div class="notice notice-error"><p>' . \esc_html( 'CAの配信停止処理が完了していません。データベースと cas ディレクトリの書き込み・削除権限を確認してください。旧JSONが残っている場合、直接アクセスによる配信が続く可能性があります。' ) . '</p></div>';
 	}
 }
