@@ -299,6 +299,9 @@ function create_uca_list( \WP_Post $post, string $issuer_id, ?string $uuid = nul
 	foreach ( $pages as $page => $content ) {
 		++$page;
 
+		// 個別記事での get_the_content() と同じ more / noteaser 処理をフィルターより先に行う.
+		$strip_teaser       = 1 === $page && \str_contains( $post->post_content, '<!--noteaser-->' );
+		$content            = expand_more_tag( $content, $post->ID, $strip_teaser );
 		$content            = \apply_filters( 'the_content', $content );
 		$html               = content_to_html( $content, \get_option( 'profile_ca_target_html', PROFILE_DEFAULT_CA_TARGET_HTML ), $title );
 		$external_resources = external_resources_from_html( $html, WP_BLOCK_IMAGE_XPATH . '[@integrity]' );
@@ -373,6 +376,31 @@ function content_to_html( string $content, string $template, string $title = '' 
 			'%CONTENT%' => $content,
 		)
 	);
+}
+
+/**
+ * 個別記事の表示に合わせて more タグを展開する.
+ *
+ * WordPress の get_the_content() は閲覧中のページや more フラグに依存するため、
+ * 保存時にはページごとの本文に対して個別記事用の処理を行う.
+ *
+ * @see https://developer.wordpress.org/reference/functions/get_the_content/
+ * @param string $content 改ページで分割済みの本文
+ * @param int    $post_id 投稿 ID
+ * @param bool   $strip_teaser 導入文を非表示にするか
+ * @return string more タグ展開後の本文 (the_content フィルター適用前)
+ */
+function expand_more_tag( string $content, int $post_id, bool $strip_teaser = false ): string {
+	if ( ! \preg_match( '/<!--more(.*?)?-->/', $content, $matches ) ) {
+		return $content;
+	}
+
+	// 分割後に不完全な more ブロックが残らないよう、ブロックの区切りを取り除く.
+	$content = \preg_replace( '/<!-- \/?wp:more(.*?) -->/', '', $content );
+	$parts   = \explode( $matches[0], $content, 2 );
+	$teaser  = $strip_teaser ? '' : $parts[0];
+
+	return $teaser . '<span id="more-' . $post_id . '"></span>' . $parts[1];
 }
 
 /**
