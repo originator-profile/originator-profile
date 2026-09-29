@@ -6,6 +6,7 @@ import {
 } from "@originator-profile/model";
 import {
   JwtVcDecoder,
+  type JwtVcDecodingResult,
   JwtVcVerificationResult,
   JwtVcVerifier,
   type UnverifiedJwtVc,
@@ -50,30 +51,29 @@ const decodeWebsiteProfiles = (
   const decodeWsp = JwtVcDecoder<WebsiteProfile>();
   const decodedWsps = wspSources.map(decodeWsp);
 
-  // デコードエラーチェック（配列全体を確認）
-  const decodeErrors = decodedWsps.filter((wsp) => wsp instanceof Error);
-  if (decodeErrors.length > 0) {
-    const successPairs = decodedWsps.reduce<
-      { wsp: UnverifiedJwtVc<WebsiteProfile>; source: string }[]
-    >((acc, wsp, index) => {
-      if (!(wsp instanceof Error)) {
-        acc.push({ wsp, source: wspSources[index] });
-      }
-      return acc;
-    }, []);
+  // デコード結果を成功/失敗に振り分け（成功分はソースとインデックスを揃えて保持）
+  const decodeErrors: JwtVcDecodingResult<WebsiteProfile>[] = [];
+  const successWsps: UnverifiedJwtVc<WebsiteProfile>[] = [];
+  const successWspSources: string[] = [];
+  decodedWsps.forEach((wsp, index) => {
+    if (wsp instanceof Error) {
+      decodeErrors.push(wsp);
+    } else {
+      successWsps.push(wsp);
+      successWspSources.push(wspSources[index]);
+    }
+  });
 
+  if (decodeErrors.length > 0) {
     return new WebsiteProfileDecodeFailed("Website Profile decoding failed", {
       originators: opsVerified,
       sites: decodeErrors,
-      decodedWsps: successPairs.map((item) => item.wsp),
-      decodedWspSources: successPairs.map((item) => item.source),
+      decodedWsps: successWsps,
+      decodedWspSources: successWspSources,
     });
   }
 
-  return {
-    decodedWsps: decodedWsps as UnverifiedJwtVc<WebsiteProfile>[],
-    wspSources,
-  };
+  return { decodedWsps: successWsps, wspSources };
 };
 
 /**
