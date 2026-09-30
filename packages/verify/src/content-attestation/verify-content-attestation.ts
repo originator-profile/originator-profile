@@ -17,7 +17,6 @@ import {
 } from "../integrity";
 import type { Logger } from "../logger";
 import { ProblemType } from "../result/problem-types";
-import { verifyAllowedOrigin } from "../verify-allowed-origin";
 import { verifyAllowedUrl } from "../verify-allowed-url";
 import { CaInvalid, CaVerifyFailed } from "./errors";
 import { CaVerificationResult, VerifiedCa } from "./types";
@@ -27,24 +26,6 @@ type IntegrityResult = {
   verifyResult: FetchIntegrityResult;
   expectedIntegrity: string;
 };
-
-/** allowedOrigin の非推奨を通知する */
-function warnAllowedOriginDeprecated(
-  logger: Logger,
-  subject: string,
-  at?: string,
-): void {
-  const message =
-    "[OP Warning] allowedOrigin is deprecated in Content Attestation and will be removed after September 2026. " +
-    "Please use allowedUrl instead. " +
-    "See: https://docs.originator-profile.org/";
-  logger.warn(message, {
-    type: ProblemType.AllowedOriginDeprecated,
-    title: message,
-    detail: subject,
-    ...(at && { pointer: at }),
-  });
-}
 
 /** VisibleTextTargetIntegrity の非推奨を通知する */
 function warnVisibleTextTargetIntegrityDeprecated(
@@ -82,35 +63,22 @@ function warnDeprecatedTargets<T extends ContentAttestation>(
   }
 }
 
-async function checkUrlAndOrigin<T extends ContentAttestation>(
+async function checkAllowedUrl<T extends ContentAttestation>(
   result: VerifiedCa<T>,
   url: URL,
-  logger: Logger,
-  at?: string,
 ) {
-  if (result.doc.allowedUrl && result.doc.allowedOrigin) {
-    return new CaInvalid("allowedUrl and allowedOrigin are exclusive", result);
-  }
-
   if (result.doc.allowedOrigin) {
-    warnAllowedOriginDeprecated(logger, result.doc.credentialSubject.id, at);
-  }
-
-  if (
-    result.doc.allowedUrl &&
-    !(await verifyAllowedUrl(url.toString(), result.doc.allowedUrl))
-  ) {
-    return new CaVerifyFailed(
-      `URL not allowed. Expected:${Array.isArray(result.doc.allowedUrl) ? result.doc.allowedUrl.join(", ") : result.doc.allowedUrl} Actual:${url}`,
+    return new CaInvalid(
+      "allowedOrigin is not allowed in Content Attestation. Use allowedUrl instead.",
       result,
     );
   }
-  if (
-    result.doc.allowedOrigin &&
-    !verifyAllowedOrigin(url.origin, result.doc.allowedOrigin)
-  ) {
+  if (!result.doc.allowedUrl) {
+    return new CaInvalid("allowedUrl is required", result);
+  }
+  if (!(await verifyAllowedUrl(url.toString(), result.doc.allowedUrl))) {
     return new CaVerifyFailed(
-      `Origin not allowed. Expected:${Array.isArray(result.doc.allowedOrigin) ? result.doc.allowedOrigin.join(", ") : result.doc.allowedOrigin} Actual:${url.origin}`,
+      `URL not allowed. Expected:${Array.isArray(result.doc.allowedUrl) ? result.doc.allowedUrl.join(", ") : result.doc.allowedUrl} Actual:${url}`,
       result,
     );
   }
@@ -192,7 +160,7 @@ export function CaVerifier<T extends ContentAttestation>(
     if (result instanceof VcVerifyFailed) {
       return new CaVerifyFailed("Content Attestation verify failed", result);
     }
-    const urlResult = await checkUrlAndOrigin(result, url, logger, at);
+    const urlResult = await checkAllowedUrl(result, url);
     if (urlResult instanceof Error) {
       return urlResult;
     }

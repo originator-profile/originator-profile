@@ -19,8 +19,6 @@ export const problemType = (code: string): string => `${REFERENCE}${code}/`;
 export const ProblemType = {
   /** 非推奨の Certificate を検出した */
   CertificateDeprecated: problemType("WARN_CERTIFICATE_DEPRECATED"),
-  /** Content Attestation の allowedOrigin は非推奨 */
-  AllowedOriginDeprecated: problemType("WARN_ALLOWED_ORIGIN_DEPRECATED"),
   /** Content Attestation の VisibleTextTargetIntegrity は非推奨 */
   VisibleTextTargetIntegrityDeprecated: problemType(
     "WARN_VISIBLE_TEXT_TARGET_INTEGRITY_DEPRECATED",

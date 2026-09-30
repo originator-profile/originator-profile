@@ -162,7 +162,7 @@ describe("CA", () => {
           description: "現在閲覧中のコンテンツと関連性が高いため。",
         },
       },
-      allowedOrigin: ["https://ad.example.com"],
+      allowedUrl: ["https://ad.example.com/*"],
       target: [
         {
           type: "ExternalResourceTargetIntegrity",
