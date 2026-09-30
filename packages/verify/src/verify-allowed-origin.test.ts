@@ -11,13 +11,7 @@ describe("verify-allowed-origin", () => {
     ).toBeTruthy();
   });
 
-  test("allowedOriginの配列に対する検証でtrueが返されるか", () => {
-    expect(
-      verifyAllowedOrigin("https://ad.example.com", "https://ad.example.com"),
-    ).toBeTruthy();
-  });
-
-  test("allowedOriginが単一の文字列の検証でtrueが返されるか", () => {
+  test("allowedOriginの配列に対する検証でfalseが返されるか", () => {
     expect(
       verifyAllowedOrigin("https://example.com", [
         "https://ad.example1.com",
