@@ -441,11 +441,15 @@ Post ID <投稿ID>, page <ページ番号>: image(s) with missing or invalid int
 ### もっと古い PHP (7.4 など) でも動かせますか?
 
 現在のコードのままでは動きません。
-ただし 3 箇所を書き換えれば動く可能性はあります (実際に PHP 7.4 上での動作確認はしていません)。
+PHP 7.4 への移植には、例えば次の構文や関数への対応が必要です。これは網羅的な移植手順ではなく、PHP 7.4 上での動作確認も行っていません。
 
 1. コンストラクタプロパティプロモーション (PHP 8.0+): `includes/class-uca.php` クラスコンストラクタ引数 `public string $issuer`
-2. ユニオン型 (PHP 8.0+): `includes/class-uca.php` メソッド戻り値の型 `string|false`
+2. ユニオン型 (PHP 8.0+): `includes/class-uca.php` の `to_json()` (`string|false`)、`includes/issue.php` の `expand_more_tag()` (`string|false`) と `prepare_post_pages()` (`array|false`)
 3. `mixed` 型 (PHP 8.0+): `includes/issue.php` と `includes/class-uca.php` の一部
+4. 名前付き引数 (PHP 8.0+): `includes/issue.php` の `new Uca()` 呼び出し
+5. `str_contains()` (PHP 8.0+): `includes/issue.php` の `prepare_post_pages()`
+
+依存ライブラリの互換性も含めて、別途動作確認が必要です。
 
 なお PHP 7.4 は 2022年11月にセキュリティ更新が終了しており、本番サイトでの利用はおすすめできません。
 

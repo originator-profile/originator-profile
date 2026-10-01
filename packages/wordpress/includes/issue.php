@@ -415,6 +415,7 @@ function prepare_post_pages( array $pages, int $post_id, string $post_content ):
  * @return string|false more タグ展開後の本文 (the_content フィルター適用前)、正規表現エラー時は false
  */
 function expand_more_tag( string $content, int $post_id, bool $strip_teaser = false ): string|false {
+	// WordPress 本体の get_the_content() と同じパターンに合わせ、冗長な量指定子も維持する.
 	$matched = \preg_match( '/<!--more(.*?)?-->/', $content, $matches );
 	if ( false === $matched ) {
 		return false;
@@ -430,6 +431,7 @@ function expand_more_tag( string $content, int $post_id, bool $strip_teaser = fa
 	}
 	$parts  = \explode( $matches[0], $content, 2 );
 	$teaser = $strip_teaser ? '' : $parts[0];
+	// 壊れた wp:more ブロックの区切りに含まれる more タグが、一緒に除去される場合がある.
 	// WordPress 本体と同様、分割できなかった場合はアンカーを挿入しない.
 	if ( \count( $parts ) < 2 ) {
 		return $teaser;
