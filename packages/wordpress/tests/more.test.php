@@ -74,6 +74,7 @@ final class More extends TestCase {
 			'only first more tag'                 => array( '導入<!--more-->本文<!--more-->続き', false, '導入' . $anchor . '本文<!--more-->続き' ),
 			'marker removed with malformed block' => array( '<!-- wp:more <!--more custom--> -->本文', false, '本文' ),
 			'removed marker with hidden teaser'   => array( '<!-- wp:more <!--more custom--> -->本文', true, '' ),
+			'multiline block attributes'          => array( "導入<!-- wp:more {\n\"noTeaser\":false\n} --><!--more--><!-- /wp:more -->本文", false, "導入<!-- wp:more {\n\"noTeaser\":false\n} -->" . $anchor . '本文' ),
 		);
 	}
 }

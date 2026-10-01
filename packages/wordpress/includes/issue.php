@@ -76,7 +76,7 @@ function sign_post( string $new_status, string $old_status, \WP_Post $post ) {
 	}
 
 	if ( empty( $uca_list ) ) {
-		debug( "UCA list is empty for post ID: {$post->ID}" );
+		debug( "No UCA generated for post ID: {$post->ID}. Skipping CA issuance and clearing saved CAS." );
 	}
 	$post_cas = array();
 
@@ -425,6 +425,7 @@ function expand_more_tag( string $content, int $post_id, bool $strip_teaser = fa
 	}
 
 	// 分割後に不完全な more ブロックが残らないよう、ブロックの区切りを取り除く.
+	// WordPress 本体に合わせ、複数行にわたるブロック属性にはマッチさせない.
 	$content = \preg_replace( '/<!-- \/?wp:more(.*?) -->/', '', $content );
 	if ( null === $content ) {
 		return false;
@@ -433,6 +434,7 @@ function expand_more_tag( string $content, int $post_id, bool $strip_teaser = fa
 	$teaser = $strip_teaser ? '' : $parts[0];
 	// 壊れた wp:more ブロックの区切りに含まれる more タグが、一緒に除去される場合がある.
 	// WordPress 本体と同様、分割できなかった場合はアンカーを挿入しない.
+	// noteaser 指定時に本文が空になる場合も、WordPress 本体の表示結果に合わせる.
 	if ( \count( $parts ) < 2 ) {
 		return $teaser;
 	}
