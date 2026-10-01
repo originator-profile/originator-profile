@@ -76,7 +76,7 @@ function sign_post( string $new_status, string $old_status, \WP_Post $post ) {
 	}
 
 	if ( empty( $uca_list ) ) {
-		debug( "UCA list is empty for post ID: {$post->ID}" );
+		debug( "No UCA generated for post ID: {$post->ID}. Skipping CA issuance and clearing saved CAS." );
 	}
 	$post_cas = array();
 
@@ -293,7 +293,11 @@ function create_uca_list( \WP_Post $post, string $issuer_id, ?string $uuid = nul
 		return $uca_list;
 	}
 
-	$pages = $postdata['pages'];
+	$pages = prepare_post_pages( $postdata['pages'], $post->ID, $post->post_content );
+	if ( false === $pages ) {
+		// 一部のページだけを発行すると CAS のページ番号がずれるため、投稿全体を中止する.
+		return array();
+	}
 	$title = \esc_html( \get_the_title( $post ) );
 
 	foreach ( $pages as $page => $content ) {
@@ -373,6 +377,69 @@ function content_to_html( string $content, string $template, string $title = '' 
 			'%CONTENT%' => $content,
 		)
 	);
+}
+
+/**
+ * フィルター適用前に全ページの more タグを展開する.
+ *
+ * @param array  $pages 改ページで分割済みの本文 (0 始まりのリスト)
+ * @param int    $post_id 投稿 ID
+ * @param string $post_content 投稿全体の本文
+ * @return list<string>|false 展開後の全ページ、失敗時は false
+ */
+function prepare_post_pages( array $pages, int $post_id, string $post_content ): array|false {
+	// WordPress 本体と同様、noteaser が後続ページにあっても先頭ページの導入文を非表示にする.
+	$has_noteaser = \str_contains( $post_content, '<!--noteaser-->' );
+	foreach ( $pages as $index => $content ) {
+		$content = expand_more_tag( $content, $post_id, 0 === $index && $has_noteaser );
+		if ( false === $content ) {
+			$page = $index + 1;
+			debug( "Failed to expand more tag for post ID: {$post_id}, page: {$page}. Skipping CA issuance for this post." );
+			return false;
+		}
+		$pages[ $index ] = $content;
+	}
+	return $pages;
+}
+
+/**
+ * 個別記事の表示に合わせて more タグを展開する.
+ *
+ * WordPress の get_the_content() は閲覧中のページや more フラグに依存するため、
+ * 保存時にはページごとの本文に対して個別記事用の処理を行う.
+ *
+ * @see https://developer.wordpress.org/reference/functions/get_the_content/
+ * @param string $content 改ページで分割済みの本文
+ * @param int    $post_id 投稿 ID
+ * @param bool   $strip_teaser 導入文を非表示にするか
+ * @return string|false more タグ展開後の本文 (the_content フィルター適用前)、正規表現エラー時は false
+ */
+function expand_more_tag( string $content, int $post_id, bool $strip_teaser = false ): string|false {
+	// WordPress 本体の get_the_content() と同じパターンに合わせ、冗長な量指定子も維持する.
+	$matched = \preg_match( '/<!--more(.*?)?-->/', $content, $matches );
+	if ( false === $matched ) {
+		return false;
+	}
+	if ( 0 === $matched ) {
+		return $content;
+	}
+
+	// 分割後に不完全な more ブロックが残らないよう、ブロックの区切りを取り除く.
+	// WordPress 本体に合わせ、複数行にわたるブロック属性にはマッチさせない.
+	$content = \preg_replace( '/<!-- \/?wp:more(.*?) -->/', '', $content );
+	if ( null === $content ) {
+		return false;
+	}
+	$parts  = \explode( $matches[0], $content, 2 );
+	$teaser = $strip_teaser ? '' : $parts[0];
+	// 壊れた wp:more ブロックの区切りに含まれる more タグが、一緒に除去される場合がある.
+	// WordPress 本体と同様、分割できなかった場合はアンカーを挿入しない.
+	// noteaser 指定時に本文が空になる場合も、WordPress 本体の表示結果に合わせる.
+	if ( \count( $parts ) < 2 ) {
+		return $teaser;
+	}
+
+	return $teaser . '<span id="more-' . $post_id . '"></span>' . $parts[1];
 }
 
 /**
