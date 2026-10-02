@@ -78,7 +78,7 @@ async function checkAllowedUrl<T extends ContentAttestation>(
   }
   if (!(await verifyAllowedUrl(url.toString(), result.doc.allowedUrl))) {
     return new CaVerifyFailed(
-      `URL not allowed. Expected:${Array.isArray(result.doc.allowedUrl) ? result.doc.allowedUrl.join(", ") : result.doc.allowedUrl} Actual:${url}`,
+      `URL not allowed. Expected: ${Array.isArray(result.doc.allowedUrl) ? result.doc.allowedUrl.join(", ") : result.doc.allowedUrl} Actual:${url}`,
       result,
     );
   }
