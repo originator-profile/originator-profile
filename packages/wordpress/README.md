@@ -504,6 +504,26 @@ Composer スクリプトの実行
 $ docker compose run --rm -w /var/www/html/wp-content/plugins/ca-manager wordpress composer run
 ```
 
+### E2E テスト
+
+上記の開発環境を構築し、リポジトリのルートで `pnpm install` を実行してから、以下を実行します。
+
+```sh
+# リポジトリのルートで実行
+pnpm --filter @originator-profile/wordpress exec playwright install chromium
+pnpm --filter @originator-profile/wordpress e2e
+```
+
+署名・検証ライブラリは E2E スクリプトが自動でビルドします。
+テストはユーザー・投稿の作成と削除、プラグインの有効化と無効化を行うため、テスト専用の WordPress データベースで実行してください。
+
+`more` の回帰テストでは、`WORDPRESS_DEBUG=1` とホスト側の空きポート `8080` が必要です。
+一時的なローカル CA サーバーでテスト鍵を使って署名し、ブラウザーで表示した HTML と署名対象の一致、CA の署名・本文検証、本文改ざんの検出を確認します。
+通常の `more`、独自リンク文言、ブロック形式、`noteaser`（通常・ブロック）、`nextpage` 併用、後続ページのみの `noteaser` の 7 ケース・9 ページが対象です。
+テストで変更する CA 設定は終了時に元へ戻します。外部 CA サーバーや OP の信頼チェーンの検証は対象外です。
+
+現在、リポジトリ全体の E2E コマンドは WordPress を除外しているため、上記のパッケージ専用コマンドで実行してください。
+
 ## Composer スクリプト
 
 help

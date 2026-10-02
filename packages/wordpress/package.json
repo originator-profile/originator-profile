@@ -11,13 +11,18 @@
   },
   "type": "module",
   "scripts": {
-    "e2e": "playwright test",
-    "e2e:update": "playwright test --update-snapshots",
+    "e2e": "pnpm --workspace-root exec turbo run build --filter=@originator-profile/sign --filter=@originator-profile/verify && playwright test",
+    "e2e:update": "pnpm run e2e --update-snapshots",
     "version": "shx sed -i 's/(?<= Version: *)[^ ]*$/'${npm_package_version}/ ca-manager.php && git add ca-manager.php"
   },
   "devDependencies": {
+    "@originator-profile/cryptography": "workspace:*",
+    "@originator-profile/model": "workspace:*",
+    "@originator-profile/sign": "workspace:*",
+    "@originator-profile/verify": "workspace:*",
     "@playwright/test": "1.59.1",
     "@wordpress/e2e-test-utils-playwright": "1.45.0",
+    "jsdom": "29.0.2",
     "shx": "0.4.0"
   }
 }
