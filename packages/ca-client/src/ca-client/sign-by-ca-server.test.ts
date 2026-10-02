@@ -17,6 +17,7 @@ const uca = {
     type: "Article",
     headline: "Test",
   },
+  allowedUrl: "https://example.com/*",
   target: [
     {
       type: "TextTargetIntegrity",

@@ -63,6 +63,7 @@ const ca: ContentAttestation = {
     id: caId,
     type: "anCA",
   },
+  allowedUrl: caUrl.href,
   target: [
     {
       type: "TextTargetIntegrity",
@@ -145,13 +146,8 @@ describe("Content Attestationの検証", async () => {
     expect(result).instanceOf(CaInvalid);
   });
 
-  test("Content Attestationの検証でallowedUrlとallowedOriginが同時に指定されている", async () => {
+  test("Content Attestationの検証でallowedOriginが含まれている場合は無効", async () => {
     const invalidCa = patch(ca, [
-      {
-        op: "add",
-        path: ["allowedUrl"],
-        value: ["https://example.org"],
-      },
       {
         op: "add",
         path: ["allowedOrigin"],

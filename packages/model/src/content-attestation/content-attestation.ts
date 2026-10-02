@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { AllowedOrigin } from "../allowed-origin";
 import { AllowedUrl } from "../allowed-url";
 import { OpContextHead } from "../context/op-context-head";
 import { OpId } from "../op-id";
@@ -19,8 +18,13 @@ export const ContentAttestation = z.looseObject({
     }),
   issuer: OpId,
   credentialSubject: subject,
-  allowedUrl: AllowedUrl.optional(),
-  allowedOrigin: AllowedOrigin.optional(),
+  allowedUrl: AllowedUrl,
+  allowedOrigin: z
+    .never({
+      error:
+        "allowedOrigin is not allowed in Content Attestation. Use allowedUrl instead.",
+    })
+    .optional(),
   target: z.array(Target).min(1),
 });
 
