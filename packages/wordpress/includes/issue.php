@@ -127,7 +127,7 @@ function is_nonempty_ca_array( mixed $cas ): bool {
  * @return array{status: 'success'|'skipped'|'failed', message: string} 発行結果.
  */
 function issue_post( \WP_Post $post, bool $only_missing = false ): array {
-	// 通常発行と一括発行を、配信停止の再試行と同じ記事単位のロックで直列化する。
+	// 通常発行と一括発行を、同じ記事単位のロックで直列化する。
 	global $wpdb;
 	$lock = hash( 'sha256', DB_NAME . ':' . $wpdb->prefix . ':ca:' . $post->ID );
 	// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- DB接続単位の排他ロック。結果はキャッシュしない。
