@@ -99,6 +99,70 @@ function deferred() {
   return { promise, resolve };
 }
 
+test("状態の再取得中はキャンセルを無効にし、取得後にキャンセルできる", async ({
+  page,
+}) => {
+  const operations: string[] = [];
+  const refreshStarted = deferred();
+  const releaseRefresh = deferred();
+  let statusRequests = 0;
+
+  await page.route("**/wp-admin/admin-ajax.php", async (route) => {
+    const form = new URLSearchParams(route.request().postData() ?? "");
+    if (form.get("action") !== "profile_ca_bulk") {
+      return route.continue();
+    }
+    const operation = form.get("operation") ?? "";
+    operations.push(operation);
+    if (operation === "status") {
+      statusRequests += 1;
+      if (statusRequests === 2) {
+        refreshStarted.resolve();
+        await releaseRefresh.promise;
+      }
+      await route.fulfill({ json: { success: true, data: makeJob() } });
+      return;
+    }
+    if (operation === "cancel") {
+      expect(form.get("job_id")).toBe("request-test");
+      await route.fulfill({
+        json: {
+          success: true,
+          data: makeJob({ status: "cancelled" }),
+        },
+      });
+      return;
+    }
+    await route.continue();
+  });
+
+  await page.goto(url);
+  const cancel = page.getByRole("button", {
+    name: "一括発行をキャンセル",
+    exact: true,
+  });
+  await expect(cancel).toBeEnabled();
+  await page.getByRole("button", { name: "状態を再取得", exact: true }).click();
+  await refreshStarted.promise;
+  try {
+    await expect(cancel).toBeDisabled();
+    // 通信中にハンドラーが呼ばれても、キャンセル要求を保留しない。
+    await cancel.dispatchEvent("click");
+    await expect(page.getByRole("status")).toContainText(
+      "状態を読み込んでいます。",
+    );
+    expect(operations).toEqual(["status", "status"]);
+  } finally {
+    releaseRefresh.resolve();
+  }
+  await expect(cancel).toBeEnabled();
+  await cancel.click();
+  await expect(page.getByRole("status")).toContainText(
+    "一括発行をキャンセルしました。",
+  );
+  expect(operations).toEqual(["status", "status", "cancel"]);
+});
+
 const timeoutCases = [
   { operation: "step", mode: "fetch", timeout: 300000 },
   { operation: "step", mode: "body", timeout: 300000 },

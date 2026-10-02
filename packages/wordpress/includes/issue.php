@@ -74,8 +74,16 @@ function sign_post( string $new_status, string $old_status, \WP_Post $post ) {
  * @return bool 空でない CA 文字列が保存されている場合は true.
  */
 function has_post_cas( int $post_id ): bool {
-	$post_cas = \get_post_meta( $post_id, '_profile_post_cas', true );
+	return has_cas_value( \get_post_meta( $post_id, '_profile_post_cas', true ) );
+}
 
+/**
+ * 保存値が、少なくとも一つの空でないページ CAS を含むか判定する。
+ *
+ * @param mixed $post_cas 保存済みの投稿 CAS.
+ * @return bool 発行済みの CAS を含む場合は true.
+ */
+function has_cas_value( mixed $post_cas ): bool {
 	if ( is_string( $post_cas ) ) {
 		return '' !== trim( $post_cas );
 	}
@@ -197,7 +205,9 @@ function sign_published_post( \WP_Post $post, bool $only_missing = false ): arra
 			);
 		}
 
-		if ( $only_missing && has_post_cas( $post->ID ) ) {
+		// 未発行判定と保存時の競合検査には、記事ロック取得後の同じDB値を使う。
+		$initial_cas = $only_missing ? read_ca_snapshot( $post->ID ) : null;
+		if ( $only_missing && is_array( $initial_cas ) && 1 === count( $initial_cas ) && has_cas_value( \maybe_unserialize( $initial_cas[0]['meta_value'] ) ) ) {
 			debug( "Post ID {$post->ID}: CA issuance skipped because an existing non-empty CAS was found." );
 			return array(
 				'status'  => 'skipped',
@@ -216,7 +226,9 @@ function sign_published_post( \WP_Post $post, bool $only_missing = false ): arra
 		// 発行中に作られた新しい停止状態を解除しないよう、開始時のトークンを保持する。
 		$blocked_token = \get_post_meta( $post->ID, BLOCKED_META, true );
 
-		$initial_cas = read_ca_snapshot( $post->ID );
+		if ( ! $only_missing ) {
+			$initial_cas = read_ca_snapshot( $post->ID );
+		}
 		if ( null === $initial_cas ) {
 			debug( "Post ID {$post->ID}: CA issuance stopped because the saved CA query failed." );
 			return array(
