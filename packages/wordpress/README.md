@@ -573,7 +573,7 @@ format
 
 ## npm scripts
 
-ホストの `packages/wordpress` で実行します。JS・TS は oxlint、JS・TS・CSS の整形は oxfmt を使用します。
+ホストの `packages/wordpress` で実行します。JS・TS の解析と自動修正は oxlint、対応するファイルの整形は oxfmt を使用します。WordPress ディレクトリはルートの Prettier から除外しています。PHP の解析と整形は上記の Composer スクリプトで実行します。
 
 ```sh
 node --run=lint
@@ -581,13 +581,10 @@ node --run=format:check
 ```
 
 lint
-: JS・TS の静的解析と型検査
-
-lint:fix
-: 自動修正可能な lint 指摘を修正
+: JS・TS の静的解析と型検査。自動修正可能な指摘を修正
 
 format
-: JS・TS・CSS を整形（80文字幅）
+: JS・TS・CSS・JSON・YAML・Markdown など、WordPress ディレクトリ内の対応ファイルを整形（80文字幅）
 
 format:check
 : 整形状態を検査。CIでも実行します。

@@ -1,7 +1,5 @@
 composer.lock
 lerna.json
 pnpm-lock.yaml
-packages/wordpress/assets/*.js
-packages/wordpress/assets/*.css
-packages/wordpress/e2e/*.ts
-packages/wordpress/playwright.config.ts
+# WordPressは専用の整形設定を使用するため除外
+packages/wordpress/
