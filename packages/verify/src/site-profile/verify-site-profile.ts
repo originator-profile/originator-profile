@@ -6,6 +6,7 @@ import {
 } from "@originator-profile/model";
 import {
   JwtVcDecoder,
+  type JwtVcDecodingResult,
   JwtVcVerificationResult,
   JwtVcVerifier,
   type UnverifiedJwtVc,
@@ -24,7 +25,11 @@ import { OpsVerifier } from "../originator-profile-set/verify-ops";
 import { pointer } from "../result/pointer";
 import { verifyAllowedOrigin } from "../verify-allowed-origin";
 import { SpVerificationResult } from "./types";
-import { SiteProfileInvalid, SiteProfileVerifyFailed } from "./verify-errors";
+import {
+  SiteProfileInvalid,
+  SiteProfileVerifyFailed,
+  WebsiteProfileDecodeFailed,
+} from "./verify-errors";
 
 /** WSPソースの取得と初期デコード */
 const decodeWebsiteProfiles = (
@@ -32,7 +37,8 @@ const decodeWebsiteProfiles = (
   opsVerified: VerifiedOps,
 ):
   | { decodedWsps: UnverifiedJwtVc<WebsiteProfile>[]; wspSources: string[] }
-  | SiteProfileInvalid => {
+  | SiteProfileInvalid
+  | WebsiteProfileDecodeFailed => {
   // NOTE: 2026-11-01 まで後方互換性のため、sitesが存在しない場合はcredentialを使用
   const wspSources = sp.sites || (sp.credential ? [sp.credential] : []);
   if (wspSources.length === 0) {
@@ -45,19 +51,29 @@ const decodeWebsiteProfiles = (
   const decodeWsp = JwtVcDecoder<WebsiteProfile>();
   const decodedWsps = wspSources.map(decodeWsp);
 
-  // デコードエラーチェック（配列全体を確認）
-  const decodeErrors = decodedWsps.filter((wsp) => wsp instanceof Error);
+  // デコード結果を成功/失敗に振り分け（成功分はソースとインデックスを揃えて保持）
+  const decodeErrors: JwtVcDecodingResult<WebsiteProfile>[] = [];
+  const successWsps: UnverifiedJwtVc<WebsiteProfile>[] = [];
+  const successWspSources: string[] = [];
+  decodedWsps.forEach((wsp, index) => {
+    if (wsp instanceof Error) {
+      decodeErrors.push(wsp);
+    } else {
+      successWsps.push(wsp);
+      successWspSources.push(wspSources[index]);
+    }
+  });
+
   if (decodeErrors.length > 0) {
-    return new SiteProfileInvalid("Website Profile invalid", {
+    return new WebsiteProfileDecodeFailed("Website Profile decoding failed", {
       originators: opsVerified,
       sites: decodeErrors,
+      decodedWsps: successWsps,
+      decodedWspSources: successWspSources,
     });
   }
 
-  return {
-    decodedWsps: decodedWsps as UnverifiedJwtVc<WebsiteProfile>[],
-    wspSources,
-  };
+  return { decodedWsps: successWsps, wspSources };
 };
 
 /**
@@ -104,18 +120,18 @@ export function SpVerifier(
     }
 
     const decoded = decodeWebsiteProfiles(sp, opsVerified);
-    if (decoded instanceof SiteProfileInvalid) {
+    if (
+      decoded instanceof SiteProfileInvalid ||
+      decoded instanceof WebsiteProfileDecodeFailed
+    ) {
       return decoded;
     }
+
     const { decodedWsps, wspSources } = decoded;
 
     // 全てのWSPを検証
     const verifiedWsps = await Promise.all(
       decodedWsps.map(async (decodedWsp, index) => {
-        if (decodedWsp instanceof Error) {
-          return decodedWsp;
-        }
-
         const wspIssuer = decodedWsp.doc.issuer;
         const cp = opsVerified.find(
           (op) => op.core.doc.credentialSubject.id === wspIssuer,
