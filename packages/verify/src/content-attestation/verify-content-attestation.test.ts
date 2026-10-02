@@ -146,7 +146,7 @@ describe("Content Attestationの検証", async () => {
     expect(result).instanceOf(CaInvalid);
   });
 
-  test("Content Attestationの検証でallowedOriginが含まれている場合は無効"", async () => {
+  test("Content Attestationの検証でallowedOriginが含まれている場合は無効", async () => {
     const invalidCa = patch(ca, [
       {
         op: "add",
