@@ -387,7 +387,9 @@
       elements.pause.hidden = !state.running;
       elements.pause.disabled = state.requestInFlight && state.cancelRequested;
       elements.cancel.hidden = !jobRunning;
-      elements.cancel.disabled = busy && state.cancelRequested;
+      // 発行ループ外の通信では、保留したキャンセルを送る経路がない。
+      elements.cancel.disabled =
+        busy && (state.cancelRequested || !state.loopActive);
     }
 
     function updateRetryButton(busy) {
@@ -849,6 +851,7 @@
 
     function requestCancel() {
       if (
+        (state.requestInFlight && !state.loopActive) ||
         state.cancelSent ||
         state.cancelRequested ||
         !state.job ||

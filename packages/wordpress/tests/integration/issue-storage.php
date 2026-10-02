@@ -10,7 +10,7 @@ if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
 }
 
 // These tests intentionally inspect database locks without caches.
-// phpcs:disable WordPress.DB.DirectDatabaseQuery
+// phpcs:disable WordPress.DB.DirectDatabaseQuery, WordPress.DB.SlowDBQuery
 
 function profile_storage_assert( bool $condition, string $message ): void {
 	if ( ! $condition ) {
@@ -75,6 +75,59 @@ try {
 	);
 	profile_storage_assert( is_int( $test_post_id ) && $test_post_id > 0, 'Could not create test post.' );
 
+	// Another connection saves CA after this request has cached an unissued post.
+	$article_lock = hash( 'sha256', DB_NAME . ':' . $wpdb->prefix . ':ca:' . $test_post_id );
+	foreach ( array( null, '', array() ) as $initial ) {
+		foreach ( array( 'competing-ca', array( 'competing-ca' ), array( array( 'competing-ca' ) ) ) as $competing_cas ) {
+			foreach ( array( false, true ) as $blocked ) {
+				delete_post_meta( $test_post_id, '_profile_post_cas' );
+				delete_post_meta( $test_post_id, \Profile\Delivery\BLOCKED_META );
+				if ( null !== $initial ) {
+					add_post_meta( $test_post_id, '_profile_post_cas', $initial );
+				}
+				if ( $blocked ) {
+					profile_storage_assert( \Profile\Delivery\suspend( $test_post_id, true ), 'Could not prepare delivery suspension.' );
+				}
+				$blocked_before = get_post_meta( $test_post_id, \Profile\Delivery\BLOCKED_META, true );
+				profile_storage_assert( ! \Profile\Issue\has_post_cas( $test_post_id ), 'The unissued CA cache was not prepared.' );
+				profile_storage_assert( '1' === $other->get_var( $other->prepare( 'SELECT GET_LOCK(%s, 0)', $article_lock ) ), 'Could not acquire the competing article lock.' );
+				try {
+					profile_storage_assert(
+						false !== $other->delete(
+							$wpdb->postmeta,
+							array(
+								'post_id'  => $test_post_id,
+								'meta_key' => '_profile_post_cas',
+							)
+						),
+						'Could not remove the previous CA row.'
+					);
+					profile_storage_assert(
+						1 === $other->insert(
+							$wpdb->postmeta,
+							array(
+								'post_id'    => $test_post_id,
+								'meta_key'   => '_profile_post_cas',
+								'meta_value' => maybe_serialize( $competing_cas ),
+							)
+						),
+						'Could not save the competing CA.'
+					);
+				} finally {
+					$other->get_var( $other->prepare( 'SELECT RELEASE_LOCK(%s)', $article_lock ) );
+				}
+				profile_storage_assert( ! \Profile\Issue\has_post_cas( $test_post_id ), 'The second connection unexpectedly cleared the first request cache.' );
+				$requests_before = $http_count;
+				$result          = \Profile\Issue\issue_post( get_post( $test_post_id ), true );
+				profile_storage_assert( 'skipped' === $result['status'], 'Missing-only issuance accepted a stale unissued CA cache.' );
+				profile_storage_assert( $requests_before === $http_count, 'Missing-only issuance sent an HTTP request for a competing CA.' );
+				profile_storage_assert( get_post_meta( $test_post_id, \Profile\Delivery\BLOCKED_META, true ) === $blocked_before, 'Missing-only issuance changed delivery suspension.' );
+				wp_cache_delete( $test_post_id, 'post_meta' );
+				profile_storage_assert( get_post_meta( $test_post_id, '_profile_post_cas', true ) === $competing_cas, 'Missing-only issuance overwrote the competing CA.' );
+			}
+		}
+	}
+
 	foreach ( array( null, '', array(), array( array( 'old-ca' ) ), array( array( 'test-ca' ) ) ) as $initial ) {
 		delete_post_meta( $test_post_id, '_profile_post_cas' );
 		if ( null !== $initial ) {
@@ -98,6 +151,41 @@ try {
 		profile_storage_assert( array( array( 'competing-ca' ) ) === get_post_meta( $test_post_id, '_profile_post_cas', true ), 'Concurrent CA was overwritten.' );
 	}
 	$http_effect = null;
+
+	foreach ( array( null, '', array(), array( array() ) ) as $initial ) {
+		delete_post_meta( $test_post_id, '_profile_post_cas' );
+		if ( null !== $initial ) {
+			add_post_meta( $test_post_id, '_profile_post_cas', $initial );
+		}
+		$result = \Profile\Issue\issue_post( get_post( $test_post_id ), true );
+		profile_storage_assert( 'success' === $result['status'], 'Missing-only issuance rejected an empty CA value.' );
+		profile_storage_assert( array( array( 'test-ca' ) ) === get_post_meta( $test_post_id, '_profile_post_cas', true ), 'Missing-only issuance did not save the CA.' );
+	}
+
+	// Query errors and duplicate rows still fail with delivery suspended.
+	foreach ( array( false, true ) as $only_missing ) {
+		delete_post_meta( $test_post_id, \Profile\Delivery\BLOCKED_META );
+		$query_filter    = static function ( $query ) use ( $wpdb ) {
+			$prefix = "SELECT meta_id, meta_value FROM {$wpdb->postmeta} ";
+			return str_starts_with( $query, $prefix ) ? 'INVALID CA SNAPSHOT' : $query;
+		};
+		$requests_before = $http_count;
+		add_filter( 'query', $query_filter );
+		$result = \Profile\Issue\issue_post( get_post( $test_post_id ), $only_missing );
+		remove_filter( 'query', $query_filter );
+		profile_storage_assert( 'failed' === $result['status'] && str_contains( $result['message'], 'データベースから読み取れなかった' ), 'The CA query failure diagnostic changed.' );
+		profile_storage_assert( $requests_before === $http_count && (bool) get_post_meta( $test_post_id, \Profile\Delivery\BLOCKED_META, true ), 'A CA query failure did not suspend delivery before HTTP.' );
+
+		delete_post_meta( $test_post_id, \Profile\Delivery\BLOCKED_META );
+		add_post_meta( $test_post_id, '_profile_post_cas', array( array( 'duplicate-ca' ) ) );
+		$result = \Profile\Issue\issue_post( get_post( $test_post_id ), $only_missing );
+		profile_storage_assert( 'failed' === $result['status'] && str_contains( $result['message'], '保存レコードが複数' ), 'The duplicate CA diagnostic changed.' );
+		profile_storage_assert( $requests_before === $http_count && (bool) get_post_meta( $test_post_id, \Profile\Delivery\BLOCKED_META, true ), 'Duplicate CA rows did not suspend delivery before HTTP.' );
+		profile_storage_assert( 2 === count( get_post_meta( $test_post_id, '_profile_post_cas', false ) ), 'Duplicate CA rows were overwritten.' );
+		delete_post_meta( $test_post_id, '_profile_post_cas' );
+		add_post_meta( $test_post_id, '_profile_post_cas', array( array( 'test-ca' ) ) );
+	}
+	update_post_meta( $test_post_id, '_profile_post_cas', array( array( 'competing-ca' ) ) );
 
 	// A normal WordPress update after HTTP, immediately before storage starts.
 	$query_filter = static function ( $query ) use ( $test_post_id, &$query_filter ) {
@@ -189,8 +277,8 @@ try {
 	profile_storage_assert( 'Uncommitted title' === $wpdb->get_var( $wpdb->prepare( "SELECT post_title FROM {$wpdb->posts} WHERE ID = %d", $test_post_id ) ), 'The caller transaction was rolled back.' );
 	profile_storage_assert( $original_title === $other->get_var( $other->prepare( "SELECT post_title FROM {$wpdb->posts} WHERE ID = %d", $test_post_id ) ), 'The caller transaction was committed.' );
 	$wpdb->query( 'ROLLBACK' );
-	profile_storage_assert( 16 === $http_count, 'Unexpected HTTP request count.' );
-	WP_CLI::success( 'CA storage checks passed: empty values, conflicts, post changes, row locks, reconnects, failed commit, caller transaction.' );
+	profile_storage_assert( 20 === $http_count, 'Unexpected HTTP request count.' );
+	WP_CLI::success( 'CA storage checks passed: 18 stale-cache cases, 4 missing-only empty values, query errors, duplicates, conflicts, post changes, row locks, reconnects, failed commit, caller transaction.' );
 } finally {
 	if ( $query_filter ) {
 		remove_filter( 'query', $query_filter );
