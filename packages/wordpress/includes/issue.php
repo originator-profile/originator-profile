@@ -28,6 +28,14 @@ use function Profile\Debug\debug;
 require_once __DIR__ . '/url.php';
 use function Profile\Url\add_page_query;
 
+require_once __DIR__ . '/exclusion.php';
+use function Profile\Exclusion\is_excluded;
+
+require_once __DIR__ . '/delivery.php';
+use function Profile\Delivery\suspend;
+use function Profile\Delivery\is_post_excluded;
+use const Profile\Delivery\BLOCKED_META;
+
 /** 投稿への署名処理の初期化
  * transition_post_status について
  * sign_post: 公開への遷移時のみの処理。非公開遷移時は何もしない。
@@ -53,6 +61,59 @@ function sign_post( string $new_status, string $old_status, \WP_Post $post ) {
 		return;
 	}
 
+	// 同一記事の発行を直列化し、古い処理が新しいCAを上書きすることを防ぐ。
+	global $wpdb;
+	$lock = hash( 'sha256', DB_NAME . ':' . $wpdb->prefix . ':ca:' . $post->ID );
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- DB接続単位の排他ロック。結果はキャッシュしない。
+	$acquired = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) );
+	if ( 1 !== (int) $acquired ) {
+		suspend( $post->ID, true );
+		debug( "Post ID {$post->ID}: concurrent CA issuance; delivery remains suspended until a later successful update." );
+		return;
+	}
+	try {
+		sign_published_post( $post );
+	} finally {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- 必ず取得した接続のロックを解放する。
+		$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+	}
+}
+
+/**
+ * 排他ロック取得後に、全ページのCAを発行して配信を再開する。
+ *
+ * @param \WP_Post $post 公開記事。
+ */
+function sign_published_post( \WP_Post $post ) {
+	$signed_post = $post->to_array();
+	// 記事の代表URLで判定し、分割ページもまとめて除外する。既存CASは保持する。
+	try {
+		$rules = \get_option( 'profile_ca_excluded_urls', array() );
+		$url   = \get_permalink( $post );
+		if ( ! is_array( $rules ) || ! is_string( $url ) || '' === $url ) {
+			suspend( $post->ID );
+			debug( "Post ID {$post->ID}: CA issuance stopped because the public URL or exclusion settings are unavailable." );
+			return;
+		}
+		if ( is_excluded( $url, $rules ) ) {
+			suspend( $post->ID );
+			debug( "Post ID {$post->ID}: CA issuance skipped by URL exclusion rules. Existing CAS preserved." );
+			return;
+		}
+	} catch ( \InvalidArgumentException $error ) {
+		suspend( $post->ID );
+		debug( "Post ID {$post->ID}: CA issuance stopped because URL exclusion could not be evaluated: " . $error->getMessage() );
+		return;
+	}
+
+	// 再発行が失敗した場合も、更新前のCAを配信しない。保存済みCA自体は保持する。
+	if ( ! suspend( $post->ID, true ) ) {
+		debug( "Post ID {$post->ID}: could not suspend CA delivery before issuance." );
+		return;
+	}
+	// 発行中の設定変更が作った新しい停止状態を解除しないよう、開始時のトークンを保持する。
+	$blocked_token = \get_post_meta( $post->ID, BLOCKED_META, true );
+
 	foreach ( \get_attached_media( 'image', $post->ID ) as $attachment ) {
 		$metadata = \wp_get_attachment_metadata( $attachment->ID );
 		update_attachment_integrity_metadata( $metadata, $attachment->ID );
@@ -77,6 +138,7 @@ function sign_post( string $new_status, string $old_status, \WP_Post $post ) {
 
 	if ( empty( $uca_list ) ) {
 		debug( "UCA list is empty for post ID: {$post->ID}" );
+		return;
 	}
 	$post_cas = array();
 
@@ -94,14 +156,43 @@ function sign_post( string $new_status, string $old_status, \WP_Post $post ) {
 		}
 
 		$cas = issue_ca( $uca, $admin_secret );
-		if ( false === $cas || empty( $cas ) ) {
+		if ( ! is_array( $cas ) || empty( $cas ) ) {
 			debug( "Failed to issue CA for post ID: {$post->ID}, page: {$page}" );
+			return;
 		}
-		$cas = is_array( $cas ) ? $cas : array();
+		foreach ( $cas as $credential ) {
+			if ( ! is_string( $credential ) || '' === $credential ) {
+				return;
+			}
+		}
 		array_push( $post_cas, $cas );
 	}
 
+	// 本文保存はこのロックの外で行われるため、古い記事を署名していないかも確認する。
+	\clean_post_cache( $post->ID );
+	$current_post = \get_post( $post->ID );
+	if ( ! $current_post instanceof \WP_Post || $current_post->to_array() !== $signed_post ) {
+		return;
+	}
+	if ( \get_post_meta( $post->ID, BLOCKED_META, true ) !== $blocked_token ) {
+		return;
+	}
 	\update_post_meta( $post->ID, '_profile_post_cas', $post_cas );
+	if ( \get_post_meta( $post->ID, '_profile_post_cas', true ) !== $post_cas ) {
+		return;
+	}
+	try {
+		if ( is_post_excluded( $post ) ) {
+			suspend( $post->ID );
+			return;
+		}
+	} catch ( \InvalidArgumentException $error ) {
+		suspend( $post->ID );
+		return;
+	}
+	if ( $blocked_token ) {
+		\delete_post_meta( $post->ID, BLOCKED_META, $blocked_token );
+	}
 }
 
 /**

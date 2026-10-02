@@ -2,6 +2,10 @@
   "scripts": {
     "help": "cat README.md",
     "test": "phpunit",
+    "test:integration:exclusion": [
+      "wp --path=/var/www/html eval-file /var/www/html/wp-content/plugins/ca-manager/tests/exclusion-integration.php",
+      "wp --path=/var/www/html eval-file /var/www/html/wp-content/plugins/ca-manager/tests/delivery-integration.php"
+    ],
     "lint": "phpcs .",
     "format": "phpcbf -v ."
   },

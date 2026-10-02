@@ -24,7 +24,7 @@ const PROFILE_DEFAULT_CA_TARGET_HTML = <<<'EOD'
 </html>
 EOD;
 
-/** CA Presentaion Type が External 時、静的ファイルを生成するディレクトリ */
+/** 旧バージョンの静的CASファイルを移行時に削除するディレクトリ */
 const PROFILE_DEFAULT_CA_EXTERNAL_DIR = 'cas';
 
 /** ログの出力設定が有効の時、ログファイルを生成するディレクトリ */
