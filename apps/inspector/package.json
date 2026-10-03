@@ -39,7 +39,7 @@
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "@uiw/react-json-view": "2.0.0-alpha.42",
-    "astro": "7.1.0",
+    "astro": "7.2.8",
     "chokidar": "5.0.0",
     "date-fns": "4.1.0",
     "dotenv": "17.4.2",
