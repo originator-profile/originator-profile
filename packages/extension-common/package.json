@@ -43,7 +43,7 @@
     "@originator-profile/securing-mechanism": "workspace:*",
     "@originator-profile/verify": "workspace:*",
     "@webext-core/messaging": "2.3.0",
-    "dompurify": "3.4.13",
+    "dompurify": "3.4.16",
     "tailwind-config-originator-profile": "workspace:*",
     "tailwind-merge": "3.5.0"
   },
