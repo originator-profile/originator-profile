@@ -54,7 +54,7 @@
     "happy-dom": "20.8.9",
     "oxlint": "^1.73.0",
     "oxlint-tsgolint": "^0.24.0",
-    "vitest": "4.1.4"
+    "vitest": "4.1.11"
   },
   "peerDependencies": {
     "react": "^19.2.0",

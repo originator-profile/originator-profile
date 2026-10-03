@@ -62,7 +62,7 @@
     "tailwindcss": "4.2.2",
     "typed-url-params": "1.0.1",
     "use-debounce": "10.1.1",
-    "vitest": "4.1.4",
+    "vitest": "4.1.11",
     "web-ext": "10.1.0",
     "wxt": "0.20.27"
   },
