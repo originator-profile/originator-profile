@@ -6,7 +6,6 @@ import {
 } from "@originator-profile/model";
 import {
   JwtVcDecoder,
-  type JwtVcDecodingResult,
   JwtVcVerificationResult,
   JwtVcVerifier,
   type UnverifiedJwtVc,
@@ -25,11 +24,7 @@ import { OpsVerifier } from "../originator-profile-set/verify-ops";
 import { pointer } from "../result/pointer";
 import { verifyAllowedOrigin } from "../verify-allowed-origin";
 import { SpVerificationResult } from "./types";
-import {
-  SiteProfileInvalid,
-  SiteProfileVerifyFailed,
-  WebsiteProfileDecodeFailed,
-} from "./verify-errors";
+import { SiteProfileInvalid, SiteProfileVerifyFailed } from "./verify-errors";
 
 /** WSPソースの取得と初期デコード */
 const decodeWebsiteProfiles = (
@@ -37,8 +32,7 @@ const decodeWebsiteProfiles = (
   opsVerified: VerifiedOps,
 ):
   | { decodedWsps: UnverifiedJwtVc<WebsiteProfile>[]; wspSources: string[] }
-  | SiteProfileInvalid
-  | WebsiteProfileDecodeFailed => {
+  | SiteProfileInvalid => {
   // NOTE: 2026-11-01 まで後方互換性のため、sitesが存在しない場合はcredentialを使用
   const wspSources = sp.sites || (sp.credential ? [sp.credential] : []);
   if (wspSources.length === 0) {
@@ -51,29 +45,24 @@ const decodeWebsiteProfiles = (
   const decodeWsp = JwtVcDecoder<WebsiteProfile>();
   const decodedWsps = wspSources.map(decodeWsp);
 
-  // デコード結果を成功/失敗に振り分け（成功分はソースとインデックスを揃えて保持）
-  const decodeErrors: JwtVcDecodingResult<WebsiteProfile>[] = [];
-  const successWsps: UnverifiedJwtVc<WebsiteProfile>[] = [];
-  const successWspSources: string[] = [];
-  decodedWsps.forEach((wsp, index) => {
-    if (wsp instanceof Error) {
-      decodeErrors.push(wsp);
-    } else {
-      successWsps.push(wsp);
-      successWspSources.push(wspSources[index]);
-    }
-  });
-
-  if (decodeErrors.length > 0) {
-    return new WebsiteProfileDecodeFailed("Website Profile decoding failed", {
-      originators: opsVerified,
-      sites: decodeErrors,
-      decodedWsps: successWsps,
-      decodedWspSources: successWspSources,
-    });
+  // デコードエラーチェック（成功分も含めて sites とインデックスを揃えて返す）
+  const decodeErrorIndexes = decodedWsps
+    .map((wsp, index) => (wsp instanceof Error ? index : null))
+    .filter((index): index is number => index !== null);
+  if (decodeErrorIndexes.length > 0) {
+    return new SiteProfileInvalid(
+      `Website Profile invalid (${decodeErrorIndexes.map((index) => `sites[${index}]`).join(", ")})`,
+      {
+        originators: opsVerified,
+        sites: decodedWsps,
+      },
+    );
   }
 
-  return { decodedWsps: successWsps, wspSources };
+  return {
+    decodedWsps: decodedWsps as UnverifiedJwtVc<WebsiteProfile>[],
+    wspSources,
+  };
 };
 
 /**
@@ -120,10 +109,7 @@ export function SpVerifier(
     }
 
     const decoded = decodeWebsiteProfiles(sp, opsVerified);
-    if (
-      decoded instanceof SiteProfileInvalid ||
-      decoded instanceof WebsiteProfileDecodeFailed
-    ) {
+    if (decoded instanceof SiteProfileInvalid) {
       return decoded;
     }
 

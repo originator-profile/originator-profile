@@ -7,6 +7,7 @@ import {
 } from "@originator-profile/model";
 import {
   signJwtVc,
+  VcDecodeFailed,
   VcValidateFailed,
   VcValidator,
   VcVerifyFailed,
@@ -35,11 +36,7 @@ import {
   CoreProfileNotFound,
   OpVerifyFailed,
 } from "../originator-profile-set/errors";
-import {
-  SiteProfileInvalid,
-  SiteProfileVerifyFailed,
-  WebsiteProfileDecodeFailed,
-} from "./verify-errors";
+import { SiteProfileInvalid, SiteProfileVerifyFailed } from "./verify-errors";
 import { SpVerifier } from "./verify-site-profile";
 
 const issuedAt = fromUnixTime(getUnixTime(new Date()));
@@ -728,19 +725,16 @@ describe("Site Profileの検証", async () => {
     );
     const resultSp = await verify();
 
-    expect(resultSp).instanceOf(WebsiteProfileDecodeFailed);
-    const { sites, decodedWsps, decodedWspSources } = (
-      resultSp as WebsiteProfileDecodeFailed
-    ).result;
-    expect(sites).toHaveLength(1);
-    expect(decodedWsps).toHaveLength(1);
-
-    expect(decodedWspSources).toHaveLength(1);
-    expect(decodedWspSources[0]).toEqual(validJwt);
-    expect(decodedWsps[0]).not.instanceOf(Error);
-    expect(decodedWsps[0].doc.credentialSubject).toMatchObject(
-      wsp.credentialSubject,
-    );
+    expect(resultSp).instanceOf(SiteProfileInvalid);
+    expect((resultSp as SiteProfileInvalid).message).toContain("sites[1]");
+    const { sites } = (resultSp as SiteProfileInvalid).result;
+    expect(sites).toHaveLength(2);
+    expect(sites[0]).not.instanceOf(Error);
+    expect(sites[0]).toMatchObject({
+      source: validJwt,
+      doc: { credentialSubject: wsp.credentialSubject },
+    });
+    expect(sites[1]).instanceOf(VcDecodeFailed);
   });
 
   test("複数のWSPのうち一つだけオリジンが一致しない", async () => {
