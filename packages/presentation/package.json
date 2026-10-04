@@ -38,6 +38,6 @@
     "oxlint-tsgolint": "^0.24.0",
     "pkgroll": "2.27.0",
     "typescript": "6.0.2",
-    "vitest": "4.1.4"
+    "vitest": "4.1.11"
   }
 }
