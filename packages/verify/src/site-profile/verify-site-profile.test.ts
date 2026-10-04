@@ -733,6 +733,7 @@ describe("Site Profileの検証", async () => {
     expect(sites[0]).toMatchObject({
       source: validJwt,
       doc: { credentialSubject: wsp.credentialSubject },
+      verificationKey: expect.any(Object),
     });
     expect(sites[1]).instanceOf(VcDecodeFailed);
   });
