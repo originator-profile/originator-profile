@@ -7,6 +7,7 @@ import {
 } from "@originator-profile/model";
 import {
   signJwtVc,
+  VcDecodeFailed,
   VcValidateFailed,
   VcValidator,
   VcVerifyFailed,
@@ -707,6 +708,34 @@ describe("Site Profileの検証", async () => {
     expect(sites).toHaveLength(2);
     expect(sites[0]).toMatchObject({ doc: wsp });
     expect(sites[1]).instanceOf(VcVerifyFailed);
+  });
+
+  test("複数のWSPのうち一つだけデコードに失敗", async () => {
+    const validJwt = await signJwtVc(wsp, originator.privateKey, signOptions);
+    const multiSp: SiteProfile = {
+      originators: ops,
+      sites: [validJwt, "invalid-jwt"],
+    };
+
+    const verify = SpVerifier(
+      multiSp,
+      LocalKeys({ keys: [authority.publicKey] }),
+      opId.authority,
+      "https://originator.example.org",
+    );
+    const resultSp = await verify();
+
+    expect(resultSp).instanceOf(SiteProfileInvalid);
+    expect((resultSp as SiteProfileInvalid).message).toContain("sites[1]");
+    const { sites } = (resultSp as SiteProfileInvalid).result;
+    expect(sites).toHaveLength(2);
+    expect(sites[0]).not.instanceOf(Error);
+    expect(sites[0]).toMatchObject({
+      source: validJwt,
+      doc: { credentialSubject: wsp.credentialSubject },
+      verificationKey: expect.any(Object),
+    });
+    expect(sites[1]).instanceOf(VcDecodeFailed);
   });
 
   test("複数のWSPのうち一つだけオリジンが一致しない", async () => {
