@@ -3,6 +3,7 @@
   <testsuites>
     <testsuite name="Profile">
       <directory suffix=".test.php">tests</directory>
+      <exclude>tests/integration</exclude>
     </testsuite>
   </testsuites>
 </phpunit>

@@ -123,6 +123,7 @@ function settings_page() {
 	?>
 		<div class="wrap">
 			<h1>CA Manager</h1>
+			<p><a href="<?php echo \esc_url( \admin_url( 'tools.php?page=ca-manager-bulk' ) ); ?>">既存記事のCA一括発行</a></p>
 			<?php exclusion_settings(); ?>
 			<form method="post" action="options.php">
 				<?php \settings_fields( 'ca-manager' ); ?>

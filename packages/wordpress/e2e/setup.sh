@@ -13,5 +13,5 @@ wp plugin activate ca-manager
 
 if [ "${WORDPRESS_RUN_INTEGRATION_TESTS:-}" = "1" ]; then
   cd /var/www/html/wp-content/plugins/ca-manager
-  composer run test:integration:exclusion
+  composer run test:integration
 fi

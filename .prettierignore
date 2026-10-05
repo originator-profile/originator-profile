@@ -1,3 +1,5 @@
 composer.lock
 lerna.json
 pnpm-lock.yaml
+# WordPressは専用の整形設定を使用するため除外
+packages/wordpress/
