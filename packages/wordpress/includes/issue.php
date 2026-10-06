@@ -639,9 +639,13 @@ function content_to_html( string $content, string $template, string $title = '' 
 /**
  * HTMLから外部リソースのIntegrityを取得
  *
+ * 要素に `wp-image-{添付ID}` クラスがあれば、その要素を特定する CSS セレクターも返す。
+ *
+ * @link https://docs.originator-profile.org/ja/opb/content-integrity-descriptor/external-resource/
+ *
  * @param string $html HTML
  * @param string $xpath_query XPathクエリ
- * @return array<string> 外部リソースのIntegrity一覧
+ * @return list<array{integrity: string, css_selector?: string}> 外部リソースのIntegrityとCSSセレクターの一覧
  */
 function external_resources_from_html( string $html, string $xpath_query ): array {
 	$document = new \DOMDocument();
@@ -652,9 +656,16 @@ function external_resources_from_html( string $html, string $xpath_query ): arra
 
 	if ( $elements ) {
 		foreach ( $elements as $element ) {
-			if ( $element->attributes['integrity']->value ) {
-				array_push( $resources, $element->attributes['integrity']->value );
+			$integrity = $element->getAttribute( 'integrity' );
+			if ( ! $integrity ) {
+				continue;
 			}
+
+			$resource = array( 'integrity' => $integrity );
+			if ( preg_match( '/(?:^|\s)wp-image-(\d+)(?:\s|$)/', $element->getAttribute( 'class' ), $matches ) ) {
+				$resource['css_selector'] = "img.wp-image-{$matches[1]}";
+			}
+			array_push( $resources, $resource );
 		}
 	} else {
 		debug( "No external resources found matching Xpath query: {$xpath_query}" );

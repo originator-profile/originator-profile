@@ -24,7 +24,7 @@ final class Uca {
 	 * @param string  $html HTML
 	 * @param string  $target_type 検証対象の種別
 	 * @param string  $target_css_selector 検証する対象の要素 CSS セレクター
-	 * @param array   $external_resources 外部リソース
+	 * @param array   $external_resources 外部リソース (list<array{integrity: string, css_selector?: string}>)
 	 * @param string  $headline タイトル
 	 * @param string  $description 説明
 	 * @param ?string $subject CA ID
@@ -88,9 +88,12 @@ final class Uca {
 					),
 				),
 				array_map(
-					fn( $integrity ) => array(
-						'type'      => 'ExternalResourceTargetIntegrity',
-						'integrity' => $integrity,
+					fn( $external_resource ) => array_merge(
+						array(
+							'type'      => 'ExternalResourceTargetIntegrity',
+							'integrity' => $external_resource['integrity'],
+						),
+						isset( $external_resource['css_selector'] ) ? array( 'cssSelector' => $external_resource['css_selector'] ) : array(),
 					),
 					$this->external_resources,
 				)

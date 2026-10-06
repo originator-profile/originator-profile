@@ -360,6 +360,24 @@ WordPress-->>利用者: CAS
 
 以上の処理により、投稿したコンテンツは自動的に管理され、利用者はその真正性を確認できます。
 
+### 画像の署名
+
+画像ブロック（`core/image`）の画像は [External Resource Target](https://docs.originator-profile.org/opb/content-integrity-descriptor/external-resource/) として署名します。
+
+- `render_block_core/image` : 画像ブロックの描画時に、添付ファイルの Integrity メタデータ（`_profile_attachment_integrity`）を `<img>` 要素の `integrity` 属性として付与します
+- 署名時には `<img>` 要素の `wp-image-{添付ID}` クラスから `cssSelector`（例: `img.wp-image-123`）を求め、`integrity` と合わせて CA に含めます
+
+```json
+{
+  "type": "ExternalResourceTargetIntegrity",
+  "cssSelector": "img.wp-image-123",
+  "integrity": "sha256-... sha256-..."
+}
+```
+
+検証者は `cssSelector` で対象要素を特定します。
+`cssSelector` の無い CA（`wp-image-{添付ID}` クラスが無い画像や、この対応以前に署名した投稿）は `integrity` 属性で対象要素を特定するため、`integrity` 属性の付与も続けています。
+
 ## CA サーバー API の認証
 
 CA サーバー API の Basic 認証をサポートしています。
