@@ -27,6 +27,7 @@ function createUnsignedContentAttestation(): UnsignedContentAttestation {
       headline: "Test Article",
       description: "test description",
     },
+    allowedUrl: "https://example.com/*",
     target: [
       {
         type: "TextTargetIntegrity",
@@ -58,6 +59,7 @@ await describe("unsignedCa()", async () => {
         headline: "Test Article",
         description: "test description",
       },
+      allowedUrl: "https://example.com/*",
       target: [
         {
           type: "TextTargetIntegrity",
@@ -109,6 +111,7 @@ await describe("unsignedCa()", async () => {
           content,
         },
       },
+      allowedUrl: "https://example.com/*",
       target: [
         {
           type: "TextTargetIntegrity",
@@ -154,6 +157,7 @@ await describe("unsignedCa()", async () => {
         headline: "Test Article",
         description: "test description",
       },
+      allowedUrl: "https://example.com/*",
       target: [
         {
           type: "ExternalResourceTargetIntegrity",
@@ -179,6 +183,7 @@ await describe("unsignedCa()", async () => {
       type: ["VerifiableCredential"],
       issuer: "dns:example.com",
       credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      allowedUrl: "https://example.com/*",
       target: [{ type: "TextTargetIntegrity", content: "data:text/html,test" }],
     };
 
@@ -197,6 +202,7 @@ await describe("unsignedCa()", async () => {
       type: ["VerifiableCredential", "ContentAttestation"],
       issuer: "invalid-issuer",
       credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      allowedUrl: "https://example.com/*",
       target: [{ type: "TextTargetIntegrity", content: "data:text/html,test" }],
     };
 
@@ -215,6 +221,7 @@ await describe("unsignedCa()", async () => {
       type: ["VerifiableCredential", "ContentAttestation"],
       issuer: "dns:example.com",
       credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      allowedUrl: "https://example.com/*",
       target: [],
     };
 
@@ -227,6 +234,7 @@ await describe("unsignedCa()", async () => {
       type: ["VerifiableCredential", "ContentAttestation"],
       issuer: "dns:example.com",
       credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      allowedUrl: "https://example.com/*",
       target: [{ type: "TextTargetIntegrity", content: "data:text/html,test" }],
     };
 
@@ -265,6 +273,7 @@ await describe("sign()", async () => {
       type: ["VerifiableCredential"],
       issuer: "dns:example.com",
       credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      allowedUrl: "https://example.com/*",
       target: [{ type: "TextTargetIntegrity", content: "data:text/html,test" }],
     };
 
@@ -283,6 +292,7 @@ await describe("sign()", async () => {
       type: ["VerifiableCredential", "ContentAttestation"],
       issuer: "not-a-dns-id",
       credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      allowedUrl: "https://example.com/*",
       target: [{ type: "TextTargetIntegrity", content: "data:text/html,test" }],
     };
 
@@ -301,6 +311,7 @@ await describe("sign()", async () => {
       type: ["VerifiableCredential", "ContentAttestation"],
       issuer: "dns:example.com",
       credentialSubject: { id: "urn:uuid:test", type: "Article" },
+      allowedUrl: "https://example.com/*",
       target: [],
     };
 

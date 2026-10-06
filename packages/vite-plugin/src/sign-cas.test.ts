@@ -41,6 +41,7 @@ const sampleUca = {
     headline: "Test Article",
     description: "test description",
   },
+  allowedUrl: "https://example.com/*",
   target: [
     {
       type: "TextTargetIntegrity",
