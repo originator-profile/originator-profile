@@ -33,6 +33,42 @@ describe("AllowedUrl バリデーション", () => {
         AllowedUrl.safeParse("https://example.com/articles/42").success,
       ).toBe(true);
     });
+
+    test.each([
+      "http://localhost:8080/*",
+      "https://example.com:*/*",
+      "https://日本語.jp/*",
+      "{https}://{example.com}/*",
+    ])("%s を受け付ける", (value) => {
+      expect(AllowedUrl.safeParse(value).success).toBe(true);
+    });
+  });
+
+  describe("スキームが https でない (不正)", () => {
+    test.each([
+      "http://example.com/*",
+      "*://example.com/*",
+      "http{s}?://example.com/*",
+      "file:///*",
+    ])("%s → エラー", (value) => {
+      expect(AllowedUrl.safeParse(value).success).toBe(false);
+    });
+  });
+
+  describe("ホスト名が固定されていない (不正)", () => {
+    test.each([
+      "https://*",
+      "https://*/*",
+      "https:*",
+      "https://ex*.com/*",
+      "https://*.*.example.com/*",
+      "https://example.com.*/*",
+      "https://:host/*",
+      "https://example.(com|net)/*",
+      "https://foo{.example.com}?/*",
+    ])("%s → エラー", (value) => {
+      expect(AllowedUrl.safeParse(value).success).toBe(false);
+    });
   });
 
   describe("* のみの指定 (不正)", () => {
