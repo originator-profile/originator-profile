@@ -91,3 +91,18 @@ export type SiteProfileEntry = TabWebsiteVerification & {
   /** 検証したトップレベル文書 */
   documentId: string;
 };
+
+/** フレームに読み込まれている文書と、その検証の状態 */
+export type FrameVerification = {
+  frame: chrome.webNavigation.GetAllFrameResultDetails;
+  /** まだ検証の通知を受けていない文書では undefined */
+  entry?: VerificationEntry;
+};
+
+/** タブが表示している文書群の検証の状態 */
+export type TabVerification = {
+  /** フレームごとの検証の状態。getAllFrames の順 */
+  frames: FrameVerification[];
+  /** トップレベル文書のオリジンの Site Profile の検証結果 */
+  siteProfile?: SiteProfileEntry;
+};

@@ -2,22 +2,11 @@ import { getAllFrames } from "../utils/frames";
 import { verificationMessenger } from "./events";
 import { resolveEntry } from "./identity";
 import { documentKey, siteProfileKey } from "./store";
-import type { SiteProfileEntry, VerificationEntry } from "./types";
-
-/** フレームに読み込まれている文書と、その検証の状態 */
-export type FrameVerification = {
-  frame: chrome.webNavigation.GetAllFrameResultDetails;
-  /** まだ検証の通知を受けていない文書では undefined */
-  entry?: VerificationEntry;
-};
-
-/** タブが表示している文書群の検証の状態 */
-export type TabVerification = {
-  /** フレームごとの検証の状態。getAllFrames の順 */
-  frames: FrameVerification[];
-  /** トップレベル文書のオリジンの Site Profile の検証結果 */
-  siteProfile?: SiteProfileEntry;
-};
+import type {
+  SiteProfileEntry,
+  TabVerification,
+  VerificationEntry,
+} from "./types";
 
 /**
  * タブが表示している文書群の検証の状態を読む
@@ -117,4 +106,49 @@ export function requestTabVerification(
     tabId,
     force: options.force ?? false,
   });
+}
+
+/** トップレベル文書の Site Profile の検証結果を待つ上限 (ミリ秒) */
+const SITE_PROFILE_TIMEOUT_MS = 10_000;
+
+/**
+ * タブのトップレベル文書のオリジンの Site Profile の検証結果を待って読む
+ * @param tabId タブID
+ * @param timeoutMs 待つ上限 (ミリ秒)
+ */
+export async function waitForTabSiteProfile(
+  tabId: number,
+  timeoutMs = SITE_PROFILE_TIMEOUT_MS,
+): Promise<SiteProfileEntry> {
+  const top = await chrome.webNavigation.getFrame({ tabId, frameId: 0 });
+  if (!top) throw new Error("No response from top level frame");
+  const key = siteProfileKey(top.documentId);
+
+  let cleanup = () => {};
+  const changed = new Promise<SiteProfileEntry>((resolve, reject) => {
+    const onChanged = (
+      changes: Record<string, chrome.storage.StorageChange>,
+      area: string,
+    ) => {
+      const entry = area === "session" ? changes[key]?.newValue : undefined;
+      if (entry) resolve(entry as SiteProfileEntry);
+    };
+    const timer = setTimeout(() => {
+      reject(
+        new Error(`Timed out waiting for the Site Profile of tab ${tabId}`),
+      );
+    }, timeoutMs);
+    chrome.storage.onChanged.addListener(onChanged);
+    cleanup = () => {
+      clearTimeout(timer);
+      chrome.storage.onChanged.removeListener(onChanged);
+    };
+  });
+
+  try {
+    const stored = await chrome.storage.session.get(key);
+    return (stored[key] as SiteProfileEntry | undefined) ?? (await changed);
+  } finally {
+    cleanup();
+  }
 }
