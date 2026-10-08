@@ -30,18 +30,18 @@ export type TabWebsiteVerification = {
 };
 
 /**
- * タブが表示している Web サイトを取得して検証する。
- * @param tabId タブID
+ * Site Profile を取得して Web サイトを検証する。
+ * @param fetchSiteProfile Site Profile の取得
  * @param options ロガー
  * @returns 検証結果と、取得した Site Profile
  */
-export async function verifyTabWebsite(
-  tabId: number,
+export async function verifyFetchedWebsite(
+  fetchSiteProfile: () => Promise<FetchSiteProfileSuccess>,
   options: { logger?: Logger } = {},
 ): Promise<TabWebsiteVerification> {
   let data: FetchSiteProfileSuccess;
   try {
-    data = await fetchTabSiteProfile(tabId);
+    data = await fetchSiteProfile();
   } catch (error) {
     return {
       result: {
@@ -64,6 +64,19 @@ export async function verifyTabWebsite(
     }),
     siteProfile: data.result,
   };
+}
+
+/**
+ * タブが表示している Web サイトを取得して検証する。
+ * @param tabId タブID
+ * @param options ロガー
+ * @returns 検証結果と、取得した Site Profile
+ */
+export function verifyTabWebsite(
+  tabId: number,
+  options: { logger?: Logger } = {},
+): Promise<TabWebsiteVerification> {
+  return verifyFetchedWebsite(() => fetchTabSiteProfile(tabId), options);
 }
 
 /**
