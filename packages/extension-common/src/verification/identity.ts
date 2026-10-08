@@ -12,6 +12,11 @@ import type {
   VerificationEntry,
 } from "./types";
 
+/** 検証を完了できなかったことを表す問題の種類 */
+export const VerificationIncomplete = problemType(
+  "ERR_VERIFICATION_INCOMPLETE",
+);
+
 /** 結果が無効になった理由の種類 */
 export const InvalidationType = {
   /** 用いた VC の有効期限を過ぎた */
@@ -119,6 +124,12 @@ export async function isReusable(
   now: Date,
 ): Promise<boolean> {
   if (entry?.state !== "settled" || isExpired(entry, now)) return false;
+  // NOTE: 検証を完了できなかった結果は検証の結果ではないため、入力が同じでも使わない
+  if (
+    entry.result.errors?.some(({ type }) => type === VerificationIncomplete)
+  ) {
+    return false;
+  }
   const { evaluatedUrl: _, ...held } = entry.inputIdentity;
   const { evaluatedUrl, ...identity } = current;
   return (
