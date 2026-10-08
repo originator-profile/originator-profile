@@ -11,12 +11,13 @@ import type {
   DocumentOutcome,
   DocumentVerificationMetadata,
   InputDependency,
+  OriginatorsOutcome,
   ProblemDetails,
   VerificationResult,
   VerificationTarget,
+  WebsiteOutcome,
 } from "@originator-profile/verify";
 import type { DocumentFrame } from "../credentials/types";
-import type { TabWebsiteVerification } from "../site-profile/verify-website";
 
 /** 検証対象の文書の識別 */
 export type VerificationSubject = DocumentFrame & { tabId: number };
@@ -25,6 +26,18 @@ export type VerificationSubject = DocumentFrame & { tabId: number };
 export type DocumentCredentials = {
   ops: SourcedCredential<OriginatorProfileSet[number]>[];
   cas: SourcedCredential<ContentAttestationSet[number]>[];
+  opMeta?: OpMeta;
+};
+
+/**
+ * 保持する、文書から取得したクレデンシャルの取得経路
+ *
+ * 原文は保持しない。結果の `$.originators[i]` / `$.cas[j]` は、それぞれ
+ * `ops[i]` / `cas[j]` から取得したものを指す。
+ */
+export type StoredCredentials = {
+  ops: { source: CredentialSource }[];
+  cas: { source: CredentialSource }[];
   opMeta?: OpMeta;
 };
 
@@ -65,7 +78,7 @@ export type InputIdentity = {
 /** 確定した検証結果 */
 type Settled = {
   subject: VerificationSubject;
-  credentials: DocumentCredentials;
+  credentials: StoredCredentials;
   result: DocumentVerificationResult;
   inputIdentity: InputIdentity;
 };
@@ -91,12 +104,17 @@ export type VerificationEntry =
 /**
  * オリジンの Site Profile の検証結果
  *
- * 同じオリジンのトップレベル文書のあいだで再利用する。
+ * 同じオリジンのトップレベル文書のあいだで再利用する。発信者はレジストリの
+ * 発信者を先頭に含む。
  */
-export type SiteProfileEntry = TabWebsiteVerification & {
+export type SiteProfileEntry = {
   /** Site Profile を探索したオリジン */
   origin: string;
+  result: VerificationResult<WebsiteOutcome>;
 };
+
+/** レジストリの検証結果 */
+export type RegistryEntry = VerificationResult<OriginatorsOutcome>;
 
 /** フレームに読み込まれている文書と、その検証の状態 */
 export type FrameVerification = {
@@ -115,4 +133,6 @@ export type TabVerification = {
   frames: FrameVerification[];
   /** トップレベル文書のオリジンの Site Profile の検証結果 */
   siteProfile?: SiteProfileEntry;
+  /** レジストリの検証結果 */
+  registry?: RegistryEntry;
 };

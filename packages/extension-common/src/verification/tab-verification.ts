@@ -2,9 +2,10 @@ import { getAllFrames } from "../utils/frames";
 import { originOf } from "../utils/origin";
 import { verificationMessenger } from "./events";
 import { resolveEntry } from "./identity";
-import { documentKey, siteProfileKey } from "./store";
+import { documentKey, registryKey, siteProfileKey } from "./store";
 import type {
   FrameVerification,
+  RegistryEntry,
   SiteProfileEntry,
   TabVerification,
   VerificationEntry,
@@ -32,7 +33,10 @@ export async function readTabVerification(
 ): Promise<TabVerification> {
   const frames = await getAllFrames(tabId);
   const top = frames.find(({ frameType }) => frameType === "outermost_frame");
-  const keys = frames.map(({ documentId }) => documentKey(documentId));
+  const keys = [
+    registryKey,
+    ...frames.map(({ documentId }) => documentKey(documentId)),
+  ];
   if (top) keys.push(siteProfileKey(originOf(top.url)));
   const stored = keys.length > 0 ? await chrome.storage.session.get(keys) : {};
 
@@ -49,6 +53,7 @@ export async function readTabVerification(
           | SiteProfileEntry
           | undefined)
       : undefined,
+    registry: stored[registryKey] as RegistryEntry | undefined,
   };
 }
 

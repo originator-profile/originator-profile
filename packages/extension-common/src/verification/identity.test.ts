@@ -10,6 +10,7 @@ import {
 } from "./identity";
 import type { DocumentCredentials, VerificationEntry } from "./types";
 
+/** 文書から取得したクレデンシャル */
 const credentials: DocumentCredentials = {
   ops: [
     {
@@ -39,7 +40,10 @@ async function settled(
       url,
       origin: "https://www.example.org",
     },
-    credentials,
+    credentials: {
+      ops: credentials.ops.map(({ source }) => ({ source })),
+      cas: [],
+    },
     result: {
       status: true,
       outcome: { originators: [], cas: [{ main: true, attestation }] },

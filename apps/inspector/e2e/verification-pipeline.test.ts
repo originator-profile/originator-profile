@@ -356,3 +356,49 @@ test("同じオリジン内の遷移では Site Profile を取得し直さない
   expect(fetchedForFirst).toBe(1);
   expect(fetched).toBe(fetchedForFirst);
 });
+
+test("保持する結果は VC の原文と共有の発信者を含まない", async ({
+  context,
+  page,
+  validSiteProfile,
+  credentialsPage,
+  validCredentials,
+}) => {
+  const key = { publicKey, privateKey };
+  await validSiteProfile(key, credentialsPage.issuer, credentialsPage.holder);
+  await validCredentials(
+    key,
+    credentialsPage.contents,
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
+  await page.goto("about:blank");
+  const worker = await backgroundWorker(context);
+  await page.goto(credentialsPage.endpoint);
+  await settledResult(worker, credentialsPage.endpoint, 1);
+
+  const stored = await worker.evaluate(async () => {
+    const entries = Object.entries(await chrome.storage.session.get(null));
+    const find = (prefix: string) =>
+      entries.find(([key]) => key.startsWith(prefix))?.[1] as
+        | Record<string, unknown>
+        | undefined;
+    return {
+      document: find("verification:document:"),
+      siteProfile: find("verification:site-profile:"),
+      registry: find("verification:registry"),
+    };
+  });
+  const json = JSON.stringify(stored);
+  const document = stored.document as VerificationEntry | undefined;
+  if (document?.state !== "settled") {
+    throw new Error("文書の検証は確定しているはず");
+  }
+
+  // VC の原文 (JWT) を保持しない
+  expect(json).not.toMatch(/eyJ[\w-]+\.[\w-]+\.[\w-]+/);
+  // 文書の結果は文書の発信者だけを含み、共有の発信者は SP エントリが持つ
+  expect(document.result.outcome?.originators).toHaveLength(1);
+  expect(stored.siteProfile).not.toHaveProperty("siteProfile");
+  expect(stored.registry).toMatchObject({ status: true });
+});
