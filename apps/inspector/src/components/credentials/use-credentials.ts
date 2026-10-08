@@ -11,6 +11,7 @@ import {
   type VerificationEntry,
   type VerifiedOpsWithSource,
 } from "@originator-profile/extension-common";
+import type { WebsiteVerificationResult } from "@originator-profile/verify";
 import { useMemo } from "react";
 import { useParams } from "react-router";
 import {
@@ -66,7 +67,7 @@ function toLegacies(documents: Settled[]): DocumentResult[] | Error {
 function sharedOriginatorsOf(
   top: Settled,
   registry?: RegistryEntry,
-  site?: SiteProfileEntry,
+  site?: WebsiteVerificationResult,
 ) {
   const usesSiteProfile = top.result.inputRange.some(
     ({ kind }) => kind === "site-profile",
@@ -76,7 +77,7 @@ function sharedOriginatorsOf(
   const parts = [
     { result: registry, source: registrySource },
     ...(usesSiteProfile && site
-      ? [{ result: site.result, source: siteProfileSource }]
+      ? [{ result: site, source: siteProfileSource }]
       : []),
   ];
   const ops: VerifiedOpsWithSource = [];
@@ -128,7 +129,7 @@ const framesCasOf = (legacies: DocumentResult[]): FramesVerifiedCas =>
 function toVerifiedCredentials(
   [top, ...rest]: [Settled, ...Settled[]],
   registry?: RegistryEntry,
-  site?: SiteProfileEntry,
+  site?: WebsiteVerificationResult,
 ): VerifiedCredentials | Error | undefined {
   // NOTE: 共有の発信者の検証に失敗していれば文書の検証も失敗している。文書の
   // 失敗を先に返し、共有の発信者の失敗を文書の発信者の失敗として示さない
@@ -190,6 +191,10 @@ function settledEntries(
   return [top, ...rest];
 }
 
+/** Site Profile の検証結果。確定していなければ undefined */
+const siteResultOf = (entry?: SiteProfileEntry) =>
+  entry?.state === "verifying" ? undefined : entry?.result;
+
 /**
  * タブの検証の状態から、表示に用いるクレデンシャルを得る
  * @returns 確定していない文書があれば undefined
@@ -217,7 +222,7 @@ function toCredentialsView(
   return toVerifiedCredentials(
     settled,
     snapshot.verification?.registry,
-    snapshot.verification?.siteProfile,
+    siteResultOf(snapshot.verification?.siteProfile),
   );
 }
 

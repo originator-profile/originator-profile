@@ -10,7 +10,7 @@ import {
   type OriginatorsOutcome,
   type ProblemDetails,
   type VerificationResult,
-  type WebsiteOutcome,
+  type WebsiteVerificationResult,
 } from "@originator-profile/verify";
 import { codeOf } from "../utils/problem-code";
 import { getRegistry } from "../utils/registry-ops";
@@ -27,17 +27,22 @@ export async function verifyFetchedWebsite(
     verifiedRegistry?: VerificationResult<OriginatorsOutcome>;
     logger?: Logger;
   } = {},
-): Promise<VerificationResult<WebsiteOutcome>> {
+): Promise<WebsiteVerificationResult> {
+  const verifiedAt = new Date().toISOString();
   let data: FetchSiteProfileSuccess;
   try {
     data = await fetchSiteProfile();
   } catch (error) {
+    // NOTE: 取得できなければ検証を適用していないため、検証範囲と入力の範囲は空
     return {
       status: false,
       securingResults: [],
       warnings: [],
       info: [],
       errors: [toProblemDetails(error)],
+      verifiedAt,
+      scope: [],
+      inputRange: [],
     };
   }
 

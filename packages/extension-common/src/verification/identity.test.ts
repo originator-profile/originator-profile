@@ -7,11 +7,17 @@ import {
   InvalidationType,
   isAllowedUrlConsistent,
   isReusable,
+  isSiteProfileReusable,
   isStillValid,
   resolveEntry,
+  resolveSiteProfileEntry,
   toInputIdentity,
 } from "./identity";
-import type { RegistryEntry, VerificationEntry } from "./types";
+import type {
+  RegistryEntry,
+  SiteProfileEntry,
+  VerificationEntry,
+} from "./types";
 
 /** 文書から取得したクレデンシャル */
 const credentials: Pick<FrameCredentials, "ops" | "cas"> = {
@@ -247,5 +253,53 @@ describe("isStillValid", () => {
     expect(isStillValid(resultAt(false, "2026-10-07T00:00:00.000Z"), now)).toBe(
       true,
     );
+  });
+});
+
+describe("Site Profile の検証の状態", () => {
+  const settledAt = (validUntil?: string): SiteProfileEntry => ({
+    state: "settled",
+    origin: "https://www.example.org",
+    result: {
+      status: true,
+      outcome: { originators: [], sites: [] },
+      securingResults: [],
+      warnings: [],
+      info: [],
+      verifiedAt: "2026-10-07T00:00:00.000Z",
+      validUntil,
+      scope: ["sp-vc", "allowed-origin"],
+      inputRange: [{ kind: "registry" }, { kind: "site-profile" }],
+    },
+  });
+
+  test("時刻の境界を過ぎた結果は無効として扱い、再利用しない", () => {
+    const entry = settledAt("2026-10-07T12:00:00.000Z");
+
+    expect(resolveSiteProfileEntry(entry, now)).toMatchObject({
+      state: "invalidated",
+      reason: { type: InvalidationType.Expired },
+    });
+    expect(isSiteProfileReusable(entry, now)).toBe(false);
+  });
+
+  test("時刻の境界より前の結果はそのまま再利用する", () => {
+    const entry = settledAt("2026-10-09T00:00:00.000Z");
+
+    expect(resolveSiteProfileEntry(entry, now)).toBe(entry);
+    expect(isSiteProfileReusable(entry, now)).toBe(true);
+  });
+
+  test("検証中の結果は再利用しない", () => {
+    expect(
+      isSiteProfileReusable(
+        {
+          state: "verifying",
+          origin: "https://www.example.org",
+          startedAt: "2026-10-08T00:00:00.000Z",
+        },
+        now,
+      ),
+    ).toBe(false);
   });
 });

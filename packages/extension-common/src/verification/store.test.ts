@@ -262,6 +262,7 @@ describe("untrackTab", () => {
 describe("Site Profile の検証結果", () => {
   const origin = "https://www.example.org";
   const entry = {
+    state: "settled" as const,
     origin,
     result: {
       status: false as const,
@@ -269,6 +270,9 @@ describe("Site Profile の検証結果", () => {
       warnings: [],
       info: [],
       errors: [],
+      verifiedAt: "2026-10-08T00:00:00.000Z",
+      scope: [],
+      inputRange: [],
     },
   };
 
