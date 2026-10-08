@@ -118,6 +118,84 @@ test("検証済みの target が変化したら改めて検証される", async 
   ).toMatchObject({ status: false });
 });
 
+test("target の部分木の外でセレクターに一致する要素が増えても改めて検証される", async ({
+  context,
+  page,
+  missingSiteProfile: _missingSiteProfile,
+  credentialsPage,
+  validCredentials,
+}) => {
+  await validCredentials(
+    { publicKey, privateKey },
+    credentialsPage.contents,
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
+  await page.goto("about:blank");
+  const worker = await backgroundWorker(context);
+  await page.goto(credentialsPage.endpoint);
+  expect(
+    await settledResult(worker, credentialsPage.endpoint, 1),
+  ).toMatchObject({ status: true });
+
+  await page.evaluate(() => {
+    const added = document.createElement("p");
+    added.id = "text-target-integrity";
+    added.textContent = "追加された本文";
+    document.body.append(added);
+  });
+
+  expect(
+    await settledResult(worker, credentialsPage.endpoint, 1, { status: false }),
+  ).toMatchObject({ status: false });
+});
+
+test("CAS の script 要素の内容や type 属性が書き換えられたら改めて検証される", async ({
+  context,
+  page,
+  missingSiteProfile: _missingSiteProfile,
+  credentialsPage,
+  validCredentials,
+}) => {
+  await validCredentials(
+    { publicKey, privateKey },
+    credentialsPage.contents,
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
+  await page.goto("about:blank");
+  const worker = await backgroundWorker(context);
+  await page.goto(credentialsPage.endpoint);
+  await settledResult(worker, credentialsPage.endpoint, 1);
+
+  // 外部参照と同じ CAS を埋め込みでも設置する
+  await page.evaluate(async () => {
+    const response = await fetch("http://localhost:8080/examples/cas.json");
+    const script = document.createElement("script");
+    script.type = "application/cas+json";
+    script.textContent = await response.text();
+    script.id = "embedded-cas";
+    document.body.append(script);
+  });
+  await settledResult(worker, credentialsPage.endpoint, 2);
+
+  // 埋め込みの内容を書き換える
+  await page.evaluate(() => {
+    const script = document.getElementById("embedded-cas");
+    if (script) script.textContent = "[]";
+  });
+  await settledResult(worker, credentialsPage.endpoint, 1);
+
+  // 外部参照の script 要素を、CAS でない種類に書き換える
+  await page.evaluate(() => {
+    const script = document.querySelector(
+      'script[src="http://localhost:8080/examples/cas.json"]',
+    );
+    if (script) script.setAttribute("type", "text/plain");
+  });
+  await settledResult(worker, credentialsPage.endpoint, 0);
+});
+
 test("後から挿入された CAS も検証される", async ({
   context,
   page,

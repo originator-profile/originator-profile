@@ -17,10 +17,47 @@ const CREDENTIAL_SCRIPT_SELECTOR = [
   'script[type="application/ops+json"]',
 ].join(",");
 
+const CREDENTIAL_SCRIPT_TYPES = [
+  "application/cas+json",
+  "application/ops+json",
+];
+
+const isCredentialScript = (node: Node | null): boolean =>
+  node instanceof Element && node.matches(CREDENTIAL_SCRIPT_SELECTOR);
+
 const containsCredentialScript = (node: Node): boolean =>
-  node instanceof Element &&
-  (node.matches(CREDENTIAL_SCRIPT_SELECTOR) ||
+  isCredentialScript(node) ||
+  (node instanceof Element &&
     node.querySelector(CREDENTIAL_SCRIPT_SELECTOR) !== null);
+
+/**
+ * クレデンシャルの script 要素の挿入・削除、または内容・src 属性・type 属性の
+ * 変化を含むか
+ */
+function changesCredentialScript(record: MutationRecord): boolean {
+  switch (record.type) {
+    case "childList":
+      return (
+        isCredentialScript(record.target) ||
+        [...record.addedNodes].some(containsCredentialScript) ||
+        [...record.removedNodes].some(containsCredentialScript)
+      );
+    case "characterData":
+      return isCredentialScript(record.target.parentNode);
+    case "attributes":
+      if (record.attributeName === "src") {
+        return isCredentialScript(record.target);
+      }
+      // NOTE: type 属性の変化では、変化前にクレデンシャルの script 要素だったかも見る
+      return (
+        record.attributeName === "type" &&
+        (isCredentialScript(record.target) ||
+          CREDENTIAL_SCRIPT_TYPES.includes(record.oldValue ?? ""))
+      );
+    default:
+      return false;
+  }
+}
 
 /**
  * 入力依存対象が検証可能になる readiness
@@ -138,14 +175,15 @@ export function setupDocumentVerification() {
   // NOTE: document.open() による内容の置き換えも、クレデンシャルの script 要素の
   // 削除と target の要素の削除としてここで検知する
   new MutationObserver((records) => {
-    for (const { removedNodes } of records) targets.handleRemoved(removedNodes);
-    const changed = records.some(
-      ({ addedNodes, removedNodes }) =>
-        [...addedNodes].some(containsCredentialScript) ||
-        [...removedNodes].some(containsCredentialScript),
-    );
-    if (changed) notify();
-  }).observe(document, { childList: true, subtree: true });
+    targets.handleMutations(records);
+    if (records.some(changesCredentialScript)) notify();
+  }).observe(document, {
+    childList: true,
+    subtree: true,
+    characterData: true,
+    attributes: true,
+    attributeOldValue: true,
+  });
 
   // NOTE: ナビゲーションが開始される前に検証処理のためのネットワークアクセスを
   // 発生させてはならないため、プリレンダリング中の文書は有効化を待つ。
