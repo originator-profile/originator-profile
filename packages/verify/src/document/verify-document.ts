@@ -16,6 +16,7 @@ import { collectProblems } from "../result/collect-problems";
 import {
   convertCas,
   convertOps,
+  coreProfilesOf,
   createCollector,
   type CasPayload,
   type OriginatorPayload,
@@ -110,15 +111,9 @@ const inputRangeOf = (
   url: string,
 ): InputSource[] => [
   { kind: "registry" },
-  ...(shared.source === "site-profile"
-    ? [{ kind: "site-profile" } as const]
-    : []),
+  ...(shared.site ? [{ kind: "site-profile" } as const] : []),
   { kind: "document", url },
 ];
-
-/** 検証済みの発信者の Core Profile */
-const coreProfilesOf = (originators: OriginatorPayload[]) =>
-  originators.flatMap(({ core }) => (core ? [{ core: { doc: core } }] : []));
 
 /** 用いた VC の有効期限のうち最も早いもの */
 function earliestExpiration(securingResults: SecuringResult[]) {
@@ -134,13 +129,16 @@ function earliestExpiration(securingResults: SecuringResult[]) {
 /**
  * 検証済みの共有の発信者
  *
- * 文書をまたいで用いてよい発信者の検証結果。`registry` はレジストリの検証結果
- * ({@link verifyRegistry})、`site-profile` はトップレベル文書のオリジンの
- * Web サイトの検証結果 ({@link verifyWebsite}。レジストリの発信者を含む)。
+ * 文書をまたいで用いてよい発信者の検証結果。
  */
 export type SharedOriginators = {
-  source: "registry" | "site-profile";
-  result: VerificationResult<OriginatorsOutcome>;
+  /** レジストリの検証結果 ({@link verifyRegistry}) */
+  registry: VerificationResult<OriginatorsOutcome>;
+  /**
+   * トップレベル文書のオリジンの Web サイトの検証結果 ({@link verifyWebsite})。
+   * トップレベル文書の検証にだけ用いる
+   */
+  site?: VerificationResult<OriginatorsOutcome>;
 };
 
 /**
@@ -160,7 +158,7 @@ export type SharedOriginators = {
  *
  * @example
  * ```ts
- * const shared = { source: "registry", result: await verifyRegistry(registry) };
+ * const shared = { registry: await verifyRegistry(registry) };
  * const result = await verifyDocument(target, { registry, shared });
  * result.outcome?.cas; // Content Attestation の復号ペイロード
  * if (!result.status) result.errors; // 検証失敗の理由
@@ -184,10 +182,7 @@ export async function verifyDocument<
   const { registry, shared, validator, logger } = options;
   // NOTE: サブフレーム中のコンテンツの検証にトップレベル文書の SP を用いてはならない
   // see https://docs.originator-profile.org/ja/opb/verifier-processing-model/site-profile/
-  if (
-    shared.source === "site-profile" &&
-    target.frameType !== "outermost_frame"
-  ) {
+  if (shared.site && target.frameType !== "outermost_frame") {
     throw new TypeError(
       "Site Profile originators must not be used for documents in sub frames",
     );
@@ -196,21 +191,23 @@ export async function verifyDocument<
   const verifiedAt = new Date().toISOString();
   const { logger: collecting, warnings, info } = collectProblems(logger);
   const collect = createCollector();
-  const trusted = shared.result.outcome?.originators ?? [];
+  const results = [shared.registry, ...(shared.site ? [shared.site] : [])];
+  const trusted = results.flatMap(({ outcome }) => outcome?.originators ?? []);
+  const failed = results.find(({ status }) => !status);
 
   const inputRange = inputRangeOf(shared, target.url);
   const metadata = () => ({
     verifiedAt,
     // NOTE: 結果は共有の発信者の VC にも依存するため、その有効期限も境界に含める
     validUntil: earliestExpiration([
-      ...shared.result.securingResults,
+      ...results.flatMap(({ securingResults }) => securingResults),
       ...collect.securingResults,
     ]),
     scope: documentScope,
     inputRange,
   });
 
-  if (!shared.result.status) {
+  if (failed) {
     return {
       status: false,
       outcome: { target, originators: [], cas: [] },
@@ -218,7 +215,7 @@ export async function verifyDocument<
       warnings,
       info,
       // 共有の発信者の中を指す問題は、この結果の outcome を指さないため除く
-      errors: shared.result.errors.filter(({ pointer: at }) => !at),
+      errors: (failed.errors ?? []).filter(({ pointer: at }) => !at),
       ...metadata(),
     };
   }

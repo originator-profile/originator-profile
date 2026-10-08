@@ -1,8 +1,8 @@
 import { signJwtVc } from "@originator-profile/securing-mechanism";
 import { assert, describe, expect, test } from "vitest";
-import { wsp } from "../helper";
+import { opId, wsp } from "../helper";
 import { buildOpsFixture, signOptions } from "../originator-profile-set/helper";
-import { prepareRegistry } from "../registry";
+import { prepareRegistry, verifyRegistry } from "../registry";
 import { problemType } from "../result/problem-types";
 import { SiteProfileInvalid, SiteProfileVerifyFailed } from "../site-profile";
 import { verifyWebsite } from "./verify-website";
@@ -11,7 +11,7 @@ import { verifyWebsite } from "./verify-website";
 const silent = { warn: () => {}, info: () => {} };
 
 describe("verifyWebsite", () => {
-  test("レジストリの OPS が Site Profile の originators に結合される", async () => {
+  test("レジストリの発信者を検証鍵に加えて Site Profile の発信者を検証する", async () => {
     const { authorityOp, certifierOp, originatorOp } = await buildOpsFixture();
     // Profile Annotation 発行者の Core Profile をレジストリ側だけが持つ状態にする
     const registry = prepareRegistry([authorityOp, certifierOp]);
@@ -29,8 +29,10 @@ describe("verifyWebsite", () => {
       type: problemType(SiteProfileInvalid.code),
       title: "No Website Profile found",
     });
-    // 復号できた発信者は status によらず outcome に含まれる
-    expect(result.outcome?.originators).not.toHaveLength(0);
+    // Site Profile の発信者だけを含み、レジストリの発信者は含まない
+    expect(
+      result.outcome?.originators.map(({ core }) => core?.credentialSubject.id),
+    ).toEqual([opId.originator]);
   });
 
   test("レジストリに発行者の Core Profile がない場合は検証に失敗する", async () => {
@@ -50,7 +52,30 @@ describe("verifyWebsite", () => {
     );
     // 失敗した Profile Annotation の位置が JSONPath で示される
     expect(result.errors.map(({ pointer }) => pointer)).toContain(
-      "$.originators[1].annotations[0]",
+      "$.originators[0].annotations[0]",
+    );
+  });
+
+  test("渡したレジストリの検証結果が失敗していれば検証に失敗する", async () => {
+    const { authorityOp, certifierOp, originatorOp } = await buildOpsFixture();
+    const registry = prepareRegistry([authorityOp, certifierOp]);
+    if (registry instanceof Error) throw registry;
+    const failed = prepareRegistry([authorityOp, originatorOp]);
+    if (failed instanceof Error) throw failed;
+    // Profile Annotation 発行者の Core Profile がなく、レジストリの検証に失敗する
+    const verifiedRegistry = await verifyRegistry(failed, { logger: silent });
+    assert(!verifiedRegistry.status, "レジストリの検証は失敗するはず");
+
+    const result = await verifyWebsite("https://originator.example.org", {
+      siteProfile: { originators: [], sites: [] },
+      registry,
+      verifiedRegistry,
+      logger: silent,
+    });
+
+    assert(!result.status, "検証は失敗するはず");
+    expect(result.errors).toEqual(
+      verifiedRegistry.errors.filter(({ pointer }) => !pointer),
     );
   });
 
