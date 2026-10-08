@@ -1,14 +1,13 @@
 import { serializeIfError } from "@originator-profile/core";
-import {
-  fetchCredentials,
-  fetchOpMeta,
-  fetchSiteProfile,
-} from "@originator-profile/presentation";
+import { fetchSiteProfile } from "@originator-profile/presentation";
 import { verifyIntegrity } from "@originator-profile/verify";
 import { activeTabMessenger } from "./active-tab/events";
 import { credentialsMessenger } from "./credentials/events";
-import type { FrameLocation } from "./credentials/types";
 import { siteProfileMessenger } from "./site-profile/events";
+import {
+  fetchDocumentCredentials,
+  setupDocumentVerification,
+} from "./verification/content-script";
 
 export { setupAdClickDetection } from "./link-verification/detect-ad-click";
 export { setupOnce } from "./setup-once";
@@ -19,20 +18,9 @@ export { setupOnce } from "./setup-once";
  * クレデンシャルの取得、Target Integrity の検証、準備完了の通知をおこなう。
  */
 export function setupFrameHandlers() {
-  credentialsMessenger.onMessage("fetchCredentials", async () => {
-    const { ops, cas } = await fetchCredentials(document);
-    const opMeta = fetchOpMeta(document);
-    const frameLocation: FrameLocation = {
-      origin: window.origin,
-      url: window.location.href,
-    };
-    return {
-      ops: serializeIfError(ops),
-      cas: serializeIfError(cas),
-      opMeta,
-      ...frameLocation,
-    };
-  });
+  setupDocumentVerification();
+
+  credentialsMessenger.onMessage("fetchCredentials", fetchDocumentCredentials);
 
   credentialsMessenger.onMessage(
     "verifyIntegrity",

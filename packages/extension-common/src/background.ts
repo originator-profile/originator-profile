@@ -4,6 +4,7 @@ import { setupLinkVerification } from "./link-verification/background";
 import type { WarningUrlBuilder } from "./link-verification/types";
 import { overlayExtensionMessenger } from "./overlay/extension-events";
 import { setupTabBadge } from "./tab-badge/background";
+import { setupVerificationPipeline } from "./verification/background";
 
 /** Firefox のサイドバーの開閉を検知するポーリング間隔（ミリ秒） */
 const SIDEBAR_POLL_INTERVAL_MS = 500;
@@ -55,6 +56,7 @@ export type BackgroundConfig = {
  * @param config アプリ固有の設定
  */
 export function setupBackground(config: BackgroundConfig) {
+  setupVerificationPipeline();
   setupLinkVerification(config.buildWarningUrl);
   const { requestTabBadgeUpdate } = setupTabBadge(config.countCredentials);
 
