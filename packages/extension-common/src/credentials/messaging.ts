@@ -7,11 +7,30 @@ import { getAllFrames } from "../utils/frames";
 import { FetchCredentialsMessagingFailed } from "./errors";
 import { credentialsMessenger } from "./events";
 import {
+  FetchCredentialsMessageResponse,
   FrameCredentials,
   FrameDocument,
   FrameResponse,
   TabCredentials,
 } from "./types";
+
+/**
+ * 文書から取得したクレデンシャルを、取得経路付きの形に戻す。
+ * 取得に失敗した OPS / CAS は空として扱う。
+ * @param result 文書での取得結果
+ */
+export function toDocumentCredentials(result: FetchCredentialsMessageResponse) {
+  const opsResult = deserializeIfError(result.ops);
+  const casResult = deserializeIfError(result.cas);
+
+  return {
+    ops: opsResult instanceof Error ? [] : opsResult,
+    cas: casResult instanceof Error ? [] : casResult,
+    opMeta: result.opMeta,
+    url: result.url,
+    origin: result.origin,
+  };
+}
 
 /**
  * タブ内の各フレームでクレデンシャルを取得する。
@@ -53,15 +72,8 @@ async function fetchAllFramesCredentials(
           );
         }
 
-        const opsResult = deserializeIfError(result.ops);
-        const casResult = deserializeIfError(result.cas);
-
         return {
-          ops: opsResult instanceof Error ? [] : opsResult,
-          cas: casResult instanceof Error ? [] : casResult,
-          opMeta: result.opMeta,
-          url: result.url,
-          origin: result.origin,
+          ...toDocumentCredentials(result),
           ...frameResponse,
           ...frameDocument,
         };

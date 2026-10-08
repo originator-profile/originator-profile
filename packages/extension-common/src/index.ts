@@ -16,4 +16,5 @@ export * from "./utils/persistent-map";
 export * from "./utils/problem-code";
 export * from "./utils/registry-ops";
 export * from "./utils/warning-params";
+export * from "./verification/types";
 export * from "./window-messaging";
