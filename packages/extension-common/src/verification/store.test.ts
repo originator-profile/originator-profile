@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   documentKey,
+  setSiteProfileEntry,
   setVerificationEntry,
+  siteProfileKey,
   trackDocument,
   untrackTab,
 } from "./store";
@@ -101,8 +103,8 @@ describe("trackDocument", () => {
       { tabId: 1, frameId: 0, documentId: "top", documentLifecycle: "active" },
       { tabId: 1, frameId: 1, documentId: "ad", documentLifecycle: "active" },
     );
-    await trackDocument(1, 0, "top");
-    await trackDocument(1, 1, "ad");
+    await trackDocument(1, 0, "top", "https://www.example.org");
+    await trackDocument(1, 1, "ad", "https://www.example.org");
     await setVerificationEntry(unverified(subject(1, 1, "ad")));
 
     // 広告の iframe が取り除かれ、別の iframe が挿入された
@@ -112,7 +114,12 @@ describe("trackDocument", () => {
       documentId: "next",
       documentLifecycle: "active",
     });
-    const removed = await trackDocument(1, 2, "next");
+    const removed = await trackDocument(
+      1,
+      2,
+      "next",
+      "https://www.example.org",
+    );
 
     expect(removed).toEqual(["ad"]);
     expect(fake.storage.has(documentKey("ad"))).toBe(false);
@@ -125,7 +132,7 @@ describe("trackDocument", () => {
       documentId: "before",
       documentLifecycle: "active",
     });
-    await trackDocument(1, 0, "before");
+    await trackDocument(1, 0, "before", "https://www.example.org");
     await setVerificationEntry(unverified(subject(1, 0, "before")));
 
     fake.frames[0].documentLifecycle = "cached";
@@ -135,7 +142,12 @@ describe("trackDocument", () => {
       documentId: "after",
       documentLifecycle: "active",
     });
-    const removed = await trackDocument(1, 0, "after");
+    const removed = await trackDocument(
+      1,
+      0,
+      "after",
+      "https://www.example.org",
+    );
 
     expect(removed).toEqual([]);
     expect(fake.storage.has(documentKey("before"))).toBe(true);
@@ -146,8 +158,8 @@ describe("trackDocument", () => {
       { tabId: 1, frameId: 0, documentId: "top", documentLifecycle: "active" },
       { tabId: 1, frameId: 1, documentId: "a", documentLifecycle: "active" },
     );
-    await trackDocument(1, 0, "top");
-    await trackDocument(1, 1, "a");
+    await trackDocument(1, 0, "top", "https://www.example.org");
+    await trackDocument(1, 1, "a", "https://www.example.org");
     await setVerificationEntry(unverified(subject(1, 1, "a")));
 
     fake.frames[1].documentLifecycle = "cached";
@@ -157,7 +169,7 @@ describe("trackDocument", () => {
       documentId: "b",
       documentLifecycle: "active",
     });
-    const removed = await trackDocument(1, 1, "b");
+    const removed = await trackDocument(1, 1, "b", "https://www.example.org");
 
     expect(removed).toEqual(["a"]);
   });
@@ -172,7 +184,7 @@ describe("setVerificationEntry", () => {
       documentId: "fenced",
       documentLifecycle: "active",
     });
-    await trackDocument(1, 3, "fenced");
+    await trackDocument(1, 3, "fenced", "https://www.example.org");
 
     expect(
       await setVerificationEntry(
@@ -216,7 +228,7 @@ describe("setVerificationEntry", () => {
           [1, 1, "new"],
         ] as const
       ).map(([tabId, frameId, documentId]) =>
-        trackDocument(tabId, frameId, documentId),
+        trackDocument(tabId, frameId, documentId, "https://www.example.org"),
       ),
     );
     await setVerificationEntry(padded(subject(1, 0, "shown")));
@@ -239,10 +251,63 @@ describe("untrackTab", () => {
       documentId: "top",
       documentLifecycle: "active",
     });
-    await trackDocument(1, 0, "top");
+    await trackDocument(1, 0, "top", "https://www.example.org");
     await setVerificationEntry(unverified(subject(1, 0, "top")));
 
     expect(await untrackTab(1)).toEqual(["top"]);
     expect(fake.storage.size).toBe(0);
+  });
+});
+
+describe("Site Profile の検証結果", () => {
+  const origin = "https://www.example.org";
+  const entry = {
+    origin,
+    result: {
+      status: false as const,
+      securingResults: [],
+      warnings: [],
+      info: [],
+      errors: [],
+    },
+  };
+
+  test("同じオリジンのトップレベル文書が残っているあいだは保持する", async () => {
+    const fake = fakeChrome();
+    fake.frames.push(
+      { tabId: 1, frameId: 0, documentId: "a", documentLifecycle: "active" },
+      { tabId: 2, frameId: 0, documentId: "b", documentLifecycle: "active" },
+    );
+    await trackDocument(1, 0, "a", origin);
+    await trackDocument(2, 0, "b", origin);
+    await setSiteProfileEntry(entry);
+
+    await untrackTab(1);
+    expect(fake.storage.has(siteProfileKey(origin))).toBe(true);
+
+    await untrackTab(2);
+    expect(fake.storage.has(siteProfileKey(origin))).toBe(false);
+  });
+
+  test("別のオリジンへ遷移したら、使われなくなったオリジンの結果を破棄する", async () => {
+    const fake = fakeChrome();
+    fake.frames.push({
+      tabId: 1,
+      frameId: 0,
+      documentId: "a",
+      documentLifecycle: "active",
+    });
+    await trackDocument(1, 0, "a", origin);
+    await setSiteProfileEntry(entry);
+
+    fake.frames.splice(0, 1, {
+      tabId: 1,
+      frameId: 0,
+      documentId: "b",
+      documentLifecycle: "active",
+    });
+    await trackDocument(1, 0, "b", "https://other.example.com");
+
+    expect(fake.storage.has(siteProfileKey(origin))).toBe(false);
   });
 });

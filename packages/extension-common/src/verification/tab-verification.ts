@@ -1,4 +1,5 @@
 import { getAllFrames } from "../utils/frames";
+import { originOf } from "../utils/origin";
 import { verificationMessenger } from "./events";
 import { resolveEntry } from "./identity";
 import { documentKey, siteProfileKey } from "./store";
@@ -20,7 +21,7 @@ export async function readTabVerification(
   const frames = await getAllFrames(tabId);
   const top = frames.find(({ frameType }) => frameType === "outermost_frame");
   const keys = frames.map(({ documentId }) => documentKey(documentId));
-  if (top) keys.push(siteProfileKey(top.documentId));
+  if (top) keys.push(siteProfileKey(originOf(top.url)));
   const stored = keys.length > 0 ? await chrome.storage.session.get(keys) : {};
 
   const now = new Date();
@@ -32,7 +33,9 @@ export async function readTabVerification(
       return { frame, entry: entry && resolveEntry(entry, now) };
     }),
     siteProfile: top
-      ? (stored[siteProfileKey(top.documentId)] as SiteProfileEntry | undefined)
+      ? (stored[siteProfileKey(originOf(top.url))] as
+          | SiteProfileEntry
+          | undefined)
       : undefined,
   };
 }
@@ -122,7 +125,7 @@ export async function waitForTabSiteProfile(
 ): Promise<SiteProfileEntry> {
   const top = await chrome.webNavigation.getFrame({ tabId, frameId: 0 });
   if (!top) throw new Error("No response from top level frame");
-  const key = siteProfileKey(top.documentId);
+  const key = siteProfileKey(originOf(top.url));
 
   let cleanup = () => {};
   const changed = new Promise<SiteProfileEntry>((resolve, reject) => {

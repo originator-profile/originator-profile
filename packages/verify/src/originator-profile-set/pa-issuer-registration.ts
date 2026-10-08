@@ -5,6 +5,7 @@ import {
 } from "@originator-profile/model";
 import { VerifiedJwtVc } from "@originator-profile/securing-mechanism";
 import type { Logger } from "../logger";
+import type { OriginatorPayload } from "../result/convert";
 import { pointer } from "../result/pointer";
 import { ProblemType } from "../result/problem-types";
 import type { Certificate, VerifiedOps } from "./types";
@@ -46,14 +47,13 @@ export function isProfileAnnotationIssuerRegistration(
  * (PA Issuer Registration Issuer が発行した登録証 PA のみを採用)
  */
 function buildProfileAnnotationPolicy(
-  /** 検証済みの OP の集合 */
-  verifiedOps: VerifiedOps,
+  /** 検証済みの PA */
+  annotations: Certificate[],
   /** PA Issuer Registration Issuer の OP ID の集合 */
   paIssuerRegistrationIssuers: ReadonlySet<string>,
 ): ProfileAnnotationPolicyMap {
   const policy: ProfileAnnotationPolicyMap = new Map();
-  const annotations = verifiedOps.flatMap((op) => op.annotations ?? []);
-  for (const { doc } of annotations) {
+  for (const doc of annotations) {
     if (!isProfileAnnotationIssuerRegistration(doc)) continue;
     if (!paIssuerRegistrationIssuers.has(doc.issuer)) continue;
     const { id: registrationIssuer, annotationScheme } = doc.credentialSubject;
@@ -121,6 +121,7 @@ function reportUnauthorizedAnnotation({
  * @param verifiedOps 検証済み Originator Profile Set
  * @param paIssuerRegistrationIssuer 基底となる Profile Annotation Issuer 登録証 PA Issuer の OP ID
  * @param logger ロガー (デフォルト: `console`)
+ * @param trusted 検証済みの共有の OP。`verifiedOps` はその後ろに置かれ、登録証 PA の引き先にも加える
  *
  * @see https://docs.originator-profile.org/opb/pa-model/profile-annotation-issuer-registration/
  */
@@ -128,19 +129,27 @@ export function verifyAnnotationIssuerRegistration(
   verifiedOps: VerifiedOps,
   paIssuerRegistrationIssuer: string | string[],
   logger: Logger = console,
+  trusted: OriginatorPayload[] = [],
 ): VerifiedOps {
   const paIssuerRegistrationIssuers = new Set(
     [paIssuerRegistrationIssuer].flat(),
   );
   const policy = buildProfileAnnotationPolicy(
-    verifiedOps,
+    [
+      ...trusted
+        .flatMap((op) => op.annotations ?? [])
+        .flatMap((doc) => (doc ? [doc] : [])),
+      ...verifiedOps
+        .flatMap((op) => op.annotations ?? [])
+        .map(({ doc }) => doc),
+    ],
     paIssuerRegistrationIssuers,
   );
   for (const [opIndex, op] of verifiedOps.entries()) {
     for (const [paIndex, annotation] of op.annotations?.entries() ?? []) {
       reportUnauthorizedAnnotation({
         annotation,
-        opIndex,
+        opIndex: trusted.length + opIndex,
         paIndex,
         policy,
         logger,

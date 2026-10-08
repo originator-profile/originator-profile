@@ -3,15 +3,21 @@ import type { ContentAttestationSet } from "@originator-profile/model";
 import {
   listInputDependencies,
   verifyDocument,
+  verifyRegistry,
   type FetchIntegrityResult,
+  type SharedOriginators,
   type VerificationTarget,
   type DocumentVerificationResult as VerifiedDocument,
   type VerifyIntegrity,
 } from "@originator-profile/verify";
 import { injectContentScripts } from "../content-script-injection";
 import { toDocumentCredentials } from "../credentials/messaging";
-import { verifyFetchedWebsite } from "../site-profile/verify-website";
+import {
+  isSiteProfileFetchError,
+  verifyFetchedWebsite,
+} from "../site-profile/verify-website";
 import { getAllFrames, getFrame } from "../utils/frames";
+import { originOf } from "../utils/origin";
 import { getRegistry } from "../utils/registry-ops";
 import { verificationMessenger } from "./events";
 import {
@@ -42,15 +48,6 @@ import type {
 } from "./types";
 
 type Destination = { tabId: number; frameId: number; documentId: string };
-
-/** URL のオリジン。解釈できない URL では不透明なオリジンとみなす */
-function originOf(url: string): string {
-  try {
-    return new URL(url).origin;
-  } catch {
-    return "null";
-  }
-}
 
 /** 検証を始めた契機 */
 type Trigger = {
@@ -160,9 +157,20 @@ async function awaitInputDependencies(
   );
 }
 
-/** 検証に成功した Site Profile が提示する発信者 */
-const verifiedOriginators = (site?: SiteProfileEntry) =>
-  site?.result.status ? site.siteProfile?.originators : undefined;
+/**
+ * 文書の検証に用いる共有の発信者
+ *
+ * トップレベル文書では、そのオリジンの Web サイトの検証結果 (レジストリの発信者を
+ * 含む) を用いる。Site Profile が設置されていなければレジストリの検証結果を用いる。
+ * Site Profile の検証に失敗していれば、その結果をそのまま渡して文書も失敗にする。
+ */
+const sharedOriginatorsOf = (
+  registry: SharedOriginators["result"],
+  site?: SiteProfileEntry,
+): SharedOriginators =>
+  site && !isSiteProfileFetchError(site.result.errors?.[0])
+    ? { source: "site-profile", result: site.result }
+    : { source: "registry", result: registry };
 
 /**
  * Service Worker の検証パイプラインを登録する
@@ -174,8 +182,19 @@ export function setupVerificationPipeline() {
   /** 文書ごとの検証の世代。新しい検証が始まったら古い検証の結果は書き込まない */
   const generations = new Map<string, number>();
   let lastGeneration = 0;
-  /** トップレベル文書ごとの Site Profile の検証 */
+  /** 進行中のオリジンごとの Site Profile の検証 */
   const siteProfiles = new Map<string, Promise<SiteProfileEntry>>();
+  /** レジストリの検証。拡張機能に同梱された入力なので Service Worker ごとに 1 度だけ */
+  let registryVerification: Promise<SharedOriginators["result"]> | undefined;
+  const verifiedRegistry = () => {
+    registryVerification ??= getRegistry().then((registry) =>
+      verifyRegistry(registry),
+    );
+    registryVerification.catch(() => {
+      registryVerification = undefined;
+    });
+    return registryVerification;
+  };
 
   /** 文書の新しい検証を始め、その検証がまだ最新かを判定する関数を返す */
   const startGeneration = (documentId: string) => {
@@ -185,18 +204,20 @@ export function setupVerificationPipeline() {
   };
 
   const forget = (documentIds: string[]) => {
-    for (const id of documentIds) {
-      generations.delete(id);
-      siteProfiles.delete(id);
-    }
+    for (const id of documentIds) generations.delete(id);
   };
 
-  const verifySiteProfile = ({ tabId, frameId, documentId }: Destination) => {
-    const pending = siteProfiles.get(documentId);
+  /**
+   * オリジンの Site Profile を検証する。同じオリジンの結果があれば再利用する
+   * @param destination Site Profile を取得するトップレベル文書
+   */
+  const verifySiteProfile = (destination: Destination, origin: string) => {
+    const { tabId, frameId, documentId } = destination;
+    const pending = siteProfiles.get(origin);
     if (pending) return pending;
 
     const verifying = (async () => {
-      const stored = await getSiteProfileEntry(documentId);
+      const stored = await getSiteProfileEntry(origin);
       if (stored) return stored;
 
       const verification = await verifyFetchedWebsite(async () => {
@@ -210,12 +231,11 @@ export function setupVerificationPipeline() {
         if (result instanceof Error) throw result;
         return result;
       });
-      const entry = { ...verification, documentId };
-      await setSiteProfileEntry(tabId, entry);
+      const entry = { ...verification, origin };
+      await setSiteProfileEntry(entry);
       return entry;
-    })();
-    siteProfiles.set(documentId, verifying);
-    verifying.catch(() => siteProfiles.delete(documentId));
+    })().finally(() => siteProfiles.delete(origin));
+    siteProfiles.set(origin, verifying);
     return verifying;
   };
 
@@ -231,7 +251,10 @@ export function setupVerificationPipeline() {
   ) => {
     const { tabId, frameId, documentId } = destination;
     const isTopLevel = subject.frameType === "outermost_frame";
-    if (isTopLevel) void verifySiteProfile(destination);
+    // NOTE: 失敗は、文書の検証で結果を待つときに扱う
+    if (isTopLevel) {
+      verifySiteProfile(destination, subject.origin).catch(() => {});
+    }
 
     const response = await verificationMessenger.sendMessage(
       "fetchDocumentCredentials",
@@ -270,9 +293,10 @@ export function setupVerificationPipeline() {
       startedAt: new Date().toISOString(),
     });
 
-    const [registry, site] = await Promise.all([
+    const [registry, registryResult, site] = await Promise.all([
       getRegistry(),
-      isTopLevel ? verifySiteProfile(destination) : undefined,
+      verifiedRegistry(),
+      isTopLevel ? verifySiteProfile(destination, subject.origin) : undefined,
     ]);
     const result = await verifyDocument(
       {
@@ -281,10 +305,7 @@ export function setupVerificationPipeline() {
         frameType: subject.frameType,
         verifyIntegrity: DocumentIntegrityVerifier(destination),
       },
-      {
-        registry,
-        siteOriginators: verifiedOriginators(site),
-      },
+      { registry, shared: sharedOriginatorsOf(registryResult, site) },
     );
 
     if (!isCurrent()) return;
@@ -305,7 +326,9 @@ export function setupVerificationPipeline() {
     const frame = await getFrame({ tabId, frameId, documentId });
     if (!frame) return;
 
-    forget(await trackDocument(tabId, frameId, documentId));
+    forget(
+      await trackDocument(tabId, frameId, documentId, originOf(frame.url)),
+    );
     const isCurrent = startGeneration(documentId);
     const subject: VerificationSubject = {
       tabId,
@@ -401,10 +424,7 @@ export function setupVerificationPipeline() {
         const top = frames.find(
           ({ frameType }) => frameType === "outermost_frame",
         );
-        if (top) {
-          forget([top.documentId]);
-          await removeSiteProfileEntry(top.documentId);
-        }
+        if (top) await removeSiteProfileEntry(originOf(top.url));
       }
       const resync = (targets: typeof frames) =>
         Promise.all(
