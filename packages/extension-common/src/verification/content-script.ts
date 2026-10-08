@@ -105,14 +105,17 @@ export function setupDocumentVerification() {
   let started = false;
   let scheduled = false;
   let restored = false;
-  const notify = (options: { restored?: boolean } = {}) => {
+  let force = false;
+  const notify = (options: { restored?: boolean; force?: boolean } = {}) => {
     restored ||= options.restored ?? false;
+    force ||= options.force ?? false;
     if (!started || scheduled) return;
     scheduled = true;
     setTimeout(() => {
-      const data = { restored };
+      const data = { restored, force };
       scheduled = false;
       restored = false;
+      force = false;
       send(() => verificationMessenger.sendMessage("documentChanged", data));
     });
   };
@@ -159,7 +162,7 @@ export function setupDocumentVerification() {
 
   verificationMessenger.onMessage("resync", async ({ data }) => {
     await accept(data);
-    notify();
+    notify({ force: data.force });
   });
 
   verificationMessenger.onMessage(

@@ -186,8 +186,7 @@ export function toLegacyWebsite(
 }
 
 /** 従来の形に戻した文書の検証結果 */
-export type LegacyDocument<Target extends VerificationTarget> = {
-  target: Target;
+export type LegacyDocument = {
   ops: VerifiedOps;
   cas: VerifiedCas;
 };
@@ -219,9 +218,11 @@ function toLegacyDocumentFailure(
  * @param result 検証結果
  * @returns 検証済みの発信者と Content Attestation、または検証失敗を表すエラー
  */
-export function toLegacyDocument<Target extends VerificationTarget>(
-  result: VerificationResult<DocumentOutcome<Target>>,
-): LegacyDocument<Target> | Error {
+export function toLegacyDocument(
+  result: VerificationResult<
+    Pick<DocumentOutcome<VerificationTarget>, "originators" | "cas">
+  >,
+): LegacyDocument | Error {
   if (!result.outcome) return toError(result.errors?.[0]);
 
   const index = createIndex(result);
@@ -236,6 +237,6 @@ export function toLegacyDocument<Target extends VerificationTarget>(
   })) as VerifiedCas;
 
   return result.status
-    ? { target: result.outcome.target, ops: ops as VerifiedOps, cas }
+    ? { ops: ops as VerifiedOps, cas }
     : toLegacyDocumentFailure(result.errors[0], ops, cas);
 }
