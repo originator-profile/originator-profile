@@ -13,6 +13,7 @@ import {
   createCollector,
   type OriginatorPayload,
 } from "../result/convert";
+import { timeBoundaryOf, type VerificationMetadata } from "../result/metadata";
 import { pointer } from "../result/pointer";
 import { toProblemDetails } from "../result/to-problem-details";
 import type { VerificationResult } from "../result/types";
@@ -25,6 +26,30 @@ export type WebsiteOutcome = {
   /** Website Profile の復号ペイロード。復号できなかった要素は null */
   sites: (WebsiteProfile | null)[];
 };
+
+/**
+ * Web サイトの検証のカテゴリー
+ *
+ * - `sp-vc`: sites と originators の VC 検証 (image データ型を除く)
+ * - `allowed-origin`: allowedOrigin の検証
+ * - `image`: image データ型の検証
+ *
+ * @see https://docs.originator-profile.org/ja/opb/verifier-processing-model/site-profile/
+ */
+export type WebsiteVerificationCategory = "sp-vc" | "allowed-origin" | "image";
+
+/** Web サイトの検証結果 */
+export type WebsiteVerificationResult = VerificationResult<WebsiteOutcome> &
+  VerificationMetadata<WebsiteVerificationCategory>;
+
+/**
+ * 適用する検証のカテゴリー
+ *
+ * NOTE: image データ型は検証するが、移行期間中は失敗を警告にとどめて結果の状態に
+ * 反映しないため、範囲に含めない
+ */
+const scopeOf = (verifyOrigin: boolean): WebsiteVerificationCategory[] =>
+  verifyOrigin ? ["sp-vc", "allowed-origin"] : ["sp-vc"];
 
 /**
  * Web サイトの検証
@@ -65,7 +90,8 @@ export async function verifyWebsite(
     /** ロガー (デフォルト: `console`) */
     logger?: Logger;
   },
-): Promise<VerificationResult<WebsiteOutcome>> {
+): Promise<WebsiteVerificationResult> {
+  const verifiedAt = new Date().toISOString();
   const {
     siteProfile,
     registry,
@@ -77,6 +103,17 @@ export async function verifyWebsite(
     options.verifiedRegistry ??
     (await verifyRegistry(registry, { validator: options.validator, logger }));
   const { logger: collecting, warnings, info } = collectProblems(logger);
+  const collect = createCollector();
+  const metadata = (): VerificationMetadata<WebsiteVerificationCategory> => ({
+    verifiedAt,
+    // NOTE: 結果はレジストリの VC にも依存するため、その有効期間も境界に含める
+    validUntil: timeBoundaryOf(
+      [...verifiedRegistry.securingResults, ...collect.securingResults],
+      verifiedAt,
+    ),
+    scope: scopeOf(options.verifyOrigin ?? true),
+    inputRange: [{ kind: "registry" }, { kind: "site-profile" }],
+  });
 
   if (!verifiedRegistry.status) {
     return {
@@ -86,6 +123,7 @@ export async function verifyWebsite(
       info,
       // レジストリの中を指す問題は、この結果の outcome を指さないため除く
       errors: verifiedRegistry.errors.filter(({ pointer: at }) => !at),
+      ...metadata(),
     };
   }
 
@@ -105,7 +143,6 @@ export async function verifyWebsite(
   const failed = verified instanceof Error;
   const sp = failed ? verified.result : verified;
 
-  const collect = createCollector();
   const outcome: WebsiteOutcome = {
     originators: convertOps(sp.originators, collect),
     sites: sp.sites.map((site, index) =>
@@ -121,6 +158,7 @@ export async function verifyWebsite(
         warnings,
         info,
         errors: [toProblemDetails(verified), ...collect.errors],
+        ...metadata(),
       }
     : {
         status: true,
@@ -128,5 +166,6 @@ export async function verifyWebsite(
         securingResults: collect.securingResults,
         warnings,
         info,
+        ...metadata(),
       };
 }

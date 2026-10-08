@@ -21,9 +21,14 @@ import {
   type CasPayload,
   type OriginatorPayload,
 } from "../result/convert";
+import {
+  timeBoundaryOf,
+  type InputSource,
+  type VerificationMetadata,
+} from "../result/metadata";
 import { pointer } from "../result/pointer";
 import { toProblemDetails } from "../result/to-problem-details";
-import type { SecuringResult, VerificationResult } from "../result/types";
+import type { VerificationResult } from "../result/types";
 
 /** 文書が置かれているフレームの種類 */
 export type FrameType = "outermost_frame" | "sub_frame" | "fenced_frame";
@@ -83,27 +88,9 @@ const documentScope: VerificationCategory[] = [
   "originator-ops",
 ];
 
-/** 検証に用いた入力の出所 */
-export type InputSource =
-  | { kind: "registry" }
-  | { kind: "site-profile" }
-  | { kind: "document"; url: string };
-
 /** 文書の検証結果が併せて持つ情報 */
-export type DocumentVerificationMetadata = {
-  /** 検証時刻 (ISO 8601) */
-  verifiedAt: string;
-  /**
-   * 結果が有効である時刻の境界 (ISO 8601)
-   *
-   * 用いた VC の有効期間の開始と終了のうち、検証時刻より後で最も早いもの。
-   */
-  validUntil?: string;
-  /** 適用した検証のカテゴリー */
-  scope: VerificationCategory[];
-  /** 検証に用いた入力の出所 */
-  inputRange: InputSource[];
-};
+export type DocumentVerificationMetadata =
+  VerificationMetadata<VerificationCategory>;
 
 /** 文書の検証結果 */
 export type DocumentVerificationResult<Target extends VerificationTarget> =
@@ -118,27 +105,6 @@ const inputRangeOf = (
   ...(shared.site ? [{ kind: "site-profile" } as const] : []),
   { kind: "document", url },
 ];
-
-/**
- * 時刻の境界
- *
- * 用いた VC の有効期間の開始と終了 (iat、exp、validFrom、validUntil) のうち、
- * 検証時刻より後で最も早いもの。
- */
-function timeBoundaryOf(securingResults: SecuringResult[], verifiedAt: string) {
-  const start = Date.parse(verifiedAt);
-  const times = securingResults
-    .flatMap(({ issuedAt, expiredAt, validFrom, validUntil }) => [
-      issuedAt,
-      expiredAt,
-      validFrom,
-      validUntil,
-    ])
-    .flatMap((value) => (value ? [Date.parse(value)] : []))
-    .filter((time) => time > start);
-  if (times.length === 0) return undefined;
-  return new Date(Math.min(...times)).toISOString();
-}
 
 /**
  * 検証済みの共有の発信者
