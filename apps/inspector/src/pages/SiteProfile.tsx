@@ -1,8 +1,10 @@
 import { selectByLocale } from "@originator-profile/core";
+import { VerificationInvalidated } from "@originator-profile/extension-common";
 import { _ } from "@originator-profile/extension-common/ui";
 import { useSearchParams } from "react-router";
 import GlobalHeader from "../components/GlobalHeader";
 import Loading from "../components/Loading";
+import Unsupported from "../components/Unsupported";
 import {
   SiteProfile as Template,
   useSiteProfile,
@@ -30,8 +32,11 @@ function MissingSiteProfile() {
 
 export default function SiteProfile() {
   const [queryParams] = useSearchParams();
-  const { siteProfile, isLoading } = useSiteProfile();
+  const { siteProfile, isLoading, error } = useSiteProfile();
   if (isLoading) return <Loading />;
+  if (error instanceof VerificationInvalidated) {
+    return <Unsupported errors={[error]} />;
+  }
   // Credential での CaSelector 部分とスタッキングコンテキストで下に重なってしまうため z-11 に設定
   if (!siteProfile) return <MissingSiteProfile />;
 

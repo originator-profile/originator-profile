@@ -1,3 +1,8 @@
+import {
+  InvalidationType,
+  isStillValid,
+  VerificationInvalidated,
+} from "@originator-profile/extension-common";
 import { toProblemDetails, type VerifiedSp } from "@originator-profile/verify";
 import { useMemo } from "react";
 import { useParams } from "react-router";
@@ -37,6 +42,17 @@ function toSiteProfileView(snapshot: TabVerificationSnapshot): SiteProfileView {
 
   const entry = snapshot.verification?.siteProfile;
   if (!entry) return { isLoading: true };
+  // NOTE: 保持した結果は、Service Worker が検証し直すまで有効期限を過ぎても残る
+  if (!isStillValid(entry.result, new Date())) {
+    const reason = {
+      type: InvalidationType.Expired,
+      title: "Verification result expired",
+    };
+    return {
+      isLoading: false,
+      error: new VerificationInvalidated(reason.title, reason),
+    };
+  }
 
   const legacy = toLegacyWebsite(entry.result);
   if (legacy instanceof Error) return { isLoading: false, error: legacy };

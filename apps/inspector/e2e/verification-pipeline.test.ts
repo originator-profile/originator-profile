@@ -417,6 +417,54 @@ test("有効期限を過ぎた Site Profile の検証結果は再利用せずに
   expect(fetched).toBe(2);
 });
 
+test("有効期限を過ぎた Site Profile の検証結果は、検証失敗とは別に無効として示す", async ({
+  context,
+  page,
+  validSiteProfile,
+  credentialsMissingPage,
+}) => {
+  await validSiteProfile(
+    { publicKey, privateKey },
+    credentialsMissingPage.issuer,
+    credentialsMissingPage.holder,
+  );
+  await page.goto(credentialsMissingPage.endpoint);
+  const ext = await sidepanel(context);
+  await expect(ext.getByTestId("site-profile")).toBeVisible();
+
+  // 表示中に、保持した Site Profile の検証結果の VC が有効期限を過ぎる
+  const worker = await backgroundWorker(context);
+  await worker.evaluate(async () => {
+    const stored = await chrome.storage.session.get(null);
+    const [key, entry] =
+      Object.entries(stored).find(([key]) =>
+        key.startsWith("verification:site-profile:"),
+      ) ?? [];
+    if (!key) throw new Error("Site Profile の検証結果を保持しているはず");
+    const { result } = entry as {
+      result: { securingResults: { expiredAt?: string }[] };
+    };
+    const expiredAt = new Date(0).toISOString();
+    await chrome.storage.session.set({
+      [key]: {
+        ...(entry as object),
+        result: {
+          ...result,
+          securingResults: result.securingResults.map((r) => ({
+            ...r,
+            expiredAt,
+          })),
+        },
+      },
+    });
+  });
+
+  await expect(ext.getByTestId("p-elm-unsupported-message")).toContainText(
+    "検証した後に有効期限を過ぎたか URL が変わったため",
+  );
+  await expect(ext.getByTestId("site-profile")).toBeHidden();
+});
+
 test("保持する結果は VC の原文と共有の発信者を含まない", async ({
   context,
   page,
