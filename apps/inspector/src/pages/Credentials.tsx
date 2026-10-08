@@ -5,6 +5,7 @@ import {
   Credentials as Template,
   useCredentials,
 } from "../components/credentials";
+import { useFrameCasLocationProvider } from "../components/frameCas";
 import Loading from "../components/Loading";
 import { routes } from "../utils/routes";
 
@@ -14,7 +15,8 @@ export default function Credentials() {
     issuer?: string;
     subject?: string;
   }>();
-  const { ops, cas, framesCas, isLoading, error } = useCredentials();
+  const { tabId, ops, cas, framesCas, isLoading, error } = useCredentials();
+  useFrameCasLocationProvider(tabId, framesCas ?? []);
   if (isLoading) return <Loading />;
   if (error) {
     console.error("Error loading credentials:", error);

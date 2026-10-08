@@ -1,7 +1,6 @@
 import { serializeIfError } from "@originator-profile/core";
 import { fetchSiteProfile } from "@originator-profile/presentation";
 import { verifyIntegrity } from "@originator-profile/verify";
-import { activeTabMessenger } from "./active-tab/events";
 import { credentialsMessenger } from "./credentials/events";
 import { siteProfileMessenger } from "./site-profile/events";
 import {
@@ -15,7 +14,7 @@ export { setupOnce } from "./setup-once";
 /**
  * 全フレームで登録するハンドラ
  *
- * クレデンシャルの取得、Target Integrity の検証、準備完了の通知をおこなう。
+ * 文書の検証、クレデンシャルの取得、Target Integrity の検証をおこなう。
  */
 export function setupFrameHandlers() {
   setupDocumentVerification();
@@ -29,26 +28,6 @@ export function setupFrameHandlers() {
       return serializeIfError(result);
     },
   );
-
-  // Side Panel にコンテンツスクリプトの準備完了を通知する
-  const notifyReady = () => {
-    void activeTabMessenger.sendMessage("contentReady", null);
-  };
-
-  if (document.readyState === "loading") {
-    document.addEventListener("DOMContentLoaded", notifyReady, { once: true });
-  } else {
-    notifyReady();
-  }
-
-  // bfcache から復元された場合、Content Script は再注入されないため
-  // pageshow イベントで contentReady を再送信する
-  // see: https://developer.chrome.com/blog/bfcache-extension-messaging-changes
-  window.addEventListener("pageshow", (event) => {
-    if (event.persisted) {
-      notifyReady();
-    }
-  });
 }
 
 /**

@@ -46,10 +46,27 @@ setupOnce("content-script", () => {
 
   let tabId: number;
   let framesCas: FrameVerifiedCas[] = [];
+  /** 位置を求める CA の組。同じ組なら求め直さない */
+  const locatedKeyOf = (framesCas: FrameVerifiedCas[]) =>
+    JSON.stringify(
+      framesCas.map(({ frameId, cas }) => [
+        frameId,
+        cas.map(({ attestation }) => attestation.doc.credentialSubject.id),
+      ]),
+    );
 
   frameCasExtensionMessenger.onMessage("prepareLocate", ({ data }) => {
+    const changed = locatedKeyOf(data.framesCas) !== locatedKeyOf(framesCas);
     tabId = data.tabId;
     framesCas = data.framesCas;
+    // NOTE: 文書の検証結果は文書ごとに後から届く。表示中のオーバーレイも追従させる
+    if (!changed || !overlay.active) return;
+    enter = { ...enter, framesCas };
+    overlayWindowMessenger.sendMessage("enter", enter, overlay.window);
+    void frameCasExtensionMessenger.sendMessage("prepareLocate", {
+      tabId,
+      framesCas,
+    });
   });
 
   frameCasWindowMessenger.onMessage("located", ({ data }) => {

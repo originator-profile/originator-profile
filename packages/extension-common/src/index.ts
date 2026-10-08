@@ -1,5 +1,4 @@
 export * from "./active-tab/events";
-export * from "./active-tab/frame-readiness-tracker";
 export * from "./credentials";
 export * from "./frame-cas/extension-events";
 export * from "./frame-cas/types";
@@ -16,5 +15,8 @@ export * from "./utils/persistent-map";
 export * from "./utils/problem-code";
 export * from "./utils/registry-ops";
 export * from "./utils/warning-params";
+export * from "./verification/errors";
+export * from "./verification/identity";
+export * from "./verification/tab-verification";
 export * from "./verification/types";
 export * from "./window-messaging";
