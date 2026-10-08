@@ -10,45 +10,13 @@ import {
 import {
   setupAdClickDetection,
   setupFrameHandlers,
+  setupOnce,
 } from "@originator-profile/extension-common/content-script";
 import {
   normalizeCasItem,
   TargetIntegrityAlgorithm,
 } from "@originator-profile/verify";
 import { isFrameVisible } from "./components/frameCas";
-
-setupFrameHandlers();
-setupAdClickDetection();
-
-frameCasExtensionMessenger.onMessage(
-  "locating",
-  async ({ data: { frameCas, frames } }) => {
-    const casItems = frameCas.cas.map(normalizeCasItem);
-    const cas: CasCoordinate = casItems.map(({ attestation }) => ({
-      id: attestation.doc.credentialSubject.id,
-      target: attestation.doc.target.flatMap((content) => {
-        const elements = TargetIntegrityAlgorithm[content.type].elementSelector(
-          { ...content, document },
-        );
-        return elements.map((el) => el.getBoundingClientRect());
-      }),
-    }));
-    frameCasWindowMessenger.sendMessage(
-      "locating",
-      {
-        frameCas: {
-          frameId: frameCas.frameId,
-          parentFrameId: frameCas.parentFrameId,
-          ancestor: [],
-          cas,
-        },
-        frames,
-      },
-      window.parent,
-      frames.find(({ frameId }) => frameId === frameCas.parentFrameId)?.origin,
-    );
-  },
-);
 
 const updateAncestor = (
   source: WindowProxy | MessagePort | ServiceWorker | null,
@@ -96,31 +64,67 @@ const sendFrameCasMessage = (
   }
 };
 
-frameCasWindowMessenger.onMessage(
-  "locating",
-  ({
-    data: {
-      frameCas: { ancestor: senderAncestor, ...coordinate },
-      frames,
-    },
-    source,
-    origin,
-  }) => {
-    const frameId =
-      senderAncestor.at(-1)?.parentFrameId ?? coordinate.parentFrameId;
-    if (frameId === -1) return;
-    const frame = frames.find((frame) => frame.frameId === frameId);
-    if (!frame) return console.error(`frame not found. frame id: ${frameId}`);
-    const senderOrigin = frames.find(
-      (f) =>
-        f.frameId === (senderAncestor.at(-1)?.frameId ?? coordinate.frameId),
-    )?.origin;
-    if (origin !== senderOrigin) {
-      return console.error(
-        `origin mismatch. sender: ${senderOrigin}, receiver: ${origin}`,
+setupOnce("content-script-all-frames", () => {
+  setupFrameHandlers();
+  setupAdClickDetection();
+
+  frameCasExtensionMessenger.onMessage(
+    "locating",
+    async ({ data: { frameCas, frames } }) => {
+      const casItems = frameCas.cas.map(normalizeCasItem);
+      const cas: CasCoordinate = casItems.map(({ attestation }) => ({
+        id: attestation.doc.credentialSubject.id,
+        target: attestation.doc.target.flatMap((content) => {
+          const elements = TargetIntegrityAlgorithm[
+            content.type
+          ].elementSelector({ ...content, document });
+          return elements.map((el) => el.getBoundingClientRect());
+        }),
+      }));
+      frameCasWindowMessenger.sendMessage(
+        "locating",
+        {
+          frameCas: {
+            frameId: frameCas.frameId,
+            parentFrameId: frameCas.parentFrameId,
+            ancestor: [],
+            cas,
+          },
+          frames,
+        },
+        window.parent,
+        frames.find(({ frameId }) => frameId === frameCas.parentFrameId)
+          ?.origin,
       );
-    }
-    const ancestor = updateAncestor(source, frame, senderAncestor);
-    sendFrameCasMessage(frame, ancestor, coordinate, frames);
-  },
-);
+    },
+  );
+
+  frameCasWindowMessenger.onMessage(
+    "locating",
+    ({
+      data: {
+        frameCas: { ancestor: senderAncestor, ...coordinate },
+        frames,
+      },
+      source,
+      origin,
+    }) => {
+      const frameId =
+        senderAncestor.at(-1)?.parentFrameId ?? coordinate.parentFrameId;
+      if (frameId === -1) return;
+      const frame = frames.find((frame) => frame.frameId === frameId);
+      if (!frame) return console.error(`frame not found. frame id: ${frameId}`);
+      const senderOrigin = frames.find(
+        (f) =>
+          f.frameId === (senderAncestor.at(-1)?.frameId ?? coordinate.frameId),
+      )?.origin;
+      if (origin !== senderOrigin) {
+        return console.error(
+          `origin mismatch. sender: ${senderOrigin}, receiver: ${origin}`,
+        );
+      }
+      const ancestor = updateAncestor(source, frame, senderAncestor);
+      sendFrameCasMessage(frame, ancestor, coordinate, frames);
+    },
+  );
+});

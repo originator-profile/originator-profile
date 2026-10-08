@@ -11,6 +11,7 @@ import type { FrameLocation } from "./credentials/types";
 import { siteProfileMessenger } from "./site-profile/events";
 
 export { setupAdClickDetection } from "./link-verification/detect-ad-click";
+export { setupOnce } from "./setup-once";
 
 /**
  * 全フレームで登録するハンドラ
