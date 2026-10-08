@@ -318,3 +318,41 @@ test("差し替えられた iframe の結果は残らず、クレデンシャル
   await replaceFrames(1);
   expect(await settledSubFrames(1)).toEqual([0]);
 });
+
+test("同じオリジン内の遷移では Site Profile を取得し直さない", async ({
+  context,
+  page,
+  validSiteProfile,
+  credentialsPage,
+  credentialsMissingPage,
+  validCredentials,
+}) => {
+  const key = { publicKey, privateKey };
+  await validSiteProfile(key, credentialsPage.issuer, credentialsPage.holder);
+  await validCredentials(
+    key,
+    credentialsPage.contents,
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
+  let fetched = 0;
+  page.on("request", (request) => {
+    if (request.url().endsWith("/.well-known/sp.json")) fetched += 1;
+  });
+  await page.goto("about:blank");
+  const worker = await backgroundWorker(context);
+
+  await page.goto(credentialsMissingPage.endpoint);
+  await settledResult(worker, credentialsMissingPage.endpoint, 0);
+  const fetchedForFirst = fetched;
+  await page.goto(credentialsPage.endpoint);
+
+  // 2 つ目の文書も、Web サイトの発信者を用いて検証される
+  expect(await settledResult(worker, credentialsPage.endpoint, 1)).toEqual({
+    status: true,
+    frameType: "outermost_frame",
+  });
+  // インストール直後に読み込んだページでも、content script は 1 度だけ実行される
+  expect(fetchedForFirst).toBe(1);
+  expect(fetched).toBe(fetchedForFirst);
+});

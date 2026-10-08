@@ -86,10 +86,14 @@ export type VerificationEntry =
       reason: ProblemDetails;
     } & Settled);
 
-/** トップレベル文書のオリジンの Site Profile の検証結果 */
+/**
+ * オリジンの Site Profile の検証結果
+ *
+ * 同じオリジンのトップレベル文書のあいだで再利用する。
+ */
 export type SiteProfileEntry = TabWebsiteVerification & {
-  /** 検証したトップレベル文書 */
-  documentId: string;
+  /** Site Profile を探索したオリジン */
+  origin: string;
 };
 
 /** フレームに読み込まれている文書と、その検証の状態 */
