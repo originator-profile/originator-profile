@@ -1,4 +1,5 @@
 import { activeTabMessenger } from "./active-tab/events";
+import { injectContentScriptsToExistingTabs } from "./content-script-injection";
 import { frameCasExtensionMessenger } from "./frame-cas/extension-events";
 import { setupLinkVerification } from "./link-verification/background";
 import type { WarningUrlBuilder } from "./link-verification/types";
@@ -9,35 +10,6 @@ import type { TabVerification } from "./verification/types";
 
 /** Firefox のサイドバーの開閉を検知するポーリング間隔（ミリ秒） */
 const SIDEBAR_POLL_INTERVAL_MS = 500;
-
-async function injectContentScriptsToExistingTabs(): Promise<void> {
-  const manifest = chrome.runtime.getManifest();
-  const tabs = await chrome.tabs.query({});
-  const injectableTabs = tabs.filter(
-    (tab): tab is chrome.tabs.Tab & { id: number } =>
-      tab.id !== undefined &&
-      tab.url !== undefined &&
-      /^https?:\/\//.test(tab.url),
-  );
-
-  const injections = (manifest.content_scripts ?? []).flatMap((cs) => {
-    const files = cs.js;
-    if (!files || files.length === 0) return [];
-
-    return injectableTabs.map((tab) =>
-      chrome.scripting
-        .executeScript({
-          target: { tabId: tab.id, allFrames: cs.all_frames },
-          files,
-        })
-        .catch(() => {
-          // 注入できないページはスキップ
-        }),
-    );
-  });
-
-  await Promise.all(injections);
-}
 
 /** {@link setupBackground} に与えるアプリ固有の設定 */
 export type BackgroundConfig = {

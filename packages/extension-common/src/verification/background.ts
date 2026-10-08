@@ -8,6 +8,7 @@ import {
   type DocumentVerificationResult as VerifiedDocument,
   type VerifyIntegrity,
 } from "@originator-profile/verify";
+import { injectContentScripts } from "../content-script-injection";
 import { toDocumentCredentials } from "../credentials/messaging";
 import { verifyFetchedWebsite } from "../site-profile/verify-website";
 import { getAllFrames, getFrame } from "../utils/frames";
@@ -311,22 +312,40 @@ export function setupVerificationPipeline() {
           await removeSiteProfileEntry(top.documentId);
         }
       }
-      const reached = await Promise.all(
-        frames.map(({ frameId, documentId }) =>
-          verificationMessenger
-            .sendMessage("resync", { documentId, force }, { tabId, frameId })
-            .then(
-              () => true,
-              () => false,
-            ),
-        ),
-      );
+      const resync = (targets: typeof frames) =>
+        Promise.all(
+          targets.map(({ frameId, documentId }) =>
+            verificationMessenger
+              .sendMessage("resync", { documentId, force }, { tabId, frameId })
+              .then(
+                () => true,
+                () => false,
+              ),
+          ),
+        );
+      const reached = await resync(frames);
       const { status } = await chrome.tabs.get(tabId);
+      const loading = status === "loading";
+
+      // NOTE: 読み込みを終えても応えない文書には content script が入っていない
+      // (拡張機能の起動と文書の読み込みが重なった場合など)。注入して求め直す
+      const unreached = frames.filter((_, i) => !reached[i]);
+      if (!loading && unreached.length > 0) {
+        await injectContentScripts(
+          tabId,
+          unreached.map(({ frameId }) => frameId),
+        );
+        const retried = await resync(unreached);
+        for (const [i, frame] of unreached.entries()) {
+          reached[frames.indexOf(frame)] = retried[i] ?? false;
+        }
+      }
+
       return {
         reachable: frames.flatMap(({ documentId }, i) =>
           reached[i] ? [documentId] : [],
         ),
-        loading: status === "loading",
+        loading,
       };
     },
   );
