@@ -110,6 +110,7 @@ async function fetchVerifiedCredentials([, tabId, websiteOriginators]: [
       origin: target.origin,
       frameId: target.frameId,
       parentFrameId: target.parentFrameId,
+      frameType: target.frameType,
     })),
     warnings: result.warnings.map(({ title }) => title),
     info: result.info.map(({ title }) => title),

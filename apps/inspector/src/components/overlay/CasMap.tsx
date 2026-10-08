@@ -81,7 +81,7 @@ export function CasMap(props: Props) {
             activeCa={props.activeCa}
             onClickCa={props.onClickCa}
             wmps={props.wmps}
-            page={frameCas.parentFrameId === -1}
+            page={frameCas.frameType === "outermost_frame"}
             frameId={frameCas.frameId}
             filtered={filteredCaIds.has(
               ca.attestation.doc.credentialSubject.id,

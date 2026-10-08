@@ -63,7 +63,14 @@ export type FrameResponse = {
   frameId: number;
   parentFrameId: number;
 };
+/** フレームに読み込まれている文書 */
+export type FrameDocument = {
+  documentId: string;
+  frameType: chrome.extensionTypes.FrameType;
+  documentLifecycle: chrome.extensionTypes.DocumentLifecycle;
+};
 export type FrameCredentials = FrameResponse &
+  FrameDocument &
   FrameLocation & {
     ops: SourcedCredential<OriginatorProfileSet[number]>[];
     cas: SourcedCredential<ContentAttestationSet[number]>[];
@@ -72,6 +79,7 @@ export type FrameCredentials = FrameResponse &
 export type TabCredentials = FrameCredentials & { frames: FrameCredentials[] };
 
 export type FrameVerifiedCas = FrameResponse &
+  Pick<FrameDocument, "frameType"> &
   FrameLocation & { cas: SupportedVerifiedCasWithSource };
 export type FramesVerifiedCas = FrameVerifiedCas[];
 
