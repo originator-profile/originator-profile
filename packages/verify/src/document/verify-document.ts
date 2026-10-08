@@ -22,7 +22,7 @@ import {
 } from "../result/convert";
 import { pointer } from "../result/pointer";
 import { toProblemDetails } from "../result/to-problem-details";
-import type { VerificationResult } from "../result/types";
+import type { SecuringResult, VerificationResult } from "../result/types";
 
 /** 文書が置かれているフレームの種類 */
 export type FrameType = "outermost_frame" | "sub_frame" | "fenced_frame";
@@ -50,6 +50,70 @@ export type DocumentOutcome<Target extends VerificationTarget> = {
   /** Content Attestation の復号ペイロード */
   cas: CasPayload[];
 };
+
+/**
+ * 文書の検証のカテゴリー
+ *
+ * - `ca-vc`: CA の VC 検証 (image データ型を除く)
+ * - `allowed-url`: allowedUrl の検証
+ * - `content-integrity`: Content Integrity Descriptor の検証
+ * - `originator-ops`: 発行者の OP を含む OPS の検証
+ * - `image`: image データ型の検証
+ *
+ * @see https://docs.originator-profile.org/ja/opb/verifier-processing-model/content-attestation-set/
+ */
+export type VerificationCategory =
+  | "ca-vc"
+  | "allowed-url"
+  | "content-integrity"
+  | "originator-ops"
+  | "image";
+
+/**
+ * verifyDocument が適用する検証のカテゴリー
+ *
+ * NOTE: image データ型は検証するが、移行期間中は失敗を警告にとどめて結果の状態に
+ * 反映しないため、範囲に含めない
+ */
+const documentScope: VerificationCategory[] = [
+  "ca-vc",
+  "allowed-url",
+  "content-integrity",
+  "originator-ops",
+];
+
+/** 検証に用いた入力の出所 */
+export type InputSource =
+  | { kind: "registry" }
+  | { kind: "site-profile" }
+  | { kind: "document"; url: string };
+
+/** 文書の検証結果が併せて持つ情報 */
+export type DocumentVerificationMetadata = {
+  /** 検証時刻 (ISO 8601) */
+  verifiedAt: string;
+  /** 結果が有効である時刻の境界 (ISO 8601)。用いた VC の有効期限の最小値 */
+  validUntil?: string;
+  /** 適用した検証のカテゴリー */
+  scope: VerificationCategory[];
+  /** 検証に用いた入力の出所 */
+  inputRange: InputSource[];
+};
+
+/** 文書の検証結果 */
+export type DocumentVerificationResult<Target extends VerificationTarget> =
+  VerificationResult<DocumentOutcome<Target>> & DocumentVerificationMetadata;
+
+/** 用いた VC の有効期限のうち最も早いもの */
+function earliestExpiration(securingResults: SecuringResult[]) {
+  const expirations = securingResults.flatMap(({ expiredAt }) =>
+    expiredAt ? [expiredAt] : [],
+  );
+  if (expirations.length === 0) return undefined;
+  return new Date(
+    Math.min(...expirations.map((value) => new Date(value).getTime())),
+  ).toISOString();
+}
 
 /**
  * 文書の検証
@@ -86,20 +150,29 @@ export async function verifyDocument<
     /** ロガー (デフォルト: `console`) */
     logger?: Logger;
   },
-): Promise<VerificationResult<DocumentOutcome<Target>>> {
+): Promise<DocumentVerificationResult<Target>> {
   const { registry, siteOriginators, validator, logger } = options;
+  const verifiedAt = new Date().toISOString();
   const { logger: collecting, warnings, info } = collectProblems(logger);
   const collect = createCollector();
 
   // NOTE: サブフレーム中のコンテンツの検証にトップレベル文書の SP を用いてはならない
   // see https://docs.originator-profile.org/ja/opb/verifier-processing-model/site-profile/
-  const isTopLevel = target.frameType === "outermost_frame";
+  const siteOps =
+    target.frameType === "outermost_frame" ? (siteOriginators ?? []) : [];
+  const inputRange: InputSource[] = [
+    { kind: "registry" },
+    ...(siteOps.length > 0 ? [{ kind: "site-profile" } as const] : []),
+    { kind: "document", url: target.url },
+  ];
+  const metadata = () => ({
+    verifiedAt,
+    validUntil: earliestExpiration(collect.securingResults),
+    scope: documentScope,
+    inputRange,
+  });
   const opsVerifier = OpsVerifier(
-    [
-      ...registry.ops,
-      ...(isTopLevel ? (siteOriginators ?? []) : []),
-      ...target.ops,
-    ],
+    [...registry.ops, ...siteOps, ...target.ops],
     registry.keys,
     registry.issuer,
     { validator, logger: collecting },
@@ -121,6 +194,7 @@ export async function verifyDocument<
       warnings,
       info,
       errors: [toProblemDetails(verifiedOps), ...collect.errors],
+      ...metadata(),
     };
   }
 
@@ -152,6 +226,7 @@ export async function verifyDocument<
         warnings,
         info,
         errors: [toProblemDetails(cas, pointer("cas")), ...collect.errors],
+        ...metadata(),
       }
     : {
         status: true,
@@ -159,5 +234,6 @@ export async function verifyDocument<
         securingResults: collect.securingResults,
         warnings,
         info,
+        ...metadata(),
       };
 }
