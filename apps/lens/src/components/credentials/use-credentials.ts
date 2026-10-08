@@ -5,16 +5,18 @@ import {
   VerificationInvalidated,
   type FramesVerifiedCas,
   type FrameVerification,
-  type OpOrigin,
+  type RegistryEntry,
   type SiteProfileEntry,
   type SupportedVerifiedCasWithSource,
   type VerificationEntry,
   type VerifiedOpsWithSource,
 } from "@originator-profile/extension-common";
+import type { VerifiedOps } from "@originator-profile/verify";
 import { useMemo } from "react";
 import { useParams } from "react-router";
 import {
   toLegacyDocument,
+  toLegacyOriginators,
   type LegacyDocument,
 } from "../../utils/to-legacy-result";
 import {
@@ -35,82 +37,95 @@ type VerifiedCredentials = {
 
 type Settled = Extract<VerificationEntry, { state: "settled" }>;
 
-/** 検証に用いた Site Profile の発信者 */
-const siteOriginatorsOf = (entry: Settled, site?: SiteProfileEntry) =>
-  entry.result.inputRange.some(({ kind }) => kind === "site-profile")
-    ? (site?.siteProfile?.originators ?? [])
-    : [];
+/** 結果の i 番目の要素の取得経路。結果は入力と同じ順序・件数で返る契約 */
+function sourceAt<T>(sources: T[], i: number, label: string): T {
+  const source = sources[i];
+  if (!source) {
+    throw new Error(`${label}[${i}] not found`);
+  }
+  return source;
+}
 
 /**
- * 文書ごとの確定した検証結果を、表示に用いる形にまとめる
- * @param documents 確定した検証結果。トップレベル文書を先頭とする
- * @param site トップレベル文書のオリジンの Site Profile の検証結果
+ * 共有の発信者に取得経路を付ける
+ *
+ * Web サイトの発信者はレジストリの発信者を先頭に含むため、レジストリの件数で
+ * 取得経路を分ける。
  */
-function toVerifiedCredentials(
-  documents: Settled[],
-  site?: SiteProfileEntry,
-): VerifiedCredentials | Error {
-  const legacies: { entry: Settled; legacy: LegacyDocument }[] = [];
+function withSharedSources(
+  ops: VerifiedOps,
+  registryCount: number,
+  usesSiteProfile: boolean,
+): VerifiedOpsWithSource {
+  return ops.map((op, i) => ({
+    ...op,
+    source:
+      usesSiteProfile && i >= registryCount
+        ? siteProfileSource()
+        : registrySource(),
+  }));
+}
+
+type DocumentResult = { entry: Settled; legacy: LegacyDocument };
+
+/** 文書ごとの検証結果を従来の形に戻す。いずれかが失敗していればそのエラー */
+function toLegacies(documents: Settled[]): DocumentResult[] | Error {
+  const legacies: DocumentResult[] = [];
   for (const entry of documents) {
     const legacy = toLegacyDocument(entry.result);
     if (legacy instanceof Error) return legacy;
     legacies.push({ entry, legacy });
   }
+  return legacies;
+}
 
-  // NOTE: verifyDocument はレジストリ・(トップレベル文書なら) Web サイト・文書の
-  // OPS をこの順で1本の配列にまとめて検証し、legacy.ops は入力と同じ順序・件数で
-  // 返る契約になっている (packages/verify/src/originator-profile-set/verify-ops.ts
-  // 参照)。取得元(source)の対応付けはこの順序を前提に行う。レジストリと Web
-  // サイトの発信者は文書ごとに同じものが現れるため、最初の文書の分だけを残す。
-  const sharedSources = ({ entry, legacy }: (typeof legacies)[number]) => {
-    const siteSources = siteOriginatorsOf(entry, site).map(siteProfileSource);
-    const registryCount =
-      legacy.ops.length - entry.credentials.ops.length - siteSources.length;
-    return [
-      ...Array.from({ length: registryCount }, registrySource),
-      ...siteSources,
-    ];
+/**
+ * トップレベル文書の検証に用いた共有の発信者に、取得経路を付けて得る
+ * @returns 検証結果が揃っていなければ undefined
+ */
+function sharedOriginatorsOf(
+  top: Settled,
+  registry?: RegistryEntry,
+  site?: SiteProfileEntry,
+) {
+  const usesSiteProfile = top.result.inputRange.some(
+    ({ kind }) => kind === "site-profile",
+  );
+  const result = usesSiteProfile ? site?.result : registry;
+  if (!registry || !result) return undefined;
+
+  const ops = toLegacyOriginators(result);
+  if (ops instanceof Error) return ops;
+  return {
+    result,
+    ops: withSharedSources(
+      ops,
+      registry.outcome?.originators.length ?? 0,
+      usesSiteProfile,
+    ),
   };
-  /** 2つ目以降の文書で、レジストリ・Web サイトの発信者を指す通知か */
-  const isRepeated = (i: number, shared: number, at?: string) => {
-    const index = at?.match(/^\$\.originators\[(\d+)\]/)?.[1];
-    return i > 0 && index !== undefined && Number(index) < shared;
-  };
+}
 
-  const ops: VerifiedOpsWithSource = legacies.flatMap((document, i) => {
-    const shared: OpOrigin[] = sharedSources(document);
-    const sources = [
-      ...shared,
-      ...document.entry.credentials.ops.map(({ source }) => source),
-    ];
-    return document.legacy.ops.flatMap((op, j) => {
-      if (i > 0 && j < shared.length) return [];
-      const source = sources[j];
-      if (!source) {
-        throw new Error(`sources[${j}] not found`);
-      }
-      return [{ ...op, source }];
-    });
-  });
+/** 文書の発信者に、文書から取得したときの取得経路を付ける */
+const documentOriginators = (legacies: DocumentResult[]) =>
+  // NOTE: 文書の発信者は入力 (credentials.ops) と同じ順序・件数で返る契約
+  // (packages/verify/src/originator-profile-set/verify-ops.ts 参照)
+  legacies.flatMap(({ entry, legacy }) =>
+    legacy.ops.map((op, j) => ({
+      ...op,
+      source: sourceAt(entry.credentials.ops, j, "credentials.ops").source,
+    })),
+  );
 
-  const problems = (key: "warnings" | "info") =>
-    legacies.flatMap((document, i) => {
-      const shared = sharedSources(document).length;
-      return document.entry.result[key].flatMap(({ title, pointer: at }) =>
-        isRepeated(i, shared, at) ? [] : [title],
-      );
-    });
-
-  const framesCas = legacies.map(({ entry, legacy }) => ({
+/** 文書ごとの Content Attestation に、取得経路とフレームの情報を付ける */
+const framesCasOf = (legacies: DocumentResult[]): FramesVerifiedCas =>
+  legacies.map(({ entry, legacy }) => ({
     // NOTE: verifyCas も同様に入力(credentials.cas)と同じ順序・件数で返す契約
     // (packages/verify/src/content-attestation-set/verify-cas.ts 参照)。
-    cas: legacy.cas.map((c, j) => {
-      const sourced = entry.credentials.cas[j];
-      if (!sourced) {
-        throw new Error(`credentials.cas[${j}] not found`);
-      }
-      return { ...c, source: sourced.source };
-    }) as SupportedVerifiedCasWithSource,
+    cas: legacy.cas.map((c, j) => ({
+      ...c,
+      source: sourceAt(entry.credentials.cas, j, "credentials.cas").source,
+    })) as SupportedVerifiedCasWithSource,
     url: entry.subject.url,
     origin: entry.subject.origin,
     frameId: entry.subject.frameId,
@@ -118,12 +133,40 @@ function toVerifiedCredentials(
     frameType: entry.subject.frameType,
   }));
 
-  const [top] = documents;
+/**
+ * 文書ごとの確定した検証結果を、表示に用いる形にまとめる
+ *
+ * 発信者は、トップレベル文書の検証に用いた共有の発信者 (レジストリ、または
+ * Web サイトの発信者) を先頭に、各文書の発信者を続けて並べる。
+ * @param documents 確定した検証結果。トップレベル文書を先頭とする
+ * @param registry レジストリの検証結果
+ * @param site トップレベル文書のオリジンの Site Profile の検証結果
+ * @returns 共有の発信者の検証結果が揃っていなければ undefined
+ */
+function toVerifiedCredentials(
+  [top, ...rest]: [Settled, ...Settled[]],
+  registry?: RegistryEntry,
+  site?: SiteProfileEntry,
+): VerifiedCredentials | Error | undefined {
+  // NOTE: 共有の発信者の検証に失敗していれば文書の検証も失敗している。文書の
+  // 失敗を先に返し、共有の発信者の失敗を文書の発信者の失敗として示さない
+  const documents = [top, ...rest];
+  const legacies = toLegacies(documents);
+  if (legacies instanceof Error) return legacies;
+  const shared = sharedOriginatorsOf(top, registry, site);
+  if (!shared || shared instanceof Error) return shared;
+
+  const problems = (key: "warnings" | "info") =>
+    [shared.result, ...documents.map(({ result }) => result)].flatMap(
+      (result) => result[key].map(({ title }) => title),
+    );
+  const framesCas = framesCasOf(legacies);
+
   return {
-    ops,
+    ops: [...shared.ops, ...documentOriginators(legacies)],
     cas: deduplicateCas(framesCas.flatMap(({ cas }) => cas)),
-    origin: top?.subject.origin ?? "",
-    url: top?.subject.url ?? "",
+    origin: top.subject.origin,
+    url: top.subject.url,
     framesCas,
     warnings: problems("warnings"),
     info: problems("info"),
@@ -153,6 +196,18 @@ function presentedFrames(snapshot: TabVerificationSnapshot) {
   return [...frames.filter(isTop), ...frames.filter((f) => !isTop(f))];
 }
 
+const isSettled = (entry?: VerificationEntry): entry is Settled =>
+  entry?.state === "settled";
+
+/** 文書の結果がすべて確定していれば、先頭を保ったまま返す */
+function settledEntries(
+  entries: (VerificationEntry | undefined)[],
+): [Settled, ...Settled[]] | undefined {
+  const [top, ...rest] = entries;
+  if (!isSettled(top) || !rest.every(isSettled)) return undefined;
+  return [top, ...rest];
+}
+
 /**
  * タブの検証の状態から、表示に用いるクレデンシャルを得る
  * @returns 確定していない文書があれば undefined
@@ -175,8 +230,13 @@ function toCredentialsView(
       invalidated.reason,
     );
   }
-  if (!entries.every((entry) => entry?.state === "settled")) return undefined;
-  return toVerifiedCredentials(entries, snapshot.verification?.siteProfile);
+  const settled = settledEntries(entries);
+  if (!settled) return undefined;
+  return toVerifiedCredentials(
+    settled,
+    snapshot.verification?.registry,
+    snapshot.verification?.siteProfile,
+  );
 }
 
 type UseCredentialsResult =

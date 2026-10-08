@@ -1,4 +1,8 @@
-import type { SiteProfileEntry, VerificationEntry } from "./types";
+import type {
+  RegistryEntry,
+  SiteProfileEntry,
+  VerificationEntry,
+} from "./types";
 
 /**
  * 検証結果ストア
@@ -10,6 +14,7 @@ import type { SiteProfileEntry, VerificationEntry } from "./types";
 const DOCUMENT_PREFIX = "verification:document:";
 const SITE_PROFILE_PREFIX = "verification:site-profile:";
 const TAB_PREFIX = "verification:tab:";
+export const registryKey = "verification:registry";
 
 export const documentKey = (documentId: string) =>
   `${DOCUMENT_PREFIX}${documentId}`;
@@ -335,4 +340,9 @@ export async function getSiteProfileEntry(
 
 export async function removeSiteProfileEntry(origin: string) {
   await chrome.storage.session.remove(siteProfileKey(origin));
+}
+
+/** レジストリの検証結果を書き込む */
+export function setRegistryEntry(entry: RegistryEntry): Promise<void> {
+  return serialize(() => setWithEviction({ [registryKey]: entry }));
 }

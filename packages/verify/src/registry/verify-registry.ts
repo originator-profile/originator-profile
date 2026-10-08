@@ -7,6 +7,7 @@ import {
   createCollector,
   type OriginatorPayload,
 } from "../result/convert";
+import { toProblemDetails } from "../result/to-problem-details";
 import type { VerificationResult } from "../result/types";
 import type { Registry } from "./prepare-registry";
 
@@ -55,7 +56,7 @@ export async function verifyRegistry(
         securingResults: collect.securingResults,
         warnings,
         info,
-        errors: collect.errors,
+        errors: [toProblemDetails(verifiedOps), ...collect.errors],
       }
     : {
         status: true,

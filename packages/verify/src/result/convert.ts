@@ -167,12 +167,10 @@ export function convertOp(
  * Originator Profile Set の検証結果を、復号したペイロードと収集物に分解する
  * @param ops 検証済み OPS、または検証・復号に失敗したエラー
  * @param collect 収集先
- * @param offset 先頭の OP が `$.originators` のどの位置に置かれるか
  */
 export function convertOps(
   ops: unknown,
   collect: Collector,
-  offset = 0,
 ): OriginatorPayload[] {
   if (ops instanceof Error) {
     collect.errors.push(toProblemDetails(ops, pointer("originators")));
@@ -184,7 +182,7 @@ export function convertOps(
   if (!Array.isArray(list)) return [];
 
   return list.map((op, index) =>
-    convertOp(op, pointer("originators", offset + index), collect),
+    convertOp(op, pointer("originators", index), collect),
   );
 }
 

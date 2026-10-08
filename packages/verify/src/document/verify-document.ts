@@ -150,10 +150,12 @@ export type SharedOriginators = {
  * 文書の Content Attestation Set を検証する。共有の発信者は検証し直さず、文書の
  * OPS だけを検証する。他の文書に設置された OPS は用いない。
  *
+ * 結果はその文書の OPS と CAS の分だけを含み、共有の発信者は含まない。どの共有の
+ * 発信者を用いたかは `inputRange` が示す。
+ *
  * @param target 検証対象の文書
  * @param options レジストリ・共有の発信者・バリデーター・ロガー
- * @returns 検証結果。復号できたペイロードは status によらず outcome に含まれる。
- *   共有の発信者の検証結果は、その位置のまま結果の先頭に含まれる
+ * @returns 検証結果。復号できたペイロードは status によらず outcome に含まれる
  * @throws {TypeError} トップレベル文書でない文書に Web サイトの発信者を渡した
  *
  * @example
@@ -193,16 +195,17 @@ export async function verifyDocument<
 
   const verifiedAt = new Date().toISOString();
   const { logger: collecting, warnings, info } = collectProblems(logger);
-  warnings.push(...shared.result.warnings);
-  info.push(...shared.result.info);
   const collect = createCollector();
-  collect.securingResults.push(...shared.result.securingResults);
   const trusted = shared.result.outcome?.originators ?? [];
 
   const inputRange = inputRangeOf(shared, target.url);
   const metadata = () => ({
     verifiedAt,
-    validUntil: earliestExpiration(collect.securingResults),
+    // NOTE: 結果は共有の発信者の VC にも依存するため、その有効期限も境界に含める
+    validUntil: earliestExpiration([
+      ...shared.result.securingResults,
+      ...collect.securingResults,
+    ]),
     scope: documentScope,
     inputRange,
   });
@@ -210,11 +213,12 @@ export async function verifyDocument<
   if (!shared.result.status) {
     return {
       status: false,
-      outcome: { target, originators: trusted, cas: [] },
-      securingResults: collect.securingResults,
+      outcome: { target, originators: [], cas: [] },
+      securingResults: [],
       warnings,
       info,
-      errors: shared.result.errors,
+      // 共有の発信者の中を指す問題は、この結果の outcome を指さないため除く
+      errors: shared.result.errors.filter(({ pointer: at }) => !at),
       ...metadata(),
     };
   }
@@ -225,10 +229,7 @@ export async function verifyDocument<
     registry.issuer,
     { validator, logger: collecting, trusted },
   )();
-  const originators = [
-    ...trusted,
-    ...convertOps(verifiedOps, collect, trusted.length),
-  ];
+  const originators = convertOps(verifiedOps, collect);
 
   if (
     verifiedOps instanceof OpsInvalid ||

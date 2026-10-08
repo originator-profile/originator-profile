@@ -121,7 +121,7 @@ function reportUnauthorizedAnnotation({
  * @param verifiedOps 検証済み Originator Profile Set
  * @param paIssuerRegistrationIssuer 基底となる Profile Annotation Issuer 登録証 PA Issuer の OP ID
  * @param logger ロガー (デフォルト: `console`)
- * @param trusted 検証済みの共有の OP。`verifiedOps` はその後ろに置かれ、登録証 PA の引き先にも加える
+ * @param trusted 検証済みの共有の OP。登録証 PA の引き先に加える
  *
  * @see https://docs.originator-profile.org/opb/pa-model/profile-annotation-issuer-registration/
  */
@@ -149,7 +149,7 @@ export function verifyAnnotationIssuerRegistration(
     for (const [paIndex, annotation] of op.annotations?.entries() ?? []) {
       reportUnauthorizedAnnotation({
         annotation,
-        opIndex: trusted.length + opIndex,
+        opIndex,
         paIndex,
         policy,
         logger,
