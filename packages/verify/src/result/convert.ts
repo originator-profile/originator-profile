@@ -77,7 +77,7 @@ function toSecuringResult(
   at: string,
   status: boolean,
 ): SecuringResult {
-  const doc = asRecord(vc?.doc);
+  const doc = asRecord(vc?.doc) ?? {};
 
   return compact({
     pointer: at,
@@ -87,8 +87,10 @@ function toSecuringResult(
     algorithm: asString(vc?.algorithm),
     issuedAt: asIsoString(vc?.issuedAt),
     expiredAt: asIsoString(vc?.expiredAt),
+    validFrom: asString(doc.validFrom),
+    validUntil: asString(doc.validUntil),
     verificationKey: asJwk(vc?.verificationKey),
-    controller: asString(doc?.issuer),
+    controller: asString(doc.issuer),
   });
 }
 

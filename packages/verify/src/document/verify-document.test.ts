@@ -1,9 +1,10 @@
 import { generateKey } from "@originator-profile/cryptography";
 import type { OriginatorProfileSet } from "@originator-profile/model";
+import { signJwtVc } from "@originator-profile/securing-mechanism";
 import { signCa } from "@originator-profile/sign";
 import { assert, describe, expect, test } from "vitest";
 import { CasVerifyFailed } from "../content-attestation-set";
-import { article, opId } from "../helper";
+import { article, certificate, opId } from "../helper";
 import type { VerifyIntegrity } from "../integrity";
 import {
   CoreProfileNotFound,
@@ -264,6 +265,35 @@ describe("verifyDocument", () => {
       { kind: "registry" },
       { kind: "document", url: "https://www.example.org/a" },
     ]);
+  });
+
+  test("時刻の境界は、用いた VC の有効期間の終了のうち最も早いもの", async () => {
+    const { authorityOp, certifierOp, originatorOp, certifier } =
+      await buildOpsFixture();
+    const registry = prepareRegistry([authorityOp, certifierOp]);
+    if (registry instanceof Error) throw registry;
+    // PA の有効期間の終了が、どの VC の有効期限よりも早い
+    const validUntil = new Date(
+      signOptions.expiredAt.getTime() - 24 * 60 * 60 * 1000,
+    ).toISOString();
+    const op = {
+      ...originatorOp,
+      annotations: [
+        await signJwtVc(
+          { ...certificate, validUntil },
+          certifier.privateKey,
+          signOptions,
+        ),
+      ],
+    };
+
+    const result = await verifyDocument(
+      target({ ops: [op], frameType: "sub_frame" }),
+      { registry, shared: await sharedRegistry(registry), logger: silent },
+    );
+
+    expect(result.status).toBe(true);
+    expect(result.validUntil).toBe(validUntil);
   });
 
   test("文書の検証中の通知を、文書の発信者の位置で結果に載せる", async () => {
