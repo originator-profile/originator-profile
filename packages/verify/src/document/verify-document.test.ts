@@ -7,12 +7,18 @@ import { article, opId } from "../helper";
 import type { VerifyIntegrity } from "../integrity";
 import {
   CoreProfileNotFound,
+  OpsVerifier,
   OpsVerifyFailed,
 } from "../originator-profile-set";
 import { buildOpsFixture, signOptions } from "../originator-profile-set/helper";
 import { prepareRegistry, verifyRegistry, type Registry } from "../registry";
-import type { OriginatorPayload } from "../result/convert";
+import {
+  convertOps,
+  createCollector,
+  type OriginatorPayload,
+} from "../result/convert";
 import { problemType } from "../result/problem-types";
+import { toProblemDetails } from "../result/to-problem-details";
 import {
   verifyDocument,
   type SharedOriginators,
@@ -34,21 +40,48 @@ const subjectIds = (ops: OriginatorPayload[]) =>
 const sharedRegistry = async (
   registry: Registry,
 ): Promise<SharedOriginators> => ({
-  source: "registry",
-  result: await verifyRegistry(registry, { logger: silent }),
+  registry: await verifyRegistry(registry, { logger: silent }),
 });
 
-/** レジストリに Web サイトの発信者を加えて検証し、共有の発信者にする */
+/**
+ * レジストリと Web サイトの発信者を検証して共有の発信者にする
+ *
+ * Web サイトの検証結果のうち、発信者の部分だけを模す。
+ */
 const sharedSite = async (
   registry: Registry,
   originators: OriginatorProfileSet,
-): Promise<SharedOriginators> => ({
-  source: "site-profile",
-  result: await verifyRegistry(
-    { ...registry, ops: [...registry.ops, ...originators] },
-    { logger: silent },
-  ),
-});
+): Promise<Required<SharedOriginators>> => {
+  const verifiedRegistry = await verifyRegistry(registry, { logger: silent });
+  const verified = await OpsVerifier(
+    originators,
+    registry.keys,
+    registry.issuer,
+    { logger: silent, trusted: verifiedRegistry.outcome?.originators },
+  )();
+  const collect = createCollector();
+  const outcome = { originators: convertOps(verified, collect) };
+  return {
+    registry: verifiedRegistry,
+    site:
+      verified instanceof Error
+        ? {
+            status: false,
+            outcome,
+            securingResults: collect.securingResults,
+            warnings: [],
+            info: [],
+            errors: [toProblemDetails(verified), ...collect.errors],
+          }
+        : {
+            status: true,
+            outcome,
+            securingResults: collect.securingResults,
+            warnings: [],
+            info: [],
+          },
+  };
+};
 
 const target = (
   overrides: Partial<VerificationTarget> = {},
@@ -168,7 +201,7 @@ describe("verifyDocument", () => {
     assert(!result.status, "検証は失敗するはず");
     // 共有の発信者の中を指す問題は含めず、失敗の要約だけを載せる
     expect(result.errors).toEqual(
-      shared.result.errors?.filter(({ pointer }) => !pointer),
+      shared.site.errors?.filter(({ pointer }) => !pointer),
     );
     expect(result.errors).not.toHaveLength(0);
     expect(result.outcome?.originators).toEqual([]);
