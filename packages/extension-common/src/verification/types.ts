@@ -96,8 +96,8 @@ export type VerificationEntry =
 /**
  * オリジンの Site Profile の検証結果
  *
- * 同じオリジンのトップレベル文書のあいだで再利用する。発信者はレジストリの
- * 発信者を先頭に含む。
+ * 同じオリジンのトップレベル文書のあいだで再利用する。発信者は Site Profile
+ * の発信者だけを含み、レジストリの発信者は {@link RegistryEntry} が持つ。
  */
 export type SiteProfileEntry = {
   /** Site Profile を探索したオリジン */

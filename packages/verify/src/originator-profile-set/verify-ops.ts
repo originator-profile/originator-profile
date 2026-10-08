@@ -6,7 +6,7 @@ import {
 } from "@originator-profile/securing-mechanism";
 import { getMappedKeys } from "../keys";
 import type { Logger } from "../logger";
-import type { OriginatorPayload } from "../result/convert";
+import { coreProfilesOf, type OriginatorPayload } from "../result/convert";
 import { pointer } from "../result/pointer";
 import { verifyAnnotations } from "./annotations";
 import { decodeOps } from "./decode-ops";
@@ -106,7 +106,7 @@ export function OpsVerifier(
       return decoded;
     }
     const paOrWmpIssuerKeys = getMappedKeys([
-      ...trusted.flatMap(({ core }) => (core ? [{ core: { doc: core } }] : [])),
+      ...coreProfilesOf(trusted),
       ...decoded,
     ]);
     const resultOps = await Promise.all(

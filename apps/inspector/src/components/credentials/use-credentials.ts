@@ -11,7 +11,6 @@ import {
   type VerificationEntry,
   type VerifiedOpsWithSource,
 } from "@originator-profile/extension-common";
-import type { VerifiedOps } from "@originator-profile/verify";
 import { useMemo } from "react";
 import { useParams } from "react-router";
 import {
@@ -46,26 +45,6 @@ function sourceAt<T>(sources: T[], i: number, label: string): T {
   return source;
 }
 
-/**
- * 共有の発信者に取得経路を付ける
- *
- * Web サイトの発信者はレジストリの発信者を先頭に含むため、レジストリの件数で
- * 取得経路を分ける。
- */
-function withSharedSources(
-  ops: VerifiedOps,
-  registryCount: number,
-  usesSiteProfile: boolean,
-): VerifiedOpsWithSource {
-  return ops.map((op, i) => ({
-    ...op,
-    source:
-      usesSiteProfile && i >= registryCount
-        ? siteProfileSource()
-        : registrySource(),
-  }));
-}
-
 type DocumentResult = { entry: Settled; legacy: LegacyDocument };
 
 /** 文書ごとの検証結果を従来の形に戻す。いずれかが失敗していればそのエラー */
@@ -80,7 +59,8 @@ function toLegacies(documents: Settled[]): DocumentResult[] | Error {
 }
 
 /**
- * トップレベル文書の検証に用いた共有の発信者に、取得経路を付けて得る
+ * トップレベル文書の検証に用いた共有の発信者 (レジストリ、Web サイト) を、
+ * 取得経路を付けて得る
  * @returns 検証結果が揃っていなければ undefined
  */
 function sharedOriginatorsOf(
@@ -91,19 +71,21 @@ function sharedOriginatorsOf(
   const usesSiteProfile = top.result.inputRange.some(
     ({ kind }) => kind === "site-profile",
   );
-  const result = usesSiteProfile ? site?.result : registry;
-  if (!registry || !result) return undefined;
+  if (!registry || (usesSiteProfile && !site)) return undefined;
 
-  const ops = toLegacyOriginators(result);
-  if (ops instanceof Error) return ops;
-  return {
-    result,
-    ops: withSharedSources(
-      ops,
-      registry.outcome?.originators.length ?? 0,
-      usesSiteProfile,
-    ),
-  };
+  const parts = [
+    { result: registry, source: registrySource },
+    ...(usesSiteProfile && site
+      ? [{ result: site.result, source: siteProfileSource }]
+      : []),
+  ];
+  const ops: VerifiedOpsWithSource = [];
+  for (const { result, source } of parts) {
+    const legacy = toLegacyOriginators(result);
+    if (legacy instanceof Error) return legacy;
+    ops.push(...legacy.map((op) => ({ ...op, source: source() })));
+  }
+  return { results: parts.map(({ result }) => result), ops };
 }
 
 /** 文書の発信者に、文書から取得したときの取得経路を付ける */
@@ -136,8 +118,8 @@ const framesCasOf = (legacies: DocumentResult[]): FramesVerifiedCas =>
 /**
  * 文書ごとの確定した検証結果を、表示に用いる形にまとめる
  *
- * 発信者は、トップレベル文書の検証に用いた共有の発信者 (レジストリ、または
- * Web サイトの発信者) を先頭に、各文書の発信者を続けて並べる。
+ * 発信者は、トップレベル文書の検証に用いた共有の発信者 (レジストリ、Web サイト
+ * の発信者の順) を先頭に、各文書の発信者を続けて並べる。
  * @param documents 確定した検証結果。トップレベル文書を先頭とする
  * @param registry レジストリの検証結果
  * @param site トップレベル文書のオリジンの Site Profile の検証結果
@@ -157,7 +139,7 @@ function toVerifiedCredentials(
   if (!shared || shared instanceof Error) return shared;
 
   const problems = (key: "warnings" | "info") =>
-    [shared.result, ...documents.map(({ result }) => result)].flatMap(
+    [...shared.results, ...documents.map(({ result }) => result)].flatMap(
       (result) => result[key].map(({ title }) => title),
     );
   const framesCas = framesCasOf(legacies);

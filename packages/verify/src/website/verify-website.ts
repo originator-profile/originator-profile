@@ -1,7 +1,11 @@
 import type { SiteProfile, WebsiteProfile } from "@originator-profile/model";
 import type { VcValidatorFactory } from "@originator-profile/securing-mechanism";
 import type { Logger } from "../logger";
-import type { Registry } from "../registry";
+import {
+  verifyRegistry,
+  type OriginatorsOutcome,
+  type Registry,
+} from "../registry";
 import { collectProblems } from "../result/collect-problems";
 import {
   convertOps,
@@ -28,6 +32,9 @@ export type WebsiteOutcome = {
  * サイトが提示する Site Profile とレジストリを用いて、指定した origin の
  * サイトを誰が運営しているものとして確認できるかを検証する。
  *
+ * 結果の originators は Site Profile の発信者だけを含み、レジストリの発信者は
+ * 含まない。
+ *
  * @param origin 検証対象のサイトを識別する RFC 6454 オリジン
  * @param options Site Profile・レジストリ・オリジン検証の可否・バリデーター・ロガー
  * @returns 検証結果。復号できたペイロードは status によらず outcome に含まれる
@@ -46,6 +53,11 @@ export async function verifyWebsite(
     siteProfile: SiteProfile;
     /** Core Profile 発行者のレジストリ */
     registry: Registry;
+    /**
+     * レジストリの検証結果 ({@link verifyRegistry})。省略するとレジストリを検証する。
+     * 検証に失敗していれば、Web サイトの検証も失敗とする
+     */
+    verifiedRegistry?: VerificationResult<OriginatorsOutcome>;
     /** WSP が提示された Web サイトの origin との一致性検証の可否 (デフォルト: 有効) */
     verifyOrigin?: boolean;
     /** バリデーター */
@@ -54,18 +66,39 @@ export async function verifyWebsite(
     logger?: Logger;
   },
 ): Promise<VerificationResult<WebsiteOutcome>> {
-  const { siteProfile, registry, logger, ...verifierOptions } = options;
+  const {
+    siteProfile,
+    registry,
+    logger,
+    verifiedRegistry: _,
+    ...verifierOptions
+  } = options;
+  const verifiedRegistry =
+    options.verifiedRegistry ??
+    (await verifyRegistry(registry, { validator: options.validator, logger }));
   const { logger: collecting, warnings, info } = collectProblems(logger);
 
+  if (!verifiedRegistry.status) {
+    return {
+      status: false,
+      securingResults: [],
+      warnings,
+      info,
+      // レジストリの中を指す問題は、この結果の outcome を指さないため除く
+      errors: verifiedRegistry.errors.filter(({ pointer: at }) => !at),
+    };
+  }
+
   const verifySp = SpVerifier(
-    {
-      ...siteProfile,
-      originators: [...registry.ops, ...siteProfile.originators],
-    },
+    siteProfile,
     registry.keys,
     registry.issuer,
     origin,
-    { ...verifierOptions, logger: collecting },
+    {
+      ...verifierOptions,
+      logger: collecting,
+      trusted: verifiedRegistry.outcome.originators,
+    },
   );
 
   const verified = await verifySp();
