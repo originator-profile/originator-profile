@@ -27,11 +27,13 @@ import {
   invalidate,
   InvalidationType,
   isAllowedUrlConsistent,
+  isRegistryEntryReusable,
   isReusable,
   toInputIdentity,
   VerificationIncomplete,
 } from "./identity";
 import {
+  getRegistryEntry,
   getSiteProfileEntry,
   getVerificationEntry,
   listVerificationEntries,
@@ -46,6 +48,7 @@ import type {
   DocumentCredentials,
   DocumentVerificationResult,
   InputIdentity,
+  RegistryEntry,
   SiteProfileEntry,
   VerificationEntry,
   VerificationSubject,
@@ -215,18 +218,25 @@ export function setupVerificationPipeline() {
   let lastGeneration = 0;
   /** 進行中のオリジンごとの Site Profile の検証 */
   const siteProfiles = new Map<string, Promise<SiteProfileEntry>>();
-  /** レジストリの検証。拡張機能に同梱された入力なので Service Worker ごとに 1 度だけ */
-  let registryVerification: Promise<SharedOriginators["registry"]> | undefined;
-  const verifiedRegistry = () => {
-    registryVerification ??= getRegistry().then(async (registry) => {
-      const result = await verifyRegistry(registry);
-      // NOTE: サイドパネルが発信者の並びと取得経路を組み立てるために読む
-      await setRegistryEntry(withoutSources(result));
-      return result;
-    });
-    registryVerification.catch(() => {
-      registryVerification = undefined;
-    });
+  /** 進行中のレジストリの検証 */
+  let registryVerification: Promise<RegistryEntry> | undefined;
+  /**
+   * レジストリの検証結果。Service Worker が起動し直しても、検証結果ストアにある
+   * 結果を再利用できるうちは検証し直さない
+   */
+  const verifiedRegistry = async (): Promise<RegistryEntry> => {
+    const stored = await getRegistryEntry();
+    if (isRegistryEntryReusable(stored, new Date())) return stored;
+    registryVerification ??= getRegistry()
+      .then(async (registry) => {
+        const entry = withoutSources(await verifyRegistry(registry));
+        // NOTE: サイドパネルが発信者の並びと取得経路を組み立てるためにも読む
+        await setRegistryEntry(entry);
+        return entry;
+      })
+      .finally(() => {
+        registryVerification = undefined;
+      });
     return registryVerification;
   };
 

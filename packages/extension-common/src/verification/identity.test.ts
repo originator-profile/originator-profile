@@ -5,11 +5,12 @@ import {
   dependsOnRenderedResult,
   InvalidationType,
   isAllowedUrlConsistent,
+  isRegistryEntryReusable,
   isReusable,
   resolveEntry,
   toInputIdentity,
 } from "./identity";
-import type { VerificationEntry } from "./types";
+import type { RegistryEntry, VerificationEntry } from "./types";
 
 /** 文書から取得したクレデンシャル */
 const credentials: Pick<FrameCredentials, "ops" | "cas"> = {
@@ -179,5 +180,41 @@ describe("dependsOnRenderedResult", () => {
         },
       }),
     ).toBe(true);
+  });
+});
+
+describe("isRegistryEntryReusable", () => {
+  const registryAt = (...expiredAt: (string | undefined)[]): RegistryEntry => ({
+    status: true,
+    outcome: { originators: [] },
+    securingResults: expiredAt.map((value, i) => ({
+      pointer: `$.originators[${i}].core`,
+      status: true,
+      expiredAt: value,
+    })),
+    warnings: [],
+    info: [],
+  });
+
+  test("用いた VC の有効期限がすべて現在時刻より後なら再利用する", () => {
+    expect(
+      isRegistryEntryReusable(
+        registryAt("2026-10-09T00:00:00.000Z", undefined),
+        new Date("2026-10-08T00:00:00.000Z"),
+      ),
+    ).toBe(true);
+  });
+
+  test("有効期限を過ぎた VC があれば検証し直す", () => {
+    expect(
+      isRegistryEntryReusable(
+        registryAt("2026-10-09T00:00:00.000Z", "2026-10-07T00:00:00.000Z"),
+        new Date("2026-10-08T00:00:00.000Z"),
+      ),
+    ).toBe(false);
+  });
+
+  test("保持していなければ検証する", () => {
+    expect(isRegistryEntryReusable(undefined, new Date())).toBe(false);
   });
 });
