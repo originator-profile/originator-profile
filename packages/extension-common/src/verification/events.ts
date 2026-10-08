@@ -13,8 +13,13 @@ type ToDocument = { documentId: string };
 type VerificationProtocolMap = {
   /** 文書の documentId を問い合わせる */
   register(data: null): string | undefined;
-  /** 文書のクレデンシャルが変わった (または検証できる状態になった) ことを通知する */
-  documentChanged(data: null): void;
+  /**
+   * 文書のクレデンシャルが変わった (または検証できる状態になった) ことを通知する
+   * @param data.restored bfcache から復元されたか
+   */
+  documentChanged(data: { restored: boolean }): void;
+  /** 検証済みの target の入力依存対象が変化したことを通知する */
+  inputChanged(data: null): void;
   /** 文書に改めて documentChanged の通知を求める */
   resync(data: ToDocument): void;
   fetchDocumentCredentials(data: ToDocument): FetchCredentialsMessageResponse;

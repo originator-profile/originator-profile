@@ -100,6 +100,7 @@ describe("verifyDocument", () => {
     expect(subjectIds(result.outcome?.originators ?? [])).toContain(
       opId.originator,
     );
+    expect(result.inputRange).toContainEqual({ kind: "site-profile" });
   });
 
   test("Site Profile の発信者はサブフレームの検証鍵に加わらない", async () => {
@@ -122,6 +123,10 @@ describe("verifyDocument", () => {
     expect(subjectIds(result.outcome?.originators ?? [])).not.toContain(
       opId.originator,
     );
+    expect(result.inputRange).toEqual([
+      { kind: "registry" },
+      { kind: "document", url: "https://www.example.org/a" },
+    ]);
   });
 
   test("CAS の検証に失敗した場合はその位置を示す", async () => {
@@ -170,6 +175,28 @@ describe("verifyDocument", () => {
     expect(result.errors[0]?.type).toBe(problemType(OpsVerifyFailed.code));
     // 失敗しても復号できた発信者は outcome に含まれる
     expect(result.outcome?.originators).not.toHaveLength(0);
+  });
+
+  test("検証時刻・時刻の境界・検証範囲を結果に載せる", async () => {
+    const { authorityOp, certifierOp, originatorOp } = await buildOpsFixture();
+    const registry = prepareRegistry([authorityOp, certifierOp]);
+    if (registry instanceof Error) throw registry;
+
+    const result = await verifyDocument(
+      {
+        ops: [originatorOp],
+        cas: [],
+        url: "https://www.example.org/a",
+        frameType: "outermost_frame",
+        verifyIntegrity: notCalled,
+      },
+      { registry, logger: silent },
+    );
+
+    expect(Date.parse(result.verifiedAt)).not.toBeNaN();
+    expect(result.validUntil).toBe(signOptions.expiredAt.toISOString());
+    // image データ型の検証の失敗は、移行期間中は結果の状態に反映しない
+    expect(result.scope).not.toContain("image");
   });
 
   test("検証中の通知を結果に載せる", async () => {
