@@ -101,6 +101,9 @@
   "Unsupported_ERR_FETCH_CREDENTIALS_MESSAGING_FAILED": {
     "message": "コンテンツ作成者を検証するためのデータが取得できませんでした"
   },
+  "Unsupported_ERR_VERIFICATION_INVALIDATED": {
+    "message": "検証した後に有効期限を過ぎたか URL が変わったため、検証結果は有効ではなくなりました"
+  },
   "Unsupported_UnknownError": {
     "message": "サイトの運営者またはコンテンツ作成者を検証するためのデータが存在しないか、取得できませんでした"
   },

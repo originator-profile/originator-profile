@@ -6,6 +6,9 @@ export class Overlay {
   deactivate() {
     this.iframe.remove();
   }
+  get active() {
+    return document.contains(this.iframe);
+  }
   constructor() {
     this.iframe = document.createElement("iframe");
     this.iframe.srcdoc = `

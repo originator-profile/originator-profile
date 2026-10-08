@@ -10,7 +10,7 @@ import {
 } from "@originator-profile/verify";
 import { toDocumentCredentials } from "../credentials/messaging";
 import { verifyFetchedWebsite } from "../site-profile/verify-website";
-import { getFrame } from "../utils/frames";
+import { getAllFrames, getFrame } from "../utils/frames";
 import { getRegistry } from "../utils/registry-ops";
 import { verificationMessenger } from "./events";
 import {
@@ -25,6 +25,7 @@ import {
   getSiteProfileEntry,
   getVerificationEntry,
   listVerificationEntries,
+  removeSiteProfileEntry,
   setSiteProfileEntry,
   setVerificationEntry,
   trackDocument,
@@ -43,22 +44,22 @@ type Destination = { tabId: number; frameId: number; documentId: string };
 type Trigger = {
   /** bfcache から復元された */
   restored?: boolean;
-  /** 検証済みの target の入力依存対象が変化した */
-  inputChanged?: boolean;
+  /** 保持している結果を再利用しない */
+  force?: boolean;
 };
 
 /**
  * 保持している結果を再利用できるか
  *
- * target の入力依存対象が変化した場合と、bfcache から復元された文書の結果が
- * rendered result に依存する場合は、改めて検証する。
+ * bfcache から復元された文書の結果が rendered result に依存する場合は、
+ * 改めて検証する。
  */
 async function canReuse(
   documentId: string,
   current: InputIdentity,
   trigger: Trigger,
 ): Promise<boolean> {
-  if (trigger.inputChanged) return false;
+  if (trigger.force) return false;
   const previous = await getVerificationEntry(documentId);
   if (trigger.restored && dependsOnRenderedResult(previous)) return false;
   return isReusable(previous, current, new Date());
@@ -262,12 +263,12 @@ export function setupVerificationPipeline() {
 
   verificationMessenger.onMessage("documentChanged", ({ data, sender }) => {
     const destination = destinationOf(sender);
-    if (destination) run(destination, { restored: data.restored });
+    if (destination) run(destination, data);
   });
 
   verificationMessenger.onMessage("inputChanged", ({ sender }) => {
     const destination = destinationOf(sender);
-    if (destination) run(destination, { inputChanged: true });
+    if (destination) run(destination, { force: true });
   });
 
   /** same-document navigation で allowedUrl の評価結果が変われば結果を無効にする */
@@ -297,6 +298,39 @@ export function setupVerificationPipeline() {
     void reevaluateAllowedUrl(details);
   });
 
+  verificationMessenger.onMessage(
+    "verifyTab",
+    async ({ data: { tabId, force } }) => {
+      const frames = await getAllFrames(tabId);
+      if (force) {
+        const top = frames.find(
+          ({ frameType }) => frameType === "outermost_frame",
+        );
+        if (top) {
+          forget([top.documentId]);
+          await removeSiteProfileEntry(top.documentId);
+        }
+      }
+      const reached = await Promise.all(
+        frames.map(({ frameId, documentId }) =>
+          verificationMessenger
+            .sendMessage("resync", { documentId, force }, { tabId, frameId })
+            .then(
+              () => true,
+              () => false,
+            ),
+        ),
+      );
+      const { status } = await chrome.tabs.get(tabId);
+      return {
+        reachable: frames.flatMap(({ documentId }, i) =>
+          reached[i] ? [documentId] : [],
+        ),
+        loading: status === "loading",
+      };
+    },
+  );
+
   chrome.tabs.onRemoved.addListener((tabId) => {
     void untrackTab(tabId).then(forget);
   });
@@ -309,7 +343,7 @@ export function setupVerificationPipeline() {
       verificationMessenger
         .sendMessage(
           "resync",
-          { documentId: subject.documentId },
+          { documentId: subject.documentId, force: false },
           { tabId: subject.tabId, frameId: subject.frameId },
         )
         .catch(() => {

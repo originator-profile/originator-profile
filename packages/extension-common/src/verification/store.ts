@@ -154,3 +154,7 @@ export async function getSiteProfileEntry(
   const stored = await chrome.storage.session.get(key);
   return stored[key] as SiteProfileEntry | undefined;
 }
+
+export async function removeSiteProfileEntry(documentId: string) {
+  await chrome.storage.session.remove(siteProfileKey(documentId));
+}
