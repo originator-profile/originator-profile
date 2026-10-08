@@ -76,10 +76,8 @@ describe("verifyDocument", () => {
 
     expect(result.status).toBe(true);
     expect(result.outcome?.target).toBe(input);
-    // 共有の発信者が先頭に、文書の発信者がその後ろに並ぶ
+    // 共有の発信者は結果に含めず、文書の発信者だけが並ぶ
     expect(subjectIds(result.outcome?.originators ?? [])).toEqual([
-      opId.authority,
-      opId.certifier,
       opId.originator,
     ]);
   });
@@ -119,15 +117,22 @@ describe("verifyDocument", () => {
     const registry = prepareRegistry([authorityOp, certifierOp]);
     if (registry instanceof Error) throw registry;
 
-    const result = await verifyDocument(target(), {
-      registry,
-      shared: await sharedSite(registry, [originatorOp]),
-      logger: silent,
-    });
+    // 発行者の Core Profile は Web サイトの発信者にだけある
+    const { privateKey } = await generateKey();
+    const ca = await signCa(article, privateKey, signOptions);
 
-    expect(result.status).toBe(true);
-    expect(subjectIds(result.outcome?.originators ?? [])).toContain(
-      opId.originator,
+    const result = await verifyDocument(
+      target({ cas: [ca], url: "https://www.example.org/articles/example" }),
+      {
+        registry,
+        shared: await sharedSite(registry, [originatorOp]),
+        logger: silent,
+      },
+    );
+
+    // 発行者の Core Profile は見つかり、署名の検証まで進む
+    expect(result.errors ?? []).not.toContainEqual(
+      expect.objectContaining({ type: problemType(CoreProfileNotFound.code) }),
     );
     expect(result.inputRange).toContainEqual({ kind: "site-profile" });
   });
@@ -161,7 +166,12 @@ describe("verifyDocument", () => {
     });
 
     assert(!result.status, "検証は失敗するはず");
-    expect(result.errors).toEqual(shared.result.errors);
+    // 共有の発信者の中を指す問題は含めず、失敗の要約だけを載せる
+    expect(result.errors).toEqual(
+      shared.result.errors?.filter(({ pointer }) => !pointer),
+    );
+    expect(result.errors).not.toHaveLength(0);
+    expect(result.outcome?.originators).toEqual([]);
   });
 
   test("文書の OPS の検証に失敗した場合はその理由を返す", async () => {
@@ -178,9 +188,9 @@ describe("verifyDocument", () => {
 
     assert(!result.status, "検証は失敗するはず");
     expect(result.errors[0]?.type).toBe(problemType(OpsVerifyFailed.code));
-    // 文書の発信者は共有の発信者の後ろの位置を指す
+    // 文書の発信者の位置を指す
     expect(result.errors).toContainEqual(
-      expect.objectContaining({ pointer: "$.originators[1]" }),
+      expect.objectContaining({ pointer: "$.originators[0]" }),
     );
   });
 
@@ -223,7 +233,7 @@ describe("verifyDocument", () => {
     ]);
   });
 
-  test("文書の検証中の通知を、共有の発信者の後ろの位置で結果に載せる", async () => {
+  test("文書の検証中の通知を、文書の発信者の位置で結果に載せる", async () => {
     const { authorityOp, certifierOp, originatorOp } = await buildOpsFixture();
     const registry = prepareRegistry([authorityOp, certifierOp]);
     if (registry instanceof Error) throw registry;
@@ -238,7 +248,7 @@ describe("verifyDocument", () => {
     expect(result.warnings).toContainEqual(
       expect.objectContaining({
         pointer: expect.stringMatching(
-          /^\$\.originators\[2\]\.annotations\[\d+\]$/,
+          /^\$\.originators\[0\]\.annotations\[\d+\]$/,
         ),
       }),
     );

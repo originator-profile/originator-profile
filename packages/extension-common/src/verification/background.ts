@@ -5,6 +5,7 @@ import {
   verifyDocument,
   verifyRegistry,
   type FetchIntegrityResult,
+  type SecuringResult,
   type SharedOriginators,
   type VerificationTarget,
   type DocumentVerificationResult as VerifiedDocument,
@@ -34,15 +35,18 @@ import {
   getVerificationEntry,
   listVerificationEntries,
   removeSiteProfileEntry,
+  setRegistryEntry,
   setSiteProfileEntry,
   setVerificationEntry,
   trackDocument,
   untrackTab,
 } from "./store";
 import type {
+  DocumentCredentials,
   DocumentVerificationResult,
   InputIdentity,
   SiteProfileEntry,
+  StoredCredentials,
   VerificationEntry,
   VerificationSubject,
 } from "./types";
@@ -74,14 +78,41 @@ async function canReuse(
   return isReusable(previous, current, new Date());
 }
 
-/** 検証結果から、保持できない検証対象を除く */
+/**
+ * 保持する検証結果から、VC の原文を除く
+ *
+ * 復号したペイロードは outcome にあり、原文は表示に用いないため保持しない。
+ */
+function withoutSources<T extends { securingResults: SecuringResult[] }>(
+  result: T,
+): T {
+  return {
+    ...result,
+    securingResults: result.securingResults.map(
+      ({ source: _, ...rest }) => rest,
+    ),
+  };
+}
+
+/** 検証結果から、保持できない検証対象と VC の原文を除く */
 function toStoredResult(
   result: VerifiedDocument<VerificationTarget>,
 ): DocumentVerificationResult {
-  if (!result.outcome) return result;
+  if (!result.outcome) return withoutSources(result);
   const { target: _, ...outcome } = result.outcome;
-  return { ...result, outcome };
+  return withoutSources({ ...result, outcome });
 }
+
+/** 保持するクレデンシャル。原文を除き、取得経路だけを残す */
+const toStoredCredentials = ({
+  ops,
+  cas,
+  opMeta,
+}: DocumentCredentials): StoredCredentials => ({
+  ops: ops.map(({ source }) => ({ source })),
+  cas: cas.map(({ source }) => ({ source })),
+  opMeta,
+});
 
 /**
  * クレデンシャルのない文書の結果
@@ -187,9 +218,12 @@ export function setupVerificationPipeline() {
   /** レジストリの検証。拡張機能に同梱された入力なので Service Worker ごとに 1 度だけ */
   let registryVerification: Promise<SharedOriginators["result"]> | undefined;
   const verifiedRegistry = () => {
-    registryVerification ??= getRegistry().then((registry) =>
-      verifyRegistry(registry),
-    );
+    registryVerification ??= getRegistry().then(async (registry) => {
+      const result = await verifyRegistry(registry);
+      // NOTE: サイドパネルが発信者の並びと取得経路を組み立てるために読む
+      await setRegistryEntry(withoutSources(result));
+      return result;
+    });
     registryVerification.catch(() => {
       registryVerification = undefined;
     });
@@ -231,7 +265,7 @@ export function setupVerificationPipeline() {
         if (result instanceof Error) throw result;
         return result;
       });
-      const entry = { ...verification, origin };
+      const entry = { origin, result: withoutSources(verification.result) };
       await setSiteProfileEntry(entry);
       return entry;
     })().finally(() => siteProfiles.delete(origin));
@@ -273,7 +307,7 @@ export function setupVerificationPipeline() {
       await record({
         state: "settled",
         subject,
-        credentials: { ops, cas, opMeta },
+        credentials: toStoredCredentials({ ops, cas, opMeta }),
         result: emptyResult(url),
         inputIdentity,
       });
@@ -315,7 +349,7 @@ export function setupVerificationPipeline() {
     await setVerificationEntry({
       state: "settled",
       subject,
-      credentials: { ops, cas, opMeta },
+      credentials: toStoredCredentials({ ops, cas, opMeta }),
       result: toStoredResult(result),
       inputIdentity,
     });

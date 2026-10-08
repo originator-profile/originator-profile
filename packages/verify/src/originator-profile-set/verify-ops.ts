@@ -84,7 +84,7 @@ export function OpsVerifier(
      * 検証済みの共有の OP (レジストリ、Web サイトの発信者など)
      *
      * 検証し直さずに、PA・WMP の検証鍵と PA Issuer 登録証の引き先に加える。
-     * `ops` はその後ろに置かれるものとして位置を指す。
+     * 結果と問題の位置は `ops` の中を指し、`trusted` を含まない。
      */
     trusted?: OriginatorPayload[];
   } = {},
@@ -111,7 +111,7 @@ export function OpsVerifier(
     ]);
     const resultOps = await Promise.all(
       decoded.map(async (op, opIndex): Promise<OpVerificationResult> => {
-        const at = pointer("originators", trusted.length + opIndex);
+        const at = pointer("originators", opIndex);
         const core = await verifyCp(op.core.source);
         const annotations = await verifyAnnotations(
           paOrWmpIssuerKeys,
