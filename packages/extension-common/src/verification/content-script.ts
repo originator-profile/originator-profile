@@ -10,6 +10,7 @@ import {
 } from "@originator-profile/verify";
 import type { FetchCredentialsMessageResponse } from "../credentials/types";
 import { verificationMessenger } from "./events";
+import { createTargetWatcher } from "./target-watcher";
 
 const CREDENTIAL_SCRIPT_SELECTOR = [
   'script[type="application/cas+json"]',
@@ -103,14 +104,24 @@ export function setupDocumentVerification() {
 
   let started = false;
   let scheduled = false;
-  const notify = () => {
+  let restored = false;
+  const notify = (options: { restored?: boolean } = {}) => {
+    restored ||= options.restored ?? false;
     if (!started || scheduled) return;
     scheduled = true;
     setTimeout(() => {
+      const data = { restored };
       scheduled = false;
-      send(() => verificationMessenger.sendMessage("documentChanged", null));
+      restored = false;
+      send(() => verificationMessenger.sendMessage("documentChanged", data));
     });
   };
+
+  const targets = createTargetWatcher(() => {
+    send(() => verificationMessenger.sendMessage("inputChanged", null));
+  });
+  /** 新しい検証が始まったら、その検証で計算した target から監視し直す */
+  let rewatch = false;
 
   // NOTE: 構文解析中に挿入された CAS は、後続の OPS がまだ挿入されていない
   // ことがある。構文解析の完了 (interactive) を待ってから通知する。
@@ -121,7 +132,10 @@ export function setupDocumentVerification() {
     });
   };
 
+  // NOTE: document.open() による内容の置き換えも、クレデンシャルの script 要素の
+  // 削除と target の要素の削除としてここで検知する
   new MutationObserver((records) => {
+    for (const { removedNodes } of records) targets.handleRemoved(removedNodes);
     const changed = records.some(
       ({ addedNodes, removedNodes }) =>
         [...addedNodes].some(containsCredentialScript) ||
@@ -140,7 +154,7 @@ export function setupDocumentVerification() {
 
   // bfcache から復元された場合、Content Script は再注入されないため改めて通知する
   window.addEventListener("pageshow", (event) => {
-    if (event.persisted) notify();
+    if (event.persisted) notify({ restored: true });
   });
 
   verificationMessenger.onMessage("resync", async ({ data }) => {
@@ -152,6 +166,7 @@ export function setupDocumentVerification() {
     "fetchDocumentCredentials",
     async ({ data }) => {
       await accept(data);
+      rewatch = true;
       return fetchDocumentCredentials();
     },
   );
@@ -173,6 +188,11 @@ export function setupDocumentVerification() {
     "verifyDocumentIntegrity",
     async ({ data }) => {
       await accept(data);
+      if (rewatch) {
+        rewatch = false;
+        targets.reset();
+      }
+      targets.watch(data.content);
       return serializeIfError(await verifyIntegrity(data.content));
     },
   );

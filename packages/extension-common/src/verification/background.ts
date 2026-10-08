@@ -3,10 +3,9 @@ import type { ContentAttestationSet } from "@originator-profile/model";
 import {
   listInputDependencies,
   verifyDocument,
-  type DocumentOutcome,
   type FetchIntegrityResult,
-  type VerificationResult,
   type VerificationTarget,
+  type DocumentVerificationResult as VerifiedDocument,
   type VerifyIntegrity,
 } from "@originator-profile/verify";
 import { toDocumentCredentials } from "../credentials/messaging";
@@ -15,7 +14,16 @@ import { getFrame } from "../utils/frames";
 import { getRegistry } from "../utils/registry-ops";
 import { verificationMessenger } from "./events";
 import {
+  dependsOnRenderedResult,
+  invalidate,
+  InvalidationType,
+  isAllowedUrlConsistent,
+  isReusable,
+  toInputIdentity,
+} from "./identity";
+import {
   getSiteProfileEntry,
+  getVerificationEntry,
   listVerificationEntries,
   setSiteProfileEntry,
   setVerificationEntry,
@@ -24,15 +32,41 @@ import {
 } from "./store";
 import type {
   DocumentVerificationResult,
+  InputIdentity,
   SiteProfileEntry,
   VerificationSubject,
 } from "./types";
 
 type Destination = { tabId: number; frameId: number; documentId: string };
 
+/** 検証を始めた契機 */
+type Trigger = {
+  /** bfcache から復元された */
+  restored?: boolean;
+  /** 検証済みの target の入力依存対象が変化した */
+  inputChanged?: boolean;
+};
+
+/**
+ * 保持している結果を再利用できるか
+ *
+ * target の入力依存対象が変化した場合と、bfcache から復元された文書の結果が
+ * rendered result に依存する場合は、改めて検証する。
+ */
+async function canReuse(
+  documentId: string,
+  current: InputIdentity,
+  trigger: Trigger,
+): Promise<boolean> {
+  if (trigger.inputChanged) return false;
+  const previous = await getVerificationEntry(documentId);
+  if (trigger.restored && dependsOnRenderedResult(previous)) return false;
+  return isReusable(previous, current, new Date());
+}
+
 /** 検証結果から、保持できない検証対象を除く */
 function toStoredResult(
-  result: VerificationResult<DocumentOutcome<VerificationTarget>>,
+  result: VerifiedDocument<VerificationTarget>,
 ): DocumentVerificationResult {
   if (!result.outcome) return result;
   const { target: _, ...outcome } = result.outcome;
@@ -129,7 +163,10 @@ export function setupVerificationPipeline() {
     return verifying;
   };
 
-  const verifyFrameDocument = async (destination: Destination) => {
+  const verifyFrameDocument = async (
+    destination: Destination,
+    trigger: Trigger,
+  ) => {
     const { tabId, frameId, documentId } = destination;
     const frame = await getFrame({ tabId, frameId, documentId });
     if (!frame) return;
@@ -155,6 +192,9 @@ export function setupVerificationPipeline() {
       url,
       origin,
     };
+    const inputIdentity = await toInputIdentity({ ops, cas }, url);
+    if (await canReuse(documentId, inputIdentity, trigger)) return;
+
     if (!isCurrent()) return;
     await setVerificationEntry({ state: "unverified", subject });
 
@@ -194,11 +234,12 @@ export function setupVerificationPipeline() {
       subject,
       credentials: { ops, cas, opMeta },
       result: toStoredResult(result),
+      inputIdentity,
     });
   };
 
-  const run = (destination: Destination) => {
-    verifyFrameDocument(destination).catch((error: unknown) => {
+  const run = (destination: Destination, trigger: Trigger = {}) => {
+    verifyFrameDocument(destination, trigger).catch((error: unknown) => {
       console.error(
         `[verification] Failed to verify document ${destination.documentId}:`,
         error,
@@ -206,15 +247,54 @@ export function setupVerificationPipeline() {
     });
   };
 
-  verificationMessenger.onMessage("register", ({ sender }) => {
-    // NOTE: webextension-polyfill の型定義は documentId を持たない
-    return (sender as chrome.runtime.MessageSender).documentId;
-  });
+  verificationMessenger.onMessage(
+    "register",
+    ({ sender }) => (sender as chrome.runtime.MessageSender).documentId,
+  );
 
-  verificationMessenger.onMessage("documentChanged", ({ sender }) => {
+  /** メッセージの送り主の文書 */
+  const destinationOf = (sender: unknown): Destination | undefined => {
+    // NOTE: webextension-polyfill の型定義は documentId を持たない
     const { tab, frameId, documentId } = sender as chrome.runtime.MessageSender;
     if (tab?.id === undefined || frameId === undefined || !documentId) return;
-    run({ tabId: tab.id, frameId, documentId });
+    return { tabId: tab.id, frameId, documentId };
+  };
+
+  verificationMessenger.onMessage("documentChanged", ({ data, sender }) => {
+    const destination = destinationOf(sender);
+    if (destination) run(destination, { restored: data.restored });
+  });
+
+  verificationMessenger.onMessage("inputChanged", ({ sender }) => {
+    const destination = destinationOf(sender);
+    if (destination) run(destination, { inputChanged: true });
+  });
+
+  /** same-document navigation で allowedUrl の評価結果が変われば結果を無効にする */
+  const reevaluateAllowedUrl = async ({
+    documentId,
+    url,
+  }: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
+    if (!documentId) return;
+    const entry = await getVerificationEntry(documentId);
+    if (entry?.state !== "settled") return;
+    if (await isAllowedUrlConsistent(entry, url)) return;
+    await setVerificationEntry(
+      invalidate(
+        entry,
+        {
+          type: InvalidationType.AllowedUrlChanged,
+          title: "allowedUrl no longer matches the document URL",
+        },
+        new Date(),
+      ),
+    );
+  };
+  chrome.webNavigation.onHistoryStateUpdated.addListener((details) => {
+    void reevaluateAllowedUrl(details);
+  });
+  chrome.webNavigation.onReferenceFragmentUpdated.addListener((details) => {
+    void reevaluateAllowedUrl(details);
   });
 
   chrome.tabs.onRemoved.addListener((tabId) => {
@@ -225,7 +305,7 @@ export function setupVerificationPipeline() {
   // 文書に通知を求め、検証をやり直す。
   void listVerificationEntries().then((entries) => {
     for (const { state, subject } of entries) {
-      if (state === "settled") continue;
+      if (state === "settled" || state === "invalidated") continue;
       verificationMessenger
         .sendMessage(
           "resync",
