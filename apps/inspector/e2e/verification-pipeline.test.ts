@@ -402,3 +402,50 @@ test("保持する結果は VC の原文と共有の発信者を含まない", a
   expect(stored.siteProfile).not.toHaveProperty("siteProfile");
   expect(stored.registry).toMatchObject({ status: true });
 });
+
+test("Service Worker が起動し直しても、保持したレジストリの検証結果を再利用する", async ({
+  context,
+  page,
+  missingSiteProfile: _missingSiteProfile,
+  credentialsPage,
+  credentialsMissingPage,
+  validCredentials,
+}) => {
+  await validCredentials(
+    { publicKey, privateKey },
+    credentialsPage.contents,
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
+  await page.goto("about:blank");
+  const worker = await backgroundWorker(context);
+  await page.goto(credentialsPage.endpoint);
+  await settledResult(worker, credentialsPage.endpoint, 1);
+
+  // 保持したレジストリの検証結果に印を付け、Service Worker を止める
+  await worker.evaluate(async () => {
+    const key = "verification:registry";
+    const { [key]: entry } = await chrome.storage.session.get(key);
+    await chrome.storage.session.set({
+      [key]: { ...(entry as object), marker: true },
+    });
+    Object.assign(globalThis, { beforeRestart: true });
+  });
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("ServiceWorker.enable");
+  await cdp.send("ServiceWorker.stopAllWorkers");
+
+  // 起動し直した Service Worker で、別の文書を検証させる
+  await page.goto(credentialsMissingPage.endpoint);
+  const restarted = await backgroundWorker(context);
+  await settledResult(restarted, credentialsMissingPage.endpoint, 0);
+
+  expect(
+    await restarted.evaluate(async () => ({
+      restarted: !("beforeRestart" in globalThis),
+      registry: (await chrome.storage.session.get("verification:registry"))[
+        "verification:registry"
+      ],
+    })),
+  ).toMatchObject({ restarted: true, registry: { marker: true } });
+});
