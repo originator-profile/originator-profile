@@ -1,6 +1,4 @@
 import {
-  InvalidationType,
-  isStillValid,
   isTopFrameUnreachable,
   VerificationInvalidated,
   type SubscribedTabVerification,
@@ -41,16 +39,11 @@ function toSiteProfileView(
   }
 
   const entry = subscribed.verification?.siteProfile;
-  if (!entry) return { isLoading: true };
-  // NOTE: 保持した結果は、Service Worker が検証し直すまで有効期限を過ぎても残る
-  if (!isStillValid(entry.result, new Date())) {
-    const reason = {
-      type: InvalidationType.Expired,
-      title: "Verification result expired",
-    };
+  if (!entry || entry.state === "verifying") return { isLoading: true };
+  if (entry.state === "invalidated") {
     return {
       isLoading: false,
-      error: new VerificationInvalidated(reason.title, reason),
+      error: new VerificationInvalidated(entry.reason.title, entry.reason),
     };
   }
 
