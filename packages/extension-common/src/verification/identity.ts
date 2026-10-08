@@ -8,6 +8,7 @@ import {
 import type { FrameCredentials } from "../credentials/types";
 import type {
   InputIdentity,
+  RegistryEntry,
   ResourceIdentity,
   VerificationEntry,
 } from "./types";
@@ -104,6 +105,22 @@ export async function isAllowedUrlConsistent(
   ]);
   return JSON.stringify(evaluated) === JSON.stringify(current);
 }
+
+/**
+ * 保持しているレジストリの検証結果を再利用できるか
+ *
+ * 用いた VC の有効期限がすべて現在時刻より後の場合に限る。同梱のレジストリは
+ * 拡張機能の更新でしか変わらず、更新で検証結果ストアも消えるため、入力は比べない。
+ */
+export const isRegistryEntryReusable = (
+  entry: RegistryEntry | undefined,
+  now: Date,
+): entry is RegistryEntry =>
+  entry !== undefined &&
+  entry.securingResults.every(
+    ({ expiredAt }) =>
+      expiredAt === undefined || now.getTime() < Date.parse(expiredAt),
+  );
 
 const isExpired = (entry: Settled, now: Date) =>
   entry.result.validUntil !== undefined &&

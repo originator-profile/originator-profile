@@ -346,3 +346,8 @@ export async function removeSiteProfileEntry(origin: string) {
 export function setRegistryEntry(entry: RegistryEntry): Promise<void> {
   return serialize(() => setWithEviction({ [registryKey]: entry }));
 }
+
+export async function getRegistryEntry(): Promise<RegistryEntry | undefined> {
+  const stored = await chrome.storage.session.get(registryKey);
+  return stored[registryKey] as RegistryEntry | undefined;
+}
