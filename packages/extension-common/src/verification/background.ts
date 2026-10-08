@@ -1,0 +1,240 @@
+import { deserializeIfError } from "@originator-profile/core";
+import type { ContentAttestationSet } from "@originator-profile/model";
+import {
+  listInputDependencies,
+  verifyDocument,
+  type DocumentOutcome,
+  type FetchIntegrityResult,
+  type VerificationResult,
+  type VerificationTarget,
+  type VerifyIntegrity,
+} from "@originator-profile/verify";
+import { toDocumentCredentials } from "../credentials/messaging";
+import { verifyFetchedWebsite } from "../site-profile/verify-website";
+import { getFrame } from "../utils/frames";
+import { getRegistry } from "../utils/registry-ops";
+import { verificationMessenger } from "./events";
+import {
+  getSiteProfileEntry,
+  listVerificationEntries,
+  setSiteProfileEntry,
+  setVerificationEntry,
+  trackDocument,
+  untrackTab,
+} from "./store";
+import type {
+  DocumentVerificationResult,
+  SiteProfileEntry,
+  VerificationSubject,
+} from "./types";
+
+type Destination = { tabId: number; frameId: number; documentId: string };
+
+/** 検証結果から、保持できない検証対象を除く */
+function toStoredResult(
+  result: VerificationResult<DocumentOutcome<VerificationTarget>>,
+): DocumentVerificationResult {
+  if (!result.outcome) return result;
+  const { target: _, ...outcome } = result.outcome;
+  return { ...result, outcome };
+}
+
+/** 文書内の Target Integrity 検証器 */
+const DocumentIntegrityVerifier =
+  ({ tabId, frameId, documentId }: Destination): VerifyIntegrity =>
+  async (content) =>
+    deserializeIfError(
+      await verificationMessenger.sendMessage(
+        "verifyDocumentIntegrity",
+        { documentId, content },
+        { tabId, frameId },
+      ),
+    ) as FetchIntegrityResult;
+
+/** CAS の target が依存する入力が、すべて検証可能になる時点まで待つ */
+async function awaitInputDependencies(
+  { tabId, frameId, documentId }: Destination,
+  cas: ContentAttestationSet,
+) {
+  const dependencies = new Set(
+    listInputDependencies(cas).map(({ dependency }) => dependency),
+  );
+  await Promise.all(
+    [...dependencies].map((dependency) =>
+      verificationMessenger.sendMessage(
+        "awaitInputDependency",
+        { documentId, dependency },
+        { tabId, frameId },
+      ),
+    ),
+  );
+}
+
+/** 検証に成功した Site Profile が提示する発信者 */
+const verifiedOriginators = (site?: SiteProfileEntry) =>
+  site?.result.status ? site.siteProfile?.originators : undefined;
+
+/**
+ * Service Worker の検証パイプラインを登録する
+ *
+ * 文書ごとに独立して、クレデンシャルの取得・入力依存対象の待ち合わせ・検証を
+ * おこない、結果を検証結果ストアに書き込む。
+ */
+export function setupVerificationPipeline() {
+  /** 文書ごとの検証の世代。新しい検証が始まったら古い検証の結果は書き込まない */
+  const generations = new Map<string, number>();
+  let lastGeneration = 0;
+  /** トップレベル文書ごとの Site Profile の検証 */
+  const siteProfiles = new Map<string, Promise<SiteProfileEntry>>();
+
+  /** 文書の新しい検証を始め、その検証がまだ最新かを判定する関数を返す */
+  const startGeneration = (documentId: string) => {
+    const generation = ++lastGeneration;
+    generations.set(documentId, generation);
+    return () => generations.get(documentId) === generation;
+  };
+
+  const forget = (documentIds: string[]) => {
+    for (const id of documentIds) {
+      generations.delete(id);
+      siteProfiles.delete(id);
+    }
+  };
+
+  const verifySiteProfile = ({ tabId, frameId, documentId }: Destination) => {
+    const pending = siteProfiles.get(documentId);
+    if (pending) return pending;
+
+    const verifying = (async () => {
+      const stored = await getSiteProfileEntry(documentId);
+      if (stored) return stored;
+
+      const verification = await verifyFetchedWebsite(async () => {
+        const result = deserializeIfError(
+          await verificationMessenger.sendMessage(
+            "fetchDocumentSiteProfile",
+            { documentId },
+            { tabId, frameId },
+          ),
+        );
+        if (result instanceof Error) throw result;
+        return result;
+      });
+      const entry = { ...verification, documentId };
+      await setSiteProfileEntry(tabId, entry);
+      return entry;
+    })();
+    siteProfiles.set(documentId, verifying);
+    verifying.catch(() => siteProfiles.delete(documentId));
+    return verifying;
+  };
+
+  const verifyFrameDocument = async (destination: Destination) => {
+    const { tabId, frameId, documentId } = destination;
+    const frame = await getFrame({ tabId, frameId, documentId });
+    if (!frame) return;
+
+    forget(await trackDocument(tabId, frameId, documentId));
+    const isCurrent = startGeneration(documentId);
+
+    const isTopLevel = frame.frameType === "outermost_frame";
+    if (isTopLevel) void verifySiteProfile(destination);
+
+    const response = await verificationMessenger.sendMessage(
+      "fetchDocumentCredentials",
+      { documentId },
+      { tabId, frameId },
+    );
+    const { ops, cas, opMeta, url, origin } = toDocumentCredentials(response);
+    const subject: VerificationSubject = {
+      tabId,
+      frameId,
+      parentFrameId: frame.parentFrameId,
+      documentId,
+      frameType: frame.frameType,
+      url,
+      origin,
+    };
+    if (!isCurrent()) return;
+    await setVerificationEntry({ state: "unverified", subject });
+
+    const credentials = {
+      ops: ops.map(({ credential }) => credential),
+      cas: cas.map(({ credential }) => credential),
+    };
+    await awaitInputDependencies(destination, credentials.cas);
+
+    if (!isCurrent()) return;
+    await setVerificationEntry({
+      state: "verifying",
+      subject,
+      startedAt: new Date().toISOString(),
+    });
+
+    const [registry, site] = await Promise.all([
+      getRegistry(),
+      isTopLevel ? verifySiteProfile(destination) : undefined,
+    ]);
+    const result = await verifyDocument(
+      {
+        ...credentials,
+        url,
+        frameType: frame.frameType,
+        verifyIntegrity: DocumentIntegrityVerifier(destination),
+      },
+      {
+        registry,
+        siteOriginators: verifiedOriginators(site),
+      },
+    );
+
+    if (!isCurrent()) return;
+    await setVerificationEntry({
+      state: "settled",
+      subject,
+      credentials: { ops, cas, opMeta },
+      result: toStoredResult(result),
+    });
+  };
+
+  const run = (destination: Destination) => {
+    verifyFrameDocument(destination).catch((error: unknown) => {
+      console.error(
+        `[verification] Failed to verify document ${destination.documentId}:`,
+        error,
+      );
+    });
+  };
+
+  verificationMessenger.onMessage("register", ({ sender }) => {
+    // NOTE: webextension-polyfill の型定義は documentId を持たない
+    return (sender as chrome.runtime.MessageSender).documentId;
+  });
+
+  verificationMessenger.onMessage("documentChanged", ({ sender }) => {
+    const { tab, frameId, documentId } = sender as chrome.runtime.MessageSender;
+    if (tab?.id === undefined || frameId === undefined || !documentId) return;
+    run({ tabId: tab.id, frameId, documentId });
+  });
+
+  chrome.tabs.onRemoved.addListener((tabId) => {
+    void untrackTab(tabId).then(forget);
+  });
+
+  // NOTE: Service Worker が停止すると進行中の検証は失われる。確定していない
+  // 文書に通知を求め、検証をやり直す。
+  void listVerificationEntries().then((entries) => {
+    for (const { state, subject } of entries) {
+      if (state === "settled") continue;
+      verificationMessenger
+        .sendMessage(
+          "resync",
+          { documentId: subject.documentId },
+          { tabId: subject.tabId, frameId: subject.frameId },
+        )
+        .catch(() => {
+          // 文書がすでに破棄されている
+        });
+    }
+  });
+}
