@@ -5,6 +5,7 @@ import type { WarningUrlBuilder } from "./link-verification/types";
 import { overlayExtensionMessenger } from "./overlay/extension-events";
 import { setupTabBadge } from "./tab-badge/background";
 import { setupVerificationPipeline } from "./verification/background";
+import type { TabVerification } from "./verification/types";
 
 /** Firefox のサイドバーの開閉を検知するポーリング間隔（ミリ秒） */
 const SIDEBAR_POLL_INTERVAL_MS = 500;
@@ -43,7 +44,7 @@ export type BackgroundConfig = {
   /** 警告ページの URL を組み立てる */
   buildWarningUrl: WarningUrlBuilder;
   /** タブのバッジに表示するクレデンシャルの件数を数える */
-  countCredentials: (tabId: number) => Promise<number>;
+  countCredentials: (verification: TabVerification) => number;
   /** 権限が足りないときに開く案内ページ */
   permissionGuideUrl: string;
 };
@@ -58,7 +59,7 @@ export type BackgroundConfig = {
 export function setupBackground(config: BackgroundConfig) {
   setupVerificationPipeline();
   setupLinkVerification(config.buildWarningUrl);
-  const { requestTabBadgeUpdate } = setupTabBadge(config.countCredentials);
+  setupTabBadge(config.countCredentials);
 
   // Chromium: アクションクリック時にサイドパネルを開く
   if (chrome.sidePanel) {
@@ -119,16 +120,9 @@ export function setupBackground(config: BackgroundConfig) {
     if (reason !== "install" && reason !== "update") return;
 
     // NOTE: 既存のタブにはマニフェストの content script が入っていないか、更新前の
-    // 拡張機能のものが残っていて通信できない
+    // 拡張機能のものが残っていて Service Worker と通信できない。注入された
+    // content script が検証を求め、その結果でバッジが更新される
     await injectContentScriptsToExistingTabs();
-
-    const [activeTab] = await chrome.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-    if (activeTab?.id !== undefined) {
-      requestTabBadgeUpdate(activeTab.id);
-    }
     if (reason !== "install") return;
 
     const granted = await chrome.permissions.contains({

@@ -6,15 +6,10 @@ import {
   overlayExtensionMessenger,
   overlayWindowMessenger,
 } from "@originator-profile/extension-common";
-import {
-  setupOnce,
-  setupTopFrameHandlers,
-} from "@originator-profile/extension-common/content-script";
+import { setupOnce } from "@originator-profile/extension-common/content-script";
 import { Overlay } from "./components/overlay";
 
 setupOnce("content-script", () => {
-  setupTopFrameHandlers();
-
   const overlay = new Overlay();
   let enter: Parameters<OverlayProtocolMap["enter"]>[0] = {
     framesCas: [],

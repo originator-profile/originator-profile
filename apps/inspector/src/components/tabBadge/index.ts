@@ -1,1 +1,1 @@
-export { verifyTabCredentials } from "./verify";
+export { countCredentials } from "./count-credentials";
