@@ -3,6 +3,7 @@ import {
   type ProblemDetails,
 } from "@originator-profile/verify";
 import { isSiteProfileFetchError } from "../site-profile/verify-website";
+import { earliestExpiration } from "../verification/identity";
 import { waitForTabSiteProfile } from "../verification/tab-verification";
 import { isMatched, resolveActualOperator } from "./matching";
 import type {
@@ -94,15 +95,25 @@ export const getVerificationResult = async (
     sites,
     expectedOperator.id,
   );
+  const validUntil = earliestExpiration(result);
 
   if (isMatched(sites, expectedOperator.id)) {
-    return { status: "matched", source, expectedOperator, actualOperator };
+    return {
+      status: "matched",
+      source,
+      expectedOperator,
+      actualOperator,
+      validUntil,
+    };
   }
 
-  return createMismatchResult({
-    source,
-    expectedOperator,
-    actualOperator,
-    isMissing: false,
-  });
+  return {
+    ...createMismatchResult({
+      source,
+      expectedOperator,
+      actualOperator,
+      isMissing: false,
+    }),
+    validUntil,
+  };
 };
