@@ -287,6 +287,42 @@ export function setupVerificationPipeline() {
     return verifying;
   };
 
+  /** same-document navigation で allowedUrl の評価結果が変われば結果を無効にする */
+  const reevaluateAllowedUrl = async (documentId: string, url: string) => {
+    const entry = await getVerificationEntry(documentId);
+    if (entry?.state !== "settled") return;
+    if (await isAllowedUrlConsistent(entry, url)) return;
+    await setVerificationEntry(
+      invalidate(
+        entry,
+        {
+          type: InvalidationType.AllowedUrlChanged,
+          title: "allowedUrl no longer matches the document URL",
+        },
+        new Date(),
+      ),
+    );
+  };
+
+  /**
+   * 確定した結果を、現在の document's URL で再評価する
+   *
+   * NOTE: 検証のあいだの same-document navigation では、確定する前の結果を
+   * 再評価できない
+   * @param startUrl 検証を開始した時点の document's URL
+   */
+  const reevaluateSinceStart = async (
+    { tabId, frameId, documentId }: Destination,
+    startUrl: string,
+  ) => {
+    const current = await getFrame({ tabId, frameId, documentId }).catch(
+      () => undefined,
+    );
+    if (current && current.url !== startUrl) {
+      await reevaluateAllowedUrl(documentId, current.url);
+    }
+  };
+
   /**
    * 文書を検証して結果を書き込む
    * @param subject 検証対象の文書の識別。取得したクレデンシャルの URL で更新する
@@ -346,10 +382,18 @@ export function setupVerificationPipeline() {
       verifiedRegistry(),
       isTopLevel ? verifySiteProfile(destination, subject.origin) : undefined,
     ]);
+    // NOTE: allowedUrl は、入力スナップショットを取る検証の開始時点の
+    // document's URL で評価する。取得した後の same-document navigation で変わりうる
+    const startUrl = await verificationMessenger.sendMessage(
+      "fetchDocumentUrl",
+      { documentId },
+      { tabId, frameId },
+    );
+    subject.url = startUrl;
     const result = await verifyDocument(
       {
         ...credentials,
-        url,
+        url: startUrl,
         frameType: subject.frameType,
         verifyIntegrity: DocumentIntegrityVerifier(destination),
       },
@@ -362,8 +406,9 @@ export function setupVerificationPipeline() {
       subject,
       credentials: toStoredCredentials({ ops, cas, opMeta }),
       result: toStoredResult(result),
-      inputIdentity,
+      inputIdentity: { ...inputIdentity, evaluatedUrl: startUrl },
     });
+    await reevaluateSinceStart(destination, startUrl);
   };
 
   const verifyFrameDocument = async (
@@ -437,32 +482,18 @@ export function setupVerificationPipeline() {
     if (destination) run(destination, { force: true });
   });
 
-  /** same-document navigation で allowedUrl の評価結果が変われば結果を無効にする */
-  const reevaluateAllowedUrl = async ({
+  const onSameDocumentNavigation = ({
     documentId,
     url,
   }: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
-    if (!documentId) return;
-    const entry = await getVerificationEntry(documentId);
-    if (entry?.state !== "settled") return;
-    if (await isAllowedUrlConsistent(entry, url)) return;
-    await setVerificationEntry(
-      invalidate(
-        entry,
-        {
-          type: InvalidationType.AllowedUrlChanged,
-          title: "allowedUrl no longer matches the document URL",
-        },
-        new Date(),
-      ),
-    );
+    if (documentId) void reevaluateAllowedUrl(documentId, url);
   };
-  chrome.webNavigation.onHistoryStateUpdated.addListener((details) => {
-    void reevaluateAllowedUrl(details);
-  });
-  chrome.webNavigation.onReferenceFragmentUpdated.addListener((details) => {
-    void reevaluateAllowedUrl(details);
-  });
+  chrome.webNavigation.onHistoryStateUpdated.addListener(
+    onSameDocumentNavigation,
+  );
+  chrome.webNavigation.onReferenceFragmentUpdated.addListener(
+    onSameDocumentNavigation,
+  );
 
   verificationMessenger.onMessage(
     "verifyTab",
