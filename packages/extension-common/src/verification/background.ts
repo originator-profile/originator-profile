@@ -191,17 +191,17 @@ async function awaitInputDependencies(
 /**
  * 文書の検証に用いる共有の発信者
  *
- * トップレベル文書では、そのオリジンの Web サイトの検証結果 (レジストリの発信者を
- * 含む) を用いる。Site Profile が設置されていなければレジストリの検証結果を用いる。
- * Site Profile の検証に失敗していれば、その結果をそのまま渡して文書も失敗にする。
+ * トップレベル文書では、そのオリジンの Web サイトの検証結果も用いる。Site Profile
+ * が設置されていなければ用いない。Site Profile の検証に失敗していれば、その結果を
+ * 渡して文書も失敗にする。
  */
 const sharedOriginatorsOf = (
-  registry: SharedOriginators["result"],
+  registry: SharedOriginators["registry"],
   site?: SiteProfileEntry,
 ): SharedOriginators =>
   site && !isSiteProfileFetchError(site.result.errors?.[0])
-    ? { source: "site-profile", result: site.result }
-    : { source: "registry", result: registry };
+    ? { registry, site: site.result }
+    : { registry };
 
 /**
  * Service Worker の検証パイプラインを登録する
@@ -216,7 +216,7 @@ export function setupVerificationPipeline() {
   /** 進行中のオリジンごとの Site Profile の検証 */
   const siteProfiles = new Map<string, Promise<SiteProfileEntry>>();
   /** レジストリの検証。拡張機能に同梱された入力なので Service Worker ごとに 1 度だけ */
-  let registryVerification: Promise<SharedOriginators["result"]> | undefined;
+  let registryVerification: Promise<SharedOriginators["registry"]> | undefined;
   const verifiedRegistry = () => {
     registryVerification ??= getRegistry().then(async (registry) => {
       const result = await verifyRegistry(registry);
@@ -254,18 +254,22 @@ export function setupVerificationPipeline() {
       const stored = await getSiteProfileEntry(origin);
       if (stored) return stored;
 
-      const verification = await verifyFetchedWebsite(async () => {
-        const result = deserializeIfError(
-          await verificationMessenger.sendMessage(
-            "fetchDocumentSiteProfile",
-            { documentId },
-            { tabId, frameId },
-          ),
-        );
-        if (result instanceof Error) throw result;
-        return result;
-      });
-      const entry = { origin, result: withoutSources(verification.result) };
+      const registry = await verifiedRegistry();
+      const verification = await verifyFetchedWebsite(
+        async () => {
+          const result = deserializeIfError(
+            await verificationMessenger.sendMessage(
+              "fetchDocumentSiteProfile",
+              { documentId },
+              { tabId, frameId },
+            ),
+          );
+          if (result instanceof Error) throw result;
+          return result;
+        },
+        { verifiedRegistry: registry },
+      );
+      const entry = { origin, result: withoutSources(verification) };
       await setSiteProfileEntry(entry);
       return entry;
     })().finally(() => siteProfiles.delete(origin));
