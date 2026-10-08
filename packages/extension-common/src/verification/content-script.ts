@@ -180,6 +180,11 @@ export function setupDocumentVerification() {
     },
   );
 
+  verificationMessenger.onMessage("fetchDocumentUrl", async ({ data }) => {
+    await accept(data);
+    return window.location.href;
+  });
+
   verificationMessenger.onMessage(
     "fetchDocumentSiteProfile",
     async ({ data }) => {
