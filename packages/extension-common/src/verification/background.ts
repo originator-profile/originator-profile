@@ -27,8 +27,8 @@ import {
   invalidate,
   InvalidationType,
   isAllowedUrlConsistent,
-  isRegistryEntryReusable,
   isReusable,
+  isStillValid,
   toInputIdentity,
   VerificationIncomplete,
 } from "./identity";
@@ -226,7 +226,7 @@ export function setupVerificationPipeline() {
    */
   const verifiedRegistry = async (): Promise<RegistryEntry> => {
     const stored = await getRegistryEntry();
-    if (isRegistryEntryReusable(stored, new Date())) return stored;
+    if (stored && isStillValid(stored, new Date())) return stored;
     registryVerification ??= getRegistry()
       .then(async (registry) => {
         const entry = withoutSources(await verifyRegistry(registry));
@@ -262,7 +262,7 @@ export function setupVerificationPipeline() {
 
     const verifying = (async () => {
       const stored = await getSiteProfileEntry(origin);
-      if (stored) return stored;
+      if (stored && isStillValid(stored.result, new Date())) return stored;
 
       const registry = await verifiedRegistry();
       const verification = await verifyFetchedWebsite(

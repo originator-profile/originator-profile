@@ -357,6 +357,66 @@ test("同じオリジン内の遷移では Site Profile を取得し直さない
   expect(fetched).toBe(fetchedForFirst);
 });
 
+test("有効期限を過ぎた Site Profile の検証結果は再利用せずに取得し直す", async ({
+  context,
+  page,
+  validSiteProfile,
+  credentialsPage,
+  credentialsMissingPage,
+  validCredentials,
+}) => {
+  const key = { publicKey, privateKey };
+  await validSiteProfile(key, credentialsPage.issuer, credentialsPage.holder);
+  await validCredentials(
+    key,
+    credentialsPage.contents,
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
+  let fetched = 0;
+  page.on("request", (request) => {
+    if (request.url().endsWith("/.well-known/sp.json")) fetched += 1;
+  });
+  await page.goto("about:blank");
+  const worker = await backgroundWorker(context);
+  await page.goto(credentialsMissingPage.endpoint);
+  await settledResult(worker, credentialsMissingPage.endpoint, 0);
+  expect(fetched).toBe(1);
+
+  // 保持した Site Profile の検証結果の VC を、有効期限を過ぎたものにする
+  await worker.evaluate(async () => {
+    const stored = await chrome.storage.session.get(null);
+    const [key, entry] =
+      Object.entries(stored).find(([key]) =>
+        key.startsWith("verification:site-profile:"),
+      ) ?? [];
+    if (!key) throw new Error("Site Profile の検証結果を保持しているはず");
+    const { result } = entry as {
+      result: { securingResults: { expiredAt?: string }[] };
+    };
+    const expiredAt = new Date(0).toISOString();
+    await chrome.storage.session.set({
+      [key]: {
+        ...(entry as object),
+        result: {
+          ...result,
+          securingResults: result.securingResults.map((r) => ({
+            ...r,
+            expiredAt,
+          })),
+        },
+      },
+    });
+  });
+  await page.goto(credentialsPage.endpoint);
+
+  expect(await settledResult(worker, credentialsPage.endpoint, 1)).toEqual({
+    status: true,
+    frameType: "outermost_frame",
+  });
+  expect(fetched).toBe(2);
+});
+
 test("保持する結果は VC の原文と共有の発信者を含まない", async ({
   context,
   page,

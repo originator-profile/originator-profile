@@ -1,3 +1,4 @@
+import { isExpired } from "@originator-profile/core";
 import type { SourcedCredential } from "@originator-profile/presentation";
 import {
   listInputDependencies,
@@ -107,24 +108,37 @@ export async function isAllowedUrlConsistent(
 }
 
 /**
- * 保持しているレジストリの検証結果を再利用できるか
- *
- * 用いた VC の有効期限がすべて現在時刻より後の場合に限る。同梱のレジストリは
- * 拡張機能の更新でしか変わらず、更新で検証結果ストアも消えるため、入力は比べない。
+ * 用いた VC の有効期間の終了 (exp、validUntil) のうち最も早いもの
+ * @returns 有効期間の終了を持つ VC がなければ undefined
  */
-export const isRegistryEntryReusable = (
-  entry: RegistryEntry | undefined,
-  now: Date,
-): entry is RegistryEntry =>
-  entry !== undefined &&
-  entry.securingResults.every(
-    ({ expiredAt }) =>
-      expiredAt === undefined || now.getTime() < Date.parse(expiredAt),
-  );
+export function earliestExpiration({
+  securingResults,
+}: Pick<RegistryEntry, "securingResults">): string | undefined {
+  const expirations = securingResults
+    .flatMap(({ expiredAt, validUntil }) => [expiredAt, validUntil])
+    .flatMap((value) => (value ? [Date.parse(value)] : []));
+  if (expirations.length === 0) return undefined;
+  return new Date(Math.min(...expirations)).toISOString();
+}
 
-const isExpired = (entry: Settled, now: Date) =>
+/**
+ * 時刻の境界を持たない結果 (レジストリ、Site Profile) を、現在時刻でも使えるか
+ *
+ * 検証を通過した結果は、用いた VC の有効期限がすべて現在時刻より後の場合に限る。
+ * 通過しなかった結果は時刻の経過で通過に変わらないため、そのまま使える。
+ */
+export const isStillValid = (
+  result: Pick<RegistryEntry, "status" | "securingResults">,
+  now: Date,
+) => {
+  if (!result.status) return true;
+  const expiration = earliestExpiration(result);
+  return expiration === undefined || !isExpired(expiration, now);
+};
+
+const isPastValidUntil = (entry: Settled, now: Date) =>
   entry.result.validUntil !== undefined &&
-  now.getTime() >= Date.parse(entry.result.validUntil);
+  isExpired(entry.result.validUntil, now);
 
 /**
  * 保持している結果を再利用できるか
@@ -140,7 +154,7 @@ export async function isReusable(
   current: InputIdentity,
   now: Date,
 ): Promise<boolean> {
-  if (entry?.state !== "settled" || isExpired(entry, now)) return false;
+  if (entry?.state !== "settled" || isPastValidUntil(entry, now)) return false;
   // NOTE: 検証を完了できなかった結果は検証の結果ではないため、入力が同じでも使わない
   if (
     entry.result.errors?.some(({ type }) => type === VerificationIncomplete)
@@ -190,7 +204,7 @@ export function resolveEntry(
   entry: VerificationEntry,
   now: Date,
 ): VerificationEntry {
-  if (entry.state !== "settled" || !isExpired(entry, now)) return entry;
+  if (entry.state !== "settled" || !isPastValidUntil(entry, now)) return entry;
   return invalidate(
     entry,
     { type: InvalidationType.Expired, title: "Verification result expired" },
