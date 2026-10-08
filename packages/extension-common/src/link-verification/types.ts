@@ -26,7 +26,7 @@ export type LinkVerificationResult = {
   actualOperator?: OrgRef;
   reason?: string;
   /**
-   * 照合に用いた Web サイトの検証結果の有効期限 (用いた VC の有効期限の最小値)
+   * 照合に用いた Web サイトの検証結果の時刻の境界
    *
    * 過ぎた結果は、履歴の移動で復元しない。
    */

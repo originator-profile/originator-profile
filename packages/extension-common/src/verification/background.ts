@@ -28,6 +28,7 @@ import {
   InvalidationType,
   isAllowedUrlConsistent,
   isReusable,
+  isSiteProfileReusable,
   isStillValid,
   toInputIdentity,
   VerificationIncomplete,
@@ -53,6 +54,8 @@ import type {
   VerificationEntry,
   VerificationSubject,
 } from "./types";
+
+type SettledSiteProfile = Extract<SiteProfileEntry, { state: "settled" }>;
 
 type Destination = { tabId: number; frameId: number; documentId: string };
 
@@ -200,7 +203,7 @@ async function awaitInputDependencies(
  */
 const sharedOriginatorsOf = (
   registry: SharedOriginators["registry"],
-  site?: SiteProfileEntry,
+  site?: SettledSiteProfile,
 ): SharedOriginators =>
   site && !isSiteProfileFetchError(site.result.errors?.[0])
     ? { registry, site: site.result }
@@ -217,7 +220,7 @@ export function setupVerificationPipeline() {
   const generations = new Map<string, number>();
   let lastGeneration = 0;
   /** 進行中のオリジンごとの Site Profile の検証 */
-  const siteProfiles = new Map<string, Promise<SiteProfileEntry>>();
+  const siteProfiles = new Map<string, Promise<SettledSiteProfile>>();
   /** 進行中のレジストリの検証 */
   let registryVerification: Promise<RegistryEntry> | undefined;
   /**
@@ -260,10 +263,16 @@ export function setupVerificationPipeline() {
     const pending = siteProfiles.get(origin);
     if (pending) return pending;
 
-    const verifying = (async () => {
+    const verifying = (async (): Promise<SettledSiteProfile> => {
       const stored = await getSiteProfileEntry(origin);
-      if (stored && isStillValid(stored.result, new Date())) return stored;
+      if (isSiteProfileReusable(stored, new Date())) return stored;
 
+      // NOTE: 取得し直すあいだは、無効を経ずに検証中とする
+      await setSiteProfileEntry({
+        state: "verifying",
+        origin,
+        startedAt: new Date().toISOString(),
+      });
       const registry = await verifiedRegistry();
       const verification = await verifyFetchedWebsite(
         async () => {
@@ -279,10 +288,20 @@ export function setupVerificationPipeline() {
         },
         { verifiedRegistry: registry },
       );
-      const entry = { origin, result: withoutSources(verification) };
+      const entry: SettledSiteProfile = {
+        state: "settled",
+        origin,
+        result: withoutSources(verification),
+      };
       await setSiteProfileEntry(entry);
       return entry;
-    })().finally(() => siteProfiles.delete(origin));
+    })()
+      .catch(async (error: unknown) => {
+        // NOTE: 検証中のまま残さず、次に必要になったときに検証し直す
+        await removeSiteProfileEntry(origin);
+        throw error;
+      })
+      .finally(() => siteProfiles.delete(origin));
     siteProfiles.set(origin, verifying);
     return verifying;
   };

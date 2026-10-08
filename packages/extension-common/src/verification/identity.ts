@@ -11,6 +11,7 @@ import type {
   InputIdentity,
   RegistryEntry,
   ResourceIdentity,
+  SiteProfileEntry,
   VerificationEntry,
 } from "./types";
 
@@ -122,9 +123,9 @@ export function earliestExpiration({
 }
 
 /**
- * 時刻の境界を持たない結果 (レジストリ、Site Profile) を、現在時刻でも使えるか
+ * 時刻の境界を持たないレジストリの検証結果を、現在時刻でも使えるか
  *
- * 検証を通過した結果は、用いた VC の有効期限がすべて現在時刻より後の場合に限る。
+ * 検証を通過した結果は、用いた VC の有効期間の終了がすべて現在時刻より後の場合に限る。
  * 通過しなかった結果は時刻の経過で通過に変わらないため、そのまま使える。
  */
 export const isStillValid = (
@@ -136,9 +137,11 @@ export const isStillValid = (
   return expiration === undefined || !isExpired(expiration, now);
 };
 
-const isPastValidUntil = (entry: Settled, now: Date) =>
-  entry.result.validUntil !== undefined &&
-  isExpired(entry.result.validUntil, now);
+/** 結果が時刻の境界を過ぎたか */
+const isPastValidUntil = (
+  { result }: { result: { validUntil?: string } },
+  now: Date,
+) => result.validUntil !== undefined && isExpired(result.validUntil, now);
 
 /**
  * 保持している結果を再利用できるか
@@ -211,3 +214,31 @@ export function resolveEntry(
     now,
   );
 }
+
+/**
+ * 現在時刻での Site Profile の検証の状態
+ *
+ * 時刻の境界を過ぎた結果は、書き込みを待たずに無効として扱う。
+ */
+export function resolveSiteProfileEntry(
+  entry: SiteProfileEntry,
+  now: Date,
+): SiteProfileEntry {
+  if (entry.state !== "settled" || !isPastValidUntil(entry, now)) return entry;
+  return {
+    ...entry,
+    state: "invalidated",
+    invalidatedAt: now.toISOString(),
+    reason: {
+      type: InvalidationType.Expired,
+      title: "Verification result expired",
+    },
+  };
+}
+
+/** 再利用できる Site Profile の検証結果か。時刻の境界を過ぎていない確定した結果に限る */
+export const isSiteProfileReusable = (
+  entry: SiteProfileEntry | undefined,
+  now: Date,
+): entry is Extract<SiteProfileEntry, { state: "settled" }> =>
+  entry?.state === "settled" && !isPastValidUntil(entry, now);
