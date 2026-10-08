@@ -471,7 +471,7 @@ test("同じオリジン内の遷移では Site Profile を取得し直さない
   expect(fetched).toBe(fetchedForFirst);
 });
 
-test("有効期限を過ぎた Site Profile の検証結果は再利用せずに取得し直す", async ({
+test("時刻の境界を過ぎた Site Profile の検証結果は再利用せずに取得し直す", async ({
   context,
   page,
   validSiteProfile,
@@ -497,7 +497,7 @@ test("有効期限を過ぎた Site Profile の検証結果は再利用せずに
   await settledResult(worker, credentialsMissingPage.endpoint, 0);
   expect(fetched).toBe(1);
 
-  // 保持した Site Profile の検証結果の VC を、有効期限を過ぎたものにする
+  // 保持した Site Profile の検証結果を、時刻の境界を過ぎたものにする
   await worker.evaluate(async () => {
     const stored = await chrome.storage.session.get(null);
     const [key, entry] =
@@ -505,20 +505,11 @@ test("有効期限を過ぎた Site Profile の検証結果は再利用せずに
         key.startsWith("verification:site-profile:"),
       ) ?? [];
     if (!key) throw new Error("Site Profile の検証結果を保持しているはず");
-    const { result } = entry as {
-      result: { securingResults: { expiredAt?: string }[] };
-    };
-    const expiredAt = new Date(0).toISOString();
+    const { result } = entry as { result: object };
     await chrome.storage.session.set({
       [key]: {
         ...(entry as object),
-        result: {
-          ...result,
-          securingResults: result.securingResults.map((r) => ({
-            ...r,
-            expiredAt,
-          })),
-        },
+        result: { ...result, validUntil: new Date(0).toISOString() },
       },
     });
   });
@@ -531,7 +522,7 @@ test("有効期限を過ぎた Site Profile の検証結果は再利用せずに
   expect(fetched).toBe(2);
 });
 
-test("有効期限を過ぎた Site Profile の検証結果は、検証失敗とは別に無効として示す", async ({
+test("時刻の境界を過ぎた Site Profile の検証結果は、検証失敗とは別に無効として示す", async ({
   context,
   page,
   validSiteProfile,
@@ -546,7 +537,7 @@ test("有効期限を過ぎた Site Profile の検証結果は、検証失敗と
   const ext = await sidepanel(context);
   await expect(ext.getByTestId("site-profile")).toBeVisible();
 
-  // 表示中に、保持した Site Profile の検証結果の VC が有効期限を過ぎる
+  // 表示中に、保持した Site Profile の検証結果が時刻の境界を過ぎる
   const worker = await backgroundWorker(context);
   await worker.evaluate(async () => {
     const stored = await chrome.storage.session.get(null);
@@ -555,20 +546,11 @@ test("有効期限を過ぎた Site Profile の検証結果は、検証失敗と
         key.startsWith("verification:site-profile:"),
       ) ?? [];
     if (!key) throw new Error("Site Profile の検証結果を保持しているはず");
-    const { result } = entry as {
-      result: { securingResults: { expiredAt?: string }[] };
-    };
-    const expiredAt = new Date(0).toISOString();
+    const { result } = entry as { result: object };
     await chrome.storage.session.set({
       [key]: {
         ...(entry as object),
-        result: {
-          ...result,
-          securingResults: result.securingResults.map((r) => ({
-            ...r,
-            expiredAt,
-          })),
-        },
+        result: { ...result, validUntil: new Date(0).toISOString() },
       },
     });
   });
