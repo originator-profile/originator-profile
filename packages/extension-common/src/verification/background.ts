@@ -21,6 +21,7 @@ import {
   isAllowedUrlConsistent,
   isReusable,
   toInputIdentity,
+  VerificationIncomplete,
 } from "./identity";
 import {
   getSiteProfileEntry,
@@ -36,10 +37,20 @@ import type {
   DocumentVerificationResult,
   InputIdentity,
   SiteProfileEntry,
+  VerificationEntry,
   VerificationSubject,
 } from "./types";
 
 type Destination = { tabId: number; frameId: number; documentId: string };
+
+/** URL のオリジン。解釈できない URL では不透明なオリジンとみなす */
+function originOf(url: string): string {
+  try {
+    return new URL(url).origin;
+  } catch {
+    return "null";
+  }
+}
 
 /** 検証を始めた契機 */
 type Trigger = {
@@ -74,6 +85,49 @@ function toStoredResult(
   const { target: _, ...outcome } = result.outcome;
   return { ...result, outcome };
 }
+
+/**
+ * クレデンシャルのない文書の結果
+ *
+ * 検証の対象がないため検証しない。レジストリの検証結果を文書ごとに保持しない。
+ */
+const emptyResult = (url: string): DocumentVerificationResult => ({
+  status: true,
+  outcome: { originators: [], cas: [] },
+  securingResults: [],
+  warnings: [],
+  info: [],
+  verifiedAt: new Date().toISOString(),
+  scope: [],
+  inputRange: [{ kind: "document", url }],
+});
+
+/** 検証を完了できなかった文書の結果。表示が確定しないまま残らないようにする */
+const incompleteEntry = (
+  subject: VerificationSubject,
+  error: unknown,
+): VerificationEntry => ({
+  state: "settled",
+  subject,
+  credentials: { ops: [], cas: [] },
+  inputIdentity: { cas: [], ops: [], targets: [], evaluatedUrl: subject.url },
+  result: {
+    status: false,
+    securingResults: [],
+    warnings: [],
+    info: [],
+    errors: [
+      {
+        type: VerificationIncomplete,
+        title: "Verification could not be completed",
+        detail: error instanceof Error ? error.message : String(error),
+      },
+    ],
+    verifiedAt: new Date().toISOString(),
+    scope: [],
+    inputRange: [],
+  },
+});
 
 /** 文書内の Target Integrity 検証器 */
 const DocumentIntegrityVerifier =
@@ -165,18 +219,18 @@ export function setupVerificationPipeline() {
     return verifying;
   };
 
-  const verifyFrameDocument = async (
+  /**
+   * 文書を検証して結果を書き込む
+   * @param subject 検証対象の文書の識別。取得したクレデンシャルの URL で更新する
+   */
+  const verifyDocumentOf = async (
     destination: Destination,
+    subject: VerificationSubject,
     trigger: Trigger,
+    isCurrent: () => boolean,
   ) => {
     const { tabId, frameId, documentId } = destination;
-    const frame = await getFrame({ tabId, frameId, documentId });
-    if (!frame) return;
-
-    forget(await trackDocument(tabId, frameId, documentId));
-    const isCurrent = startGeneration(documentId);
-
-    const isTopLevel = frame.frameType === "outermost_frame";
+    const isTopLevel = subject.frameType === "outermost_frame";
     if (isTopLevel) void verifySiteProfile(destination);
 
     const response = await verificationMessenger.sendMessage(
@@ -185,19 +239,22 @@ export function setupVerificationPipeline() {
       { tabId, frameId },
     );
     const { ops, cas, opMeta, url, origin } = toDocumentCredentials(response);
-    const subject: VerificationSubject = {
-      tabId,
-      frameId,
-      parentFrameId: frame.parentFrameId,
-      documentId,
-      frameType: frame.frameType,
-      url,
-      origin,
-    };
+    Object.assign(subject, { url, origin });
     const inputIdentity = await toInputIdentity({ ops, cas }, url);
     if (await canReuse(documentId, inputIdentity, trigger)) return;
-
     if (!isCurrent()) return;
+
+    if (!isTopLevel && ops.length === 0 && cas.length === 0) {
+      await setVerificationEntry({
+        state: "settled",
+        subject,
+        credentials: { ops, cas, opMeta },
+        result: emptyResult(url),
+        inputIdentity,
+      });
+      return;
+    }
+
     await setVerificationEntry({ state: "unverified", subject });
 
     const credentials = {
@@ -221,7 +278,7 @@ export function setupVerificationPipeline() {
       {
         ...credentials,
         url,
-        frameType: frame.frameType,
+        frameType: subject.frameType,
         verifyIntegrity: DocumentIntegrityVerifier(destination),
       },
       {
@@ -238,6 +295,43 @@ export function setupVerificationPipeline() {
       result: toStoredResult(result),
       inputIdentity,
     });
+  };
+
+  const verifyFrameDocument = async (
+    destination: Destination,
+    trigger: Trigger,
+  ) => {
+    const { tabId, frameId, documentId } = destination;
+    const frame = await getFrame({ tabId, frameId, documentId });
+    if (!frame) return;
+
+    forget(await trackDocument(tabId, frameId, documentId));
+    const isCurrent = startGeneration(documentId);
+    const subject: VerificationSubject = {
+      tabId,
+      frameId,
+      parentFrameId: frame.parentFrameId,
+      documentId,
+      frameType: frame.frameType,
+      url: frame.url,
+      origin: originOf(frame.url),
+    };
+
+    try {
+      await verifyDocumentOf(destination, subject, trigger, isCurrent);
+    } catch (error) {
+      // NOTE: 検証のあいだに文書が入れ替わったかフレームが取り除かれると、文書への
+      // 要求が拒否されるか届かずに失敗する。いずれも想定内のため打ち切るだけにする
+      const current = await chrome.webNavigation
+        .getFrame({ tabId, frameId })
+        .catch(() => null);
+      if (!isCurrent() || current?.documentId !== documentId) return;
+      console.error(
+        `[verification] Failed to verify document ${documentId}:`,
+        error,
+      );
+      await setVerificationEntry(incompleteEntry(subject, error));
+    }
   };
 
   const run = (destination: Destination, trigger: Trigger = {}) => {

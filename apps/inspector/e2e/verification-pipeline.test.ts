@@ -253,3 +253,68 @@ test("CA のないまま着地した画面は、後から確定した iframe の
   await page.unroute(endpoint);
   await page.unroute(credentialsPage.endpoint);
 });
+
+test("差し替えられた iframe の結果は残らず、クレデンシャルのない iframe は検証しない", async ({
+  context,
+  page,
+  missingSiteProfile: _missingSiteProfile,
+  credentialsPage,
+  validCredentials,
+}) => {
+  await validCredentials(
+    { publicKey, privateKey },
+    credentialsPage.contents,
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
+  await page.goto("about:blank");
+  const worker = await backgroundWorker(context);
+  await page.goto(credentialsPage.endpoint);
+  await settledResult(worker, credentialsPage.endpoint, 1);
+
+  /** クレデンシャルのない iframe を差し替える (広告の差し替えを模す) */
+  const replaceFrames = (count: number) =>
+    page.evaluate((count) => {
+      for (const frame of document.querySelectorAll("iframe")) frame.remove();
+      for (let i = 0; i < count; i++) {
+        const frame = document.createElement("iframe");
+        frame.srcdoc = `<p>ad ${i}</p>`;
+        document.body.append(frame);
+      }
+    }, count);
+
+  /** 確定したサブフレームの結果を、件数がそろうまで待って読む */
+  const settledSubFrames = (count: number) =>
+    /* eslint-disable no-await-in-loop -- Service Worker内で逐次ポーリングするため意図的 */
+    worker.evaluate(async (count) => {
+      for (let i = 0; i < 50; i++) {
+        const stored = await chrome.storage.session.get(null);
+        const entries = Object.entries(stored)
+          .filter(([key]) => key.startsWith("verification:document:"))
+          .map(([, value]) => value as VerificationEntry)
+          .filter(({ subject }) => subject.frameType === "sub_frame");
+        if (
+          entries.length === count &&
+          entries.every(({ state }) => state === "settled")
+        ) {
+          return entries.map((entry) =>
+            entry.state === "settled"
+              ? entry.result.securingResults.length
+              : -1,
+          );
+        }
+        await new Promise((resolve) => {
+          setTimeout(resolve, 100);
+        });
+      }
+      throw new Error("Timeout waiting for settled sub frames");
+    }, count);
+  /* eslint-enable no-await-in-loop */
+
+  await replaceFrames(3);
+  // 検証していないため、レジストリの VC を保持しない
+  expect(await settledSubFrames(3)).toEqual([0, 0, 0]);
+
+  await replaceFrames(1);
+  expect(await settledSubFrames(1)).toEqual([0]);
+});
