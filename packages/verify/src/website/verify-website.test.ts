@@ -35,6 +35,27 @@ describe("verifyWebsite", () => {
     ).toEqual([opId.originator]);
   });
 
+  test("検証時刻・時刻の境界・検証範囲・入力の範囲を結果に載せる", async () => {
+    const { authorityOp, certifierOp, originatorOp } = await buildOpsFixture();
+    const registry = prepareRegistry([authorityOp, certifierOp]);
+    if (registry instanceof Error) throw registry;
+
+    const result = await verifyWebsite("https://originator.example.org", {
+      siteProfile: { originators: [originatorOp], sites: [] },
+      registry,
+      logger: silent,
+    });
+
+    expect(Date.parse(result.verifiedAt)).not.toBeNaN();
+    expect(result.validUntil).toBe(signOptions.expiredAt.toISOString());
+    // image データ型の検証の失敗は、移行期間中は結果の状態に反映しない
+    expect(result.scope).toEqual(["sp-vc", "allowed-origin"]);
+    expect(result.inputRange).toEqual([
+      { kind: "registry" },
+      { kind: "site-profile" },
+    ]);
+  });
+
   test("レジストリに発行者の Core Profile がない場合は検証に失敗する", async () => {
     const { authorityOp, originatorOp } = await buildOpsFixture();
     const registry = prepareRegistry([authorityOp]);
