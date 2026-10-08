@@ -93,7 +93,11 @@ export type InputSource =
 export type DocumentVerificationMetadata = {
   /** 検証時刻 (ISO 8601) */
   verifiedAt: string;
-  /** 結果が有効である時刻の境界 (ISO 8601)。用いた VC の有効期限の最小値 */
+  /**
+   * 結果が有効である時刻の境界 (ISO 8601)
+   *
+   * 用いた VC の有効期間の開始と終了のうち、検証時刻より後で最も早いもの。
+   */
   validUntil?: string;
   /** 適用した検証のカテゴリー */
   scope: VerificationCategory[];
@@ -115,15 +119,25 @@ const inputRangeOf = (
   { kind: "document", url },
 ];
 
-/** 用いた VC の有効期限のうち最も早いもの */
-function earliestExpiration(securingResults: SecuringResult[]) {
-  const expirations = securingResults.flatMap(({ expiredAt }) =>
-    expiredAt ? [expiredAt] : [],
-  );
-  if (expirations.length === 0) return undefined;
-  return new Date(
-    Math.min(...expirations.map((value) => new Date(value).getTime())),
-  ).toISOString();
+/**
+ * 時刻の境界
+ *
+ * 用いた VC の有効期間の開始と終了 (iat、exp、validFrom、validUntil) のうち、
+ * 検証時刻より後で最も早いもの。
+ */
+function timeBoundaryOf(securingResults: SecuringResult[], verifiedAt: string) {
+  const start = Date.parse(verifiedAt);
+  const times = securingResults
+    .flatMap(({ issuedAt, expiredAt, validFrom, validUntil }) => [
+      issuedAt,
+      expiredAt,
+      validFrom,
+      validUntil,
+    ])
+    .flatMap((value) => (value ? [Date.parse(value)] : []))
+    .filter((time) => time > start);
+  if (times.length === 0) return undefined;
+  return new Date(Math.min(...times)).toISOString();
 }
 
 /**
@@ -198,11 +212,14 @@ export async function verifyDocument<
   const inputRange = inputRangeOf(shared, target.url);
   const metadata = () => ({
     verifiedAt,
-    // NOTE: 結果は共有の発信者の VC にも依存するため、その有効期限も境界に含める
-    validUntil: earliestExpiration([
-      ...results.flatMap(({ securingResults }) => securingResults),
-      ...collect.securingResults,
-    ]),
+    // NOTE: 結果は共有の発信者の VC にも依存するため、その有効期間も境界に含める
+    validUntil: timeBoundaryOf(
+      [
+        ...results.flatMap(({ securingResults }) => securingResults),
+        ...collect.securingResults,
+      ],
+      verifiedAt,
+    ),
     scope: documentScope,
     inputRange,
   });
