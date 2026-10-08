@@ -3,9 +3,15 @@ import {
   FetchIntegrityResult,
   VerifyIntegrity,
 } from "@originator-profile/verify";
+import { getAllFrames } from "../utils/frames";
 import { FetchCredentialsMessagingFailed } from "./errors";
 import { credentialsMessenger } from "./events";
-import { FrameCredentials, FrameResponse, TabCredentials } from "./types";
+import {
+  FrameCredentials,
+  FrameDocument,
+  FrameResponse,
+  TabCredentials,
+} from "./types";
 
 /**
  * タブ内の各フレームでクレデンシャルを取得する。
@@ -23,6 +29,11 @@ async function fetchAllFramesCredentials(
         const frameResponse: FrameResponse = {
           frameId: frame.frameId,
           parentFrameId: frame.parentFrameId,
+        };
+        const frameDocument: FrameDocument = {
+          documentId: frame.documentId,
+          frameType: frame.frameType,
+          documentLifecycle: frame.documentLifecycle,
         };
         const result = await credentialsMessenger.sendMessage(
           "fetchCredentials",
@@ -52,6 +63,7 @@ async function fetchAllFramesCredentials(
           url: result.url,
           origin: result.origin,
           ...frameResponse,
+          ...frameDocument,
         };
       }),
     );
@@ -87,18 +99,11 @@ async function fetchAllFramesCredentials(
 export async function fetchTabCredentials(
   tabId: number,
 ): Promise<TabCredentials> {
-  const frames = (await chrome.webNavigation.getAllFrames({ tabId })) ?? [];
+  const frames = await getAllFrames(tabId);
   const frameCredentials = await fetchAllFramesCredentials(frames, tabId);
 
-  const topLevelFrameIndex = frames.findIndex(
-    (frame) => frame.parentFrameId === -1,
-  );
-  if (topLevelFrameIndex === -1) {
-    throw Error("No response from top level frame");
-  }
-  const [topLevelFrameCredentials] = frameCredentials.splice(
-    topLevelFrameIndex,
-    1,
+  const topLevelFrameCredentials = frameCredentials.find(
+    (frame) => frame.frameType === "outermost_frame",
   );
   if (!topLevelFrameCredentials) {
     throw Error("No response from top level frame");
@@ -106,7 +111,9 @@ export async function fetchTabCredentials(
 
   return {
     ...topLevelFrameCredentials,
-    frames: frameCredentials,
+    frames: frameCredentials.filter(
+      (frame) => frame !== topLevelFrameCredentials,
+    ),
   };
 }
 
