@@ -1,5 +1,6 @@
 import type { ContentAttestation } from "@originator-profile/model";
 import { describe, expect, test } from "vitest";
+import type { FrameCredentials } from "../credentials/types";
 import {
   dependsOnRenderedResult,
   InvalidationType,
@@ -8,9 +9,10 @@ import {
   resolveEntry,
   toInputIdentity,
 } from "./identity";
-import type { DocumentCredentials, VerificationEntry } from "./types";
+import type { VerificationEntry } from "./types";
 
-const credentials: DocumentCredentials = {
+/** 文書から取得したクレデンシャル */
+const credentials: Pick<FrameCredentials, "ops" | "cas"> = {
   ops: [
     {
       source: { kind: "embedded", elementIndex: 0 },
@@ -39,7 +41,10 @@ async function settled(
       url,
       origin: "https://www.example.org",
     },
-    credentials,
+    credentials: {
+      ops: credentials.ops.map(({ source }) => ({ source })),
+      cas: [],
+    },
     result: {
       status: true,
       outcome: { originators: [], cas: [{ main: true, attestation }] },

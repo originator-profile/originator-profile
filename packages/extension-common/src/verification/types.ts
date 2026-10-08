@@ -1,30 +1,37 @@
+import type { OpMeta } from "@originator-profile/model";
 import type { CredentialSource } from "@originator-profile/presentation";
 import type {
   DocumentOutcome,
   DocumentVerificationMetadata,
   InputDependency,
+  OriginatorsOutcome,
   ProblemDetails,
   VerificationResult,
   VerificationTarget,
+  WebsiteOutcome,
 } from "@originator-profile/verify";
 import type {
-  FrameCredentials,
   FrameDocument,
   FrameLocation,
   FrameResponse,
 } from "../credentials/types";
-import type { TabWebsiteVerification } from "../site-profile/verify-website";
 
 /** 検証対象の文書の識別 */
 export type VerificationSubject = FrameResponse &
   Pick<FrameDocument, "documentId" | "frameType"> &
   FrameLocation & { tabId: number };
 
-/** 文書から取得したクレデンシャル */
-export type DocumentCredentials = Pick<
-  FrameCredentials,
-  "ops" | "cas" | "opMeta"
->;
+/**
+ * 文書から取得したクレデンシャルの取得経路
+ *
+ * 原文は保持しない。結果の `$.originators[i]` / `$.cas[j]` は、それぞれ
+ * `ops[i]` / `cas[j]` から取得したものを指す。
+ */
+export type DocumentCredentials = {
+  ops: { source: CredentialSource }[];
+  cas: { source: CredentialSource }[];
+  opMeta?: OpMeta;
+};
 
 /**
  * 保持する文書の検証結果
@@ -89,12 +96,17 @@ export type VerificationEntry =
 /**
  * オリジンの Site Profile の検証結果
  *
- * 同じオリジンのトップレベル文書のあいだで再利用する。
+ * 同じオリジンのトップレベル文書のあいだで再利用する。発信者はレジストリの
+ * 発信者を先頭に含む。
  */
-export type SiteProfileEntry = TabWebsiteVerification & {
+export type SiteProfileEntry = {
   /** Site Profile を探索したオリジン */
   origin: string;
+  result: VerificationResult<WebsiteOutcome>;
 };
+
+/** レジストリの検証結果 */
+export type RegistryEntry = VerificationResult<OriginatorsOutcome>;
 
 /** フレームに読み込まれている文書と、その検証の状態 */
 export type FrameVerification = {
@@ -109,4 +121,6 @@ export type TabVerification = {
   frames: FrameVerification[];
   /** トップレベル文書のオリジンの Site Profile の検証結果 */
   siteProfile?: SiteProfileEntry;
+  /** レジストリの検証結果 */
+  registry?: RegistryEntry;
 };

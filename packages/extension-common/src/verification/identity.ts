@@ -5,8 +5,8 @@ import {
   verifyAllowedUrl,
   type ProblemDetails,
 } from "@originator-profile/verify";
+import type { FrameCredentials } from "../credentials/types";
 import type {
-  DocumentCredentials,
   InputIdentity,
   ResourceIdentity,
   VerificationEntry,
@@ -63,7 +63,7 @@ const identify = (
  * @param url 文書の URL
  */
 export async function toInputIdentity(
-  credentials: DocumentCredentials,
+  credentials: Pick<FrameCredentials, "ops" | "cas">,
   url: string,
 ): Promise<InputIdentity> {
   return {
