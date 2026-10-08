@@ -170,7 +170,9 @@ if (watch) {
   const ctx = await esbuild.context(buildOptions);
   await ctx.watch();
   console.log("watching...");
-  const watcher = chokidar.watch("./public");
+  // NOTE: 既にあるファイルの add を通知させると、起動直後に再ビルドが走り、
+  // web-ext が拡張機能を再読み込みする
+  const watcher = chokidar.watch("./public", { ignoreInitial: true });
   watcher
     .on("add", (path) => {
       console.log(`File ${path} has been added`);
