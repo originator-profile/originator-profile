@@ -11,10 +11,10 @@ import {
   type VerifiedOpsWithSource,
 } from "@originator-profile/extension-common";
 import type { OriginatorProfileSet } from "@originator-profile/model";
-import { verifyDocuments } from "@originator-profile/verify";
+import { verifyDocument } from "@originator-profile/verify";
 import { useParams } from "react-router";
 import useSWRImmutable from "swr/immutable";
-import { toLegacyDocuments } from "../../utils/to-legacy-result";
+import { toLegacyDocument } from "../../utils/to-legacy-result";
 import { useSiteProfile } from "../siteProfile";
 
 const CREDENTIALS_KEY = "credentials";
@@ -45,75 +45,97 @@ async function fetchVerifiedCredentials([, tabId, websiteOriginators]: [
   ]);
 
   const framesAndPage = [page, ...frames];
-  const targets = framesAndPage.map((frame) => ({
-    ...frame,
-    ops: frame.ops.map(({ credential }) => credential),
-    cas: frame.cas.map(({ credential }) => credential),
-    verifyIntegrity: FrameIntegrityVerifier(tabId, frame.frameId),
-  }));
+  const results = await Promise.all(
+    framesAndPage.map((frame) =>
+      verifyDocument(
+        {
+          ...frame,
+          ops: frame.ops.map(({ credential }) => credential),
+          cas: frame.cas.map(({ credential }) => credential),
+          verifyIntegrity: FrameIntegrityVerifier(tabId, frame.frameId),
+        },
+        { registry, siteOriginators: websiteOriginators },
+      ),
+    ),
+  );
 
-  const result = await verifyDocuments(targets, {
-    registry,
-    websiteOriginators,
-  });
-
-  const legacy = toLegacyDocuments(result);
-  if (legacy instanceof Error) {
-    throw legacy;
-  }
-
-  // NOTE: verifyDocuments はレジストリ・Web サイト・各文書の OPS をこの順で
-  // 1本の配列にまとめて検証するため(packages/verify/src/document/verify-documents.ts
-  // 参照)、legacy.ops は入力と同じ順序・件数で返る契約になっている
-  // (packages/verify/src/originator-profile-set/verify-ops.ts 参照)。
-  // 取得元(source)の対応付けはこの順序を前提に行う。
-  const opsSources: OpOrigin[] = [
-    ...registry.ops.map(registrySource),
-    ...(websiteOriginators ?? []).map(siteProfileSource),
-    ...framesAndPage.flatMap((frame) => frame.ops.map(({ source }) => source)),
-  ];
-  const ops: VerifiedOpsWithSource = legacy.ops.map((op, i) => {
-    const source = opsSources[i];
-    if (!source) {
-      throw new Error(`opsSources[${i}] not found`);
-    }
-    return { ...op, source };
-  });
-
-  const documents = legacy.documents.map(({ target, cas }, i) => {
+  const documents = results.map((result, i) => {
     const frame = framesAndPage[i];
     if (!frame) {
       throw new Error(`framesAndPage[${i}] not found`);
     }
+    const legacy = toLegacyDocument(result);
+    if (legacy instanceof Error) {
+      throw legacy;
+    }
+    return { frame, result, legacy };
+  });
+
+  // NOTE: verifyDocument はレジストリ・(トップレベル文書なら) Web サイト・文書の
+  // OPS をこの順で1本の配列にまとめて検証し、legacy.ops は入力と同じ順序・件数で
+  // 返る契約になっている (packages/verify/src/originator-profile-set/verify-ops.ts
+  // 参照)。取得元(source)の対応付けはこの順序を前提に行う。レジストリと Web
+  // サイトの発信者は文書ごとに同じものが現れるため、最初の文書の分だけを残す。
+  const sharedSources = (frame: (typeof framesAndPage)[number]): OpOrigin[] => [
+    ...registry.ops.map(registrySource),
+    ...(frame.frameType === "outermost_frame"
+      ? (websiteOriginators ?? []).map(siteProfileSource)
+      : []),
+  ];
+  /** 2つ目以降の文書で、レジストリ・Web サイトの発信者を指す通知か */
+  const isRepeated = (i: number, shared: number, at?: string) => {
+    const index = at?.match(/^\$\.originators\[(\d+)\]/)?.[1];
+    return i > 0 && index !== undefined && Number(index) < shared;
+  };
+
+  const ops: VerifiedOpsWithSource = documents.flatMap(
+    ({ frame, legacy }, i) => {
+      const shared = sharedSources(frame);
+      const sources = [...shared, ...frame.ops.map(({ source }) => source)];
+      return legacy.ops.flatMap((op, j) => {
+        if (i > 0 && j < shared.length) return [];
+        const source = sources[j];
+        if (!source) {
+          throw new Error(`sources[${j}] not found`);
+        }
+        return [{ ...op, source }];
+      });
+    },
+  );
+
+  const problems = (key: "warnings" | "info") =>
+    documents.flatMap(({ frame, result }, i) => {
+      const shared = sharedSources(frame).length;
+      return result[key].flatMap(({ title, pointer: at }) =>
+        isRepeated(i, shared, at) ? [] : [title],
+      );
+    });
+
+  const framesCas = documents.map(({ frame, legacy }) => ({
     // NOTE: verifyCas も同様に入力(frame.cas)と同じ順序・件数で返す契約
     // (packages/verify/src/content-attestation-set/verify-cas.ts 参照)。
-    return {
-      target,
-      cas: cas.map((c, j) => {
-        const sourced = frame.cas[j];
-        if (!sourced) {
-          throw new Error(`frame.cas[${j}] not found`);
-        }
-        return { ...c, source: sourced.source };
-      }) as SupportedVerifiedCasWithSource,
-    };
-  });
+    cas: legacy.cas.map((c, j) => {
+      const sourced = frame.cas[j];
+      if (!sourced) {
+        throw new Error(`frame.cas[${j}] not found`);
+      }
+      return { ...c, source: sourced.source };
+    }) as SupportedVerifiedCasWithSource,
+    url: frame.url,
+    origin: frame.origin,
+    frameId: frame.frameId,
+    parentFrameId: frame.parentFrameId,
+    frameType: frame.frameType,
+  }));
 
   return {
     ops,
-    cas: deduplicateCas(documents.flatMap(({ cas }) => cas)),
+    cas: deduplicateCas(framesCas.flatMap(({ cas }) => cas)),
     origin: page.origin,
     url: page.url,
-    framesCas: documents.map(({ target, cas }) => ({
-      cas,
-      url: target.url,
-      origin: target.origin,
-      frameId: target.frameId,
-      parentFrameId: target.parentFrameId,
-      frameType: target.frameType,
-    })),
-    warnings: result.warnings.map(({ title }) => title),
-    info: result.info.map(({ title }) => title),
+    framesCas,
+    warnings: problems("warnings"),
+    info: problems("info"),
   };
 }
 

@@ -8,8 +8,8 @@ import {
   verifyTabWebsite,
 } from "@originator-profile/extension-common";
 import type { OriginatorProfileSet } from "@originator-profile/model";
-import { verifyDocuments } from "@originator-profile/verify";
-import { toLegacyDocuments } from "../../utils/to-legacy-result";
+import { verifyDocument } from "@originator-profile/verify";
+import { toLegacyDocument } from "../../utils/to-legacy-result";
 
 /**
  * Web サイトを検証し、文書の検証で検証鍵に加える発信者を得る
@@ -58,23 +58,27 @@ export async function verifyTabCredentials(tabId: number): Promise<{
         getRegistry(),
       ]);
 
-    const targets = [page, ...frames].map((frame) => ({
-      ...frame,
-      ops: frame.ops.map(({ credential }) => credential),
-      cas: frame.cas.map(({ credential }) => credential),
-      verifyIntegrity: FrameIntegrityVerifier(tabId, frame.frameId),
-    }));
+    const results = await Promise.all(
+      [page, ...frames].map((frame) =>
+        verifyDocument(
+          {
+            ...frame,
+            ops: frame.ops.map(({ credential }) => credential),
+            cas: frame.cas.map(({ credential }) => credential),
+            verifyIntegrity: FrameIntegrityVerifier(tabId, frame.frameId),
+          },
+          { registry, siteOriginators: websiteOriginators },
+        ),
+      ),
+    );
 
-    const result = await verifyDocuments(targets, {
-      registry,
-      websiteOriginators,
-    });
-
-    const legacy = toLegacyDocuments(result);
-    if (legacy instanceof Error) return null;
+    const documents = results.map(toLegacyDocument);
+    if (documents.some((legacy) => legacy instanceof Error)) return null;
 
     const verifiedCas = deduplicateCas(
-      legacy.documents.flatMap(({ cas }) => cas),
+      documents.flatMap((legacy) =>
+        legacy instanceof Error ? [] : legacy.cas,
+      ),
     ) as SupportedVerifiedCas;
     return { verifiedCas, count: verifiedCas.length };
   } catch (error) {
