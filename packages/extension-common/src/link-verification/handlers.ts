@@ -1,3 +1,4 @@
+import { isExpired } from "@originator-profile/core";
 import { buildWarningSearchParams } from "../utils/warning-params";
 import {
   pendingOpIdVerification,
@@ -165,7 +166,7 @@ export function createLinkVerificationHandlers(
 
 export const restoreVerificationFromCache = (tabId: number, url: string) => {
   const cached = verificationCache.get(tabId)?.[url];
-  if (cached) {
+  if (cached && !(cached.validUntil && isExpired(cached.validUntil))) {
     verificationResults.set(tabId, cached);
   }
 };

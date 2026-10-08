@@ -1,7 +1,7 @@
 import { getAllFrames } from "../utils/frames";
 import { originOf } from "../utils/origin";
 import { verificationMessenger } from "./events";
-import { resolveEntry } from "./identity";
+import { isStillValid, resolveEntry } from "./identity";
 import { documentKey, registryKey, siteProfileKey } from "./store";
 import type {
   RegistryEntry,
@@ -155,7 +155,11 @@ export async function waitForTabSiteProfile(
 
   try {
     const stored = await chrome.storage.session.get(key);
-    return (stored[key] as SiteProfileEntry | undefined) ?? (await changed);
+    // NOTE: 有効期限を過ぎた結果は使わず、Service Worker が検証し直すのを待つ
+    const entry = stored[key] as SiteProfileEntry | undefined;
+    return entry && isStillValid(entry.result, new Date())
+      ? entry
+      : await changed;
   } finally {
     cleanup();
   }
