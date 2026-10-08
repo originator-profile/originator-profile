@@ -76,7 +76,6 @@ export type FrameCredentials = FrameResponse &
     cas: SourcedCredential<ContentAttestationSet[number]>[];
     opMeta?: OpMeta;
   };
-export type TabCredentials = FrameCredentials & { frames: FrameCredentials[] };
 
 export type FrameVerifiedCas = FrameResponse &
   Pick<FrameDocument, "frameType"> &

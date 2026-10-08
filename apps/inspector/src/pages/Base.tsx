@@ -1,5 +1,4 @@
 import {
-  FetchCredentialsMessagingFailed,
   FramesVerifiedCas,
   SupportedVerifiedCas,
   overlayExtensionMessenger,
@@ -154,8 +153,7 @@ function Base() {
     ): error is
       | SiteProfileFetchFailed
       | SiteProfileFetchInvalid
-      | OpsInvalid
-      | FetchCredentialsMessagingFailed => {
+      | OpsInvalid => {
       if (!error) {
         return false;
       }
