@@ -11,10 +11,11 @@
   },
   "type": "module",
   "scripts": {
-    "lint": "oxlint --fix .",
+    "build:test-deps": "pnpm --workspace-root exec turbo run build --filter=@originator-profile/sign --filter=@originator-profile/verify",
+    "lint": "pnpm run build:test-deps && oxlint --fix .",
     "format": "oxfmt .",
     "format:check": "node --run=format -- --check",
-    "e2e": "pnpm --workspace-root exec turbo run build --filter=@originator-profile/sign --filter=@originator-profile/verify && playwright test",
+    "e2e": "pnpm run build:test-deps && playwright test",
     "e2e:update": "pnpm run e2e --update-snapshots",
     "version": "shx sed -i 's/(?<= Version: *)[^ ]*$/'${npm_package_version}/ ca-manager.php && git add ca-manager.php"
   },

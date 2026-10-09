@@ -636,8 +636,11 @@ node --run=lint
 node --run=format:check
 ```
 
+build:test-deps
+: E2E が利用する署名・検証ライブラリと依存先をビルド。lint と E2E の開始時にも自動実行します。
+
 lint
-: JS・TS の静的解析と型検査。自動修正可能な指摘を修正
+: 依存ライブラリをビルドした後、JS・TS の静的解析と型検査を実行。自動修正可能な指摘を修正
 
 format
 : JS・TS・CSS・JSON・YAML・Markdown など、WordPress ディレクトリ内の対応ファイルを整形（80文字幅）
