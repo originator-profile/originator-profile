@@ -1,5 +1,4 @@
 import { z } from "zod";
-import { AllowedUrl } from "../allowed-url";
 import { OpCipContext } from "../context/op-cip-context";
 import { DateTimeStamp } from "../date-time-stamp";
 import { Image } from "../image";
@@ -25,9 +24,6 @@ const subject = z.object({
 export const ArticleCA = ContentAttestation.extend({
   "@context": OpCipContext,
   credentialSubject: subject,
-  allowedUrl: AllowedUrl,
-}).refine((obj) => !("allowedOrigin" in obj), {
-  error: "allowedOrigin is not allowed in ArticleCA",
 });
 
 export type ArticleCA = z.infer<typeof ArticleCA>;

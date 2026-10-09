@@ -74,6 +74,7 @@ for (const fixture of fixtures) {
     );
     expect(response.status(), await response.text()).toBe(201);
     const post: { link: string } = await response.json();
+    // oxlint-disable no-await-in-loop -- 同じブラウザーページで表示と改ざんを検証するため、ページ順に実行する.
     for (let index = 0; index < fixture.pages.length; index++) {
       const url = new URL(post.link);
       if (index) url.searchParams.set("page", String(index + 1));
@@ -81,8 +82,9 @@ for (const fixture of fixtures) {
       const cas = await page
         .locator('script[type="application/cas+json"]')
         .textContent();
-      expect(cas).toBeTruthy();
-      const jwt: string = JSON.parse(cas!)[0];
+      if (!cas)
+        throw new Error("Expected embedded CAS: " + localCa.errors.join("; "));
+      const jwt: string = JSON.parse(cas)[0];
       expect(jwt, localCa.errors.join("; ")).toBeTruthy();
       const paragraphs = await page
         .locator(".wp-block-post-content > p")
@@ -92,14 +94,13 @@ for (const fixture of fixtures) {
       );
 
       const submission = localCa.submissions.get(page.url());
-      expect(
-        submission,
-        "ページに対応する CA 発行リクエストがあること",
-      ).toBeDefined();
-      const target = submission!.target[0];
-      if (typeof target.content !== "string")
+      if (!submission)
+        throw new Error("ページに対応する CA 発行リクエストがありません");
+      const target = submission.target[0];
+      if (!target || typeof target.content !== "string")
         throw new Error("Expected HTML content in CA request");
-      const selector = target.cssSelector!;
+      const selector = target.cssSelector;
+      if (!selector) throw new Error("Expected CSS selector in CA request");
       const signedDocument = new JSDOM(target.content).window.document;
       const signedHTML = Array.from(
         signedDocument.querySelectorAll(selector),
@@ -136,6 +137,7 @@ for (const fixture of fixtures) {
         .window.document;
       expect(await verify(tampered)).toBeInstanceOf(CaVerifyFailed);
     }
+    // oxlint-enable no-await-in-loop
     expect(localCa.errors).toEqual([]);
   });
 }

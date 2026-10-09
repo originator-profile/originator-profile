@@ -66,6 +66,19 @@ jobs:
           FIREFOX_EXTENSION_ID: ${{ secrets.FIREFOX_EXTENSION_ID }}
           FIREFOX_JWT_ISSUER: ${{ secrets.FIREFOX_JWT_ISSUER }}
           FIREFOX_JWT_SECRET: ${{ secrets.FIREFOX_JWT_SECRET }}
+      - if: github.event.inputs.release_type == 'release'
+        name: GitHub Release
+        run: |
+          version="$(jq -r .version lerna.json)"
+          gh release create "v${version}" \
+            --verify-tag \
+            --title "v${version}" \
+            --notes "For release notes, please refer to the [release documentation](https://docs.originator-profile.org/releases/v${version}/)." \
+            "apps/inspector/web-ext-artifacts/op_inspector-chromium-${version}.zip" \
+            "apps/inspector/web-ext-artifacts/op_inspector-firefox-desktop-${version}.zip" \
+            packages/wordpress/dist/wordpress-ca-manager.zip
+        env:
+          GH_TOKEN: ${{ github.token }}
       - if: github.ref == 'refs/heads/main' && github.event.inputs.release_type == 'release' && github.event.inputs.version != 'prerelease'
         name: Next Release
         run: |

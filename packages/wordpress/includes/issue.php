@@ -28,6 +28,16 @@ use function Profile\Debug\debug;
 require_once __DIR__ . '/url.php';
 use function Profile\Url\add_page_query;
 
+require_once __DIR__ . '/ca-storage.php';
+
+require_once __DIR__ . '/exclusion.php';
+use function Profile\Exclusion\is_excluded;
+
+require_once __DIR__ . '/delivery.php';
+use function Profile\Delivery\suspend;
+use function Profile\Delivery\is_post_excluded;
+use const Profile\Delivery\BLOCKED_META;
+
 /** 投稿への署名処理の初期化
  * transition_post_status について
  * sign_post: 公開への遷移時のみの処理。非公開遷移時は何もしない。
@@ -53,55 +63,306 @@ function sign_post( string $new_status, string $old_status, \WP_Post $post ) {
 		return;
 	}
 
-	foreach ( \get_attached_media( 'image', $post->ID ) as $attachment ) {
-		$metadata = \wp_get_attachment_metadata( $attachment->ID );
-		update_attachment_integrity_metadata( $metadata, $attachment->ID );
+	$result = issue_post( $post );
+	debug( "Post ID {$post->ID}: CA issuance result ({$result['status']}): {$result['message']}" );
+}
+
+/**
+ * 保存済みの投稿 CAS が、少なくとも一つの空でない CA 文字列を含むか判定する。
+ *
+ * @param int $post_id Post ID.
+ * @return bool 空でない CA 文字列が保存されている場合は true.
+ */
+function has_post_cas( int $post_id ): bool {
+	return has_cas_value( \get_post_meta( $post_id, '_profile_post_cas', true ) );
+}
+
+/**
+ * 保存値が、少なくとも一つの空でないページ CAS を含むか判定する。
+ *
+ * @param mixed $post_cas 保存済みの投稿 CAS.
+ * @return bool 発行済みの CAS を含む場合は true.
+ */
+function has_cas_value( mixed $post_cas ): bool {
+	if ( is_string( $post_cas ) ) {
+		return '' !== trim( $post_cas );
 	}
 
-	$admin_secret = \get_option( 'profile_ca_server_admin_secret' );
-	$issuer_id    = \get_option( 'profile_ca_issuer_id' );
-
-	if ( ! $admin_secret || ! $issuer_id ) {
-		debug( 'Missing required CA server configuration (admin_secret or issuer_id)' );
-		return;
+	if ( ! is_array( $post_cas ) || empty( $post_cas ) ) {
+		return false;
 	}
 
-	$uuid = extract_uuid_from_cas( $post );
-
-	if ( false === $uuid ) {
-		debug( "UUID not available or failed to decode UUID for post ID {$post->ID}. Continuing with new UCA issuance" );
-		$uca_list = create_uca_list( $post, $issuer_id ); // UUIDなしで新規発行
-	} else {
-		$uca_list = create_uca_list( $post, $issuer_id, $uuid );
+	// 旧形式の単一ページ CAS（array<string>）も受け付ける。
+	if ( is_nonempty_ca_array( $post_cas ) ) {
+		return true;
 	}
 
-	if ( empty( $uca_list ) ) {
-		debug( "No UCA generated for post ID: {$post->ID}. Skipping CA issuance and clearing saved CAS." );
+	// 通常形式はページごとの CAS 配列（array<array<string>>）。
+	foreach ( $post_cas as $page_cas ) {
+		if ( is_array( $page_cas ) && is_nonempty_ca_array( $page_cas ) ) {
+			return true;
+		}
 	}
-	$post_cas = array();
 
-	foreach ( $uca_list as $page => $uca ) {
-		++$page;
+	return false;
+}
 
-		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
-			require_once ABSPATH . 'wp-admin/includes/file.php';
+/**
+ * 配列が空でない CA 文字列の配列か判定する。
+ *
+ * @param mixed $cas 値.
+ * @return bool 空でない文字列だけで構成される場合は true.
+ */
+function is_nonempty_ca_array( mixed $cas ): bool {
+	if ( ! is_array( $cas ) || empty( $cas ) ) {
+		return false;
+	}
 
-			if ( \WP_Filesystem() ) {
-				global $wp_filesystem;
+	foreach ( $cas as $value ) {
+		if ( ! is_string( $value ) || '' === trim( $value ) ) {
+			return false;
+		}
+	}
 
-				$wp_filesystem->put_contents( \get_temp_dir() . "/profile-test-snapshots/{$post->ID}.{$page}.snapshot.json", $uca->to_json() );
+	return true;
+}
+
+/**
+ * 投稿一件分の Content Attestation を発行する。
+ *
+ * @param \WP_Post $post 投稿オブジェクト.
+ * @param bool     $only_missing 既存 CAS がある場合は発行をスキップするか.
+ * @return array{status: 'success'|'skipped'|'failed', message: string} 発行結果.
+ */
+function issue_post( \WP_Post $post, bool $only_missing = false ): array {
+	// 通常発行と一括発行を、同じ記事単位のロックで直列化する。
+	global $wpdb;
+	$lock = hash( 'sha256', DB_NAME . ':' . $wpdb->prefix . ':ca:' . $post->ID );
+	// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- DB接続単位の排他ロック。結果はキャッシュしない。
+	$acquired = $wpdb->get_var( $wpdb->prepare( 'SELECT GET_LOCK(%s, 0)', $lock ) );
+	if ( 1 !== (int) $acquired ) {
+		suspend( $post->ID, true );
+		debug( "Post ID {$post->ID}: concurrent CA issuance; delivery remains suspended until a later successful update." );
+		return array(
+			'status'  => 'failed',
+			'message' => '別の処理がこの記事のCAを発行中です。完了後に再試行してください。',
+		);
+	}
+	try {
+		return sign_published_post( $post, $only_missing );
+	} finally {
+		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- 必ず取得した接続のロックを解放する。
+		$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
+	}
+}
+
+/**
+ * 排他ロック取得後に、全ページのCAを発行して配信を再開する。
+ *
+ * @param \WP_Post $post 投稿オブジェクト。
+ * @param bool     $only_missing 既存CASがある場合は発行をスキップするか。
+ * @return array{status: 'success'|'skipped'|'failed', message: string} 発行結果。
+ */
+function sign_published_post( \WP_Post $post, bool $only_missing = false ): array {
+	$signed_post = $post->to_array();
+	try {
+		if ( 'publish' !== $post->post_status ) {
+			debug( "Post ID {$post->ID}: post status is '{$post->post_status}', not 'publish'." );
+			return array(
+				'status'  => 'skipped',
+				'message' => '投稿が公開状態ではないため、CA発行をスキップしました。',
+			);
+		}
+
+		// 記事の代表 URL で判定し、分割ページもまとめて除外する。ここでは
+		// 画像処理や CA サーバーへの接続をまだ行わない。
+		$rules = \get_option( 'profile_ca_excluded_urls', array() );
+		$url   = \get_permalink( $post );
+		if ( ! is_array( $rules ) || ! is_string( $url ) || '' === $url ) {
+			suspend( $post->ID );
+			debug( "Post ID {$post->ID}: CA issuance stopped because the public URL or exclusion settings are unavailable." );
+			return array(
+				'status'  => 'failed',
+				'message' => '公開URLまたはCA除外設定を確認できないため、CA発行を中止しました。',
+			);
+		}
+
+		try {
+			if ( is_excluded( $url, $rules ) ) {
+				suspend( $post->ID );
+				debug( "Post ID {$post->ID}: CA issuance skipped by URL exclusion rules. Existing CAS preserved." );
+				return array(
+					'status'  => 'skipped',
+					'message' => '除外対象のURLのためスキップしました。',
+				);
 			}
+		} catch ( \InvalidArgumentException $error ) {
+			suspend( $post->ID );
+			debug( "Post ID {$post->ID}: CA issuance stopped because URL exclusion could not be evaluated: " . $error->getMessage() );
+			return array(
+				'status'  => 'failed',
+				'message' => 'CA除外設定または公開URLを確認できないため、CA発行を中止しました。',
+			);
 		}
 
-		$cas = issue_ca( $uca, $admin_secret );
-		if ( false === $cas || empty( $cas ) ) {
-			debug( "Failed to issue CA for post ID: {$post->ID}, page: {$page}" );
+		// 未発行判定と保存時の競合検査には、記事ロック取得後の同じDB値を使う。
+		$initial_cas = $only_missing ? read_ca_snapshot( $post->ID ) : null;
+		if ( $only_missing && is_array( $initial_cas ) && 1 === count( $initial_cas ) && has_cas_value( \maybe_unserialize( $initial_cas[0]['meta_value'] ) ) ) {
+			debug( "Post ID {$post->ID}: CA issuance skipped because an existing non-empty CAS was found." );
+			return array(
+				'status'  => 'skipped',
+				'message' => '発行済みのためスキップしました。',
+			);
 		}
-		$cas = is_array( $cas ) ? $cas : array();
-		array_push( $post_cas, $cas );
+
+		// 再発行が失敗した場合も、更新前のCAを配信しない。保存済みCA自体は保持する。
+		if ( ! suspend( $post->ID, true ) ) {
+			debug( "Post ID {$post->ID}: could not suspend CA delivery before issuance." );
+			return array(
+				'status'  => 'failed',
+				'message' => 'CAの配信を停止できないため、CA発行を中止しました。',
+			);
+		}
+		// 発行中に作られた新しい停止状態を解除しないよう、開始時のトークンを保持する。
+		$blocked_token = \get_post_meta( $post->ID, BLOCKED_META, true );
+
+		if ( ! $only_missing ) {
+			$initial_cas = read_ca_snapshot( $post->ID );
+		}
+		if ( null === $initial_cas ) {
+			debug( "Post ID {$post->ID}: CA issuance stopped because the saved CA query failed." );
+			return array(
+				'status'  => 'failed',
+				'message' => '保存済みのCAをデータベースから読み取れなかったため、CA発行を中止しました。',
+			);
+		}
+		if ( count( $initial_cas ) > 1 ) {
+			debug( "Post ID {$post->ID}: CA issuance stopped because duplicate CA metadata rows were found." );
+			return array(
+				'status'  => 'failed',
+				'message' => '同じ記事のCA保存レコードが複数あるため、CA発行を中止しました。',
+			);
+		}
+		$initial_state = array(
+			'status'       => $post->post_status,
+			'content'      => $post->post_content,
+			'title'        => $post->post_title,
+			'excerpt'      => $post->post_excerpt,
+			'author'       => $post->post_author,
+			'date'         => $post->post_date,
+			'modified'     => $post->post_modified,
+			'modified_gmt' => $post->post_modified_gmt,
+			'permalink'    => $url,
+		);
+
+		foreach ( \get_attached_media( 'image', $post->ID ) as $attachment ) {
+			$metadata = \wp_get_attachment_metadata( $attachment->ID );
+			update_attachment_integrity_metadata( $metadata, $attachment->ID );
+		}
+
+		$admin_secret = \get_option( 'profile_ca_server_admin_secret' );
+		$issuer_id    = \get_option( 'profile_ca_issuer_id' );
+
+		if ( ! is_string( $admin_secret ) || '' === $admin_secret || ! is_string( $issuer_id ) || '' === $issuer_id ) {
+			debug( 'Missing required CA server configuration (admin_secret or issuer_id)' );
+			return array(
+				'status'  => 'failed',
+				'message' => 'CAサーバーの設定が不足しているため、CAを発行できません。',
+			);
+		}
+
+		$uuid = extract_uuid_from_cas( $post );
+
+		if ( false === $uuid ) {
+			debug( "UUID not available or failed to decode UUID for post ID {$post->ID}. Continuing with new UCA issuance" );
+			$uca_list = create_uca_list( $post, $issuer_id ); // UUIDなしで新規発行
+		} else {
+			$uca_list = create_uca_list( $post, $issuer_id, $uuid );
+		}
+
+		if ( empty( $uca_list ) ) {
+			debug( "No UCA generated for post ID: {$post->ID}. Skipping CA issuance, preserving saved CAS and keeping delivery suspended." );
+			return array(
+				'status'  => 'failed',
+				'message' => '署名対象のデータを作成できなかったため、CAを発行できません。',
+			);
+		}
+
+		$post_cas = array();
+
+		foreach ( $uca_list as $page => $uca ) {
+			++$page;
+
+			if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
+				require_once ABSPATH . 'wp-admin/includes/file.php';
+
+				if ( \WP_Filesystem() ) {
+					global $wp_filesystem;
+
+					$wp_filesystem->put_contents( \get_temp_dir() . "/profile-test-snapshots/{$post->ID}.{$page}.snapshot.json", $uca->to_json() );
+				}
+			}
+
+			$cas = issue_ca( $uca, $admin_secret );
+			if ( ! is_nonempty_ca_array( $cas ) ) {
+				debug( "Failed to issue a non-empty CA for post ID: {$post->ID}, page: {$page}" );
+				return array(
+					'status'  => 'failed',
+					'message' => 'CAサーバーから有効な発行結果を取得できなかったため、既存のCAを保持しました。',
+				);
+			}
+
+			$post_cas[] = $cas;
+		}
+
+		// 本文保存は記事ロックの外で行われるため、全投稿状態と配信停止トークンを再確認する。
+		\clean_post_cache( $post->ID );
+		$current_post = \get_post( $post->ID );
+		if ( ! $current_post instanceof \WP_Post || $current_post->to_array() !== $signed_post || \get_post_meta( $post->ID, BLOCKED_META, true ) !== $blocked_token ) {
+			return array(
+				'status'  => 'failed',
+				'message' => '発行中に記事または配信停止状態が変更されたため、CAを保存しませんでした。',
+			);
+		}
+
+		if ( ! store_post_cas( $post->ID, $initial_state, $initial_cas, $post_cas ) ) {
+			debug( "Post ID {$post->ID}: CA storage failed or the post changed while issuing CA." );
+			return array(
+				'status'  => 'failed',
+				'message' => '発行中の変更または保存エラーのため、CAを保存できませんでした。再試行してください。',
+			);
+		}
+
+		try {
+			if ( is_post_excluded( $post ) ) {
+				suspend( $post->ID );
+				return array(
+					'status'  => 'skipped',
+					'message' => '除外対象のURLのため、CAの配信を停止しました。',
+				);
+			}
+		} catch ( \InvalidArgumentException $error ) {
+			suspend( $post->ID );
+			return array(
+				'status'  => 'failed',
+				'message' => 'CA除外設定または公開URLを確認できないため、CAの配信を停止しました。',
+			);
+		}
+		if ( $blocked_token ) {
+			\delete_post_meta( $post->ID, BLOCKED_META, $blocked_token );
+		}
+
+		return array(
+			'status'  => 'success',
+			'message' => 'CAを発行しました。',
+		);
+	} catch ( \Throwable $error ) {
+		debug( "Post ID {$post->ID}: CA issuance failed with an unexpected error: " . $error->getMessage() );
+		return array(
+			'status'  => 'failed',
+			'message' => 'CA発行中にエラーが発生しました。',
+		);
 	}
-
-	\update_post_meta( $post->ID, '_profile_post_cas', $post_cas );
 }
 
 /**
@@ -233,7 +494,7 @@ function extract_uuid_from_jwt( string $jwt ) {
 function extract_uuid_from_cas( \WP_Post $post ) {
 	$cas  = \get_post_meta( $post->ID, '_profile_post_cas', true );
 	$page = \max( 1, \get_query_var( 'page' ) );
-	$cas  = is_array( $cas ) ? $cas[ $page - 1 ] : $cas;
+	$cas  = is_array( $cas ) ? ( $cas[ $page - 1 ] ?? null ) : $cas;
 
 	if ( is_array( $cas ) && isset( $cas[0] ) && is_string( $cas[0] ) ) {
 		$jwt = $cas[0];
@@ -445,9 +706,13 @@ function expand_more_tag( string $content, int $post_id, bool $strip_teaser = fa
 /**
  * HTMLから外部リソースのIntegrityを取得
  *
+ * 要素に `wp-image-{添付ID}` クラスがあれば、その要素を特定する CSS セレクターも返す。
+ *
+ * @link https://docs.originator-profile.org/ja/opb/content-integrity-descriptor/external-resource/
+ *
  * @param string $html HTML
  * @param string $xpath_query XPathクエリ
- * @return array<string> 外部リソースのIntegrity一覧
+ * @return list<array{integrity: string, css_selector?: string}> 外部リソースのIntegrityとCSSセレクターの一覧
  */
 function external_resources_from_html( string $html, string $xpath_query ): array {
 	$document = new \DOMDocument();
@@ -458,9 +723,16 @@ function external_resources_from_html( string $html, string $xpath_query ): arra
 
 	if ( $elements ) {
 		foreach ( $elements as $element ) {
-			if ( $element->attributes['integrity']->value ) {
-				array_push( $resources, $element->attributes['integrity']->value );
+			$integrity = $element->getAttribute( 'integrity' );
+			if ( ! $integrity ) {
+				continue;
 			}
+
+			$resource = array( 'integrity' => $integrity );
+			if ( preg_match( '/(?:^|\s)wp-image-(\d+)(?:\s|$)/', $element->getAttribute( 'class' ), $matches ) ) {
+				$resource['css_selector'] = "img.wp-image-{$matches[1]}";
+			}
+			array_push( $resources, $resource );
 		}
 	} else {
 		debug( "No external resources found matching Xpath query: {$xpath_query}" );

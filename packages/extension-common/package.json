@@ -1,6 +1,6 @@
 {
   "name": "@originator-profile/extension-common",
-  "version": "0.7.0-beta.5",
+  "version": "0.8.0-beta.0",
   "license": "Apache-2.0",
   "private": true,
   "homepage": "https://docs.originator-profile.org",
@@ -43,7 +43,7 @@
     "@originator-profile/securing-mechanism": "workspace:*",
     "@originator-profile/verify": "workspace:*",
     "@webext-core/messaging": "2.3.0",
-    "dompurify": "3.4.13",
+    "dompurify": "3.4.16",
     "tailwind-config-originator-profile": "workspace:*",
     "tailwind-merge": "3.5.0"
   },
@@ -54,7 +54,7 @@
     "happy-dom": "20.8.9",
     "oxlint": "^1.73.0",
     "oxlint-tsgolint": "^0.24.0",
-    "vitest": "4.1.4"
+    "vitest": "4.1.11"
   },
   "peerDependencies": {
     "react": "^19.2.0",

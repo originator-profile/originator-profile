@@ -4,7 +4,7 @@
  *
  * Plugin Name: CA Manager (Originator Profile)
  * Description: WordPress での記事の公開時の Content Attestation (CA) の発行に役立つプラグインです。
- * Version: 0.7.0-beta.5
+ * Version: 0.8.0-beta.0
  * Author: Originator Profile Collaborative Innovation Partnership
  * Author URI: https://originator-profile.org/
  * License: MIT
@@ -20,8 +20,16 @@ require_once __DIR__ . '/includes/admin.php';
 \Profile\Admin\init();
 \add_filter( 'plugin_action_links_' . \plugin_basename( __FILE__ ), '\Profile\Admin\add_action_links' );
 
+require_once __DIR__ . '/includes/delivery.php';
+\Profile\Delivery\init();
+
 require_once __DIR__ . '/includes/issue.php';
 \Profile\Issue\init();
+
+require_once __DIR__ . '/includes/bulk.php';
+\Profile\Bulk\init();
+require_once __DIR__ . '/includes/bulk-admin.php';
+\Profile\BulkAdmin\init();
 
 require_once __DIR__ . '/includes/post.php';
 \Profile\Post\init();

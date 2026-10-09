@@ -1,6 +1,6 @@
 {
   "name": "@originator-profile/sign",
-  "version": "0.7.0-beta.5",
+  "version": "0.8.0-beta.0",
   "license": "Apache-2.0",
   "homepage": "https://docs.originator-profile.org",
   "repository": {
@@ -40,7 +40,7 @@
     "oxlint-tsgolint": "^0.24.0",
     "pkgroll": "2.27.0",
     "typescript": "6.0.2",
-    "vitest": "4.1.4",
+    "vitest": "4.1.11",
     "websri": "1.0.1",
     "zod": "4.4.3"
   }

@@ -1,7 +1,7 @@
 {
   "name": "@originator-profile/originator-profile",
   "description": "Originator Profile Project",
-  "version": "0.7.0-beta.5",
+  "version": "0.8.0-beta.0",
   "license": "Apache-2.0",
   "private": true,
   "homepage": "https://docs.originator-profile.org",
@@ -25,7 +25,7 @@
     "@lerna-lite/cli": "4.11.5",
     "@lerna-lite/version": "4.11.5",
     "@types/jsdom": "28.0.1",
-    "js-yaml": "5.2.2",
+    "js-yaml": "5.4.1",
     "npm-run-all2": "8.0.4",
     "prettier": "3.8.2",
     "prettier-plugin-organize-imports": "4.3.0",

@@ -39,9 +39,23 @@ type LocalCa = {
   errors: string[];
 };
 
-export const test = base.extend<{}, { localCa: LocalCa }>({
+async function restoreOptions(
+  names: string[],
+  previous: { option_name: string; option_value: string }[],
+) {
+  for (const name of names) {
+    const old = previous.find((option) => option.option_name === name);
+    // oxlint-disable-next-line no-await-in-loop -- WordPress の設定変更は順番に完了させる.
+    await (old
+      ? wp("option", "update", name, old.option_value)
+      : wp("option", "delete", name));
+  }
+}
+
+export const test = base.extend<Record<never, never>, { localCa: LocalCa }>({
   localCa: [
-    async ({}, use) => {
+    // oxlint-disable-next-line no-empty-pattern -- Playwright は依存のない fixture にも分割代入を要求する.
+    async ({}, runFixture) => {
       const { publicKey, privateKey } = await generateKey();
       const submissions = new Map<string, UnsignedContentAttestation>();
       const errors: string[] = [];
@@ -108,9 +122,11 @@ export const test = base.extend<{}, { localCa: LocalCa }>({
         server.listen(8080, "0.0.0.0", resolve);
       });
       try {
-        for (const [name, value] of Object.entries(options))
+        for (const [name, value] of Object.entries(options)) {
+          // oxlint-disable-next-line no-await-in-loop -- 復元開始前にすべての設定変更を完了させる.
           await wp("option", "update", name, value);
-        await use({
+        }
+        await runFixture({
           keys: LocalKeys({ keys: [publicKey] }),
           issuer,
           submissions,
@@ -118,14 +134,12 @@ export const test = base.extend<{}, { localCa: LocalCa }>({
         });
       } finally {
         try {
-          for (const name of Object.keys(options)) {
-            const old = previous.find((option) => option.option_name === name);
-            if (old) await wp("option", "update", name, old.option_value);
-            else await wp("option", "delete", name);
-          }
+          await restoreOptions(Object.keys(options), previous);
         } finally {
           server.closeAllConnections();
-          await new Promise<void>((resolve) => server.close(() => resolve()));
+          await new Promise<void>((resolve) => {
+            server.close(() => resolve());
+          });
         }
       }
     },

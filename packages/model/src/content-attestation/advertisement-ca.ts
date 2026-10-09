@@ -1,6 +1,4 @@
 import { z } from "zod";
-import { AllowedOrigin } from "../allowed-origin";
-import { AllowedUrl } from "../allowed-url";
 import { OpCipContext } from "../context/op-cip-context";
 import { Image } from "../image";
 import { Page } from "../page";
@@ -39,20 +37,10 @@ const subject = z
     { error: "At least one of name, description, or image must be provided" },
   );
 
-const withAllowedUrl = z.object({
-  allowedUrl: AllowedUrl,
-  allowedOrigin: z.never().optional(),
-});
-
-const withAllowedOrigin = z.object({
-  allowedUrl: z.never().optional(),
-  allowedOrigin: AllowedOrigin,
-});
-
 export const AdvertisementCA = ContentAttestation.extend({
   "@context": OpCipContext,
   credentialSubject: subject,
-}).and(z.union([withAllowedUrl, withAllowedOrigin]));
+});
 
 export type AdvertisementCA = z.infer<typeof AdvertisementCA>;
 export type AdvertisementSubject = z.infer<typeof subject>;

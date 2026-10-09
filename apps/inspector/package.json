@@ -1,7 +1,7 @@
 {
   "name": "@originator-profile/inspector",
   "description": "OP Inspector is a dev debug tool to verify Originator Profile info, proving authenticity and credibility of information originators.",
-  "version": "0.7.0-beta.5",
+  "version": "0.8.0-beta.0",
   "license": "Apache-2.0",
   "private": true,
   "homepage": "https://docs.originator-profile.org",
@@ -39,7 +39,7 @@
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
     "@uiw/react-json-view": "2.0.0-alpha.42",
-    "astro": "7.1.0",
+    "astro": "7.2.8",
     "chokidar": "5.0.0",
     "date-fns": "4.1.0",
     "dotenv": "17.4.2",
@@ -62,7 +62,7 @@
     "tailwindcss": "4.2.2",
     "typed-url-params": "1.0.1",
     "use-debounce": "10.1.1",
-    "vitest": "4.1.4",
+    "vitest": "4.1.11",
     "web-ext": "10.1.0",
     "wxt": "0.20.27"
   },

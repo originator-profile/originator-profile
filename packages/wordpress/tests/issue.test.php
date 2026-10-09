@@ -9,6 +9,8 @@ use const Profile\Config\PROFILE_DEFAULT_CA_TARGET_HTML;
 
 require_once __DIR__ . '/../includes/issue.php';
 use function Profile\Issue\content_to_html;
+use function Profile\Issue\external_resources_from_html;
+use const Profile\Issue\WP_BLOCK_IMAGE_XPATH;
 use function Profile\Issue\find_images_without_integrity;
 
 final class Issue extends TestCase {
@@ -107,6 +109,37 @@ EOD;
 		$this->assertSame(
 			array( 'https://example.com/a.png' ),
 			find_images_without_integrity( $html )
+		);
+	}
+
+	public function test_external_resources_from_html関数はwp_imageクラスからCSSセレクターを返す() {
+		$html = <<<'EOD'
+<div class="wp-block-post-content">
+<figure class="wp-block-image size-full"><img src="https://example.com/a.png" class="wp-image-123" integrity="sha256-xxx sha256-yyy" /></figure>
+</div>
+EOD;
+
+		$this->assertSame(
+			array(
+				array(
+					'integrity'    => 'sha256-xxx sha256-yyy',
+					'css_selector' => 'img.wp-image-123',
+				),
+			),
+			external_resources_from_html( $html, WP_BLOCK_IMAGE_XPATH . '[@integrity]' )
+		);
+	}
+
+	public function test_external_resources_from_html関数はwp_imageクラスが無ければCSSセレクターを返さない() {
+		$html = <<<'EOD'
+<div class="wp-block-post-content">
+<figure class="wp-block-image size-full"><img src="https://example.com/a.png" class="wp-image-foo" integrity="sha256-xxx" /></figure>
+</div>
+EOD;
+
+		$this->assertSame(
+			array( array( 'integrity' => 'sha256-xxx' ) ),
+			external_resources_from_html( $html, WP_BLOCK_IMAGE_XPATH . '[@integrity]' )
 		);
 	}
 }
