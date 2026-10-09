@@ -29,14 +29,13 @@ function CertificateRef(props: { ref?: string }) {
       className="card border px-5 py-3 flex items-center justify-between gap-2.5 rounded-2xl"
       target="_blank"
       rel="noopener noreferrer"
-      /* oxlint-disable-next-line react/react-compiler */
+      /* oxlint-disable-next-line react/refs */
       href={props.ref}
     >
       <span className="flex flex-col gap-1">
         <span className="text-xs text-gray-500">
           {_("CertificateDetail_Details")}
         </span>
-        {/* oxlint-disable-next-line react/react-compiler */}
         <span className="text-sm">{props.ref}</span>
       </span>
       <IconFa6SolidArrowRight className="text-sm text-gray-500" height="1em" />
@@ -65,7 +64,7 @@ function CertificateDetailContent({
           height={40}
         />
         <div className="space-y-0.5 ">
-          {/* oxlint-disable-next-line react/react-compiler */}
+          {/* oxlint-disable-next-line react/refs */}
           <h2 className="text-sm text-black">{policy.name}</h2>
           <p className="text-xs text-gray-600">
             {_(
@@ -78,9 +77,7 @@ function CertificateDetailContent({
       <CertificateDescription
         description={certificate.credentialSubject.description}
       />
-      {/* oxlint-disable-next-line react/react-compiler */}
       <CertificateDescription description={policy.description} />
-      {/* oxlint-disable-next-line react/react-compiler */}
       <CertificateRef ref={policy.ref} />
     </>
   );

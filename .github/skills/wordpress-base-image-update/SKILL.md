@@ -22,8 +22,18 @@ description: packages/wordpress の Docker ベースイメージ（WordPress/PHP
    PHP バージョンを上げる場合は、README の「PHP のサポート方針」が指す下限([endoflife.date/php](https://endoflife.date/php))を下回らないことを確認する。
 
 2. タグを変更した場合は `node scripts/update-readme-environments.ts` を実行し、README の「Verified」セクションを同期する(ダイジェストのみの更新では、この行にダイジェストは表示されないため不要)。
-3. `docker compose exec -w /var/www/html/wp-content/plugins/ca-manager wordpress composer install` で `composer.json`/`composer.lock` が新しい PHP バージョンでも解決できることを確認する。
-4. `composer run test`、`composer run lint`、`docker build --output=dist packages/wordpress` で動作確認する。
+3. PHP のマイナーバージョンを変更した場合は、`packages/wordpress/composer.json` の `config.platform.php` を新しいベースイメージの PHP バージョン(例: `php8.4` なら `"8.4"`)に合わせ、`composer.lock` を再生成する。
+
+   ```bash
+   docker compose exec -w /var/www/html/wp-content/plugins/ca-manager wordpress composer update --no-install
+   ```
+
+4. `docker compose exec -w /var/www/html/wp-content/plugins/ca-manager wordpress composer install` で `composer.json`/`composer.lock` が新しい PHP バージョンでも解決できることを確認する。
+5. `composer run test`、`composer run lint`、`docker build --output=dist packages/wordpress` で動作確認する。
+
+## なぜ `config.platform.php` を固定するか
+
+Composer は依存関係を解決するとき、実行環境の PHP バージョンを基準にする。Renovate の lock file maintenance はベースイメージより新しい PHP で `composer update` を実行するため、指定がないとベースイメージの PHP では入らないバージョン(例: PHP 8.4 以上を要求する symfony 8.x)を `composer.lock` に書き込んでしまう。`config.platform.php` をベースイメージの PHP バージョンに固定すると、どの環境で解決しても `composer.lock` がベースイメージで動く範囲に収まる。ベースイメージの PHP バージョンを変えたら、この値も必ず一緒に更新する。
 
 ## なぜダイジェストを固定するか
 
