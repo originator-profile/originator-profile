@@ -114,8 +114,10 @@ export function setupBackground(config: BackgroundConfig) {
   }
 
   chrome.runtime.onInstalled.addListener(async ({ reason }) => {
-    if (reason !== "install") return;
+    if (reason !== "install" && reason !== "update") return;
 
+    // NOTE: 既存のタブにはマニフェストの content script が入っていないか、更新前の
+    // 拡張機能のものが残っていて通信できない
     await injectContentScriptsToExistingTabs();
 
     const [activeTab] = await chrome.tabs.query({
@@ -125,6 +127,7 @@ export function setupBackground(config: BackgroundConfig) {
     if (activeTab?.id !== undefined) {
       requestTabBadgeUpdate(activeTab.id);
     }
+    if (reason !== "install") return;
 
     const granted = await chrome.permissions.contains({
       origins: ["<all_urls>"],
