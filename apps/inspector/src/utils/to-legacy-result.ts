@@ -8,7 +8,7 @@ import {
   pointer,
   SiteProfileInvalid,
   SiteProfileVerifyFailed,
-  type DocumentsOutcome,
+  type DocumentOutcome,
   type OriginatorPayload,
   type ProblemDetails,
   type SecuringResult,
@@ -185,32 +185,27 @@ export function toLegacyWebsite(
     : new SiteProfileVerifyFailed(message, value as never);
 }
 
-/** 従来の形に戻した文書群の検証結果 */
-export type LegacyDocuments<Target extends VerificationTarget> = {
+/** 従来の形に戻した文書の検証結果 */
+export type LegacyDocument = {
   ops: VerifiedOps;
-  documents: { target: Target; cas: VerifiedCas }[];
+  cas: VerifiedCas;
 };
 
 /**
- * 文書群の検証失敗を、従来のエラークラスに戻す
+ * 文書の検証失敗を、従来のエラークラスに戻す
  * @param problem 検証失敗の理由
  * @param ops 復元済みの発信者プロファイル集合
- * @param documents 復元済みの文書ごとの Content Attestation
+ * @param cas 復元済みの Content Attestation
  */
-function toLegacyDocumentsFailure(
+function toLegacyDocumentFailure(
   problem: ProblemDetails | undefined,
   ops: unknown,
-  documents: { cas: VerifiedCas }[],
+  cas: VerifiedCas,
 ): Error {
   const code = problem && codeOf(problem.type);
   const message = problem?.title ?? "Verify failed";
 
-  if (code === CasVerifyFailed.code) {
-    const failed = documents.find(({ cas }) =>
-      cas.some(({ attestation }) => attestation instanceof Error),
-    );
-    return new CasVerifyFailed(message, failed?.cas ?? []);
-  }
+  if (code === CasVerifyFailed.code) return new CasVerifyFailed(message, cas);
   if (!isOpsProblem(code)) return toError(problem);
 
   // NOTE: toLegacyOps は失敗を含む場合すでにエラーを返している。二重に包むと
@@ -219,30 +214,29 @@ function toLegacyDocumentsFailure(
 }
 
 /**
- * 文書群の検証結果を、従来の verifyDocuments の戻り値の形に戻す
+ * 文書の検証結果を、従来の検証済み OPS / CAS の形に戻す
  * @param result 検証結果
- * @returns 検証済みの発信者と文書、または検証失敗を表すエラー
+ * @returns 検証済みの発信者と Content Attestation、または検証失敗を表すエラー
  */
-export function toLegacyDocuments<Target extends VerificationTarget>(
-  result: VerificationResult<DocumentsOutcome<Target>>,
-): LegacyDocuments<Target> | Error {
+export function toLegacyDocument(
+  result: VerificationResult<
+    Pick<DocumentOutcome<VerificationTarget>, "originators" | "cas">
+  >,
+): LegacyDocument | Error {
   if (!result.outcome) return toError(result.errors?.[0]);
 
   const index = createIndex(result);
   const ops = toLegacyOps(result.outcome.originators, index);
-  const documents = result.outcome.documents.map(({ target, cas }, i) => ({
-    target,
-    cas: cas.map(({ main, attestation }, j) => ({
-      main,
-      attestation: toLegacyVc(
-        attestation,
-        pointer("documents", i, "cas", j, "attestation"),
-        index,
-      ),
-    })) as VerifiedCas,
-  }));
+  const cas = result.outcome.cas.map(({ main, attestation }, j) => ({
+    main,
+    attestation: toLegacyVc(
+      attestation,
+      pointer("cas", j, "attestation"),
+      index,
+    ),
+  })) as VerifiedCas;
 
   return result.status
-    ? { ops: ops as VerifiedOps, documents }
-    : toLegacyDocumentsFailure(result.errors[0], ops, documents);
+    ? { ops: ops as VerifiedOps, cas }
+    : toLegacyDocumentFailure(result.errors[0], ops, cas);
 }

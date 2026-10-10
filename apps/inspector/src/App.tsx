@@ -1,9 +1,9 @@
 import { overlayExtensionMessenger } from "@originator-profile/extension-common";
 import { useEffect } from "react";
 import { Navigate, Route, Routes } from "react-router";
-import { useNavigationRefetch, useTabTracking } from "./components/activeTab";
+import { useDocumentNavigation, useTabTracking } from "./components/activeTab";
 import { EnvironmentBanner } from "./components/environment";
-import Base from "./pages/Base";
+import Base, { FollowLanding } from "./pages/Base";
 import Credentials from "./pages/Credentials";
 import DetailInfo from "./pages/DetailInfo";
 import Org from "./pages/Org";
@@ -14,7 +14,7 @@ import { buildPublUrl, paths } from "./utils/routes";
 
 function App() {
   useTabTracking();
-  useNavigationRefetch();
+  useDocumentNavigation();
 
   useEffect(() => {
     const cleanup = overlayExtensionMessenger.onMessage(
@@ -45,6 +45,7 @@ function App() {
                 index
                 element={
                   <div className="flex flex-col divide-y divide-gray-200">
+                    <FollowLanding />
                     <SiteProfile />
                   </div>
                 }

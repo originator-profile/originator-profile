@@ -56,7 +56,7 @@ export function useTabTracking() {
     chrome.tabs.onActivated.addListener(activatedListener);
 
     // アクティブタブの読み込み完了時にも表示先を合わせる。
-    // 同一タブ内の Web ページ間遷移による再取得は useNavigationRefetch が担う。
+    // 同一タブ内の遷移による再表示は useDocumentNavigation が担う。
     // 同一タブの場合 navigateToTab は pathname 一致で no-op になる。
     const updatedListener = async (
       tabId: number,

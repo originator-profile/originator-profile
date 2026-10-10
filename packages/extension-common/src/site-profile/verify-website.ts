@@ -14,9 +14,8 @@ import {
 } from "@originator-profile/verify";
 import { codeOf } from "../utils/problem-code";
 import { getRegistry } from "../utils/registry-ops";
-import { fetchTabSiteProfile } from "./messaging";
 
-/** タブが表示している Web サイトの検証結果 */
+/** Web サイトの検証結果 */
 export type TabWebsiteVerification = {
   /** 検証結果 */
   result: VerificationResult<WebsiteOutcome>;
@@ -30,18 +29,18 @@ export type TabWebsiteVerification = {
 };
 
 /**
- * タブが表示している Web サイトを取得して検証する。
- * @param tabId タブID
+ * Site Profile を取得して Web サイトを検証する。
+ * @param fetchSiteProfile Site Profile の取得
  * @param options ロガー
  * @returns 検証結果と、取得した Site Profile
  */
-export async function verifyTabWebsite(
-  tabId: number,
+export async function verifyFetchedWebsite(
+  fetchSiteProfile: () => Promise<FetchSiteProfileSuccess>,
   options: { logger?: Logger } = {},
 ): Promise<TabWebsiteVerification> {
   let data: FetchSiteProfileSuccess;
   try {
-    data = await fetchTabSiteProfile(tabId);
+    data = await fetchSiteProfile();
   } catch (error) {
     return {
       result: {

@@ -6,6 +6,7 @@ import { useSWRConfig } from "swr";
 import { twMerge } from "tailwind-merge";
 import { buildDetailUrl, routes } from "../utils/routes";
 import { matchTabCacheKey } from "./activeTab/match-tab-cache-key";
+import { reverifyTab } from "./activeTab/use-tab-verification";
 import { Menu, MenuButton, MenuItem, useMenuButton } from "./Menu";
 
 type Props = {
@@ -43,6 +44,7 @@ function GlobalHeader({ className, children }: Props) {
     const numericTabId = Number(tabId);
     const base = routes.base.build({ tabId });
     void mutate(matchTabCacheKey(numericTabId), undefined);
+    void reverifyTab(numericTabId);
     void navigate(base, { replace: true });
   };
 

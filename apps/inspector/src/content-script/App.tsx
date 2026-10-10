@@ -77,7 +77,8 @@ function App() {
   }
 
   const pageCas =
-    framesCas?.find((frameCas) => frameCas.parentFrameId === -1)?.cas ?? [];
+    framesCas?.find((frameCas) => frameCas.frameType === "outermost_frame")
+      ?.cas ?? [];
 
   // NOTE: dialog ロールが非対話的要素とみなされる
   // see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/issues/932

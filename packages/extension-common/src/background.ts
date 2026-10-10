@@ -1,48 +1,22 @@
 import { activeTabMessenger } from "./active-tab/events";
+import { injectContentScriptsToExistingTabs } from "./content-script-injection";
 import { frameCasExtensionMessenger } from "./frame-cas/extension-events";
 import { setupLinkVerification } from "./link-verification/background";
 import type { WarningUrlBuilder } from "./link-verification/types";
 import { overlayExtensionMessenger } from "./overlay/extension-events";
 import { setupTabBadge } from "./tab-badge/background";
+import { setupVerificationPipeline } from "./verification/background";
+import type { TabVerification } from "./verification/types";
 
 /** Firefox のサイドバーの開閉を検知するポーリング間隔（ミリ秒） */
 const SIDEBAR_POLL_INTERVAL_MS = 500;
-
-async function injectContentScriptsToExistingTabs(): Promise<void> {
-  const manifest = chrome.runtime.getManifest();
-  const tabs = await chrome.tabs.query({});
-  const injectableTabs = tabs.filter(
-    (tab): tab is chrome.tabs.Tab & { id: number } =>
-      tab.id !== undefined &&
-      tab.url !== undefined &&
-      /^https?:\/\//.test(tab.url),
-  );
-
-  const injections = (manifest.content_scripts ?? []).flatMap((cs) => {
-    const files = cs.js;
-    if (!files || files.length === 0) return [];
-
-    return injectableTabs.map((tab) =>
-      chrome.scripting
-        .executeScript({
-          target: { tabId: tab.id, allFrames: cs.all_frames },
-          files,
-        })
-        .catch(() => {
-          // 注入できないページはスキップ
-        }),
-    );
-  });
-
-  await Promise.all(injections);
-}
 
 /** {@link setupBackground} に与えるアプリ固有の設定 */
 export type BackgroundConfig = {
   /** 警告ページの URL を組み立てる */
   buildWarningUrl: WarningUrlBuilder;
   /** タブのバッジに表示するクレデンシャルの件数を数える */
-  countCredentials: (tabId: number) => Promise<number>;
+  countCredentials: (verification: TabVerification) => number;
   /** 権限が足りないときに開く案内ページ */
   permissionGuideUrl: string;
 };
@@ -55,8 +29,9 @@ export type BackgroundConfig = {
  * @param config アプリ固有の設定
  */
 export function setupBackground(config: BackgroundConfig) {
+  setupVerificationPipeline();
   setupLinkVerification(config.buildWarningUrl);
-  const { requestTabBadgeUpdate } = setupTabBadge(config.countCredentials);
+  setupTabBadge(config.countCredentials);
 
   // Chromium: アクションクリック時にサイドパネルを開く
   if (chrome.sidePanel) {
@@ -117,16 +92,9 @@ export function setupBackground(config: BackgroundConfig) {
     if (reason !== "install" && reason !== "update") return;
 
     // NOTE: 既存のタブにはマニフェストの content script が入っていないか、更新前の
-    // 拡張機能のものが残っていて通信できない
+    // 拡張機能のものが残っていて Service Worker と通信できない。注入された
+    // content script が検証を求め、その結果でバッジが更新される
     await injectContentScriptsToExistingTabs();
-
-    const [activeTab] = await chrome.tabs.query({
-      active: true,
-      currentWindow: true,
-    });
-    if (activeTab?.id !== undefined) {
-      requestTabBadgeUpdate(activeTab.id);
-    }
     if (reason !== "install") return;
 
     const granted = await chrome.permissions.contains({
