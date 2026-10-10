@@ -34,6 +34,8 @@ type VerificationProtocolMap = {
     loading: boolean;
   };
   fetchDocumentCredentials(data: ToDocument): FetchCredentialsMessageResponse;
+  /** その時点の document's URL を問い合わせる */
+  fetchDocumentUrl(data: ToDocument): string;
   fetchDocumentSiteProfile(data: ToDocument): SerializedSiteProfileResult;
   /** 入力依存対象が検証可能になる時点まで待つ */
   awaitInputDependency(

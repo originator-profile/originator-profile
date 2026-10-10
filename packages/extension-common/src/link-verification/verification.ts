@@ -94,15 +94,25 @@ export const getVerificationResult = async (
     sites,
     expectedOperator.id,
   );
+  const { validUntil } = result;
 
   if (isMatched(sites, expectedOperator.id)) {
-    return { status: "matched", source, expectedOperator, actualOperator };
+    return {
+      status: "matched",
+      source,
+      expectedOperator,
+      actualOperator,
+      validUntil,
+    };
   }
 
-  return createMismatchResult({
-    source,
-    expectedOperator,
-    actualOperator,
-    isMissing: false,
-  });
+  return {
+    ...createMismatchResult({
+      source,
+      expectedOperator,
+      actualOperator,
+      isMissing: false,
+    }),
+    validUntil,
+  };
 };

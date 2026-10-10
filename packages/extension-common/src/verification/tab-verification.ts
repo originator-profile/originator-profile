@@ -1,12 +1,20 @@
 import { getAllFrames } from "../utils/frames";
+import { originOf } from "../utils/origin";
 import { verificationMessenger } from "./events";
-import { resolveEntry } from "./identity";
-import { documentKey, siteProfileKey } from "./store";
+import {
+  isSiteProfileReusable,
+  resolveEntry,
+  resolveSiteProfileEntry,
+} from "./identity";
+import { documentKey, registryKey, siteProfileKey } from "./store";
 import type {
+  RegistryEntry,
   SiteProfileEntry,
   TabVerification,
   VerificationEntry,
 } from "./types";
+
+type SettledSiteProfile = Extract<SiteProfileEntry, { state: "settled" }>;
 
 /**
  * タブが表示している文書群の検証の状態を読む
@@ -19,11 +27,19 @@ export async function readTabVerification(
 ): Promise<TabVerification> {
   const frames = await getAllFrames(tabId);
   const top = frames.find(({ frameType }) => frameType === "outermost_frame");
-  const keys = frames.map(({ documentId }) => documentKey(documentId));
-  if (top) keys.push(siteProfileKey(top.documentId));
+  const keys = [
+    registryKey,
+    ...frames.map(({ documentId }) => documentKey(documentId)),
+  ];
+  if (top) keys.push(siteProfileKey(originOf(top.url)));
   const stored = keys.length > 0 ? await chrome.storage.session.get(keys) : {};
 
   const now = new Date();
+  const siteProfile = top
+    ? (stored[siteProfileKey(originOf(top.url))] as
+        | SiteProfileEntry
+        | undefined)
+    : undefined;
   return {
     frames: frames.map((frame) => {
       const entry = stored[documentKey(frame.documentId)] as
@@ -31,9 +47,8 @@ export async function readTabVerification(
         | undefined;
       return { frame, entry: entry && resolveEntry(entry, now) };
     }),
-    siteProfile: top
-      ? (stored[siteProfileKey(top.documentId)] as SiteProfileEntry | undefined)
-      : undefined,
+    siteProfile: siteProfile && resolveSiteProfileEntry(siteProfile, now),
+    registry: stored[registryKey] as RegistryEntry | undefined,
   };
 }
 
@@ -119,19 +134,21 @@ const SITE_PROFILE_TIMEOUT_MS = 10_000;
 export async function waitForTabSiteProfile(
   tabId: number,
   timeoutMs = SITE_PROFILE_TIMEOUT_MS,
-): Promise<SiteProfileEntry> {
+): Promise<SettledSiteProfile> {
   const top = await chrome.webNavigation.getFrame({ tabId, frameId: 0 });
   if (!top) throw new Error("No response from top level frame");
-  const key = siteProfileKey(top.documentId);
+  const key = siteProfileKey(originOf(top.url));
 
   let cleanup = () => {};
-  const changed = new Promise<SiteProfileEntry>((resolve, reject) => {
+  const changed = new Promise<SettledSiteProfile>((resolve, reject) => {
     const onChanged = (
       changes: Record<string, chrome.storage.StorageChange>,
       area: string,
     ) => {
       const entry = area === "session" ? changes[key]?.newValue : undefined;
-      if (entry) resolve(entry as SiteProfileEntry);
+      if (isSiteProfileReusable(entry as SiteProfileEntry, new Date())) {
+        resolve(entry as SettledSiteProfile);
+      }
     };
     const timer = setTimeout(() => {
       reject(
@@ -147,7 +164,10 @@ export async function waitForTabSiteProfile(
 
   try {
     const stored = await chrome.storage.session.get(key);
-    return (stored[key] as SiteProfileEntry | undefined) ?? (await changed);
+    // NOTE: 確定していない結果と時刻の境界を過ぎた結果は使わず、Service Worker
+    // が検証するのを待つ
+    const entry = stored[key] as SiteProfileEntry | undefined;
+    return isSiteProfileReusable(entry, new Date()) ? entry : await changed;
   } finally {
     cleanup();
   }

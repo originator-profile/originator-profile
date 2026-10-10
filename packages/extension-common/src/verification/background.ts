@@ -3,15 +3,23 @@ import type { ContentAttestationSet } from "@originator-profile/model";
 import {
   listInputDependencies,
   verifyDocument,
+  verifyRegistry,
   type FetchIntegrityResult,
+  type SecuringResult,
+  type SharedOriginators,
   type VerificationTarget,
   type DocumentVerificationResult as VerifiedDocument,
   type VerifyIntegrity,
 } from "@originator-profile/verify";
 import { injectContentScripts } from "../content-script-injection";
 import { toDocumentCredentials } from "../credentials/messaging";
-import { verifyFetchedWebsite } from "../site-profile/verify-website";
+import type { FrameCredentials } from "../credentials/types";
+import {
+  isSiteProfileFetchError,
+  verifyFetchedWebsite,
+} from "../site-profile/verify-website";
 import { getAllFrames, getFrame } from "../utils/frames";
+import { originOf } from "../utils/origin";
 import { getRegistry } from "../utils/registry-ops";
 import { verificationMessenger } from "./events";
 import {
@@ -20,24 +28,34 @@ import {
   InvalidationType,
   isAllowedUrlConsistent,
   isReusable,
+  isSiteProfileReusable,
+  isStillValid,
   toInputIdentity,
+  VerificationIncomplete,
 } from "./identity";
 import {
+  getRegistryEntry,
   getSiteProfileEntry,
   getVerificationEntry,
   listVerificationEntries,
   removeSiteProfileEntry,
+  setRegistryEntry,
   setSiteProfileEntry,
   setVerificationEntry,
   trackDocument,
   untrackTab,
 } from "./store";
 import type {
+  DocumentCredentials,
   DocumentVerificationResult,
   InputIdentity,
+  RegistryEntry,
   SiteProfileEntry,
+  VerificationEntry,
   VerificationSubject,
 } from "./types";
+
+type SettledSiteProfile = Extract<SiteProfileEntry, { state: "settled" }>;
 
 type Destination = { tabId: number; frameId: number; documentId: string };
 
@@ -66,14 +84,84 @@ async function canReuse(
   return isReusable(previous, current, new Date());
 }
 
-/** 検証結果から、保持できない検証対象を除く */
+/**
+ * 保持する検証結果から、VC の原文を除く
+ *
+ * 復号したペイロードは outcome にあり、原文は表示に用いないため保持しない。
+ */
+function withoutSources<T extends { securingResults: SecuringResult[] }>(
+  result: T,
+): T {
+  return {
+    ...result,
+    securingResults: result.securingResults.map(
+      ({ source: _, ...rest }) => rest,
+    ),
+  };
+}
+
+/** 検証結果から、保持できない検証対象と VC の原文を除く */
 function toStoredResult(
   result: VerifiedDocument<VerificationTarget>,
 ): DocumentVerificationResult {
-  if (!result.outcome) return result;
+  if (!result.outcome) return withoutSources(result);
   const { target: _, ...outcome } = result.outcome;
-  return { ...result, outcome };
+  return withoutSources({ ...result, outcome });
 }
+
+/** 保持するクレデンシャル。原文を除き、取得経路だけを残す */
+const toStoredCredentials = ({
+  ops,
+  cas,
+  opMeta,
+}: Pick<FrameCredentials, "ops" | "cas" | "opMeta">): DocumentCredentials => ({
+  ops: ops.map(({ source }) => ({ source })),
+  cas: cas.map(({ source }) => ({ source })),
+  opMeta,
+});
+
+/**
+ * クレデンシャルのない文書の結果
+ *
+ * 検証の対象がないため検証しない。レジストリの検証結果を文書ごとに保持しない。
+ */
+const emptyResult = (url: string): DocumentVerificationResult => ({
+  status: true,
+  outcome: { originators: [], cas: [] },
+  securingResults: [],
+  warnings: [],
+  info: [],
+  verifiedAt: new Date().toISOString(),
+  scope: [],
+  inputRange: [{ kind: "document", url }],
+});
+
+/** 検証を完了できなかった文書の結果。表示が確定しないまま残らないようにする */
+const incompleteEntry = (
+  subject: VerificationSubject,
+  error: unknown,
+): VerificationEntry => ({
+  state: "settled",
+  subject,
+  credentials: { ops: [], cas: [] },
+  inputIdentity: { cas: [], ops: [], targets: [], evaluatedUrl: subject.url },
+  result: {
+    status: false,
+    securingResults: [],
+    warnings: [],
+    info: [],
+    errors: [
+      {
+        type: VerificationIncomplete,
+        title: "Verification could not be completed",
+        detail: error instanceof Error ? error.message : String(error),
+      },
+    ],
+    verifiedAt: new Date().toISOString(),
+    scope: [],
+    inputRange: [],
+  },
+});
 
 /** 文書内の Target Integrity 検証器 */
 const DocumentIntegrityVerifier =
@@ -106,9 +194,20 @@ async function awaitInputDependencies(
   );
 }
 
-/** 検証に成功した Site Profile が提示する発信者 */
-const verifiedOriginators = (site?: SiteProfileEntry) =>
-  site?.result.status ? site.siteProfile?.originators : undefined;
+/**
+ * 文書の検証に用いる共有の発信者
+ *
+ * トップレベル文書では、そのオリジンの Web サイトの検証結果も用いる。Site Profile
+ * が設置されていなければ用いない。Site Profile の検証に失敗していれば、その結果を
+ * 渡して文書も失敗にする。
+ */
+const sharedOriginatorsOf = (
+  registry: SharedOriginators["registry"],
+  site?: SettledSiteProfile,
+): SharedOriginators =>
+  site && !isSiteProfileFetchError(site.result.errors?.[0])
+    ? { registry, site: site.result }
+    : { registry };
 
 /**
  * Service Worker の検証パイプラインを登録する
@@ -120,8 +219,29 @@ export function setupVerificationPipeline() {
   /** 文書ごとの検証の世代。新しい検証が始まったら古い検証の結果は書き込まない */
   const generations = new Map<string, number>();
   let lastGeneration = 0;
-  /** トップレベル文書ごとの Site Profile の検証 */
-  const siteProfiles = new Map<string, Promise<SiteProfileEntry>>();
+  /** 進行中のオリジンごとの Site Profile の検証 */
+  const siteProfiles = new Map<string, Promise<SettledSiteProfile>>();
+  /** 進行中のレジストリの検証 */
+  let registryVerification: Promise<RegistryEntry> | undefined;
+  /**
+   * レジストリの検証結果。Service Worker が起動し直しても、検証結果ストアにある
+   * 結果を再利用できるうちは検証し直さない
+   */
+  const verifiedRegistry = async (): Promise<RegistryEntry> => {
+    const stored = await getRegistryEntry();
+    if (stored && isStillValid(stored, new Date())) return stored;
+    registryVerification ??= getRegistry()
+      .then(async (registry) => {
+        const entry = withoutSources(await verifyRegistry(registry));
+        // NOTE: サイドパネルが発信者の並びと取得経路を組み立てるためにも読む
+        await setRegistryEntry(entry);
+        return entry;
+      })
+      .finally(() => {
+        registryVerification = undefined;
+      });
+    return registryVerification;
+  };
 
   /** 文書の新しい検証を始め、その検証がまだ最新かを判定する関数を返す */
   const startGeneration = (documentId: string) => {
@@ -131,53 +251,113 @@ export function setupVerificationPipeline() {
   };
 
   const forget = (documentIds: string[]) => {
-    for (const id of documentIds) {
-      generations.delete(id);
-      siteProfiles.delete(id);
-    }
+    for (const id of documentIds) generations.delete(id);
   };
 
-  const verifySiteProfile = ({ tabId, frameId, documentId }: Destination) => {
-    const pending = siteProfiles.get(documentId);
+  /**
+   * オリジンの Site Profile を検証する。同じオリジンの結果があれば再利用する
+   * @param destination Site Profile を取得するトップレベル文書
+   */
+  const verifySiteProfile = (destination: Destination, origin: string) => {
+    const { tabId, frameId, documentId } = destination;
+    const pending = siteProfiles.get(origin);
     if (pending) return pending;
 
-    const verifying = (async () => {
-      const stored = await getSiteProfileEntry(documentId);
-      if (stored) return stored;
+    const verifying = (async (): Promise<SettledSiteProfile> => {
+      const stored = await getSiteProfileEntry(origin);
+      if (isSiteProfileReusable(stored, new Date())) return stored;
 
-      const verification = await verifyFetchedWebsite(async () => {
-        const result = deserializeIfError(
-          await verificationMessenger.sendMessage(
-            "fetchDocumentSiteProfile",
-            { documentId },
-            { tabId, frameId },
-          ),
-        );
-        if (result instanceof Error) throw result;
-        return result;
+      // NOTE: 取得し直すあいだは、無効を経ずに検証中とする
+      await setSiteProfileEntry({
+        state: "verifying",
+        origin,
+        startedAt: new Date().toISOString(),
       });
-      const entry = { ...verification, documentId };
-      await setSiteProfileEntry(tabId, entry);
+      const registry = await verifiedRegistry();
+      const verification = await verifyFetchedWebsite(
+        async () => {
+          const result = deserializeIfError(
+            await verificationMessenger.sendMessage(
+              "fetchDocumentSiteProfile",
+              { documentId },
+              { tabId, frameId },
+            ),
+          );
+          if (result instanceof Error) throw result;
+          return result;
+        },
+        { verifiedRegistry: registry },
+      );
+      const entry: SettledSiteProfile = {
+        state: "settled",
+        origin,
+        result: withoutSources(verification),
+      };
+      await setSiteProfileEntry(entry);
       return entry;
-    })();
-    siteProfiles.set(documentId, verifying);
-    verifying.catch(() => siteProfiles.delete(documentId));
+    })()
+      .catch(async (error: unknown) => {
+        // NOTE: 検証中のまま残さず、次に必要になったときに検証し直す
+        await removeSiteProfileEntry(origin);
+        throw error;
+      })
+      .finally(() => siteProfiles.delete(origin));
+    siteProfiles.set(origin, verifying);
     return verifying;
   };
 
-  const verifyFrameDocument = async (
+  /** same-document navigation で allowedUrl の評価結果が変われば結果を無効にする */
+  const reevaluateAllowedUrl = async (documentId: string, url: string) => {
+    const entry = await getVerificationEntry(documentId);
+    if (entry?.state !== "settled") return;
+    if (await isAllowedUrlConsistent(entry, url)) return;
+    await setVerificationEntry(
+      invalidate(
+        entry,
+        {
+          type: InvalidationType.AllowedUrlChanged,
+          title: "allowedUrl no longer matches the document URL",
+        },
+        new Date(),
+      ),
+    );
+  };
+
+  /**
+   * 確定した結果を、現在の document's URL で再評価する
+   *
+   * NOTE: 検証のあいだの same-document navigation では、確定する前の結果を
+   * 再評価できない
+   * @param startUrl 検証を開始した時点の document's URL
+   */
+  const reevaluateSinceStart = async (
+    { tabId, frameId, documentId }: Destination,
+    startUrl: string,
+  ) => {
+    const current = await getFrame({ tabId, frameId, documentId }).catch(
+      () => undefined,
+    );
+    if (current && current.url !== startUrl) {
+      await reevaluateAllowedUrl(documentId, current.url);
+    }
+  };
+
+  /**
+   * 文書を検証して結果を書き込む
+   * @param subject 検証対象の文書の識別。取得したクレデンシャルの URL で更新する
+   */
+  const verifyDocumentOf = async (
     destination: Destination,
+    subject: VerificationSubject,
     trigger: Trigger,
+    isCurrent: () => boolean,
   ) => {
     const { tabId, frameId, documentId } = destination;
-    const frame = await getFrame({ tabId, frameId, documentId });
-    if (!frame) return;
-
-    forget(await trackDocument(tabId, frameId, documentId));
-    const isCurrent = startGeneration(documentId);
-
-    const isTopLevel = frame.frameType === "outermost_frame";
-    if (isTopLevel) void verifySiteProfile(destination);
+    const isTopLevel = subject.frameType === "outermost_frame";
+    // NOTE: 失敗は、文書の検証で結果を待つときに扱う
+    if (isTopLevel) {
+      verifySiteProfile(destination, subject.origin).catch(() => {});
+    }
 
     const response = await verificationMessenger.sendMessage(
       "fetchDocumentCredentials",
@@ -185,19 +365,22 @@ export function setupVerificationPipeline() {
       { tabId, frameId },
     );
     const { ops, cas, opMeta, url, origin } = toDocumentCredentials(response);
-    const subject: VerificationSubject = {
-      tabId,
-      frameId,
-      parentFrameId: frame.parentFrameId,
-      documentId,
-      frameType: frame.frameType,
-      url,
-      origin,
-    };
+    Object.assign(subject, { url, origin });
     const inputIdentity = await toInputIdentity({ ops, cas }, url);
     if (await canReuse(documentId, inputIdentity, trigger)) return;
-
     if (!isCurrent()) return;
+
+    if (!isTopLevel && ops.length === 0 && cas.length === 0) {
+      await setVerificationEntry({
+        state: "settled",
+        subject,
+        credentials: toStoredCredentials({ ops, cas, opMeta }),
+        result: emptyResult(url),
+        inputIdentity,
+      });
+      return;
+    }
+
     await setVerificationEntry({ state: "unverified", subject });
 
     const credentials = {
@@ -213,31 +396,77 @@ export function setupVerificationPipeline() {
       startedAt: new Date().toISOString(),
     });
 
-    const [registry, site] = await Promise.all([
+    const [registry, registryResult, site] = await Promise.all([
       getRegistry(),
-      isTopLevel ? verifySiteProfile(destination) : undefined,
+      verifiedRegistry(),
+      isTopLevel ? verifySiteProfile(destination, subject.origin) : undefined,
     ]);
+    // NOTE: allowedUrl は、入力スナップショットを取る検証の開始時点の
+    // document's URL で評価する。取得した後の same-document navigation で変わりうる
+    const startUrl = await verificationMessenger.sendMessage(
+      "fetchDocumentUrl",
+      { documentId },
+      { tabId, frameId },
+    );
+    subject.url = startUrl;
     const result = await verifyDocument(
       {
         ...credentials,
-        url,
-        frameType: frame.frameType,
+        url: startUrl,
+        frameType: subject.frameType,
         verifyIntegrity: DocumentIntegrityVerifier(destination),
       },
-      {
-        registry,
-        siteOriginators: verifiedOriginators(site),
-      },
+      { registry, shared: sharedOriginatorsOf(registryResult, site) },
     );
 
     if (!isCurrent()) return;
     await setVerificationEntry({
       state: "settled",
       subject,
-      credentials: { ops, cas, opMeta },
+      credentials: toStoredCredentials({ ops, cas, opMeta }),
       result: toStoredResult(result),
-      inputIdentity,
+      inputIdentity: { ...inputIdentity, evaluatedUrl: startUrl },
     });
+    await reevaluateSinceStart(destination, startUrl);
+  };
+
+  const verifyFrameDocument = async (
+    destination: Destination,
+    trigger: Trigger,
+  ) => {
+    const { tabId, frameId, documentId } = destination;
+    const frame = await getFrame({ tabId, frameId, documentId });
+    if (!frame) return;
+
+    forget(
+      await trackDocument(tabId, frameId, documentId, originOf(frame.url)),
+    );
+    const isCurrent = startGeneration(documentId);
+    const subject: VerificationSubject = {
+      tabId,
+      frameId,
+      parentFrameId: frame.parentFrameId,
+      documentId,
+      frameType: frame.frameType,
+      url: frame.url,
+      origin: originOf(frame.url),
+    };
+
+    try {
+      await verifyDocumentOf(destination, subject, trigger, isCurrent);
+    } catch (error) {
+      // NOTE: 検証のあいだに文書が入れ替わったかフレームが取り除かれると、文書への
+      // 要求が拒否されるか届かずに失敗する。いずれも想定内のため打ち切るだけにする
+      const current = await chrome.webNavigation
+        .getFrame({ tabId, frameId })
+        .catch(() => null);
+      if (!isCurrent() || current?.documentId !== documentId) return;
+      console.error(
+        `[verification] Failed to verify document ${documentId}:`,
+        error,
+      );
+      await setVerificationEntry(incompleteEntry(subject, error));
+    }
   };
 
   const run = (destination: Destination, trigger: Trigger = {}) => {
@@ -272,32 +501,18 @@ export function setupVerificationPipeline() {
     if (destination) run(destination, { force: true });
   });
 
-  /** same-document navigation で allowedUrl の評価結果が変われば結果を無効にする */
-  const reevaluateAllowedUrl = async ({
+  const onSameDocumentNavigation = ({
     documentId,
     url,
   }: chrome.webNavigation.WebNavigationTransitionCallbackDetails) => {
-    if (!documentId) return;
-    const entry = await getVerificationEntry(documentId);
-    if (entry?.state !== "settled") return;
-    if (await isAllowedUrlConsistent(entry, url)) return;
-    await setVerificationEntry(
-      invalidate(
-        entry,
-        {
-          type: InvalidationType.AllowedUrlChanged,
-          title: "allowedUrl no longer matches the document URL",
-        },
-        new Date(),
-      ),
-    );
+    if (documentId) void reevaluateAllowedUrl(documentId, url);
   };
-  chrome.webNavigation.onHistoryStateUpdated.addListener((details) => {
-    void reevaluateAllowedUrl(details);
-  });
-  chrome.webNavigation.onReferenceFragmentUpdated.addListener((details) => {
-    void reevaluateAllowedUrl(details);
-  });
+  chrome.webNavigation.onHistoryStateUpdated.addListener(
+    onSameDocumentNavigation,
+  );
+  chrome.webNavigation.onReferenceFragmentUpdated.addListener(
+    onSameDocumentNavigation,
+  );
 
   verificationMessenger.onMessage(
     "verifyTab",
@@ -307,10 +522,7 @@ export function setupVerificationPipeline() {
         const top = frames.find(
           ({ frameType }) => frameType === "outermost_frame",
         );
-        if (top) {
-          forget([top.documentId]);
-          await removeSiteProfileEntry(top.documentId);
-        }
+        if (top) await removeSiteProfileEntry(originOf(top.url));
       }
       const resync = (targets: typeof frames) =>
         Promise.all(

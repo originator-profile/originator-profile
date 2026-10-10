@@ -1,18 +1,30 @@
 import { generateKey } from "@originator-profile/cryptography";
+import type { OriginatorProfileSet } from "@originator-profile/model";
+import { signJwtVc } from "@originator-profile/securing-mechanism";
 import { signCa } from "@originator-profile/sign";
 import { assert, describe, expect, test } from "vitest";
 import { CasVerifyFailed } from "../content-attestation-set";
-import { article, opId } from "../helper";
+import { article, certificate, opId } from "../helper";
 import type { VerifyIntegrity } from "../integrity";
 import {
   CoreProfileNotFound,
+  OpsVerifier,
   OpsVerifyFailed,
 } from "../originator-profile-set";
 import { buildOpsFixture, signOptions } from "../originator-profile-set/helper";
-import { prepareRegistry } from "../registry";
-import type { OriginatorPayload } from "../result/convert";
+import { prepareRegistry, verifyRegistry, type Registry } from "../registry";
+import {
+  convertOps,
+  createCollector,
+  type OriginatorPayload,
+} from "../result/convert";
 import { problemType } from "../result/problem-types";
-import { verifyDocument } from "./verify-document";
+import { toProblemDetails } from "../result/to-problem-details";
+import {
+  verifyDocument,
+  type SharedOriginators,
+  type VerificationTarget,
+} from "./verify-document";
 
 /** 検証中の通知を握りつぶす */
 const silent = { warn: () => {}, info: () => {} };
@@ -25,27 +37,83 @@ const notCalled: VerifyIntegrity = () => {
 const subjectIds = (ops: OriginatorPayload[]) =>
   ops.flatMap((op) => op.core?.credentialSubject.id ?? []);
 
+/** レジストリを検証して共有の発信者にする */
+const sharedRegistry = async (
+  registry: Registry,
+): Promise<SharedOriginators> => ({
+  registry: await verifyRegistry(registry, { logger: silent }),
+});
+
+/**
+ * レジストリと Web サイトの発信者を検証して共有の発信者にする
+ *
+ * Web サイトの検証結果のうち、発信者の部分だけを模す。
+ */
+const sharedSite = async (
+  registry: Registry,
+  originators: OriginatorProfileSet,
+): Promise<Required<SharedOriginators>> => {
+  const verifiedRegistry = await verifyRegistry(registry, { logger: silent });
+  const verified = await OpsVerifier(
+    originators,
+    registry.keys,
+    registry.issuer,
+    { logger: silent, trusted: verifiedRegistry.outcome?.originators },
+  )();
+  const collect = createCollector();
+  const outcome = { originators: convertOps(verified, collect) };
+  return {
+    registry: verifiedRegistry,
+    site:
+      verified instanceof Error
+        ? {
+            status: false,
+            outcome,
+            securingResults: collect.securingResults,
+            warnings: [],
+            info: [],
+            errors: [toProblemDetails(verified), ...collect.errors],
+          }
+        : {
+            status: true,
+            outcome,
+            securingResults: collect.securingResults,
+            warnings: [],
+            info: [],
+          },
+  };
+};
+
+const target = (
+  overrides: Partial<VerificationTarget> = {},
+): VerificationTarget => ({
+  ops: [],
+  cas: [],
+  url: "https://www.example.org/a",
+  frameType: "outermost_frame",
+  verifyIntegrity: notCalled,
+  ...overrides,
+});
+
 describe("verifyDocument", () => {
-  test("レジストリと文書の OPS を結合して検証する", async () => {
+  test("文書の OPS を、共有の発信者を検証鍵に加えて検証する", async () => {
     const { authorityOp, certifierOp, originatorOp } = await buildOpsFixture();
     const registry = prepareRegistry([authorityOp, certifierOp]);
     if (registry instanceof Error) throw registry;
+    const input = target({ ops: [originatorOp], frameType: "sub_frame" });
 
-    const target = {
-      ops: [originatorOp],
-      cas: [],
-      url: "https://www.example.org/a",
-      frameType: "sub_frame" as const,
-      verifyIntegrity: notCalled,
-    };
-
-    const result = await verifyDocument(target, { registry, logger: silent });
+    const result = await verifyDocument(input, {
+      registry,
+      shared: await sharedRegistry(registry),
+      logger: silent,
+    });
 
     expect(result.status).toBe(true);
-    expect(result.outcome?.target).toBe(target);
-    expect(subjectIds(result.outcome?.originators ?? [])).toContain(
+    expect(result.outcome?.target).toBe(input);
+    // 共有の発信者は結果に含めず、文書の発信者だけが並ぶ
+    expect(subjectIds(result.outcome?.originators ?? [])).toEqual([
       opId.originator,
-    );
+    ]);
   });
 
   test("他の文書に設置された OPS は CA の検証に用いない", async () => {
@@ -57,14 +125,12 @@ describe("verifyDocument", () => {
     const ca = await signCa(article, privateKey, signOptions);
 
     const result = await verifyDocument(
-      {
-        ops: [],
+      target({
         cas: [ca],
         url: "https://www.example.org/articles/example",
         frameType: "sub_frame",
-        verifyIntegrity: notCalled,
-      },
-      { registry, logger: silent },
+      }),
+      { registry, shared: await sharedRegistry(registry), logger: silent },
     );
 
     assert(!result.status, "検証は失敗するはず");
@@ -80,53 +146,86 @@ describe("verifyDocument", () => {
     );
   });
 
-  test("Site Profile の発信者はトップレベル文書の検証鍵に加わる", async () => {
+  test("Web サイトの発信者はトップレベル文書の検証鍵に加わる", async () => {
     const { authorityOp, certifierOp, originatorOp } = await buildOpsFixture();
     const registry = prepareRegistry([authorityOp, certifierOp]);
     if (registry instanceof Error) throw registry;
 
+    // 発行者の Core Profile は Web サイトの発信者にだけある
+    const { privateKey } = await generateKey();
+    const ca = await signCa(article, privateKey, signOptions);
+
     const result = await verifyDocument(
+      target({ cas: [ca], url: "https://www.example.org/articles/example" }),
       {
-        ops: [],
-        cas: [],
-        url: "https://www.example.org/a",
-        frameType: "outermost_frame",
-        verifyIntegrity: notCalled,
+        registry,
+        shared: await sharedSite(registry, [originatorOp]),
+        logger: silent,
       },
-      { registry, siteOriginators: [originatorOp], logger: silent },
     );
 
-    expect(result.status).toBe(true);
-    expect(subjectIds(result.outcome?.originators ?? [])).toContain(
-      opId.originator,
+    // 発行者の Core Profile は見つかり、署名の検証まで進む
+    expect(result.errors ?? []).not.toContainEqual(
+      expect.objectContaining({ type: problemType(CoreProfileNotFound.code) }),
     );
     expect(result.inputRange).toContainEqual({ kind: "site-profile" });
   });
 
-  test("Site Profile の発信者はサブフレームの検証鍵に加わらない", async () => {
+  test("Web サイトの発信者をサブフレームの検証に用いない", async () => {
     const { authorityOp, certifierOp, originatorOp } = await buildOpsFixture();
     const registry = prepareRegistry([authorityOp, certifierOp]);
     if (registry instanceof Error) throw registry;
+    const shared = await sharedSite(registry, [originatorOp]);
 
-    const result = await verifyDocument(
-      {
-        ops: [],
-        cas: [],
-        url: "https://www.example.org/a",
-        frameType: "sub_frame",
-        verifyIntegrity: notCalled,
-      },
-      { registry, siteOriginators: [originatorOp], logger: silent },
-    );
+    await expect(
+      verifyDocument(target({ frameType: "sub_frame" }), {
+        registry,
+        shared,
+        logger: silent,
+      }),
+    ).rejects.toThrow(TypeError);
+  });
 
-    expect(result.status).toBe(true);
-    expect(subjectIds(result.outcome?.originators ?? [])).not.toContain(
-      opId.originator,
+  test("共有の発信者の検証に失敗していれば文書の検証も失敗する", async () => {
+    const { authorityOp, originatorOp } = await buildOpsFixture();
+    // Profile Annotation 発行者の Core Profile がどこにもない
+    const registry = prepareRegistry([authorityOp]);
+    if (registry instanceof Error) throw registry;
+    const shared = await sharedSite(registry, [originatorOp]);
+
+    const result = await verifyDocument(target(), {
+      registry,
+      shared,
+      logger: silent,
+    });
+
+    assert(!result.status, "検証は失敗するはず");
+    // 共有の発信者の中を指す問題は含めず、失敗の要約だけを載せる
+    expect(result.errors).toEqual(
+      shared.site.errors?.filter(({ pointer }) => !pointer),
     );
-    expect(result.inputRange).toEqual([
-      { kind: "registry" },
-      { kind: "document", url: "https://www.example.org/a" },
-    ]);
+    expect(result.errors).not.toHaveLength(0);
+    expect(result.outcome?.originators).toEqual([]);
+  });
+
+  test("文書の OPS の検証に失敗した場合はその理由を返す", async () => {
+    const { authorityOp, originatorOp } = await buildOpsFixture();
+    // Profile Annotation 発行者の Core Profile がどこにもない
+    const registry = prepareRegistry([authorityOp]);
+    if (registry instanceof Error) throw registry;
+
+    const result = await verifyDocument(target({ ops: [originatorOp] }), {
+      registry,
+      shared: await sharedRegistry(registry),
+      logger: silent,
+    });
+
+    assert(!result.status, "検証は失敗するはず");
+    expect(result.errors[0]?.type).toBe(problemType(OpsVerifyFailed.code));
+    // 文書の発信者の位置を指す
+    expect(result.errors).toContainEqual(
+      expect.objectContaining({ pointer: "$.originators[0]" }),
+    );
   });
 
   test("CAS の検証に失敗した場合はその位置を示す", async () => {
@@ -135,14 +234,8 @@ describe("verifyDocument", () => {
     if (registry instanceof Error) throw registry;
 
     const result = await verifyDocument(
-      {
-        ops: [originatorOp],
-        cas: ["not-a-jwt"],
-        url: "https://www.example.org/a",
-        frameType: "outermost_frame",
-        verifyIntegrity: notCalled,
-      },
-      { registry, logger: silent },
+      target({ ops: [originatorOp], cas: ["not-a-jwt"] }),
+      { registry, shared: await sharedRegistry(registry), logger: silent },
     );
 
     assert(!result.status, "検証は失敗するはず");
@@ -154,72 +247,71 @@ describe("verifyDocument", () => {
     expect(result.outcome?.cas).toEqual([{ main: false, attestation: null }]);
   });
 
-  test("OPS の検証に失敗した場合はその理由を返す", async () => {
-    const { authorityOp, originatorOp } = await buildOpsFixture();
-    // Profile Annotation 発行者の Core Profile がどこにもない
-    const registry = prepareRegistry([authorityOp]);
-    if (registry instanceof Error) throw registry;
-
-    const result = await verifyDocument(
-      {
-        ops: [originatorOp],
-        cas: [],
-        url: "https://www.example.org/a",
-        frameType: "outermost_frame",
-        verifyIntegrity: notCalled,
-      },
-      { registry, logger: silent },
-    );
-
-    assert(!result.status, "検証は失敗するはず");
-    expect(result.errors[0]?.type).toBe(problemType(OpsVerifyFailed.code));
-    // 失敗しても復号できた発信者は outcome に含まれる
-    expect(result.outcome?.originators).not.toHaveLength(0);
-  });
-
   test("検証時刻・時刻の境界・検証範囲を結果に載せる", async () => {
     const { authorityOp, certifierOp, originatorOp } = await buildOpsFixture();
     const registry = prepareRegistry([authorityOp, certifierOp]);
     if (registry instanceof Error) throw registry;
 
     const result = await verifyDocument(
-      {
-        ops: [originatorOp],
-        cas: [],
-        url: "https://www.example.org/a",
-        frameType: "outermost_frame",
-        verifyIntegrity: notCalled,
-      },
-      { registry, logger: silent },
+      target({ ops: [originatorOp], frameType: "sub_frame" }),
+      { registry, shared: await sharedRegistry(registry), logger: silent },
     );
 
     expect(Date.parse(result.verifiedAt)).not.toBeNaN();
     expect(result.validUntil).toBe(signOptions.expiredAt.toISOString());
     // image データ型の検証の失敗は、移行期間中は結果の状態に反映しない
     expect(result.scope).not.toContain("image");
+    expect(result.inputRange).toEqual([
+      { kind: "registry" },
+      { kind: "document", url: "https://www.example.org/a" },
+    ]);
   });
 
-  test("検証中の通知を結果に載せる", async () => {
+  test("時刻の境界は、用いた VC の有効期間の終了のうち最も早いもの", async () => {
+    const { authorityOp, certifierOp, originatorOp, certifier } =
+      await buildOpsFixture();
+    const registry = prepareRegistry([authorityOp, certifierOp]);
+    if (registry instanceof Error) throw registry;
+    // PA の有効期間の終了が、どの VC の有効期限よりも早い
+    const validUntil = new Date(
+      signOptions.expiredAt.getTime() - 24 * 60 * 60 * 1000,
+    ).toISOString();
+    const op = {
+      ...originatorOp,
+      annotations: [
+        await signJwtVc(
+          { ...certificate, validUntil },
+          certifier.privateKey,
+          signOptions,
+        ),
+      ],
+    };
+
+    const result = await verifyDocument(
+      target({ ops: [op], frameType: "sub_frame" }),
+      { registry, shared: await sharedRegistry(registry), logger: silent },
+    );
+
+    expect(result.status).toBe(true);
+    expect(result.validUntil).toBe(validUntil);
+  });
+
+  test("文書の検証中の通知を、文書の発信者の位置で結果に載せる", async () => {
     const { authorityOp, certifierOp, originatorOp } = await buildOpsFixture();
     const registry = prepareRegistry([authorityOp, certifierOp]);
     if (registry instanceof Error) throw registry;
 
-    const result = await verifyDocument(
-      {
-        ops: [originatorOp],
-        cas: [],
-        url: "https://www.example.org/a",
-        frameType: "outermost_frame",
-        verifyIntegrity: notCalled,
-      },
-      { registry, logger: silent },
-    );
+    const result = await verifyDocument(target({ ops: [originatorOp] }), {
+      registry,
+      shared: await sharedRegistry(registry),
+      logger: silent,
+    });
 
     // 非推奨の Certificate を検出した通知が、位置とともに warnings に載る
     expect(result.warnings).toContainEqual(
       expect.objectContaining({
         pointer: expect.stringMatching(
-          /^\$\.originators\[\d+\]\.annotations\[\d+\]$/,
+          /^\$\.originators\[0\]\.annotations\[\d+\]$/,
         ),
       }),
     );

@@ -1,16 +1,26 @@
 import type { ContentAttestation } from "@originator-profile/model";
 import { describe, expect, test } from "vitest";
+import type { FrameCredentials } from "../credentials/types";
 import {
   dependsOnRenderedResult,
+  earliestExpiration,
   InvalidationType,
   isAllowedUrlConsistent,
   isReusable,
+  isSiteProfileReusable,
+  isStillValid,
   resolveEntry,
+  resolveSiteProfileEntry,
   toInputIdentity,
 } from "./identity";
-import type { DocumentCredentials, VerificationEntry } from "./types";
+import type {
+  RegistryEntry,
+  SiteProfileEntry,
+  VerificationEntry,
+} from "./types";
 
-const credentials: DocumentCredentials = {
+/** 文書から取得したクレデンシャル */
+const credentials: Pick<FrameCredentials, "ops" | "cas"> = {
   ops: [
     {
       source: { kind: "embedded", elementIndex: 0 },
@@ -39,7 +49,10 @@ async function settled(
       url,
       origin: "https://www.example.org",
     },
-    credentials,
+    credentials: {
+      ops: credentials.ops.map(({ source }) => ({ source })),
+      cas: [],
+    },
     result: {
       status: true,
       outcome: { originators: [], cas: [{ main: true, attestation }] },
@@ -174,5 +187,119 @@ describe("dependsOnRenderedResult", () => {
         },
       }),
     ).toBe(true);
+  });
+});
+
+describe("isStillValid", () => {
+  const resultAt = (
+    status: boolean,
+    ...expiredAt: (string | undefined)[]
+  ): RegistryEntry =>
+    ({
+      status,
+      outcome: { originators: [] },
+      securingResults: expiredAt.map((value, i) => ({
+        pointer: `$.originators[${i}].core`,
+        status,
+        expiredAt: value,
+      })),
+      warnings: [],
+      info: [],
+      errors: [],
+    }) as RegistryEntry;
+
+  test("VC が含む情報の有効期間の終了も有効期限に含める", () => {
+    const result = resultAt(true, "2026-10-09T00:00:00.000Z");
+    expect(
+      earliestExpiration({
+        ...result,
+        securingResults: result.securingResults.map((r) => ({
+          ...r,
+          validUntil: "2026-10-08T12:00:00.000Z",
+        })),
+      }),
+    ).toBe("2026-10-08T12:00:00.000Z");
+  });
+
+  test("用いた VC の最も早い有効期限を求める", () => {
+    expect(
+      earliestExpiration(
+        resultAt(
+          true,
+          "2026-10-09T00:00:00.000Z",
+          undefined,
+          "2026-10-07T00:00:00.000Z",
+        ),
+      ),
+    ).toBe("2026-10-07T00:00:00.000Z");
+    expect(earliestExpiration(resultAt(true, undefined))).toBeUndefined();
+  });
+
+  test("検証を通過した結果は、用いた VC の有効期限がすべて現在時刻より後なら使える", () => {
+    expect(
+      isStillValid(resultAt(true, "2026-10-09T00:00:00.000Z", undefined), now),
+    ).toBe(true);
+    expect(
+      isStillValid(
+        resultAt(true, "2026-10-09T00:00:00.000Z", "2026-10-07T00:00:00.000Z"),
+        now,
+      ),
+    ).toBe(false);
+    // 有効期限ちょうどは期限切れとみなす
+    expect(isStillValid(resultAt(true, now.toISOString()), now)).toBe(false);
+  });
+
+  test("検証を通過しなかった結果は有効期限によらず使える", () => {
+    expect(isStillValid(resultAt(false, "2026-10-07T00:00:00.000Z"), now)).toBe(
+      true,
+    );
+  });
+});
+
+describe("Site Profile の検証の状態", () => {
+  const settledAt = (validUntil?: string): SiteProfileEntry => ({
+    state: "settled",
+    origin: "https://www.example.org",
+    result: {
+      status: true,
+      outcome: { originators: [], sites: [] },
+      securingResults: [],
+      warnings: [],
+      info: [],
+      verifiedAt: "2026-10-07T00:00:00.000Z",
+      validUntil,
+      scope: ["sp-vc", "allowed-origin"],
+      inputRange: [{ kind: "registry" }, { kind: "site-profile" }],
+    },
+  });
+
+  test("時刻の境界を過ぎた結果は無効として扱い、再利用しない", () => {
+    const entry = settledAt("2026-10-07T12:00:00.000Z");
+
+    expect(resolveSiteProfileEntry(entry, now)).toMatchObject({
+      state: "invalidated",
+      reason: { type: InvalidationType.Expired },
+    });
+    expect(isSiteProfileReusable(entry, now)).toBe(false);
+  });
+
+  test("時刻の境界より前の結果はそのまま再利用する", () => {
+    const entry = settledAt("2026-10-09T00:00:00.000Z");
+
+    expect(resolveSiteProfileEntry(entry, now)).toBe(entry);
+    expect(isSiteProfileReusable(entry, now)).toBe(true);
+  });
+
+  test("検証中の結果は再利用しない", () => {
+    expect(
+      isSiteProfileReusable(
+        {
+          state: "verifying",
+          origin: "https://www.example.org",
+          startedAt: "2026-10-08T00:00:00.000Z",
+        },
+        now,
+      ),
+    ).toBe(false);
   });
 });

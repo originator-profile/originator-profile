@@ -1,3 +1,4 @@
+import { isExpired } from "@originator-profile/core";
 import type { SourcedCredential } from "@originator-profile/presentation";
 import {
   listInputDependencies,
@@ -5,12 +6,19 @@ import {
   verifyAllowedUrl,
   type ProblemDetails,
 } from "@originator-profile/verify";
+import type { FrameCredentials } from "../credentials/types";
 import type {
-  DocumentCredentials,
   InputIdentity,
+  RegistryEntry,
   ResourceIdentity,
+  SiteProfileEntry,
   VerificationEntry,
 } from "./types";
+
+/** 検証を完了できなかったことを表す問題の種類 */
+export const VerificationIncomplete = problemType(
+  "ERR_VERIFICATION_INCOMPLETE",
+);
 
 /** 結果が無効になった理由の種類 */
 export const InvalidationType = {
@@ -58,7 +66,7 @@ const identify = (
  * @param url 文書の URL
  */
 export async function toInputIdentity(
-  credentials: DocumentCredentials,
+  credentials: Pick<FrameCredentials, "ops" | "cas">,
   url: string,
 ): Promise<InputIdentity> {
   return {
@@ -100,9 +108,40 @@ export async function isAllowedUrlConsistent(
   return JSON.stringify(evaluated) === JSON.stringify(current);
 }
 
-const isExpired = (entry: Settled, now: Date) =>
-  entry.result.validUntil !== undefined &&
-  now.getTime() >= Date.parse(entry.result.validUntil);
+/**
+ * 用いた VC の有効期間の終了 (exp、validUntil) のうち最も早いもの
+ * @returns 有効期間の終了を持つ VC がなければ undefined
+ */
+export function earliestExpiration({
+  securingResults,
+}: Pick<RegistryEntry, "securingResults">): string | undefined {
+  const expirations = securingResults
+    .flatMap(({ expiredAt, validUntil }) => [expiredAt, validUntil])
+    .flatMap((value) => (value ? [Date.parse(value)] : []));
+  if (expirations.length === 0) return undefined;
+  return new Date(Math.min(...expirations)).toISOString();
+}
+
+/**
+ * 時刻の境界を持たないレジストリの検証結果を、現在時刻でも使えるか
+ *
+ * 検証を通過した結果は、用いた VC の有効期間の終了がすべて現在時刻より後の場合に限る。
+ * 通過しなかった結果は時刻の経過で通過に変わらないため、そのまま使える。
+ */
+export const isStillValid = (
+  result: Pick<RegistryEntry, "status" | "securingResults">,
+  now: Date,
+) => {
+  if (!result.status) return true;
+  const expiration = earliestExpiration(result);
+  return expiration === undefined || !isExpired(expiration, now);
+};
+
+/** 結果が時刻の境界を過ぎたか */
+const isPastValidUntil = (
+  { result }: { result: { validUntil?: string } },
+  now: Date,
+) => result.validUntil !== undefined && isExpired(result.validUntil, now);
 
 /**
  * 保持している結果を再利用できるか
@@ -118,7 +157,13 @@ export async function isReusable(
   current: InputIdentity,
   now: Date,
 ): Promise<boolean> {
-  if (entry?.state !== "settled" || isExpired(entry, now)) return false;
+  if (entry?.state !== "settled" || isPastValidUntil(entry, now)) return false;
+  // NOTE: 検証を完了できなかった結果は検証の結果ではないため、入力が同じでも使わない
+  if (
+    entry.result.errors?.some(({ type }) => type === VerificationIncomplete)
+  ) {
+    return false;
+  }
   const { evaluatedUrl: _, ...held } = entry.inputIdentity;
   const { evaluatedUrl, ...identity } = current;
   return (
@@ -162,10 +207,38 @@ export function resolveEntry(
   entry: VerificationEntry,
   now: Date,
 ): VerificationEntry {
-  if (entry.state !== "settled" || !isExpired(entry, now)) return entry;
+  if (entry.state !== "settled" || !isPastValidUntil(entry, now)) return entry;
   return invalidate(
     entry,
     { type: InvalidationType.Expired, title: "Verification result expired" },
     now,
   );
 }
+
+/**
+ * 現在時刻での Site Profile の検証の状態
+ *
+ * 時刻の境界を過ぎた結果は、書き込みを待たずに無効として扱う。
+ */
+export function resolveSiteProfileEntry(
+  entry: SiteProfileEntry,
+  now: Date,
+): SiteProfileEntry {
+  if (entry.state !== "settled" || !isPastValidUntil(entry, now)) return entry;
+  return {
+    ...entry,
+    state: "invalidated",
+    invalidatedAt: now.toISOString(),
+    reason: {
+      type: InvalidationType.Expired,
+      title: "Verification result expired",
+    },
+  };
+}
+
+/** 再利用できる Site Profile の検証結果か。時刻の境界を過ぎていない確定した結果に限る */
+export const isSiteProfileReusable = (
+  entry: SiteProfileEntry | undefined,
+  now: Date,
+): entry is Extract<SiteProfileEntry, { state: "settled" }> =>
+  entry?.state === "settled" && !isPastValidUntil(entry, now);
