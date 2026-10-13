@@ -114,7 +114,7 @@ export function setupBackground(config: BackgroundConfig) {
   }
 
   chrome.runtime.onInstalled.addListener(async ({ reason }) => {
-    if (reason !== "install" && reason !== "update") return;
+    if (!["install", "update"].includes(reason)) return;
 
     // NOTE: 既存のタブにはマニフェストの content script が入っていないか、更新前の
     // 拡張機能のものが残っていて通信できない
