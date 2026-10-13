@@ -36,6 +36,7 @@ import type {
   DocumentVerificationResult,
   InputIdentity,
   SiteProfileEntry,
+  VerificationEntry,
   VerificationSubject,
 } from "./types";
 
@@ -197,8 +198,11 @@ export function setupVerificationPipeline() {
     const inputIdentity = await toInputIdentity({ ops, cas }, url);
     if (await canReuse(documentId, inputIdentity, trigger)) return;
 
-    if (!isCurrent()) return;
-    await setVerificationEntry({ state: "unverified", subject });
+    /** 古い検証でなければ書き込み、書き込めたかを返す */
+    const record = async (entry: VerificationEntry) =>
+      isCurrent() && (await setVerificationEntry(entry));
+    // NOTE: 書き込めない文書は結果を保持しないため、検証を打ち切る
+    if (!(await record({ state: "unverified", subject }))) return;
 
     const credentials = {
       ops: ops.map(({ credential }) => credential),
@@ -206,12 +210,12 @@ export function setupVerificationPipeline() {
     };
     await awaitInputDependencies(destination, credentials.cas);
 
-    if (!isCurrent()) return;
-    await setVerificationEntry({
+    const started = await record({
       state: "verifying",
       subject,
       startedAt: new Date().toISOString(),
     });
+    if (!started) return;
 
     const [registry, site] = await Promise.all([
       getRegistry(),
