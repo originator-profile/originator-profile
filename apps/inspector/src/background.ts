@@ -6,6 +6,4 @@ setupBackground({
     `${chrome.runtime.getURL("index.html")}#/warning?${params.toString()}`,
   countCredentials: async (tabId) =>
     (await verifyTabCredentials(tabId))?.count ?? 0,
-  permissionGuideUrl:
-    "https://cip.docs.originator-profile.org/web-ext/experimental-use/#setup-in-firefox",
 });

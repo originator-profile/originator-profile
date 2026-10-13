@@ -43,8 +43,6 @@ export type BackgroundConfig = {
   buildWarningUrl: WarningUrlBuilder;
   /** タブのバッジに表示するクレデンシャルの件数を数える */
   countCredentials: (tabId: number) => Promise<number>;
-  /** 権限が足りないときに開く案内ページ */
-  permissionGuideUrl: string;
 };
 
 /**
@@ -126,16 +124,6 @@ export function setupBackground(config: BackgroundConfig) {
     });
     if (activeTab?.id !== undefined) {
       requestTabBadgeUpdate(activeTab.id);
-    }
-    if (reason !== "install") return;
-
-    const granted = await chrome.permissions.contains({
-      origins: ["<all_urls>"],
-    });
-
-    if (!granted) {
-      // 権限が足らない場合は初期設定の説明を開く (Firefoxのみ)
-      await chrome.tabs.create({ url: config.permissionGuideUrl });
     }
   });
 
