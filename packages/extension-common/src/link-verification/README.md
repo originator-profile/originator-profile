@@ -18,12 +18,12 @@ OP ID と突き合わせる。一致しなければ警告ページへ差し替�
 </script>
 
 <!-- 広告主・媒体社の Originator Profile Set -->
-<script type="application/ops+json">
+<script type="application/op-set+json">
   [{ "core": "eyJ...", "media": ["eyJ...", "eyJ..."] }]
 </script>
 
 <!-- 広告であることの Content Attestation Set -->
-<script type="application/cas+json">
+<script type="application/ca-set+json">
   ["eyJ..."]
 </script>
 
