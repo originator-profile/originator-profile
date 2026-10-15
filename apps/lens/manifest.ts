@@ -21,7 +21,7 @@ const base = {
     128: "icons/128x128.png",
   },
   default_locale: "en",
-  action: {},
+  action: { default_popup: "index.html" },
   content_scripts: [
     {
       match_about_blank: true,
@@ -60,7 +60,6 @@ const chromium = {
   background: {
     service_worker: "background.js",
   },
-  side_panel: { default_path: "index.html" },
 };
 
 const firefox = {

@@ -33,7 +33,7 @@ function App() {
   }, []);
 
   return (
-    <div className="flex flex-col">
+    <div className="flex flex-col min-w-sm">
       <EnvironmentBanner mode={import.meta.env.MODE} />
       <Routes>
         <Route path="/">
