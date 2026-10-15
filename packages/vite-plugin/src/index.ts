@@ -32,8 +32,15 @@ async function buildSiteProfile(
 }
 
 const UNSIGNED_CAS_TYPE =
+  "application/prs.originator-profile.unsigned-ca-set+json";
+/** @deprecated 2027-11-01 以降はサポート外。代わりに {@link UNSIGNED_CAS_TYPE} を用いる */
+const DEPRECATED_UNSIGNED_CAS_TYPE =
   "application/prs.originator-profile.unsigned-cas+json";
-const SIGNED_CAS_TYPE = "application/cas+json";
+const UNSIGNED_CAS_TYPES: readonly unknown[] = [
+  UNSIGNED_CAS_TYPE,
+  DEPRECATED_UNSIGNED_CAS_TYPE,
+];
+const SIGNED_CAS_TYPE = "application/ca-set+json";
 
 const htmlParser = unified().use(rehypeParse);
 
@@ -48,7 +55,7 @@ function findUnsignedCasScripts(html: string): UnsignedCasMatch[] {
   const matches: UnsignedCasMatch[] = [];
   visit(tree, "element", (node) => {
     if (node.tagName !== "script") return;
-    if (node.properties.type !== UNSIGNED_CAS_TYPE) return;
+    if (!UNSIGNED_CAS_TYPES.includes(node.properties.type)) return;
     const startOffset = node.position?.start.offset;
     const endOffset = node.position?.end.offset;
     if (startOffset === undefined || endOffset === undefined) return;

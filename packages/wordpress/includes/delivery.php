@@ -227,7 +227,7 @@ function rest_cas( \WP_REST_Request $request ): \WP_REST_Response {
 		empty( $cas ) ? null : $cas,
 		empty( $cas ) ? 404 : 200,
 		array(
-			'Content-Type'  => 'application/cas+json; charset=utf-8',
+			'Content-Type'  => 'application/ca-set+json; charset=utf-8',
 			'Cache-Control' => 'no-store, no-cache, must-revalidate, max-age=0',
 		)
 	);

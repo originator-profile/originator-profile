@@ -14,8 +14,8 @@ const opsText = await opsApi.GET().then((res) => res.text());
     <title>OPSとCAS</title>
   </head>
   <body>
-    <script type="application/ops+json" set:html={opsText} />
-    <script type="application/cas+json" set:html={casText} />
+    <script type="application/op-set+json" set:html={opsText} />
+    <script type="application/ca-set+json" set:html={casText} />
     <p id="text-target-integrity">OPSとCASがあるWebページ</p>
   </body>
 </html>
