@@ -48,6 +48,19 @@ PHP 7.4 のように下限を下回る環境では、現在のコードのまま
    - このトリガーにより投稿内容を処理し、CAサーバーのCA登録・更新エンドポイントに送信します
 2. WordPressの投稿ページでのCAS配信
 
+### 「続きを読む」への対応
+
+WordPress 標準の `<!--more-->` タグと「続きを読む」ブロックに対応しています。
+個別記事の表示に合わせ、導入文と続きの本文、および `more-<投稿ID>` アンカーを含めて CA を発行します。
+`<!--noteaser-->`（「続きを読む」ブロックの「抜粋を非表示」設定）がある場合は、個別記事で非表示になる導入文を署名対象から除外します。
+`<!--nextpage-->` による改ページと併用した場合も、各ページの本文に適用します。`noteaser` による導入文の非表示は先頭ページのみです。
+WordPress 本体と同様、`noteaser` は投稿全体から検索するため、後続ページにだけ指定がある場合も先頭ページの導入文が非表示になります。
+
+more タグ処理で正規表現エラーが起きた場合は、不完全な本文で署名しないよう投稿全体の CA 発行を中止します。保存済みの CAS は保持しますが、問題を解消して記事を再更新し、CA の再発行が成功するまで配信を停止します。ログ出力が有効な場合は、処理に失敗した投稿 ID とページ番号が記録されます。
+
+一覧ページの抜粋への CAS 配信、および追加プラグインなどが実装するペイウォールは対応対象外です。
+既存記事に反映するには、プラグイン更新後に記事を更新して CA を再発行してください。
+
 ## デモ
 
 プラグインインストール済みの試験用環境を用意しています。
@@ -495,11 +508,15 @@ Post ID <投稿ID>, page <ページ番号>: image(s) with missing or invalid int
 ### もっと古い PHP (7.4 など) でも動かせますか?
 
 現在のコードのままでは動きません。
-ただし 3 箇所を書き換えれば動く可能性はあります (実際に PHP 7.4 上での動作確認はしていません)。
+PHP 7.4 への移植には、例えば次の構文や関数への対応が必要です。これは網羅的な移植手順ではなく、PHP 7.4 上での動作確認も行っていません。
 
 1. コンストラクタプロパティプロモーション (PHP 8.0+): `includes/class-uca.php` クラスコンストラクタ引数 `public string $issuer`
-2. ユニオン型 (PHP 8.0+): `includes/class-uca.php` メソッド戻り値の型 `string|false`
+2. ユニオン型 (PHP 8.0+): `includes/class-uca.php` の `to_json()` (`string|false`)、`includes/issue.php` の `expand_more_tag()` (`string|false`) と `prepare_post_pages()` (`array|false`)
 3. `mixed` 型 (PHP 8.0+): `includes/issue.php` と `includes/class-uca.php` の一部
+4. 名前付き引数 (PHP 8.0+): `includes/issue.php` の `new Uca()` 呼び出し
+5. `str_contains()` (PHP 8.0+): `includes/issue.php` の `prepare_post_pages()`
+
+依存ライブラリの互換性も含めて、別途動作確認が必要です。
 
 なお PHP 7.4 は 2022年11月にセキュリティ更新が終了しており、本番サイトでの利用はおすすめできません。
 
@@ -554,6 +571,27 @@ Composer スクリプトの実行
 $ docker compose run --rm -w /var/www/html/wp-content/plugins/ca-manager wordpress composer run
 ```
 
+### E2E テスト
+
+上記の開発環境を構築し、リポジトリのルートで `pnpm install` を実行してから、以下を実行します。
+
+```sh
+# リポジトリのルートで実行
+pnpm --filter @originator-profile/wordpress exec playwright install chromium
+pnpm --filter @originator-profile/wordpress e2e
+```
+
+署名・検証ライブラリは E2E スクリプトが自動でビルドします。
+テストはユーザー・投稿の作成と削除、プラグインの有効化と無効化を行うため、テスト専用の WordPress データベースで実行してください。
+
+`more` の回帰テストでは、`WORDPRESS_DEBUG=1` とホスト側の空きポート `8080` が必要です。
+一時的なローカル CA サーバーでテスト鍵を使って署名し、ブラウザーで表示した HTML と署名対象の一致、CA の署名・本文検証、本文改ざんの検出を確認します。
+通常の `more`、独自リンク文言、ブロック形式、`noteaser`（通常・ブロック）、`nextpage` 併用、後続ページのみの `noteaser` の 7 ケース・9 ページが対象です。
+テストで変更する CA 設定は終了時に元へ戻します。外部 CA サーバーや OP の信頼チェーンの検証は対象外です。
+
+リポジトリ全体の E2E コマンドは WordPress を除外しているため、ローカルでは上記のパッケージ専用コマンドで実行してください。
+CI では別の WordPress 専用 workflow (`.github/workflows/wordpress.yml`) があり、`packages/wordpress/**` の変更を含む push で E2E を実行します。
+
 ## Composer スクリプト
 
 ホストの `packages/wordpress` からスクリプトの一覧を確認できます。
@@ -598,8 +636,11 @@ node --run=lint
 node --run=format:check
 ```
 
+build:test-deps
+: E2E が利用する署名・検証ライブラリと依存先をビルド。lint と E2E の開始時にも自動実行します。
+
 lint
-: JS・TS の静的解析と型検査。自動修正可能な指摘を修正
+: 依存ライブラリをビルドした後、JS・TS の静的解析と型検査を実行。自動修正可能な指摘を修正
 
 format
 : JS・TS・CSS・JSON・YAML・Markdown など、WordPress ディレクトリ内の対応ファイルを整形（80文字幅）
