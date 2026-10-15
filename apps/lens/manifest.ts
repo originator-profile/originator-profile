@@ -76,12 +76,6 @@ const firefox = {
   background: {
     page: "background.html",
   },
-  sidebar_action: {
-    default_panel: "index.html",
-    default_title: "__MSG_extensionName__",
-    default_icon: { 48: "icons/48x48.png", 128: "icons/128x128.png" },
-    open_at_install: false,
-  },
 };
 
 export default function esbuildPluginManifest({
