@@ -15,6 +15,8 @@ use function Profile\Exclusion\parse_rules;
 use function Profile\Exclusion\is_excluded;
 use function Profile\Exclusion\parse_absolute_url;
 
+require_once __DIR__ . '/diagnostics.php';
+
 /** 管理者画面の初期化 */
 function init() {
 	\add_action( 'admin_menu', '\Profile\Admin\add_options_page' );
@@ -125,11 +127,12 @@ function settings_page() {
 			<h1>CA Manager</h1>
 			<p><a href="<?php echo \esc_url( \admin_url( 'tools.php?page=ca-manager-bulk' ) ); ?>">既存記事のCA一括発行</a></p>
 			<?php exclusion_settings(); ?>
-			<form method="post" action="options.php">
+			<form id="profile-ca-settings" method="post" action="options.php">
 				<?php \settings_fields( 'ca-manager' ); ?>
 				<?php \do_settings_sections( 'ca-manager' ); ?>
 				<?php \submit_button(); ?>
 			</form>
+			<?php \Profile\Diagnostics\render(); ?>
 		</div>
 	<?php
 }
