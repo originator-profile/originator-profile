@@ -82,7 +82,7 @@ test("クレデンシャルが存在しないページでバッジが表示さ�
   // 対象ページにナビゲート
   await page.goto(credentialsPage.endpoint);
 
-  // バッジ更新のデバウンス + 検証処理を待つ
+  // 検証処理を待つ
   await page.waitForTimeout(1000);
 
   const badgeText = await backgroundWorker.evaluate(async () => {

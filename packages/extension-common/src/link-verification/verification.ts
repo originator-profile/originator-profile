@@ -1,8 +1,9 @@
-import type { ProblemDetails } from "@originator-profile/verify";
 import {
-  isSiteProfileFetchError,
-  verifyTabWebsite,
-} from "../site-profile/verify-website";
+  toProblemDetails,
+  type ProblemDetails,
+} from "@originator-profile/verify";
+import { isSiteProfileFetchError } from "../site-profile/verify-website";
+import { waitForTabSiteProfile } from "../verification/tab-verification";
 import { isMatched, resolveActualOperator } from "./matching";
 import type {
   CreateMismatchResultParams,
@@ -56,7 +57,7 @@ export const createMismatchResult = ({
 };
 
 /**
- * 遷移先の Web サイトを検証し、OPID の照合結果を返す
+ * 遷移先の Web サイトの検証結果を用いて、OPID の照合結果を返す
  * @param tabId - 検証対象のタブID
  * @param context - 検証コンテキスト
  */
@@ -66,7 +67,12 @@ export const getVerificationResult = async (
 ): Promise<LinkVerificationResult> => {
   const { source, expectedOperator } = context;
 
-  const { result } = await verifyTabWebsite(tabId);
+  let result;
+  try {
+    ({ result } = await waitForTabSiteProfile(tabId));
+  } catch (error) {
+    return createErrorResult(context, toProblemDetails(error));
+  }
 
   // NOTE: 検証を通過した場合だけ照合する。通過していない Website Profile で
   // 照合すると、署名されていない sp.json で matched を作れてしまう。

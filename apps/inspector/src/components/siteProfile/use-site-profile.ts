@@ -1,35 +1,50 @@
-import { verifyTabWebsite } from "@originator-profile/extension-common";
-import type { OriginatorProfileSet } from "@originator-profile/model";
-import type { VerifiedSp } from "@originator-profile/verify";
+import { toProblemDetails, type VerifiedSp } from "@originator-profile/verify";
+import { useMemo } from "react";
 import { useParams } from "react-router";
-import useSWRImmutable from "swr/immutable";
 import { toLegacyWebsite } from "../../utils/to-legacy-result";
+import {
+  isTopFrameUnreachable,
+  useTabVerification,
+  type TabVerificationSnapshot,
+} from "../activeTab/use-tab-verification";
 
-const key = "site-profile";
+type SiteProfileView =
+  | { isLoading: true; siteProfile?: never; error?: never }
+  | { isLoading: false; siteProfile?: never; error: Error }
+  | {
+      isLoading: false;
+      siteProfile: VerifiedSp;
+      error?: never;
+      warnings: string[];
+      info: string[];
+    };
 
-type FetchVerifiedSiteProfileResult = {
-  siteProfile: VerifiedSp;
-  /** 文書の検証で検証鍵に加えるための、サイトが提示した発信者 */
-  originators: OriginatorProfileSet;
-  warnings: string[];
-  info: string[];
-};
-
-async function fetchVerifiedSiteProfile([, tabId]: [
-  _: typeof key,
-  tabId: number,
-]): Promise<FetchVerifiedSiteProfileResult> {
-  const { result, siteProfile } = await verifyTabWebsite(tabId);
-  const legacy = toLegacyWebsite(result);
-  if (legacy instanceof Error) {
-    throw legacy;
+function toSiteProfileView(snapshot: TabVerificationSnapshot): SiteProfileView {
+  if (isTopFrameUnreachable(snapshot)) {
+    return {
+      isLoading: false,
+      error: toLegacyWebsite({
+        status: false,
+        securingResults: [],
+        warnings: [],
+        info: [],
+        errors: [
+          toProblemDetails(new Error("No response from top level frame")),
+        ],
+      }) as Error,
+    };
   }
 
+  const entry = snapshot.verification?.siteProfile;
+  if (!entry) return { isLoading: true };
+
+  const legacy = toLegacyWebsite(entry.result);
+  if (legacy instanceof Error) return { isLoading: false, error: legacy };
   return {
+    isLoading: false,
     siteProfile: legacy,
-    originators: siteProfile?.originators ?? [],
-    warnings: result.warnings.map(({ title }) => title),
-    info: result.info.map(({ title }) => title),
+    warnings: entry.result.warnings.map(({ title }) => title),
+    info: entry.result.info.map(({ title }) => title),
   };
 }
 
@@ -39,21 +54,14 @@ async function fetchVerifiedSiteProfile([, tabId]: [
 export function useSiteProfile() {
   const params = useParams<{ tabId: string }>();
   const tabId = Number(params.tabId);
-  const { data, error, isLoading } = useSWRImmutable<
-    FetchVerifiedSiteProfileResult,
-    Error,
-    [typeof key, number]
-  >([key, tabId], fetchVerifiedSiteProfile, {
-    // NOTE: 404 だと再試行しつづけるのを抑制する目的
-    shouldRetryOnError: false,
-  });
+  const snapshot = useTabVerification(tabId);
+  const view = useMemo(() => toSiteProfileView(snapshot), [snapshot]);
   return {
-    error,
-    isLoading,
-    siteProfile: data?.siteProfile,
-    originators: data?.originators,
+    error: view.error,
+    isLoading: view.isLoading,
+    siteProfile: view.siteProfile,
     tabId,
-    warnings: data?.warnings,
-    info: data?.info,
+    warnings: "warnings" in view ? view.warnings : undefined,
+    info: "info" in view ? view.info : undefined,
   };
 }

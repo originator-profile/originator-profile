@@ -98,8 +98,8 @@
   "Unsupported_ERR_ORIGINATOR_PROFILE_SET_INVALID": {
     "message": "The data format required to verify the site operator or content creator is invalid"
   },
-  "Unsupported_ERR_FETCH_CREDENTIALS_MESSAGING_FAILED": {
-    "message": "Failed to retrieve the data required to verify the content creator"
+  "Unsupported_ERR_VERIFICATION_INVALIDATED": {
+    "message": "The verification result is no longer valid because it expired or the URL changed after verification"
   },
   "Unsupported_UnknownError": {
     "message": "The data required to verify the site operator or content creator either does not exist or could not be retrieved"
