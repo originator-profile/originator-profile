@@ -38,6 +38,10 @@ export type SecuringResult = {
   issuedAt?: string;
   /** 有効期限 (ISO 8601) */
   expiredAt?: string;
+  /** VC が含む情報の有効期間の開始 (validFrom) */
+  validFrom?: string;
+  /** VC が含む情報の有効期間の終了 (validUntil) */
+  validUntil?: string;
   /** 検証に用いた鍵 */
   verificationKey?: Jwk;
   /** 検証鍵の保有者 */

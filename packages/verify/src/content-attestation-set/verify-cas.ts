@@ -2,6 +2,7 @@ import { LocalKeys } from "@originator-profile/cryptography";
 import {
   ContentAttestation,
   ContentAttestationSet,
+  type CoreProfile,
 } from "@originator-profile/model";
 import {
   JwtVcDecoder,
@@ -12,7 +13,6 @@ import {
   CaVerifier,
   CaVerifyFailed,
   CoreProfileNotFound,
-  VerifiedOps,
   VerifyIntegrity,
 } from "../";
 import type { Logger } from "../logger";
@@ -58,7 +58,7 @@ export async function verifyCas<
   T extends ContentAttestation = ContentAttestation,
 >(
   cas: ContentAttestationSet,
-  verifiedOps: VerifiedOps,
+  verifiedOps: readonly { core: { doc: CoreProfile } }[],
   url: string,
   verifyIntegrity: VerifyIntegrity,
   validator?: VcValidatorFactory,

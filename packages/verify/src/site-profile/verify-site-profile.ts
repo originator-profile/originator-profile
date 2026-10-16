@@ -21,6 +21,7 @@ import {
 } from "../originator-profile-set/errors";
 import { VerifiedOps } from "../originator-profile-set/types";
 import { OpsVerifier } from "../originator-profile-set/verify-ops";
+import { coreProfilesOf, type OriginatorPayload } from "../result/convert";
 import { pointer } from "../result/pointer";
 import { verifyAllowedOrigin } from "../verify-allowed-origin";
 import { SpVerificationFailure, SpVerificationResult } from "./types";
@@ -65,13 +66,26 @@ export function SpVerifier(
     validator?: VcValidatorFactory;
     /** ロガー (デフォルト: `console`) */
     logger?: Logger;
+    /**
+     * 検証済みの共有の OP (レジストリなど)
+     *
+     * 検証し直さずに、PA・WMP の検証鍵と WSP の発行者の探索に加える。
+     * 結果の originators には含めない。
+     */
+    trusted?: OriginatorPayload[];
   } = {},
 ) {
-  const { verifyOrigin = true, validator, logger = console } = options;
+  const {
+    verifyOrigin = true,
+    validator,
+    logger = console,
+    trusted = [],
+  } = options;
   async function verify(): Promise<SpVerificationResult> {
     const verifyOps = OpsVerifier(sp.originators, keys, issuer, {
       validator,
       logger,
+      trusted,
     });
     const opsVerified = await verifyOps();
     if (opsVerified instanceof OpsInvalid) {
@@ -100,7 +114,7 @@ export function SpVerifier(
         }
 
         const wspIssuer = decodedWsp.doc.issuer;
-        const cp = opsVerified.find(
+        const cp = [...coreProfilesOf(trusted), ...opsVerified].find(
           (op) => op.core.doc.credentialSubject.id === wspIssuer,
         );
         if (!cp) {
