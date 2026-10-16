@@ -13,18 +13,33 @@
    `documentChanged` を送る。プリレンダリング中の文書は有効化を待ってから送る
 2. Service Worker が文書を検証する ([background.ts](./background.ts) の
    `verifyFrameDocument`)
-   1. フレームに読み込まれている文書を索引に記録し、入れ替わった文書の結果を破棄する
-   2. トップレベル文書なら、Site Profile の取得と検証を並行して始める
+   1. フレームに読み込まれている文書を索引に記録し、保持しなくてよい文書の結果を破棄する
+   2. トップレベル文書なら、そのオリジンの Site Profile の検証を並行して始める
    3. クレデンシャルを取得し、保持している結果を再利用できれば終える
    4. `unverified` を書き込み、入力依存対象が検証可能になるまで待つ
    5. `verifying` を書き込み、`verifyDocument` で検証して `settled` を書き込む
 3. 購読する側が `storage.onChanged` を受けてストアを読み直す
 
-検証は 1 つの文書について、レジストリと、その文書に設置された OPS を用いる。
-トップレベル文書に限り、Site Profile の発信者も用いる。他の文書の OPS は用いない。
+クレデンシャルのないサブフレームの文書は、検証せずに空の結果を `settled` として
+書き込む。検証を完了できなかった文書は、文書が入れ替わっていなければ、その旨を
+表す失敗 (`VerificationIncomplete`) を `settled` として書き込む。
 
 同じ文書の検証が重なったら、後から始めた検証だけが書き込む (世代で判定する)。
 文書がフレームから外れていれば書き込めず、そこで検証を打ち切る。
+
+### 検証に用いる発信者
+
+1 つの文書の検証には、次の発信者だけを用いる。他の文書の OPS は用いない。
+
+| 発信者               | 用いる文書       | 検証の単位                                          |
+| -------------------- | ---------------- | --------------------------------------------------- |
+| レジストリ           | すべて           | 拡張機能で 1 度。用いた VC の有効期間内は再利用する |
+| Site Profile         | トップレベル文書 | オリジンごとに 1 度。時刻の境界までは再利用する     |
+| 文書に設置された OPS | その文書         | 文書ごと                                            |
+
+Site Profile を取得できなければ (設置されていない場合を含む)、Site Profile の
+発信者を用いずに検証する。Site Profile の検証に失敗していれば、トップレベル文書の
+検証も失敗にする。
 
 ## 文書とのやり取り
 
@@ -38,6 +53,7 @@
 | `verifyTab`                | 画面→SW | タブ内の文書の検証を求める                             |
 | `resync`                   | SW→文書 | `documentChanged` を送り直すよう求める                 |
 | `fetchDocumentCredentials` | SW→文書 | クレデンシャルを取得する                               |
+| `fetchDocumentUrl`         | SW→文書 | その時点の document's URL を問い合わせる               |
 | `fetchDocumentSiteProfile` | SW→文書 | Site Profile を取得する                                |
 | `awaitInputDependency`     | SW→文書 | 入力依存対象が検証可能になるまで待つ                   |
 | `verifyDocumentIntegrity`  | SW→文書 | target の完全性を検証し、その target を監視に加える    |
@@ -58,12 +74,14 @@ documentId と一致しないメッセージを拒否する。documentId は `re
 | `settled`     | 検証済みまたは検証失敗。どちらかは `result.status` で判別する |
 | `invalidated` | 確定した結果が、入力の変化または時刻の経過で有効でなくなった  |
 
-時刻の境界 (`result.validUntil`) を過ぎた結果は書き換えず、読み出すときに
-`invalidated` として扱う ([identity.ts](./identity.ts) の `resolveEntry`)。
-提示する側は、無効を検証失敗と区別する (`VerificationInvalidated`)。
+オリジンごとの Site Profile のエントリ (`SiteProfileEntry`) は、`unverified` を
+除く 3 つの状態をとる。取得し直すあいだは、無効を経ずに `verifying` とする。
+取得か検証が例外で終わったら、エントリを消して次に必要になったときに検証し直す。
 
-Site Profile の検証結果 (`SiteProfileEntry`) は、トップレベル文書ごとに 1 度だけ
-検証して保持する。再読み込みボタンで検証を求められたときは取得し直す。
+時刻の境界 (`result.validUntil`) を過ぎた結果は書き換えず、読み出すときに
+`invalidated` として扱う ([identity.ts](./identity.ts) の `resolveEntry` と
+`resolveSiteProfileEntry`)。提示する側は、無効を検証失敗と区別する
+(`VerificationInvalidated`)。
 
 ## 入力依存対象の待ち合わせ
 
@@ -80,51 +98,83 @@ type と入力依存対象の対応は、仕様の定めるものを `@originato
 `response` は本来、対象リソースの取得が終われば検証できる。リソースを個別に
 追跡せず、文書の読み込み完了で近似している。
 
+allowedUrl は、待ち合わせを終えて検証を始める時点の document's URL で評価する
+(`fetchDocumentUrl`)。検証のあいだに URL が変わっていれば、確定した結果を現在の
+URL で評価し直す。
+
 ## 再利用と検証し直し
 
 保持している結果は、次をすべて満たすときに再利用する
 ([identity.ts](./identity.ts) の `isReusable`)。
 
-- `settled` で、時刻の境界を過ぎていない
+- `settled` で、時刻の境界を過ぎておらず、検証を完了できなかった結果でない
 - CAS・OPS の取得経路ごとのダイジェストと、target の入力依存対象が一致する
 - allowedUrl の評価結果が、検証時の URL と現在の URL とで一致する
 
 次の契機で検証し直す。
 
-| 契機                                     | 送るもの                       | 再利用           |
-| ---------------------------------------- | ------------------------------ | ---------------- |
-| クレデンシャルの script 要素の挿入・削除 | `documentChanged`              | する             |
-| 検証した target の要素の変化             | `inputChanged`                 | しない           |
-| bfcache からの復元                       | `documentChanged` (`restored`) | 条件付き (※)     |
-| サイドパネルを開いた・再読み込みボタン   | `verifyTab` → `resync`         | ボタンならしない |
-| Service Worker の起動                    | 確定していない文書に `resync`  | する             |
+| 契機                                                       | 送るもの                       | 再利用           |
+| ---------------------------------------------------------- | ------------------------------ | ---------------- |
+| クレデンシャルの script 要素の挿入・削除、内容・属性の変化 | `documentChanged`              | する             |
+| 検証した target の入力依存対象の変化                       | `inputChanged`                 | しない           |
+| bfcache からの復元                                         | `documentChanged` (`restored`) | 条件付き (※)     |
+| サイドパネルを開いた・再読み込みボタン                     | `verifyTab` → `resync`         | ボタンならしない |
+| Service Worker の起動                                      | 確定していない文書に `resync`  | する             |
 
 ※ 結果が `rendered-result` に依存していれば再利用しない。
 
+再読み込みボタンでは、トップレベル文書のオリジンの Site Profile も取得し直す。
 same-document navigation で allowedUrl の評価結果が変わったら、検証し直さずに
 `invalidated` を書き込む。
 
 ### target の監視
 
-`verifyDocumentIntegrity` で検証した target の要素を、content script が監視する
-([target-watcher.ts](./target-watcher.ts))。
+`verifyDocumentIntegrity` で検証した target を、content script が監視する
+([target-watcher.ts](./target-watcher.ts))。入力依存対象を求め直す代わりに、
+次の変化の検知で近似する。
 
-- 要素の部分木の変化 (子・文字列・属性) と、要素が文書から取り除かれたことを検知する
-- `rendered-result` に依存する target は、要素の大きさの変化も検知する
-- 変化を 1 度検知したら監視を止め、次の検証で監視し直す
+| 入力依存対象      | 検知する変化                                                       |
+| ----------------- | ------------------------------------------------------------------ |
+| `parsed-dom`      | セレクターに一致する要素の集合の変化と、一致した要素の部分木の変化 |
+| `rendered-result` | 上に加えて、要素の大きさの変化とビューポートの大きさの変化         |
+
+変化を 1 度検知したら監視を止め、次の検証で監視し直す。DOM の変化は、クレデンシャルの
+script 要素の検知と同じ `MutationObserver` で受ける。
 
 ## 保持
 
-| キー                                     | 値                                                   |
-| ---------------------------------------- | ---------------------------------------------------- |
-| `verification:document:<documentId>`     | 文書の検証の状態                                     |
-| `verification:site-profile:<documentId>` | トップレベル文書の Site Profile の検証結果           |
-| `verification:tab:<tabId>`               | タブの索引。フレームごとの文書と、bfcache にある文書 |
+| キー                                 | 値                                                           |
+| ------------------------------------ | ------------------------------------------------------------ |
+| `verification:document:<documentId>` | 文書の検証の状態                                             |
+| `verification:site-profile:<origin>` | オリジンの Site Profile の検証の状態                         |
+| `verification:registry`              | レジストリの検証結果                                         |
+| `verification:tab:<tabId>`           | タブの索引。フレームごとの文書、bfcache にある文書、オリジン |
 
-- フレームの文書が入れ替わったら、前の文書の結果を破棄する。前の文書が bfcache に
-  あれば、復元されたときに再利用できるよう残す
-- タブを閉じたら、そのタブの結果をすべて破棄する
-- 索引の読み書きとエントリの書き込みは直列化する。索引にない文書の結果は書き込まない
+VC の原文は保持しない。結果には復号したペイロードを残し、クレデンシャルは取得経路
+だけを残す。
+
+文書の結果は、次のときに破棄する。
+
+- フレームの文書が入れ替わった。ただし、bfcache に入ったトップレベル文書は
+  復元されたときに再利用できるよう残す
+- フレームが取り除かれた、または文書が bfcache から追い出された
+- タブを閉じた
+
+どのタブのトップレベル文書のオリジンでもなくなった Site Profile の結果も破棄する。
+
+索引の読み書きとエントリの書き込みは直列化する。索引にない文書と fenced frame の
+文書の結果は書き込まない。
+
+### 容量が足りないとき
+
+書き込みが容量を超えたら、次の順に組ごとに追い出して書き直す。追い出された文書は、
+表示されるときに検証を求められて検証し直される。
+
+1. 表示していないタブのサブフレームの文書
+2. bfcache にある文書
+3. 表示していないタブのトップレベル文書
+
+表示中のタブの文書は、bfcache にあるものを除いて追い出さない。
 
 ## 購読する側
 
@@ -135,33 +185,35 @@ same-document navigation で allowedUrl の評価結果が変わったら、検�
 | リンク検証   | `waitForTabSiteProfile`                              |
 
 `readTabVerification` は、`webNavigation.getAllFrames` が返すフレームの文書の結果
-だけを返す。
+と、トップレベル文書のオリジンの Site Profile、レジストリの検証結果を返す。
+`waitForTabSiteProfile` は、時刻の境界を過ぎていない `settled` の結果が書き込まれる
+まで待つ。
 
 `verifyTab` はタブ内の全フレームに `resync` を送り、届いた文書を返す。読み込みを
 終えても応えない文書には content script を注入して送り直す。
 
 ## 実装
 
-| ファイル                                     | 役割                                                    |
-| -------------------------------------------- | ------------------------------------------------------- |
-| [content-script.ts](./content-script.ts)     | 全フレームで検知・通知し、Service Worker の要求に応える |
-| [background.ts](./background.ts)             | Service Worker の検証パイプライン                       |
-| [store.ts](./store.ts)                       | 検証結果ストアとタブの索引                              |
-| [identity.ts](./identity.ts)                 | 入力の同一性、再利用の判定、無効化                      |
-| [target-watcher.ts](./target-watcher.ts)     | 検証した target の変化の監視                            |
-| [tab-verification.ts](./tab-verification.ts) | 購読する側が使う読み出し・購読・検証の要求              |
-| [types.ts](./types.ts)                       | エントリと結果の型                                      |
-| [events.ts](./events.ts)                     | 拡張機能内メッセージ                                    |
-| [errors.ts](./errors.ts)                     | 無効を表すエラー                                        |
+| ファイル                                     | 役割                                                     |
+| -------------------------------------------- | -------------------------------------------------------- |
+| [content-script.ts](./content-script.ts)     | 全フレームで検知・通知し、Service Worker の要求に応える  |
+| [background.ts](./background.ts)             | Service Worker の検証パイプライン                        |
+| [store.ts](./store.ts)                       | 検証結果ストアとタブの索引、容量が足りないときの追い出し |
+| [identity.ts](./identity.ts)                 | 入力の同一性、再利用の判定、無効化                       |
+| [target-watcher.ts](./target-watcher.ts)     | 検証した target の変化の監視                             |
+| [tab-verification.ts](./tab-verification.ts) | 購読する側が使う読み出し・購読・検証の要求               |
+| [types.ts](./types.ts)                       | エントリと結果の型                                       |
+| [events.ts](./events.ts)                     | 拡張機能内メッセージ                                     |
+| [errors.ts](./errors.ts)                     | 無効を表すエラー                                         |
 
 アプリ側は `setupBackground` と `setupFrameHandlers` を呼ぶだけで、このモジュールを
 直接は登録しない。
 
 ## 既知の限界
 
-- target の監視は、検証時に選択された要素だけを対象にする。後から挿入されて
-  セレクターに一致するようになった要素は検知しない
-- `rendered-result` に依存する target について、ビューポートの大きさや文書の
-  可視性の変化は検知しない
+- target の監視は近似である。target の部分木の外の変化 (祖先の属性やスタイル
+  シートの変更など) は、一致する要素の集合か大きさが変わらない限り検知しない。
+  `rendered-result` の入力は、こうした変化でも変わりうる
+- `rendered-result` に依存する type は非推奨のため、文書の可視性の変化は監視しない
 - Service Worker が停止すると、進行中の検証は失われる。起動したときに、確定して
   いない文書へ `resync` を送って検証をやり直す
