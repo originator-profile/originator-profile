@@ -1,11 +1,12 @@
+import type { Serialized } from "@originator-profile/core";
 import type { Target } from "@originator-profile/model";
-import type { InputDependency } from "@originator-profile/verify";
-import { defineExtensionMessaging } from "@webext-core/messaging";
 import type {
-  FetchCredentialsMessageResponse,
-  SerializedIntegrityVerifyResult,
-} from "../credentials/types";
+  InputDependency,
+  IntegrityVerifyResult,
+} from "@originator-profile/verify";
+import { defineExtensionMessaging } from "@webext-core/messaging";
 import type { SerializedSiteProfileResult } from "../site-profile/types";
+import type { FetchCredentialsMessageResponse } from "./credentials";
 
 /** 宛先の文書。受け取った文書は自身の documentId と一致しなければ拒否する */
 type ToDocument = { documentId: string };
@@ -41,7 +42,7 @@ type VerificationProtocolMap = {
   ): void;
   verifyDocumentIntegrity(
     data: ToDocument & { content: Target },
-  ): SerializedIntegrityVerifyResult;
+  ): Serialized<IntegrityVerifyResult>;
 };
 
 export const verificationMessenger =

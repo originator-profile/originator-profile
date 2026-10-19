@@ -9,10 +9,10 @@ import {
   type VerifyIntegrity,
 } from "@originator-profile/verify";
 import { injectContentScripts } from "../content-script-injection";
-import { toDocumentCredentials } from "../credentials/messaging";
 import { verifyFetchedWebsite } from "../site-profile/verify-website";
 import { getAllFrames, getFrame } from "../utils/frames";
 import { getRegistry } from "../utils/registry-ops";
+import { toDocumentCredentials } from "./credentials";
 import { verificationMessenger } from "./events";
 import {
   dependsOnRenderedResult,

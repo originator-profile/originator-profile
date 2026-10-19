@@ -8,7 +8,7 @@ import {
   verifyIntegrity,
   type InputDependency,
 } from "@originator-profile/verify";
-import type { FetchCredentialsMessageResponse } from "../credentials/types";
+import type { FetchCredentialsMessageResponse } from "./credentials";
 import { verificationMessenger } from "./events";
 import { createTargetWatcher } from "./target-watcher";
 

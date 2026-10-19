@@ -101,22 +101,21 @@ function toVerifiedCredentials(
       );
     });
 
-  const framesCas = legacies.map(({ entry, legacy }) => ({
-    // NOTE: verifyCas も同様に入力(credentials.cas)と同じ順序・件数で返す契約
-    // (packages/verify/src/content-attestation-set/verify-cas.ts 参照)。
-    cas: legacy.cas.map((c, j) => {
-      const sourced = entry.credentials.cas[j];
-      if (!sourced) {
-        throw new Error(`credentials.cas[${j}] not found`);
-      }
-      return { ...c, source: sourced.source };
-    }) as SupportedVerifiedCasWithSource,
-    url: entry.subject.url,
-    origin: entry.subject.origin,
-    frameId: entry.subject.frameId,
-    parentFrameId: entry.subject.parentFrameId,
-    frameType: entry.subject.frameType,
-  }));
+  const framesCas = legacies.map(({ entry, legacy }) => {
+    const { tabId: _, ...frame } = entry.subject;
+    return {
+      ...frame,
+      // NOTE: verifyCas も同様に入力(credentials.cas)と同じ順序・件数で返す契約
+      // (packages/verify/src/content-attestation-set/verify-cas.ts 参照)。
+      cas: legacy.cas.map((c, j) => {
+        const sourced = entry.credentials.cas[j];
+        if (!sourced) {
+          throw new Error(`credentials.cas[${j}] not found`);
+        }
+        return { ...c, source: sourced.source };
+      }) as SupportedVerifiedCasWithSource,
+    };
+  });
 
   const [top] = documents;
   return {

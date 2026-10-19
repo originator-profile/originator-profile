@@ -1,22 +1,10 @@
-import type { Serialized } from "@originator-profile/core";
 import type {
   AdvertisementCA,
   AdvertorialCA,
   ArticleCA,
-  ContentAttestationSet,
-  OpMeta,
-  OriginatorProfileSet,
 } from "@originator-profile/model";
-import type {
-  CredentialSource,
-  FetchCredentialSetResult,
-  SourcedCredential,
-} from "@originator-profile/presentation";
-import type {
-  IntegrityVerifyResult,
-  VerifiedCas,
-  VerifiedOp,
-} from "@originator-profile/verify";
+import type { CredentialSource } from "@originator-profile/presentation";
+import type { VerifiedCas, VerifiedOp } from "@originator-profile/verify";
 
 /** 表示に対応している CA */
 export type SupportedCa = ArticleCA | AdvertisementCA | AdvertorialCA;
@@ -51,14 +39,6 @@ export type SupportedVerifiedCaWithSource = SupportedVerifiedCa & {
 export type SupportedVerifiedCasWithSource = SupportedVerifiedCaWithSource[];
 export type FrameLocation = { origin: string; url: string };
 
-export type FetchCredentialsMessageResponse = FrameLocation & {
-  ops: Serialized<FetchCredentialSetResult<OriginatorProfileSet>>;
-  cas: Serialized<FetchCredentialSetResult<ContentAttestationSet>>;
-  opMeta?: OpMeta;
-};
-
-export type SerializedIntegrityVerifyResult = Serialized<IntegrityVerifyResult>;
-
 export type FrameResponse = {
   frameId: number;
   parentFrameId: number;
@@ -67,19 +47,13 @@ export type FrameResponse = {
 export type FrameDocument = {
   documentId: string;
   frameType: chrome.extensionTypes.FrameType;
-  documentLifecycle: chrome.extensionTypes.DocumentLifecycle;
 };
-export type FrameCredentials = FrameResponse &
-  FrameDocument &
-  FrameLocation & {
-    ops: SourcedCredential<OriginatorProfileSet[number]>[];
-    cas: SourcedCredential<ContentAttestationSet[number]>[];
-    opMeta?: OpMeta;
-  };
+/** タブ内のフレームの位置と、そこに読み込まれている文書 */
+export type DocumentFrame = FrameResponse & FrameDocument & FrameLocation;
 
-export type FrameVerifiedCas = FrameResponse &
-  Pick<FrameDocument, "frameType"> &
-  FrameLocation & { cas: SupportedVerifiedCasWithSource };
+export type FrameVerifiedCas = DocumentFrame & {
+  cas: SupportedVerifiedCasWithSource;
+};
 export type FramesVerifiedCas = FrameVerifiedCas[];
 
 export type ArticleLike =

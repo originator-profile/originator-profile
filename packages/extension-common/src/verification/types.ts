@@ -1,4 +1,12 @@
-import type { CredentialSource } from "@originator-profile/presentation";
+import type {
+  ContentAttestationSet,
+  OpMeta,
+  OriginatorProfileSet,
+} from "@originator-profile/model";
+import type {
+  CredentialSource,
+  SourcedCredential,
+} from "@originator-profile/presentation";
 import type {
   DocumentOutcome,
   DocumentVerificationMetadata,
@@ -7,24 +15,18 @@ import type {
   VerificationResult,
   VerificationTarget,
 } from "@originator-profile/verify";
-import type {
-  FrameCredentials,
-  FrameDocument,
-  FrameLocation,
-  FrameResponse,
-} from "../credentials/types";
+import type { DocumentFrame } from "../credentials/types";
 import type { TabWebsiteVerification } from "../site-profile/verify-website";
 
 /** 検証対象の文書の識別 */
-export type VerificationSubject = FrameResponse &
-  Pick<FrameDocument, "documentId" | "frameType"> &
-  FrameLocation & { tabId: number };
+export type VerificationSubject = DocumentFrame & { tabId: number };
 
 /** 文書から取得したクレデンシャル */
-export type DocumentCredentials = Pick<
-  FrameCredentials,
-  "ops" | "cas" | "opMeta"
->;
+export type DocumentCredentials = {
+  ops: SourcedCredential<OriginatorProfileSet[number]>[];
+  cas: SourcedCredential<ContentAttestationSet[number]>[];
+  opMeta?: OpMeta;
+};
 
 /**
  * 保持する文書の検証結果

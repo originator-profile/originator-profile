@@ -201,17 +201,18 @@ Panel->>Store: readTabVerification
 
 ## 実装
 
-| ファイル                                     | 役割                                                    |
-| -------------------------------------------- | ------------------------------------------------------- |
-| [content-script.ts](./content-script.ts)     | 全フレームで検知・通知し、Service Worker の要求に応える |
-| [background.ts](./background.ts)             | Service Worker の検証パイプライン                       |
-| [store.ts](./store.ts)                       | 検証結果ストアとタブの索引                              |
-| [identity.ts](./identity.ts)                 | 入力の同一性、再利用の判定、無効化                      |
-| [target-watcher.ts](./target-watcher.ts)     | 検証した target の変化の監視                            |
-| [tab-verification.ts](./tab-verification.ts) | 購読する側が使う読み出し・購読・検証の要求              |
-| [types.ts](./types.ts)                       | エントリと結果の型                                      |
-| [events.ts](./events.ts)                     | 拡張機能内メッセージ                                    |
-| [errors.ts](./errors.ts)                     | 無効を表すエラー                                        |
+| ファイル                                     | 役割                                                     |
+| -------------------------------------------- | -------------------------------------------------------- |
+| [content-script.ts](./content-script.ts)     | 全フレームで検知・通知し、Service Worker の要求に応える  |
+| [background.ts](./background.ts)             | Service Worker の検証パイプライン                        |
+| [store.ts](./store.ts)                       | 検証結果ストアとタブの索引                               |
+| [identity.ts](./identity.ts)                 | 入力の同一性、再利用の判定、無効化                       |
+| [credentials.ts](./credentials.ts)           | 文書から受け取ったクレデンシャルを取得経路付きの形に戻す |
+| [target-watcher.ts](./target-watcher.ts)     | 検証した target の変化の監視                             |
+| [tab-verification.ts](./tab-verification.ts) | 購読する側が使う読み出し・購読・検証の要求               |
+| [types.ts](./types.ts)                       | エントリと結果の型                                       |
+| [events.ts](./events.ts)                     | 拡張機能内メッセージ                                     |
+| [errors.ts](./errors.ts)                     | 無効を表すエラー                                         |
 
 アプリ側は `setupBackground` と `setupFrameHandlers` を呼ぶだけで、このモジュールを
 直接は登録しない。
