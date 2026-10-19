@@ -20,6 +20,43 @@
    5. `verifying` を書き込み、`verifyDocument` で検証して `settled` を書き込む
 3. 購読する側が `storage.onChanged` を受けてストアを読み直す
 
+```mermaid
+sequenceDiagram
+participant CS as content script (文書)
+participant SW as Service Worker
+participant Store as 検証結果ストア
+participant Sub as 購読する側
+
+CS->>SW: register
+SW-->>CS: documentId
+Note over CS: interactive まで待つ<br/>(プリレンダリング中は有効化も待つ)
+CS->>SW: documentChanged
+SW->>Store: 索引に文書を記録する
+par トップレベル文書なら
+  SW->>CS: fetchDocumentSiteProfile
+  CS-->>SW: Site Profile
+  SW->>Store: Site Profile の検証結果
+and 文書の検証
+  SW->>CS: fetchDocumentCredentials
+  CS-->>SW: OPS・CAS
+  alt 保持している結果を再利用できる
+    Note over SW: 終える
+  else
+    SW->>Store: unverified
+    SW->>CS: awaitInputDependency
+    CS-->>SW: 検証可能になった
+    SW->>Store: verifying
+    loop target ごと
+      SW->>CS: verifyDocumentIntegrity
+      CS-->>SW: 完全性の検証結果 (target を監視に加える)
+    end
+    SW->>Store: settled
+  end
+end
+Store-->>Sub: storage.onChanged
+Sub->>Store: 読み直す
+```
+
 検証は 1 つの文書について、レジストリと、その文書に設置された OPS を用いる。
 トップレベル文書に限り、Site Profile の発信者も用いる。他の文書の OPS は用いない。
 
@@ -139,6 +176,28 @@ same-document navigation で allowedUrl の評価結果が変わったら、検�
 
 `verifyTab` はタブ内の全フレームに `resync` を送り、届いた文書を返す。読み込みを
 終えても応えない文書には content script を注入して送り直す。
+
+```mermaid
+sequenceDiagram
+participant Panel as サイドパネル
+participant SW as Service Worker
+participant CS as content script (各フレームの文書)
+participant Store as 検証結果ストア
+
+Panel->>Store: watchTabVerification (storage.onChanged を購読する)
+Panel->>SW: verifyTab (再読み込みボタンなら force)
+SW->>CS: resync
+CS-->>SW: 応答 (届いた文書)
+opt 応えない文書 (読み込み後)
+  SW->>CS: content script を注入して resync
+  CS-->>SW: 応答
+end
+SW-->>Panel: 届いた文書 (reachable)・読み込み中か (loading)
+CS->>SW: documentChanged
+Note over SW,Store: 文書の検証 (「流れ」の図)
+Store-->>Panel: storage.onChanged
+Panel->>Store: readTabVerification
+```
 
 ## 実装
 
