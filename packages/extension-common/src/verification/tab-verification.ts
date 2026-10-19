@@ -3,10 +3,22 @@ import { verificationMessenger } from "./events";
 import { resolveEntry } from "./identity";
 import { documentKey, siteProfileKey } from "./store";
 import type {
+  FrameVerification,
   SiteProfileEntry,
   TabVerification,
   VerificationEntry,
 } from "./types";
+
+/**
+ * トップレベル文書の検証の状態
+ * @param verification タブが表示している文書群の検証の状態
+ */
+export const topFrameOf = (
+  verification?: TabVerification,
+): FrameVerification | undefined =>
+  verification?.frames.find(
+    ({ frame }) => frame.frameType === "outermost_frame",
+  );
 
 /**
  * タブが表示している文書群の検証の状態を読む

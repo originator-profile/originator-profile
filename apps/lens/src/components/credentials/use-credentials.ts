@@ -1,5 +1,6 @@
 import {
   deduplicateCas,
+  isTopFrameUnreachable,
   registrySource,
   siteProfileSource,
   VerificationInvalidated,
@@ -8,6 +9,7 @@ import {
   type OpOrigin,
   type SiteProfileEntry,
   type SupportedVerifiedCasWithSource,
+  type TabVerificationSnapshot,
   type VerificationEntry,
   type VerifiedOpsWithSource,
 } from "@originator-profile/extension-common";
@@ -17,11 +19,7 @@ import {
   toLegacyDocument,
   type LegacyDocument,
 } from "../../utils/to-legacy-result";
-import {
-  isTopFrameUnreachable,
-  useTabVerification,
-  type TabVerificationSnapshot,
-} from "../activeTab/use-tab-verification";
+import { useTabVerification } from "../activeTab/use-tab-verification";
 
 type VerifiedCredentials = {
   ops: VerifiedOpsWithSource;

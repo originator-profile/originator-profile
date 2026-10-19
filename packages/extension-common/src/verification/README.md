@@ -167,12 +167,17 @@ same-document navigation で allowedUrl の評価結果が変わったら、検�
 
 | 購読する側   | 使う関数                                             |
 | ------------ | ---------------------------------------------------- |
-| サイドパネル | `watchTabVerification`、`requestTabVerification`     |
+| サイドパネル | `tabVerificationStoreOf` (購読ストア)                |
 | バッジ       | `readTabVerification` (`storage.onChanged` を受けて) |
 | リンク検証   | `waitForTabSiteProfile`                              |
 
 `readTabVerification` は、`webNavigation.getAllFrames` が返すフレームの文書の結果
 だけを返す。
+
+サイドパネルは、タブごとの購読ストア ([subscription-store.ts](./subscription-store.ts))
+を介して読む。購読ストアは検証結果ストアの変化を購読し、`useSyncExternalStore` に
+渡せる形で提供する。検証を求めたときの到達確認の結果 (`reachable`・`loading`) を
+加えるが、検証結果は保持せず、変化のたびに検証結果ストアから読み直す。
 
 `verifyTab` はタブ内の全フレームに `resync` を送り、届いた文書を返す。読み込みを
 終えても応えない文書には content script を注入して送り直す。
@@ -180,39 +185,43 @@ same-document navigation で allowedUrl の評価結果が変わったら、検�
 ```mermaid
 sequenceDiagram
 participant Panel as サイドパネル
+participant Sub as 購読ストア
 participant SW as Service Worker
 participant CS as content script (各フレームの文書)
 participant Store as 検証結果ストア
 
-Panel->>Store: watchTabVerification (storage.onChanged を購読する)
-Panel->>SW: verifyTab (再読み込みボタンなら force)
+Panel->>Sub: subscribe (useSyncExternalStore)
+Sub->>SW: verifyTab
+Sub->>Store: watchTabVerification (storage.onChanged を購読する)
 SW->>CS: resync
 CS-->>SW: 応答 (届いた文書)
 opt 応えない文書 (読み込み後)
   SW->>CS: content script を注入して resync
   CS-->>SW: 応答
 end
-SW-->>Panel: 届いた文書 (reachable)・読み込み中か (loading)
+SW-->>Sub: 届いた文書 (reachable)・読み込み中か (loading)
 CS->>SW: documentChanged
 Note over SW,Store: 文書の検証 (「流れ」の図)
-Store-->>Panel: storage.onChanged
-Panel->>Store: readTabVerification
+Store-->>Sub: storage.onChanged
+Sub->>Store: readTabVerification
+Sub-->>Panel: 新しいスナップショット
 ```
 
 ## 実装
 
-| ファイル                                     | 役割                                                     |
-| -------------------------------------------- | -------------------------------------------------------- |
-| [content-script.ts](./content-script.ts)     | 全フレームで検知・通知し、Service Worker の要求に応える  |
-| [background.ts](./background.ts)             | Service Worker の検証パイプライン                        |
-| [store.ts](./store.ts)                       | 検証結果ストアとタブの索引                               |
-| [identity.ts](./identity.ts)                 | 入力の同一性、再利用の判定、無効化                       |
-| [credentials.ts](./credentials.ts)           | 文書から受け取ったクレデンシャルを取得経路付きの形に戻す |
-| [target-watcher.ts](./target-watcher.ts)     | 検証した target の変化の監視                             |
-| [tab-verification.ts](./tab-verification.ts) | 購読する側が使う読み出し・購読・検証の要求               |
-| [types.ts](./types.ts)                       | エントリと結果の型                                       |
-| [events.ts](./events.ts)                     | 拡張機能内メッセージ                                     |
-| [errors.ts](./errors.ts)                     | 無効を表すエラー                                         |
+| ファイル                                         | 役割                                                     |
+| ------------------------------------------------ | -------------------------------------------------------- |
+| [content-script.ts](./content-script.ts)         | 全フレームで検知・通知し、Service Worker の要求に応える  |
+| [background.ts](./background.ts)                 | Service Worker の検証パイプライン                        |
+| [store.ts](./store.ts)                           | 検証結果ストアとタブの索引                               |
+| [identity.ts](./identity.ts)                     | 入力の同一性、再利用の判定、無効化                       |
+| [credentials.ts](./credentials.ts)               | 文書から受け取ったクレデンシャルを取得経路付きの形に戻す |
+| [target-watcher.ts](./target-watcher.ts)         | 検証した target の変化の監視                             |
+| [tab-verification.ts](./tab-verification.ts)     | 購読する側が使う読み出し・購読・検証の要求               |
+| [subscription-store.ts](./subscription-store.ts) | サイドパネルが使う購読ストアと到達確認                   |
+| [types.ts](./types.ts)                           | エントリと結果の型                                       |
+| [events.ts](./events.ts)                         | 拡張機能内メッセージ                                     |
+| [errors.ts](./errors.ts)                         | 無効を表すエラー                                         |
 
 アプリ側は `setupBackground` と `setupFrameHandlers` を呼ぶだけで、このモジュールを
 直接は登録しない。

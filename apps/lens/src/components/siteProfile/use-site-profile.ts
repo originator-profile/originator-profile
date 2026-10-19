@@ -1,12 +1,12 @@
+import {
+  isTopFrameUnreachable,
+  type TabVerificationSnapshot,
+} from "@originator-profile/extension-common";
 import { toProblemDetails, type VerifiedSp } from "@originator-profile/verify";
 import { useMemo } from "react";
 import { useParams } from "react-router";
 import { toLegacyWebsite } from "../../utils/to-legacy-result";
-import {
-  isTopFrameUnreachable,
-  useTabVerification,
-  type TabVerificationSnapshot,
-} from "../activeTab/use-tab-verification";
+import { useTabVerification } from "../activeTab/use-tab-verification";
 
 type SiteProfileView =
   | { isLoading: true; siteProfile?: never; error?: never }

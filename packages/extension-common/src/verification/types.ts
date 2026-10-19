@@ -103,7 +103,11 @@ export type FrameVerification = {
 
 /** タブが表示している文書群の検証の状態 */
 export type TabVerification = {
-  /** フレームごとの検証の状態。getAllFrames の順 */
+  /**
+   * フレームごとの検証の状態。getAllFrames の順
+   *
+   * トップレベル文書も他の文書と同じく含む。取り出すには `topFrameOf` を使う。
+   */
   frames: FrameVerification[];
   /** トップレベル文書のオリジンの Site Profile の検証結果 */
   siteProfile?: SiteProfileEntry;
