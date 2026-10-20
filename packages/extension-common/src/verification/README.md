@@ -165,11 +165,11 @@ same-document navigation で allowedUrl の評価結果が変わったら、検�
 
 ## 購読する側
 
-| 購読する側   | 使う関数                                             |
-| ------------ | ---------------------------------------------------- |
-| サイドパネル | `tabVerificationStoreOf` (購読ストア)                |
-| バッジ       | `readTabVerification` (`storage.onChanged` を受けて) |
-| リンク検証   | `waitForTabSiteProfile`                              |
+| 購読する側   | 使う関数                                                                           |
+| ------------ | ---------------------------------------------------------------------------------- |
+| サイドパネル | `tabVerificationStoreOf` (購読ストア)、`requestTabVerification` (再読み込みボタン) |
+| バッジ       | `readTabVerification` (`storage.onChanged` を受けて)                               |
+| リンク検証   | `waitForTabSiteProfile`                                                            |
 
 `readTabVerification` は、`webNavigation.getAllFrames` が返すフレームの文書の結果
 だけを返す。
