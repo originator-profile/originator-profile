@@ -2,5 +2,5 @@ export { useTabTracking } from "./use-tab-tracking";
 export {
   reverifyTab,
   useDocumentNavigation,
-  useTabVerification,
+  useSubscribedTabVerification,
 } from "./use-tab-verification";

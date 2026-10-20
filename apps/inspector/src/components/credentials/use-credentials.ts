@@ -8,8 +8,8 @@ import {
   type FrameVerification,
   type OpOrigin,
   type SiteProfileEntry,
+  type SubscribedTabVerification,
   type SupportedVerifiedCasWithSource,
-  type TabVerificationSnapshot,
   type VerificationEntry,
   type VerifiedOpsWithSource,
 } from "@originator-profile/extension-common";
@@ -19,7 +19,7 @@ import {
   toLegacyDocument,
   type LegacyDocument,
 } from "../../utils/to-legacy-result";
-import { useTabVerification } from "../activeTab/use-tab-verification";
+import { useSubscribedTabVerification } from "../activeTab/use-tab-verification";
 
 type VerifiedCredentials = {
   ops: VerifiedOpsWithSource;
@@ -137,8 +137,8 @@ function toVerifiedCredentials(
  * NOTE: fenced frame 中の CAS の検証結果を、埋め込み側の文書の検証結果に含めて
  * 提示してはならない
  */
-function presentedFrames(snapshot: TabVerificationSnapshot) {
-  const frames = (snapshot.verification?.frames ?? []).filter(
+function presentedFrames(subscribed: SubscribedTabVerification) {
+  const frames = (subscribed.verification?.frames ?? []).filter(
     ({ frame, entry }) =>
       frame.frameType !== "fenced_frame" &&
       (entry?.state === "settled" ||
@@ -155,13 +155,13 @@ function presentedFrames(snapshot: TabVerificationSnapshot) {
  * @returns 確定していない文書があれば undefined
  */
 function toCredentialsView(
-  snapshot: TabVerificationSnapshot,
+  subscribed: SubscribedTabVerification,
 ): VerifiedCredentials | Error | undefined {
-  if (isTopFrameUnreachable(snapshot)) {
+  if (isTopFrameUnreachable(subscribed)) {
     return new Error("No response from top level frame");
   }
-  if (!snapshot.reachable) return undefined;
-  const frames = presentedFrames(snapshot);
+  if (!subscribed.reachable) return undefined;
+  const frames = presentedFrames(subscribed);
   if (frames[0]?.frame.frameType !== "outermost_frame") return undefined;
 
   const entries = frames.map(({ entry }) => entry);
@@ -173,7 +173,7 @@ function toCredentialsView(
     );
   }
   if (!entries.every((entry) => entry?.state === "settled")) return undefined;
-  return toVerifiedCredentials(entries, snapshot.verification?.siteProfile);
+  return toVerifiedCredentials(entries, subscribed.verification?.siteProfile);
 }
 
 type UseCredentialsResult =
@@ -217,8 +217,8 @@ type UseCredentialsResult =
 export function useCredentials() {
   const params = useParams<{ tabId: string }>();
   const tabId = Number(params.tabId);
-  const snapshot = useTabVerification(tabId);
-  const view = useMemo(() => toCredentialsView(snapshot), [snapshot]);
+  const subscribed = useSubscribedTabVerification(tabId);
+  const view = useMemo(() => toCredentialsView(subscribed), [subscribed]);
   const error = view instanceof Error ? view : undefined;
   const credentials = view instanceof Error ? undefined : view;
   const { ops, cas, origin, framesCas, warnings, info } = credentials ?? {};

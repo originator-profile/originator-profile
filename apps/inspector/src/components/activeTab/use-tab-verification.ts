@@ -2,7 +2,7 @@ import {
   requestTabVerification,
   tabVerificationStoreOf,
   topFrameOf,
-  type TabVerificationSnapshot,
+  type SubscribedTabVerification,
 } from "@originator-profile/extension-common";
 import { useEffect, useEffectEvent, useSyncExternalStore } from "react";
 import { matchPath, useLocation, useNavigate } from "react-router";
@@ -14,7 +14,9 @@ import { matchTabCacheKey } from "./match-tab-cache-key";
  * タブが表示している文書群の検証の状態を購読する
  * @param tabId タブID
  */
-export function useTabVerification(tabId: number): TabVerificationSnapshot {
+export function useSubscribedTabVerification(
+  tabId: number,
+): SubscribedTabVerification {
   const store = tabVerificationStoreOf(tabId);
   return useSyncExternalStore(store.subscribe, store.getSnapshot);
 }

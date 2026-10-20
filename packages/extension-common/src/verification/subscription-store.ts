@@ -10,7 +10,7 @@ import type { TabVerification } from "./types";
  *
  * 検証結果ストアから読み出した状態に、検証を求めたときの到達確認の結果を加える。
  */
-export type TabVerificationSnapshot = {
+export type SubscribedTabVerification = {
   verification?: TabVerification;
   /** 検証を求めた時点で content script に到達できた文書。問い合わせ中は undefined */
   reachable?: string[];
@@ -28,18 +28,18 @@ export type TabVerificationSnapshot = {
  */
 export type TabVerificationStore = {
   subscribe: (listener: () => void) => () => void;
-  getSnapshot: () => TabVerificationSnapshot;
+  getSnapshot: () => SubscribedTabVerification;
 };
 
 const topDocumentIdOf = (verification?: TabVerification) =>
   topFrameOf(verification)?.frame.documentId;
 
 function createStore(tabId: number): TabVerificationStore {
-  let snapshot: TabVerificationSnapshot = {};
+  let snapshot: SubscribedTabVerification = {};
   let dispose: (() => void) | undefined;
   const listeners = new Set<() => void>();
 
-  const update = (patch: TabVerificationSnapshot) => {
+  const update = (patch: SubscribedTabVerification) => {
     snapshot = { ...snapshot, ...patch };
     for (const listener of listeners) listener();
   };
@@ -132,13 +132,13 @@ export function tabVerificationStoreOf(tabId: number): TabVerificationStore {
  * 検証結果を持つ文書には到達できている。読み込み中のタブでは content script が
  * まだ応答できないことがあるため、到達できないとは決めない。
  */
-export function isTopFrameUnreachable(snapshot: TabVerificationSnapshot) {
-  if (snapshot.error) return true;
-  if (!snapshot.verification) return false;
-  const top = topFrameOf(snapshot.verification);
+export function isTopFrameUnreachable(subscribed: SubscribedTabVerification) {
+  if (subscribed.error) return true;
+  if (!subscribed.verification) return false;
+  const top = topFrameOf(subscribed.verification);
   if (!top) return true;
-  if (top.entry || snapshot.reachable === undefined || snapshot.loading) {
+  if (top.entry || subscribed.reachable === undefined || subscribed.loading) {
     return false;
   }
-  return !snapshot.reachable.includes(top.frame.documentId);
+  return !subscribed.reachable.includes(top.frame.documentId);
 }

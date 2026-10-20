@@ -1,12 +1,12 @@
 import {
   isTopFrameUnreachable,
-  type TabVerificationSnapshot,
+  type SubscribedTabVerification,
 } from "@originator-profile/extension-common";
 import { toProblemDetails, type VerifiedSp } from "@originator-profile/verify";
 import { useMemo } from "react";
 import { useParams } from "react-router";
 import { toLegacyWebsite } from "../../utils/to-legacy-result";
-import { useTabVerification } from "../activeTab/use-tab-verification";
+import { useSubscribedTabVerification } from "../activeTab/use-tab-verification";
 
 type SiteProfileView =
   | { isLoading: true; siteProfile?: never; error?: never }
@@ -19,8 +19,10 @@ type SiteProfileView =
       info: string[];
     };
 
-function toSiteProfileView(snapshot: TabVerificationSnapshot): SiteProfileView {
-  if (isTopFrameUnreachable(snapshot)) {
+function toSiteProfileView(
+  subscribed: SubscribedTabVerification,
+): SiteProfileView {
+  if (isTopFrameUnreachable(subscribed)) {
     return {
       isLoading: false,
       error: toLegacyWebsite({
@@ -35,7 +37,7 @@ function toSiteProfileView(snapshot: TabVerificationSnapshot): SiteProfileView {
     };
   }
 
-  const entry = snapshot.verification?.siteProfile;
+  const entry = subscribed.verification?.siteProfile;
   if (!entry) return { isLoading: true };
 
   const legacy = toLegacyWebsite(entry.result);
@@ -54,8 +56,8 @@ function toSiteProfileView(snapshot: TabVerificationSnapshot): SiteProfileView {
 export function useSiteProfile() {
   const params = useParams<{ tabId: string }>();
   const tabId = Number(params.tabId);
-  const snapshot = useTabVerification(tabId);
-  const view = useMemo(() => toSiteProfileView(snapshot), [snapshot]);
+  const subscribed = useSubscribedTabVerification(tabId);
+  const view = useMemo(() => toSiteProfileView(subscribed), [subscribed]);
   return {
     error: view.error,
     isLoading: view.isLoading,
