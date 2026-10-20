@@ -318,7 +318,7 @@ HTML中にscript要素を用いてOPを埋め込むことが可能です。
 </script>
 ```
 
-詳細は「[Content Attestation の設置ガイド](https://docs.originator-profile.org/ja/tutorial/cas-setup-guide/#step2)」または「[Linking Content Attestation Set and Originator Profile Set to A HTML Document](https://docs.originator-profile.org/opb/link-to-html/)」をご確認ください。
+詳細は「[Content Attestation の設置ガイド](https://docs.originator-profile.org/ja/tutorial/cas-setup-guide/)」または「[Linking Content Attestation Set and Originator Profile Set to A HTML Document](https://docs.originator-profile.org/opb/link-to-html/)」をご確認ください。
 
 ## 処理の流れ
 
