@@ -53,7 +53,7 @@ npx wrangler deploy  # pnpm build 後に実行
 `@originator-profile/vite-plugin` がビルド時に以下を実行します:
 
 - `sp.json` 内の未署名 WSP を署名し `/.well-known/sp.json` に出力
-- HTML 内の `<script type="application/cas+json">` を署名済み CAS に変換
+- HTML 内の `<script type="application/ca-set+json">` を署名済み CAS に変換
 
 ### Site Profile (`sp.json` → `/.well-known/sp.json`)
 
@@ -62,7 +62,7 @@ npx wrangler deploy  # pnpm build 後に実行
 - `originators`: 署名済み OPS（パススルー）
 - `sites`: 未署名 [UnsignedWebsiteProfile](https://github.com/originator-profile/originator-profile/blob/main/packages/model/src/unsigned-website-profile.ts) の配列（en/ja）
 
-### Content Attestation Set (`<script type="application/cas+json">`)
+### Content Attestation Set (`<script type="application/ca-set+json">`)
 
 各 HTML には未署名 [UnsignedContentAttestation](https://github.com/originator-profile/originator-profile/blob/main/packages/model/src/content-attestation/unsigned-content-attestation.ts) の配列が埋め込まれています。
 

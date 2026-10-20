@@ -1,15 +1,30 @@
 import { embeddedSource, SourcedCredential } from "./credentials/types";
 
 /**
+ * 指定されたメディアタイプのいずれかを type 属性に持つ script 要素のセレクター
+ * @param mediaTypes メディアタイプ
+ * @param attributes 追加の属性セレクター
+ */
+export function scriptSelector(
+  mediaTypes: string | readonly string[],
+  attributes = "",
+): string {
+  return [mediaTypes]
+    .flat()
+    .map((mediaType) => `script${attributes}[type="${mediaType}"]`)
+    .join(", ");
+}
+
+/**
  * 文書内の指定された mediaType の埋め込みデータを取得する
  * @param doc Document オブジェクト
- * @param mediaType メディアタイプ
+ * @param mediaTypes メディアタイプ (複数指定時はいずれかに一致する要素を文書順に取得)
  */
 export function getEmbeddedData<T extends unknown[]>(
   doc: Document,
-  mediaType: string,
+  mediaTypes: string | readonly string[],
 ): SourcedCredential<T[number]>[] {
-  const elements = [...doc.querySelectorAll(`script[type="${mediaType}"]`)];
+  const elements = [...doc.querySelectorAll(scriptSelector(mediaTypes))];
 
   return elements.flatMap((elem, elementIndex) => {
     const text = elem.textContent;

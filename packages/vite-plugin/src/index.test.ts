@@ -31,8 +31,10 @@ async function createPlugin(
 }
 
 const UNSIGNED_CAS_TYPE =
+  "application/prs.originator-profile.unsigned-ca-set+json";
+const DEPRECATED_UNSIGNED_CAS_TYPE =
   "application/prs.originator-profile.unsigned-cas+json";
-const SIGNED_CAS_TYPE = "application/cas+json";
+const SIGNED_CAS_TYPE = "application/ca-set+json";
 
 function casHtml(json: string): string {
   return `<!DOCTYPE html>
@@ -43,7 +45,7 @@ function casHtml(json: string): string {
 }
 
 const SIGNED_CAS_RE =
-  /<script type="application\/cas\+json">([\s\S]*?)<\/script>/g;
+  /<script type="application\/ca-set\+json">([\s\S]*?)<\/script>/g;
 
 function extractCas(html: string): unknown[] {
   SIGNED_CAS_RE.lastIndex = 0;
@@ -103,7 +105,7 @@ const sampleUwsp = {
 };
 
 describe("transformIndexHtml", () => {
-  test("unsigned CAS script の中身が署名され application/cas+json に置換される", async () => {
+  test("unsigned CAS script の中身が署名され application/ca-set+json に置換される", async () => {
     const plugin = await createPlugin();
     const html = casHtml(JSON.stringify([sampleUca]));
 
@@ -127,17 +129,33 @@ describe("transformIndexHtml", () => {
     expect(result).toBe(html);
   });
 
-  test("既に署名済みの application/cas+json script はパススルーされる", async () => {
+  test("既に署名済みの application/ca-set+json script はパススルーされる", async () => {
     const plugin = await createPlugin();
     const presigned = `<!DOCTYPE html>
 <html><head><title>test</title></head>
 <body>
-<script type="application/cas+json">["eyJ.preexisting.jwt"]</script>
+<script type="application/ca-set+json">["eyJ.preexisting.jwt"]</script>
 </body></html>`;
 
     const result = await callTransform(plugin, presigned);
 
     expect(result).toBe(presigned);
+  });
+
+  test("非推奨の unsigned CAS script も署名され application/ca-set+json に置換される", async () => {
+    const plugin = await createPlugin();
+    const html = `<!DOCTYPE html>
+<html><head><title>test</title></head>
+<body>
+<script type="${DEPRECATED_UNSIGNED_CAS_TYPE}">${JSON.stringify([sampleUca])}</script>
+</body></html>`;
+
+    const result = await callTransform(plugin, html);
+
+    expect(result).not.toContain(DEPRECATED_UNSIGNED_CAS_TYPE);
+    const cas = extractCas(result);
+    expect(cas).toHaveLength(1);
+    expect((cas[0] as string).startsWith("eyJ")).toBe(true);
   });
 
   test("クォート無しの type 属性も検出される", async () => {
@@ -199,7 +217,7 @@ describe("transformIndexHtml", () => {
     const result = await callTransform(plugin, html);
 
     const signedMatches = [
-      ...result.matchAll(/<script type="application\/cas\+json">/g),
+      ...result.matchAll(/<script type="application\/ca-set\+json">/g),
     ];
     expect(signedMatches).toHaveLength(2);
     expect(result).toContain("<p>middle</p>");

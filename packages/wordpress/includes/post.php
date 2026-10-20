@@ -43,10 +43,10 @@ function cas_script() {
 
 	switch ( $embedded_or_external ) {
 		case 'embedded':
-			echo '<script type="application/cas+json">' . \wp_json_encode( $cas ) . '</script>' . PHP_EOL;
+			echo '<script type="application/ca-set+json">' . \wp_json_encode( $cas ) . '</script>' . PHP_EOL;
 			break;
 		case 'external':
-			echo '<script src="' . \esc_url( external_url( $post_id, $page ) ) . '" type="application/cas+json"></script>' . PHP_EOL;
+			echo '<script src="' . \esc_url( external_url( $post_id, $page ) ) . '" type="application/ca-set+json"></script>' . PHP_EOL;
 			break;
 	}
 }

@@ -202,7 +202,7 @@ h1.wp-block-post-title, .wp-block-post-content>*:not(.post-nav-links)
 例:
 
 ```html
-<script type="application/cas+json">
+<script type="application/ca-set+json">
   ["eyJ..."]
 </script>
 ```
@@ -216,7 +216,7 @@ h1.wp-block-post-title, .wp-block-post-content>*:not(.post-nav-links)
 ```html
 <script
   src="https://example.com/wp-json/ca-manager/v1/cas/1/1"
-  type="application/cas+json"
+  type="application/ca-set+json"
 ></script>
 ```
 
@@ -307,7 +307,7 @@ HTML中にscript要素を用いてOPを埋め込むことが可能です。
 具体例:
 
 ```html
-<script type="application/ops+json">
+<script type="application/op-set+json">
   [
     {
       "core": "eyJ...",
