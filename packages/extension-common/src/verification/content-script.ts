@@ -1,8 +1,10 @@
 import { serializeIfError } from "@originator-profile/core";
 import {
+  CAS_ACCEPTED_MEDIA_TYPES,
   fetchCredentials,
   fetchOpMeta,
   fetchSiteProfile,
+  OPS_ACCEPTED_MEDIA_TYPES,
 } from "@originator-profile/presentation";
 import {
   verifyIntegrity,
@@ -12,10 +14,14 @@ import type { FetchCredentialsMessageResponse } from "./credentials";
 import { verificationMessenger } from "./events";
 import { createTargetWatcher } from "./target-watcher";
 
-const CREDENTIAL_SCRIPT_SELECTOR = [
-  'script[type="application/cas+json"]',
-  'script[type="application/ops+json"]',
-].join(",");
+const CREDENTIAL_SCRIPT_TYPES: readonly string[] = [
+  ...CAS_ACCEPTED_MEDIA_TYPES,
+  ...OPS_ACCEPTED_MEDIA_TYPES,
+];
+
+const CREDENTIAL_SCRIPT_SELECTOR = CREDENTIAL_SCRIPT_TYPES.map(
+  (type) => `script[type="${type}"]`,
+).join(",");
 
 const containsCredentialScript = (node: Node): boolean =>
   node instanceof Element &&

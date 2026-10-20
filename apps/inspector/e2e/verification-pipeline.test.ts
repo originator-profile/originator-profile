@@ -158,8 +158,8 @@ test("後から挿入された CAS も検証される", async ({
 
   await page.evaluate(() => {
     for (const [type, src] of [
-      ["application/ops+json", "/examples/ops.json"],
-      ["application/cas+json", "/examples/cas.json"],
+      ["application/op-set+json", "/examples/ops.json"],
+      ["application/ca-set+json", "/examples/cas.json"],
     ] as const) {
       const script = document.createElement("script");
       script.type = type;
