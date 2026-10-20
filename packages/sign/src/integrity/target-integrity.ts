@@ -34,25 +34,119 @@ export const fetchVisibleTextContent: ContentFetcher = async (elements) => {
   return [new Response(text)];
 };
 
+type SourceSelectableElement = Element & { src: string; currentSrc: string };
+
+/** `srcset` 属性の候補の URL (未解決) を取り出す。記述子は読み飛ばす。 */
+function parseSrcsetUrls(srcset: string): string[] {
+  const urls: string[] = [];
+  const url = /[\s,]*(\S+)/y;
+  // NOTE: 記述子の括弧内のカンマは候補の区切りではない
+  const descriptors = /(?:\([^)]*\)?|[^,(])*/y;
+
+  for (let match = url.exec(srcset); match; match = url.exec(srcset)) {
+    const token = match[1] ?? "";
+
+    if (token.endsWith(",")) {
+      urls.push(token.replace(/,+$/, ""));
+      continue;
+    }
+
+    urls.push(token);
+    descriptors.lastIndex = url.lastIndex;
+    descriptors.exec(srcset);
+    url.lastIndex = descriptors.lastIndex;
+  }
+
+  return urls.filter(Boolean);
+}
+
 /**
- * Fetches external resources from elements by using their `currentSrc` or `src` property.
- * HTMLImageElement (<img>) and HTMLMediaElement (<video>, <audio>) support the `currentSrc` property,
- * which represents the actual source URL currently in use after source selection (e.g., <img srcset>, <video> with multiple <source>).
- * `currentSrc` is preferred over `src` because it reflects the final selected resource, ensuring integrity checks are performed on the actual loaded content.
- * Falls back to `src` if `currentSrc` is not available.
+ * `currentSrc` が空なら `src` を返す
+ *
+ * NOTE: JSDOM (cas-monitor) は `currentSrc` を実装しておらず常に空文字を返す。
+ * ブラウザーでも読み込み前の要素では空になる。
+ */
+const currentSrcOrSrc = (element: Element): string | undefined => {
+  const el = element as SourceSelectableElement;
+  return el.currentSrc || el.src || undefined;
+};
+
+const resolvePictureUrl = (picture: Element): string | undefined => {
+  const img = picture.querySelector(":scope > img");
+  return img ? currentSrcOrSrc(img) : undefined;
+};
+
+/** `picture` 要素で選択された候補が自身の `srcset` にあれば、その URL を返す */
+function resolvePictureSourceUrl(source: Element, picture: Element) {
+  const url = resolvePictureUrl(picture);
+  const candidates = parseSrcsetUrls(source.getAttribute("srcset") ?? "")
+    .filter((candidate) => URL.canParse(candidate, source.baseURI))
+    .map((candidate) => new URL(candidate, source.baseURI).href);
+  return url && candidates.includes(url) ? url : undefined;
+}
+
+/** メディア要素で選択されたリソースが自身の `src` であれば、その URL を返す */
+function resolveMediaSourceUrl(source: Element, media: Element) {
+  const url = currentSrcOrSrc(media);
+  return url === (source as SourceSelectableElement).src ? url : undefined;
+}
+
+function resolveSourceUrl(source: Element): string | undefined {
+  const parent = source.parentElement;
+
+  switch (parent?.localName) {
+    case "picture":
+      return resolvePictureSourceUrl(source, parent);
+    case "video":
+    case "audio":
+      return resolveMediaSourceUrl(source, parent);
+    default:
+      return undefined;
+  }
+}
+
+// NOTE: cas-monitor では JSDOM の要素を扱うため instanceof ではなく localName で判定する
+const externalResourceUrlResolvers = new Map<
+  string,
+  (element: Element) => string | undefined
+>([
+  ["img", currentSrcOrSrc],
+  ["picture", resolvePictureUrl],
+  ["source", resolveSourceUrl],
+  ["video", currentSrcOrSrc],
+  ["audio", currentSrcOrSrc],
+  ["track", (track) => (track as SourceSelectableElement).src || undefined],
+]);
+
+/**
+ * External Resource Integrity の対象要素について、取得する URL を返す
+ *
+ * 対象要素でない場合や、選択されていない `source` 要素の場合は `undefined` を返す。
+ *
+ * @see {@link https://docs.originator-profile.org/opb/content-integrity-descriptor/external-resource/#target-elements}
+ */
+export const resolveExternalResourceUrl = (
+  element: Element,
+): string | undefined =>
+  externalResourceUrlResolvers.get(element.localName)?.(element);
+
+/**
+ * 要素の外部リソースを取得する
+ *
+ * URL は {@link resolveExternalResourceUrl} で決める。
+ * 対象要素でない要素が含まれる場合はエラーを投げるため、{@link selectExternalResources} で選択した要素を渡す。
  */
 export const fetchExternalResource: ContentFetcher = async (
   elements,
   fetcher = fetch,
 ) => {
   return await Promise.all(
-    elements.map(async (element: unknown) => {
-      const el = element as HTMLElement & { src?: string; currentSrc?: string };
-      // HTMLMediaElement and HTMLImageElement support currentSrc property
-      // which represents the actual selected source URL
-      const src = el.currentSrc || el.src;
+    elements.map(async (element) => {
+      const src = resolveExternalResourceUrl(element);
       if (!src) {
-        throw new Error("Element has no src or currentSrc property");
+        throw new Error(
+          `<${element.localName}> is not a target element of External Resource Integrity`,
+        );
       }
       try {
         return await fetcher(src);
@@ -90,6 +184,18 @@ export const selectByCssOrIntegrity: ElementSelector = (params) =>
   params.cssSelector === undefined
     ? selectByIntegrity(params)
     : selectByCss(params);
+
+/**
+ * `ExternalResourceTargetIntegrity` の検証対象の要素の選択
+ *
+ * {@link selectByCssOrIntegrity} で特定した要素のうち、取得する URL が決まるものに限る。
+ *
+ * @see {@link https://docs.originator-profile.org/opb/content-integrity-descriptor/external-resource/#target-elements}
+ */
+export const selectExternalResources: ElementSelector = (params) =>
+  selectByCssOrIntegrity(params).filter(
+    (element) => resolveExternalResourceUrl(element) !== undefined,
+  );
 
 /**
  * Target Integrity の作成

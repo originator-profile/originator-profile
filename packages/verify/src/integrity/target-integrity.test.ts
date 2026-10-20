@@ -311,4 +311,74 @@ describe("verifyIntegrity()", () => {
       expect(fetchResult).toBeInstanceOf(IntegrityVerificationFailed);
     });
   });
+
+  describe("target elements for ExternalResourceTargetIntegrity", () => {
+    const sriOf = async (content: string) =>
+      (
+        await createIntegrityMetadata(
+          "sha256",
+          await new Response(content).arrayBuffer(),
+        )
+      ).toString();
+
+    it("should return false if only elements that are not target elements match", async () => {
+      const integrity = await sriOf("ok");
+
+      document.body.innerHTML = `\
+<iframe integrity="${integrity}" src="data:text/plain,ok"></iframe>
+`;
+
+      const fetchResult = await verifyIntegrity({
+        type: "ExternalResourceTargetIntegrity",
+        integrity,
+      });
+
+      expect(fetchResult instanceof Error).toBe(false);
+      const verifyResult = fetchResult as IntegrityVerifyResult;
+      expect(verifyResult.valid).toBe(false);
+      expect(verifyResult.failedIntegrities).toEqual([]);
+    });
+
+    it("should verify only target elements when other elements also match", async () => {
+      const integrity = await sriOf("ok");
+
+      document.body.innerHTML = `\
+<img class="hero" src="data:text/plain,ok" />
+<iframe class="hero" src="data:text/plain,other"></iframe>
+<div class="hero"></div>
+`;
+
+      const fetchResult = await verifyIntegrity({
+        type: "ExternalResourceTargetIntegrity",
+        cssSelector: ".hero",
+        integrity,
+      });
+
+      expect(fetchResult instanceof Error).toBe(false);
+      const verifyResult = fetchResult as IntegrityVerifyResult;
+      expect(verifyResult.valid).toBe(true);
+    });
+
+    it("should return false for an unselected source element in a video element", async () => {
+      const integrity = await sriOf("unselected");
+
+      document.body.innerHTML = `\
+<video>
+  <source src="data:text/plain,selected" />
+  <source id="unselected" src="data:text/plain,unselected" />
+</video>
+`;
+
+      const fetchResult = await verifyIntegrity({
+        type: "ExternalResourceTargetIntegrity",
+        cssSelector: "#unselected",
+        integrity,
+      });
+
+      expect(fetchResult instanceof Error).toBe(false);
+      const verifyResult = fetchResult as IntegrityVerifyResult;
+      expect(verifyResult.valid).toBe(false);
+      expect(verifyResult.failedIntegrities).toEqual([]);
+    });
+  });
 });

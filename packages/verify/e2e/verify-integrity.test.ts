@@ -141,3 +141,22 @@ test("verifyIntegrity() should not verify ExternalResourceTargetIntegrity if any
 
   expect((await handle.jsonValue()).valid).toBe(false);
 });
+
+test("verifyIntegrity() should verify the source element selected in a picture element by currentSrc", async function ({
+  page,
+}) {
+  await page.goto("/");
+
+  const content: Target = {
+    type: "ExternalResourceTargetIntegrity",
+    cssSelector: "#picture-source",
+    integrity: "sha256-P0hnTtzozTl+5h4CpQdOK+5dwpuINHNaZEahrlrNkSQ=",
+  };
+
+  const handle = await page.evaluateHandle(
+    (content) => verifyIntegrity(content),
+    content,
+  );
+
+  expect((await handle.jsonValue()).valid).toBe(true);
+});

@@ -6,9 +6,11 @@ import {
   fetchExternalResource,
   fetchHtmlContent,
   fetchTextContent,
+  resolveExternalResourceUrl,
   selectByCss,
   selectByCssOrIntegrity,
   selectByIntegrity,
+  selectExternalResources,
 } from "./target-integrity";
 
 describe("createIntegrity()", () => {
@@ -309,7 +311,7 @@ describe("fetchExternalResource()", () => {
     expect(await res.text()).toBe("fallbackContent");
   });
 
-  it("should throw error when element has no src or currentSrc", async () => {
+  it("should throw error when element is not a target element", async () => {
     document.body.innerHTML = `\
 <div integrity="sha256-xxx"></div>
 `;
@@ -320,7 +322,7 @@ describe("fetchExternalResource()", () => {
     });
 
     await expect(fetchExternalResource(elements)).rejects.toThrow(
-      "Element has no src or currentSrc property",
+      "<div> is not a target element of External Resource Integrity",
     );
   });
 });
@@ -445,5 +447,117 @@ describe("selectByCssOrIntegrity()", () => {
         document,
       }),
     ).toThrow();
+  });
+});
+
+describe("resolveExternalResourceUrl()", () => {
+  const resolve = (selector: string) =>
+    resolveExternalResourceUrl(document.querySelector(selector) as Element);
+
+  it.each([
+    ["img", `<img src="data:text/plain,image" />`, "data:text/plain,image"],
+    [
+      "video",
+      `<video src="data:text/plain,video"></video>`,
+      "data:text/plain,video",
+    ],
+    [
+      "audio",
+      `<audio src="data:text/plain,audio"></audio>`,
+      "data:text/plain,audio",
+    ],
+    [
+      "track",
+      `<video><track src="data:text/plain,caption" /></video>`,
+      "data:text/plain,caption",
+    ],
+    [
+      "picture",
+      `<picture><source srcset="data:text/plain,large" /><img src="data:text/plain,image" /></picture>`,
+      "data:text/plain,image",
+    ],
+  ])("should resolve the URL of %s element", (selector, html, expected) => {
+    document.body.innerHTML = html;
+
+    expect(resolve(selector)).toBe(expected);
+  });
+
+  it("should resolve the URL of source element in picture element when it is selected", () => {
+    document.body.innerHTML = `\
+<picture>
+  <source srcset="data:text/plain,small 1x, data:text/plain,image 2x" />
+  <img src="data:text/plain,image" />
+</picture>
+`;
+
+    expect(resolve("source")).toBe("data:text/plain,image");
+  });
+
+  it("should not resolve the URL of source element in picture element when it is not selected", () => {
+    document.body.innerHTML = `\
+<picture>
+  <source srcset="data:text/plain,large" />
+  <img src="data:text/plain,image" />
+</picture>
+`;
+
+    expect(resolve("source")).toBeUndefined();
+  });
+
+  it("should parse srcset candidates containing commas in the URL", () => {
+    document.body.innerHTML = `\
+<picture>
+  <source srcset="data:text/plain,a 1x,data:text/plain,b 2x" />
+  <img src="data:text/plain,b" />
+</picture>
+`;
+
+    expect(resolve("source")).toBe("data:text/plain,b");
+  });
+
+  it("should resolve the URL of source element in video element only when it is selected", () => {
+    document.body.innerHTML = `\
+<video>
+  <source id="selected" src="data:text/plain,selected" />
+  <source id="unselected" src="data:text/plain,unselected" />
+</video>
+`;
+
+    expect(resolve("#selected")).toBe("data:text/plain,selected");
+    expect(resolve("#unselected")).toBeUndefined();
+  });
+
+  it.each([
+    ["iframe", `<iframe src="data:text/plain,page"></iframe>`],
+    [
+      "script",
+      `<script type="text/plain" src="data:text/plain,script"></script>`,
+    ],
+    ["embed", `<embed src="data:text/plain,image" type="image/svg+xml" />`],
+    ["div", `<div></div>`],
+    ["a", `<a href="data:text/plain,image">link</a>`],
+    ["img", `<img />`],
+    ["picture", `<picture></picture>`],
+  ])("should not resolve the URL of %s element", (selector, html) => {
+    document.body.innerHTML = html;
+
+    expect(resolve(selector)).toBeUndefined();
+  });
+});
+
+describe("selectExternalResources()", () => {
+  it("should exclude elements that are not target elements", () => {
+    document.body.innerHTML = `\
+<img integrity="sha256-xxx" src="data:text/plain,image" />
+<iframe integrity="sha256-xxx" src="data:text/plain,page"></iframe>
+<div integrity="sha256-xxx"></div>
+`;
+
+    const elements = selectExternalResources({
+      integrity: "sha256-xxx",
+      document,
+    });
+
+    expect(elements.map((element) => element.localName)).toEqual(["img"]);
   });
 });
