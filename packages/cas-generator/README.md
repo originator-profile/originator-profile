@@ -1,7 +1,7 @@
 # CAS Generator for OPCIP website
 
 [OP-CIPサイト](https://originator-profile.org) の各ページや各コンテンツを対象とした CA ファイルを自動生成するジェネレータです。
-管理者のローカル環境での使用を前提とし、 [CA の作成](https://cip.docs.originator-profile.org/studies/general-instruction/cas-setup-guide/#%E5%88%A5%E3%81%AE%E6%96%B9%E6%B3%95-cli-%E3%82%92%E4%BD%BF%E7%94%A8%E3%81%99%E3%82%8B%E6%96%B9%E6%B3%95) を自動化することを目的としています。
+管理者のローカル環境での使用を前提とし、 [Content Attestation の設置](https://docs.originator-profile.org/ja/tutorial/) を自動化することを目的としています。
 
 <img width="986" alt="Screenshot of the CAS Generator interface showing the main dashboard." src="https://github.com/user-attachments/assets/402e588c-9a4a-4c00-b23d-52ba367cd0dd" />
 
