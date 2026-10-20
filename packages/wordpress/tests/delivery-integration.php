@@ -173,7 +173,7 @@ try {
 	$dispatch( $fixture_id, 2, 200 );
 	foreach ( array( 1, 2 ) as $page_number ) {
 		$embedded_output = $render_script( $fixture_id, $page_number, 'embedded' );
-		profile_delivery_assert( str_contains( $embedded_output, '<script type="application/cas+json">["test-delivery-ca"]</script>' ), 'Reissued embedded script is missing.' );
+		profile_delivery_assert( str_contains( $embedded_output, '<script type="application/ca-set+json">["test-delivery-ca"]</script>' ), 'Reissued embedded script is missing.' );
 		$external_output = $render_script( $fixture_id, $page_number, 'external' );
 		profile_delivery_assert( str_contains( $external_output, 'src="' . esc_url( \Profile\Delivery\external_url( $fixture_id, $page_number ) ) . '"' ), 'Reissued external script must use the dynamic page URL.' );
 	}

@@ -67,11 +67,11 @@ export const test = base.extend<TestFixtures>({
 <body>
   <script
     src="http://localhost:8080/examples/ops.json"
-    type="application/ops+json"
+    type="application/op-set+json"
   ></script>
   <script
     src="http://localhost:8080/examples/cas.json"
-    type="application/cas+json"
+    type="application/ca-set+json"
   ></script>
   <p id="text-target-integrity">正常なCAS/OPSが設置されているテストページ</p>
 </body>
@@ -105,11 +105,11 @@ export const test = base.extend<TestFixtures>({
 <body>
   <script
     src="http://localhost:8080/examples/ops.json"
-    type="application/ops+json"
+    type="application/op-set+json"
   ></script>
   <script
     src="http://localhost:8080/examples/cas.json"
-    type="application/cas+json"
+    type="application/ca-set+json"
   ></script>
   <div id="text-target-integrity">
     <div class="ad-container">

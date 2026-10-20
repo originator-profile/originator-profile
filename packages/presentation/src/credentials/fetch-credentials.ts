@@ -2,8 +2,12 @@ import {
   ContentAttestationSet,
   OriginatorProfileSet,
 } from "@originator-profile/model";
-import { getEmbeddedData } from "../get-embedded-data";
+import { getEmbeddedData, scriptSelector } from "../get-embedded-data";
 import { CredentialsFetchFailed } from "./errors";
+import {
+  CAS_ACCEPTED_MEDIA_TYPES,
+  OPS_ACCEPTED_MEDIA_TYPES,
+} from "./media-types";
 import {
   externalSource,
   FetchCredentialSetResult,
@@ -11,24 +15,28 @@ import {
   SourcedCredential,
 } from "./types";
 
-function getEndpoints(doc: Document, mediaType: string): string[] {
+function getEndpoints(doc: Document, mediaTypes: readonly string[]): string[] {
   const endpoints = [
-    ...doc.querySelectorAll(`script[src][type="${mediaType}"]`),
+    ...doc.querySelectorAll(scriptSelector(mediaTypes, "[src]")),
   ].map((e) => new URL(e.getAttribute("src") ?? "", doc.location.href).href);
 
   return endpoints;
 }
 
 /**
- * {mediaType} のデータの取得
+ * {mediaTypes} のいずれかのデータの取得
  * @param doc Document オブジェクト
+ * @param mediaTypes 受理するメディアタイプ
  */
 async function fetchCredentialSet<
   T extends OriginatorProfileSet | ContentAttestationSet,
->(doc: Document, mediaType: string): Promise<FetchCredentialSetResult<T>> {
-  let profiles = getEmbeddedData<T>(doc, mediaType);
+>(
+  doc: Document,
+  mediaTypes: readonly string[],
+): Promise<FetchCredentialSetResult<T>> {
+  let profiles = getEmbeddedData<T>(doc, mediaTypes);
   try {
-    const profileEndpoints = getEndpoints(doc, mediaType);
+    const profileEndpoints = getEndpoints(doc, mediaTypes);
 
     const profileSetFromEndpoints = await Promise.all(
       profileEndpoints.map(
@@ -66,9 +74,9 @@ async function fetchCredentialSet<
 }
 
 export const fetchContentAttestationSet = (doc: Document) =>
-  fetchCredentialSet<ContentAttestationSet>(doc, "application/cas+json");
+  fetchCredentialSet<ContentAttestationSet>(doc, CAS_ACCEPTED_MEDIA_TYPES);
 export const fetchOriginatorProfileSet = (doc: Document) =>
-  fetchCredentialSet<OriginatorProfileSet>(doc, "application/ops+json");
+  fetchCredentialSet<OriginatorProfileSet>(doc, OPS_ACCEPTED_MEDIA_TYPES);
 
 export const fetchCredentials = async (
   doc: Document,

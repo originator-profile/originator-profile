@@ -46,7 +46,7 @@ describe("Originator Profile Set", () => {
 <script
   src="${opsUrl}"
   rel="alternate"
-  type="application/ops+json"
+  type="application/op-set+json"
 />`;
     const result = await fetchOriginatorProfileSet(
       window.document as unknown as Document,
@@ -65,7 +65,7 @@ describe("Originator Profile Set", () => {
 <script
   src=""
   rel="alternate"
-  type="application/ops+json"
+  type="application/op-set+json"
 />`;
     const result = await fetchOriginatorProfileSet(
       window.document as unknown as Document,
@@ -88,7 +88,7 @@ describe("Originator Profile Set", () => {
 <script
   src="${opsUrl}"
   rel="alternate"
-  type="application/ops+json"
+  type="application/op-set+json"
 />`;
     const result = await fetchOriginatorProfileSet(
       window.document as unknown as Document,
@@ -133,7 +133,7 @@ describe("<script> 要素が2つ以上存在するとき", () => {
 <script
   src="${endpoint}"
   rel="alternate"
-  type="application/ops+json"
+  type="application/op-set+json"
 />
   `,
       )
@@ -173,7 +173,7 @@ describe("<script>要素から Originator Profile Set を取得する", () => {
   test("<script> から Originator Profile Set を取得できる", async () => {
     const window = new Window();
     window.document.body.innerHTML = `
-<script type="application/ops+json">${JSON.stringify(ops)}</script>
+<script type="application/op-set+json">${JSON.stringify(ops)}</script>
 `;
 
     const result = await fetchOriginatorProfileSet(
@@ -186,8 +186,8 @@ describe("<script>要素から Originator Profile Set を取得する", () => {
   test("<script> が2つ以上存在する", async () => {
     const window = new Window();
     window.document.body.innerHTML = `
-<script type="application/ops+json">${JSON.stringify(ops)}</script>
-<script type="application/ops+json">${JSON.stringify(ops)}</script>
+<script type="application/op-set+json">${JSON.stringify(ops)}</script>
+<script type="application/op-set+json">${JSON.stringify(ops)}</script>
 `;
 
     const result = await fetchOriginatorProfileSet(
@@ -201,8 +201,8 @@ describe("<script>要素から Originator Profile Set を取得する", () => {
     const window = new Window();
     const profileEndpoint = "https://example.com/1/ops.json";
     window.document.body.innerHTML = `
-<script type="application/ops+json">${JSON.stringify(ops)}</script>
-<script src="${profileEndpoint}" rel="alternate" type="application/ops+json" />
+<script type="application/op-set+json">${JSON.stringify(ops)}</script>
+<script src="${profileEndpoint}" rel="alternate" type="application/op-set+json" />
 `;
 
     const result = await fetchOriginatorProfileSet(
@@ -225,7 +225,7 @@ describe("Content Attestation Set", () => {
 <script
   src="${casUrl}"
   rel="alternate"
-  type="application/cas+json"
+  type="application/ca-set+json"
 />`;
     const result = await fetchContentAttestationSet(
       window.document as unknown as Document,
@@ -241,7 +241,7 @@ describe("Content Attestation Set", () => {
   test("<script> 埋め込み時 source: embedded 付きで Content Attestation Set が得られる", async () => {
     const window = new Window();
     window.document.body.innerHTML = `
-<script type="application/cas+json">${JSON.stringify(cas)}</script>
+<script type="application/ca-set+json">${JSON.stringify(cas)}</script>
 `;
     const result = await fetchContentAttestationSet(
       window.document as unknown as Document,
@@ -259,8 +259,8 @@ describe("Content Attestation Set", () => {
 
     const window = new Window();
     window.document.body.innerHTML = `
-<script type="application/cas+json">${JSON.stringify(cas)}</script>
-<script src="${casUrl}" rel="alternate" type="application/cas+json" />
+<script type="application/ca-set+json">${JSON.stringify(cas)}</script>
+<script src="${casUrl}" rel="alternate" type="application/ca-set+json" />
 `;
     const result = await fetchContentAttestationSet(
       window.document as unknown as Document,
@@ -275,6 +275,61 @@ describe("Content Attestation Set", () => {
         credential,
         source: { kind: "external", url: casUrl },
       })),
+    ]);
+  });
+});
+
+describe("非推奨のメディアタイプ", () => {
+  const ops = [{ core: "eyJ..." }];
+  const cas = ["eyJ..."];
+
+  test("非推奨の application/ops+json から Originator Profile Set を取得できる", async () => {
+    const window = new Window();
+    window.document.body.innerHTML = `
+<script type="application/ops+json">${JSON.stringify(ops)}</script>
+`;
+    const result = await fetchOriginatorProfileSet(
+      window.document as unknown as Document,
+    );
+    expect(result).toStrictEqual(
+      ops.map((credential) => ({
+        credential,
+        source: { kind: "embedded", elementIndex: 0 },
+      })),
+    );
+  });
+
+  test("非推奨の application/cas+json から Content Attestation Set を取得できる", async () => {
+    const casUrl = "https://example.com/cas.json";
+    server.use(http.get(casUrl, () => HttpResponse.json(cas)));
+
+    const window = new Window();
+    window.document.body.innerHTML = `
+<script src="${casUrl}" type="application/cas+json"></script>
+`;
+    const result = await fetchContentAttestationSet(
+      window.document as unknown as Document,
+    );
+    expect(result).toStrictEqual(
+      cas.map((credential) => ({
+        credential,
+        source: { kind: "external", url: casUrl },
+      })),
+    );
+  });
+
+  test("新旧のメディアタイプが混在するとき文書順に取得できる", async () => {
+    const window = new Window();
+    window.document.body.innerHTML = `
+<script type="application/cas+json">["old"]</script>
+<script type="application/ca-set+json">["new"]</script>
+`;
+    const result = await fetchContentAttestationSet(
+      window.document as unknown as Document,
+    );
+    expect(result).toStrictEqual([
+      { credential: "old", source: { kind: "embedded", elementIndex: 0 } },
+      { credential: "new", source: { kind: "embedded", elementIndex: 1 } },
     ]);
   });
 });

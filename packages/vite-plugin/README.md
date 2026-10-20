@@ -114,14 +114,16 @@ The `originators` array is passed through as-is. See the [`UnsignedWebsiteProfil
 
 ## CA Signing
 
-Embed unsigned Content Attestations in your HTML as a `<script>` element with type `application/prs.originator-profile.unsigned-cas+json`. During build, the plugin signs each CA and replaces the script with a [Content Attestation Set](https://docs.originator-profile.org/en/opb/content-attestation-set/) using the standard `application/cas+json` type, matching the [embedded method](https://docs.originator-profile.org/en/opb/link-to-html/#embedded-method) in the spec. Any pre-signed `application/cas+json` script in the page is passed through unchanged.
+Embed unsigned Content Attestations in your HTML as a `<script>` element with type `application/prs.originator-profile.unsigned-ca-set+json`. During build, the plugin signs each CA and replaces the script with a [Content Attestation Set](https://docs.originator-profile.org/en/opb/content-attestation-set/) using the standard `application/ca-set+json` type, matching the [embedded method](https://docs.originator-profile.org/en/opb/link-to-html/#embedded-method) in the spec. Any pre-signed `application/ca-set+json` script in the page is passed through unchanged.
+
+The former input type `application/prs.originator-profile.unsigned-cas+json` is deprecated but still accepted until 2027-11-01, aligned with the [deprecated media types](https://docs.originator-profile.org/en/opb/media-types/#deprecated) in the spec.
 
 See the [`UnsignedContentAttestation` model](https://github.com/originator-profile/originator-profile/blob/main/packages/model/src/content-attestation/unsigned-content-attestation.ts) for the schema of each entry. The `main` property can be set on any entry to mark it as the main content attestation.
 
 **Input** (HTML):
 
 ```html
-<script type="application/prs.originator-profile.unsigned-cas+json">
+<script type="application/prs.originator-profile.unsigned-ca-set+json">
   [
     {
       "@context": [
@@ -160,7 +162,7 @@ See the [`UnsignedContentAttestation` model](https://github.com/originator-profi
 **Output** (HTML):
 
 ```html
-<script type="application/cas+json">
+<script type="application/ca-set+json">
   [{ "attestation": "eyJ...signed", "main": true }]
 </script>
 ```
@@ -195,7 +197,7 @@ Without `cssSelector`, you must manually set the `integrity` attribute on each `
 
 ### DOM target integrity is computed against the pre-transform HTML
 
-When a DOM target (`HtmlTargetIntegrity`, `TextTargetIntegrity`, `VisibleTextTargetIntegrity`) is used without an explicit `content` field, this plugin uses the HTML page **before** the unsigned CA script is replaced with the signed `application/cas+json` Set. As a result, CSS selectors that match elements outside of the unsigned CA script tag are safe, but selectors that target the script's own content (e.g., `script[type="application/cas+json"]`) will not match the served HTML after build.
+When a DOM target (`HtmlTargetIntegrity`, `TextTargetIntegrity`, `VisibleTextTargetIntegrity`) is used without an explicit `content` field, this plugin uses the HTML page **before** the unsigned CA script is replaced with the signed `application/ca-set+json` Set. As a result, CSS selectors that match elements outside of the unsigned CA script tag are safe, but selectors that target the script's own content (e.g., `script[type="application/ca-set+json"]`) will not match the served HTML after build.
 
 ## License
 
