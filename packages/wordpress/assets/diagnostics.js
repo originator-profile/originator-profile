@@ -5,6 +5,7 @@
     reachability: "CAサーバーへの接続",
     authentication: "認証情報",
   };
+  const STATES = new Set(["success", "warning", "error"]);
   const STATUS_LABELS = {
     ok: "OK",
     ng: "NG",
@@ -56,7 +57,7 @@
           ),
         );
       }
-      show(data.state || "warning", nodes);
+      show(STATES.has(data.state) ? data.state : "warning", nodes);
     }
 
     button.addEventListener("click", async function () {

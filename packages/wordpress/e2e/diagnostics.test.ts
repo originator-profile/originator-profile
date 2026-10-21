@@ -102,3 +102,19 @@ test("不正な nonce では接続確認を実行しない", async ({ page }) =>
   expect(response.status()).toBe(403);
   expect((await response.json()).success).toBe(false);
 });
+
+test("想定外の state は警告として表示する", async ({ page }) => {
+  await mockCheck(page, {
+    success: true,
+    data: {
+      state: "success hidden",
+      stages: {
+        reachability: { status: "ok", message: "CAサーバーに接続できました。" },
+      },
+    },
+  });
+  await page.goto(settingsUrl);
+  await checkButton(page).click();
+  await expect(status(page)).toHaveClass("notice notice-warning inline");
+  await expect(status(page)).toContainText("CAサーバーへの接続：OK");
+});
