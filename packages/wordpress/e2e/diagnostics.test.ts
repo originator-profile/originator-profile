@@ -118,3 +118,33 @@ test("想定外の state は警告として表示する", async ({ page }) => {
   await expect(status(page)).toHaveClass("notice notice-warning inline");
   await expect(status(page)).toContainText("CAサーバーへの接続：OK");
 });
+
+test("タイムアウトと通信エラーを別のメッセージで表示する", async ({ page }) => {
+  await page.clock.install();
+  // 応答を返さず、タイムアウトさせる。
+  await page.route("**/admin-ajax.php", async (route) => {
+    const body = new URLSearchParams(route.request().postData() || "");
+    if (body.get("action") !== "profile_ca_diagnostics") {
+      return route.continue();
+    }
+  });
+  await page.goto(settingsUrl);
+  await checkButton(page).click();
+  await expect(status(page)).toContainText("確認中です");
+  await page.clock.runFor(90000);
+  await expect(status(page)).toHaveClass(/notice-error/);
+  await expect(status(page)).toContainText("確認がタイムアウトしました。");
+  await expect(checkButton(page)).toBeEnabled();
+
+  await page.unrouteAll({ behavior: "ignoreErrors" });
+  await page.route("**/admin-ajax.php", async (route) => {
+    const body = new URLSearchParams(route.request().postData() || "");
+    if (body.get("action") !== "profile_ca_diagnostics") {
+      return route.continue();
+    }
+    return route.abort("failed");
+  });
+  await checkButton(page).click();
+  await expect(status(page)).toContainText("確認結果を取得できませんでした。");
+  await expect(status(page)).not.toContainText("タイムアウト");
+});
