@@ -33,6 +33,9 @@ require_once __DIR__ . '/ca-storage.php';
 require_once __DIR__ . '/exclusion.php';
 use function Profile\Exclusion\is_excluded;
 
+require_once __DIR__ . '/issue-status.php';
+use function Profile\IssueStatus\record_result;
+
 require_once __DIR__ . '/delivery.php';
 use function Profile\Delivery\suspend;
 use function Profile\Delivery\is_post_excluded;
@@ -143,13 +146,17 @@ function issue_post( \WP_Post $post, bool $only_missing = false ): array {
 	if ( 1 !== (int) $acquired ) {
 		suspend( $post->ID, true );
 		debug( "Post ID {$post->ID}: concurrent CA issuance; delivery remains suspended until a later successful update." );
-		return array(
-			'status'  => 'failed',
-			'message' => '別の処理がこの記事のCAを発行中です。完了後に再試行してください。',
+		return record_result(
+			$post->ID,
+			array(
+				'status'  => 'failed',
+				'message' => '別の処理がこの記事のCAを発行中です。完了後に再試行してください。',
+			)
 		);
 	}
 	try {
-		return sign_published_post( $post, $only_missing );
+		// 失敗を記事の編集画面で通知できるよう、公開時・一括発行のどちらの結果も記録する。
+		return record_result( $post->ID, sign_published_post( $post, $only_missing ) );
 	} finally {
 		// phpcs:ignore WordPress.DB.DirectDatabaseQuery -- 必ず取得した接続のロックを解放する。
 		$wpdb->get_var( $wpdb->prepare( 'SELECT RELEASE_LOCK(%s)', $lock ) );
