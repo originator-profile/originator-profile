@@ -6,7 +6,7 @@ import {
   fetchExternalResource,
   fetchHtmlContent,
   fetchTextContent,
-  resolveExternalResourceUrls,
+  resolveExternalResourceUrl,
   selectByCss,
   selectByCssOrIntegrity,
   selectByIntegrity,
@@ -311,27 +311,6 @@ describe("fetchExternalResource()", () => {
     expect(await res.text()).toBe("fallbackContent");
   });
 
-  it("should fetch all srcset candidates of source element in picture element", async () => {
-    document.body.innerHTML = `\
-<picture>
-  <source integrity="sha256-xxx" srcset="data:text/plain,small 1x, data:text/plain,large 2x" />
-  <img src="data:text/plain,image" />
-</picture>
-`;
-
-    const elements = selectByIntegrity({
-      integrity: "sha256-xxx",
-      document,
-    });
-
-    const responses = await fetchExternalResource(elements);
-
-    expect(await Promise.all(responses.map((res) => res.text()))).toEqual([
-      "small",
-      "large",
-    ]);
-  });
-
   it("should throw error when element is not a target element", async () => {
     document.body.innerHTML = `\
 <div integrity="sha256-xxx"></div>
@@ -471,64 +450,36 @@ describe("selectByCssOrIntegrity()", () => {
   });
 });
 
-describe("resolveExternalResourceUrls()", () => {
+describe("resolveExternalResourceUrl()", () => {
   const resolve = (selector: string) =>
-    resolveExternalResourceUrls(document.querySelector(selector) as Element);
+    resolveExternalResourceUrl(document.querySelector(selector) as Element);
 
   it.each([
-    ["img", `<img src="data:text/plain,image" />`, ["data:text/plain,image"]],
+    ["img", `<img src="data:text/plain,image" />`, "data:text/plain,image"],
     [
       "video",
       `<video src="data:text/plain,video"></video>`,
-      ["data:text/plain,video"],
+      "data:text/plain,video",
     ],
     [
       "audio",
       `<audio src="data:text/plain,audio"></audio>`,
-      ["data:text/plain,audio"],
+      "data:text/plain,audio",
     ],
     [
       "track",
       `<video><track src="data:text/plain,caption" /></video>`,
-      ["data:text/plain,caption"],
+      "data:text/plain,caption",
     ],
     [
       "picture",
       `<picture><source srcset="data:text/plain,large" /><img src="data:text/plain,image" /></picture>`,
-      ["data:text/plain,image"],
+      "data:text/plain,image",
     ],
   ])("should resolve the URL of %s element", (selector, html, expected) => {
     document.body.innerHTML = html;
 
-    expect(resolve(selector)).toEqual(expected);
-  });
-
-  it("should resolve all srcset candidates of source element in picture element whether or not it is selected", () => {
-    document.body.innerHTML = `\
-<picture>
-  <source srcset="data:text/plain,small 1x, data:text/plain,large 2x" />
-  <img src="data:text/plain,image" />
-</picture>
-`;
-
-    expect(resolve("source")).toEqual([
-      "data:text/plain,small",
-      "data:text/plain,large",
-    ]);
-  });
-
-  it("should parse srcset candidates containing commas in the URL", () => {
-    document.body.innerHTML = `\
-<picture>
-  <source srcset="data:text/plain,a 1x,data:text/plain,b 2x" />
-  <img src="data:text/plain,b" />
-</picture>
-`;
-
-    expect(resolve("source")).toEqual([
-      "data:text/plain,a",
-      "data:text/plain,b",
-    ]);
+    expect(resolve(selector)).toBe(expected);
   });
 
   it("should resolve the URL of source element in video element whether or not it is selected", () => {
@@ -539,8 +490,8 @@ describe("resolveExternalResourceUrls()", () => {
 </video>
 `;
 
-    expect(resolve("#selected")).toEqual(["data:text/plain,selected"]);
-    expect(resolve("#unselected")).toEqual(["data:text/plain,unselected"]);
+    expect(resolve("#selected")).toBe("data:text/plain,selected");
+    expect(resolve("#unselected")).toBe("data:text/plain,unselected");
   });
 
   it.each([
@@ -557,13 +508,13 @@ describe("resolveExternalResourceUrls()", () => {
     ["source", `<video><source /></video>`],
     [
       "source",
-      `<picture><source /><img src="data:text/plain,image" /></picture>`,
+      `<picture><source srcset="data:text/plain,image" /><img src="data:text/plain,image" /></picture>`,
     ],
     ["source", `<div><source src="data:text/plain,source" /></div>`],
   ])("should not resolve the URL of %s element", (selector, html) => {
     document.body.innerHTML = html;
 
-    expect(resolve(selector)).toEqual([]);
+    expect(resolve(selector)).toBeUndefined();
   });
 });
 

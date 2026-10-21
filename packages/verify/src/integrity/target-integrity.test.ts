@@ -380,33 +380,12 @@ describe("verifyIntegrity()", () => {
       expect(verifyResult.valid).toBe(true);
     });
 
-    it("should verify all srcset candidates of a source element in a picture element", async () => {
-      const integrity = `${await sriOf("small")} ${await sriOf("large")}`;
+    it("should return false for a source element in a picture element", async () => {
+      const integrity = await sriOf("image");
 
       document.body.innerHTML = `\
 <picture>
-  <source id="picture-source" srcset="data:text/plain,small 1x, data:text/plain,large 2x" />
-  <img src="data:text/plain,image" />
-</picture>
-`;
-
-      const fetchResult = await verifyIntegrity({
-        type: "ExternalResourceTargetIntegrity",
-        cssSelector: "#picture-source",
-        integrity,
-      });
-
-      expect(fetchResult instanceof Error).toBe(false);
-      const verifyResult = fetchResult as IntegrityVerifyResult;
-      expect(verifyResult.valid).toBe(true);
-    });
-
-    it("should return false if any srcset candidate of a source element in a picture element does not match", async () => {
-      const integrity = await sriOf("small");
-
-      document.body.innerHTML = `\
-<picture>
-  <source id="picture-source" srcset="data:text/plain,small 1x, data:text/plain,large 2x" />
+  <source id="picture-source" srcset="data:text/plain,image" />
   <img src="data:text/plain,image" />
 </picture>
 `;
@@ -420,7 +399,7 @@ describe("verifyIntegrity()", () => {
       expect(fetchResult instanceof Error).toBe(false);
       const verifyResult = fetchResult as IntegrityVerifyResult;
       expect(verifyResult.valid).toBe(false);
-      expect(verifyResult.failedIntegrities).toEqual([await sriOf("large")]);
+      expect(verifyResult.failedIntegrities).toEqual([]);
     });
   });
 });
