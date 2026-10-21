@@ -197,8 +197,9 @@ function check_authentication( string $base_endpoint, string $admin_secret, int 
 
 /** 保存済みの設定で接続確認を行う */
 function diagnose(): array {
-	$base_endpoint = build_ca_base_endpoint();
-	$res           = \wp_remote_request( $base_endpoint . '/ca', request_args() );
+	$base_endpoint    = build_ca_base_endpoint();
+	$res              = \wp_remote_request( $base_endpoint . '/ca', request_args() );
+	$anonymous_status = 0;
 	if ( \is_wp_error( $res ) ) {
 		$reachability = stage( 'ng', 'CAサーバーに接続できませんでした：' . $res->get_error_message() . '　ホスト名とネットワークを確認してください。' );
 	} else {
