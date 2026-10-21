@@ -359,7 +359,7 @@ describe("verifyIntegrity()", () => {
       expect(verifyResult.valid).toBe(true);
     });
 
-    it("should return false for an unselected source element in a video element", async () => {
+    it("should verify an unselected source element in a video element", async () => {
       const integrity = await sriOf("unselected");
 
       document.body.innerHTML = `\
@@ -377,8 +377,50 @@ describe("verifyIntegrity()", () => {
 
       expect(fetchResult instanceof Error).toBe(false);
       const verifyResult = fetchResult as IntegrityVerifyResult;
+      expect(verifyResult.valid).toBe(true);
+    });
+
+    it("should verify all srcset candidates of a source element in a picture element", async () => {
+      const integrity = `${await sriOf("small")} ${await sriOf("large")}`;
+
+      document.body.innerHTML = `\
+<picture>
+  <source id="picture-source" srcset="data:text/plain,small 1x, data:text/plain,large 2x" />
+  <img src="data:text/plain,image" />
+</picture>
+`;
+
+      const fetchResult = await verifyIntegrity({
+        type: "ExternalResourceTargetIntegrity",
+        cssSelector: "#picture-source",
+        integrity,
+      });
+
+      expect(fetchResult instanceof Error).toBe(false);
+      const verifyResult = fetchResult as IntegrityVerifyResult;
+      expect(verifyResult.valid).toBe(true);
+    });
+
+    it("should return false if any srcset candidate of a source element in a picture element does not match", async () => {
+      const integrity = await sriOf("small");
+
+      document.body.innerHTML = `\
+<picture>
+  <source id="picture-source" srcset="data:text/plain,small 1x, data:text/plain,large 2x" />
+  <img src="data:text/plain,image" />
+</picture>
+`;
+
+      const fetchResult = await verifyIntegrity({
+        type: "ExternalResourceTargetIntegrity",
+        cssSelector: "#picture-source",
+        integrity,
+      });
+
+      expect(fetchResult instanceof Error).toBe(false);
+      const verifyResult = fetchResult as IntegrityVerifyResult;
       expect(verifyResult.valid).toBe(false);
-      expect(verifyResult.failedIntegrities).toEqual([]);
+      expect(verifyResult.failedIntegrities).toEqual([await sriOf("large")]);
     });
   });
 });

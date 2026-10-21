@@ -66,90 +66,87 @@ function parseSrcsetUrls(srcset: string): string[] {
  * NOTE: JSDOM (cas-monitor) は `currentSrc` を実装しておらず常に空文字を返す。
  * ブラウザーでも読み込み前の要素では空になる。
  */
-const currentSrcOrSrc = (element: Element): string | undefined => {
+const currentSrcOrSrc = (element: Element): string[] => {
   const el = element as SourceSelectableElement;
-  return el.currentSrc || el.src || undefined;
+  const url = el.currentSrc || el.src;
+  return url ? [url] : [];
 };
 
-const resolvePictureUrl = (picture: Element): string | undefined => {
+const srcOf = (element: Element): string[] => {
+  const url = (element as SourceSelectableElement).src;
+  return url ? [url] : [];
+};
+
+const resolvePictureUrls = (picture: Element): string[] => {
   const img = picture.querySelector(":scope > img");
-  return img ? currentSrcOrSrc(img) : undefined;
+  return img ? currentSrcOrSrc(img) : [];
 };
 
-/** `picture` 要素で選択された候補が自身の `srcset` にあれば、その URL を返す */
-function resolvePictureSourceUrl(source: Element, picture: Element) {
-  const url = resolvePictureUrl(picture);
-  const candidates = parseSrcsetUrls(source.getAttribute("srcset") ?? "")
+/** `srcset` 属性のすべての候補を解決した URL を返す */
+const resolveSrcsetUrls = (source: Element): string[] =>
+  parseSrcsetUrls(source.getAttribute("srcset") ?? "")
     .filter((candidate) => URL.canParse(candidate, source.baseURI))
     .map((candidate) => new URL(candidate, source.baseURI).href);
-  return url && candidates.includes(url) ? url : undefined;
-}
 
-/** メディア要素で選択されたリソースが自身の `src` であれば、その URL を返す */
-function resolveMediaSourceUrl(source: Element, media: Element) {
-  const url = currentSrcOrSrc(media);
-  return url === (source as SourceSelectableElement).src ? url : undefined;
-}
-
-function resolveSourceUrl(source: Element): string | undefined {
-  const parent = source.parentElement;
-
-  switch (parent?.localName) {
+function resolveSourceUrls(source: Element): string[] {
+  switch (source.parentElement?.localName) {
     case "picture":
-      return resolvePictureSourceUrl(source, parent);
+      return resolveSrcsetUrls(source);
     case "video":
     case "audio":
-      return resolveMediaSourceUrl(source, parent);
+      return srcOf(source);
     default:
-      return undefined;
+      return [];
   }
 }
 
 // NOTE: cas-monitor では JSDOM の要素を扱うため instanceof ではなく localName で判定する
 const externalResourceUrlResolvers = new Map<
   string,
-  (element: Element) => string | undefined
+  (element: Element) => string[]
 >([
   ["img", currentSrcOrSrc],
-  ["picture", resolvePictureUrl],
-  ["source", resolveSourceUrl],
+  ["picture", resolvePictureUrls],
+  ["source", resolveSourceUrls],
   ["video", currentSrcOrSrc],
   ["audio", currentSrcOrSrc],
-  ["track", (track) => (track as SourceSelectableElement).src || undefined],
+  ["track", srcOf],
 ]);
 
 /**
  * External Resource Integrity の対象要素について、取得する URL を返す
  *
- * 対象要素でない場合や、選択されていない `source` 要素の場合は `undefined` を返す。
+ * 対象要素でない場合は空配列を返す。
  *
  * @see {@link https://docs.originator-profile.org/opb/content-integrity-descriptor/external-resource/#target-elements}
  */
-export const resolveExternalResourceUrl = (
-  element: Element,
-): string | undefined =>
-  externalResourceUrlResolvers.get(element.localName)?.(element);
+export const resolveExternalResourceUrls = (element: Element): string[] =>
+  externalResourceUrlResolvers.get(element.localName)?.(element) ?? [];
 
 /**
  * 要素の外部リソースを取得する
  *
- * URL は {@link resolveExternalResourceUrl} で決める。
+ * URL は {@link resolveExternalResourceUrls} で決める。1 つの要素に複数の URL があれば、そのすべてを取得する。
  * 対象要素でない要素が含まれる場合はエラーを投げるため、{@link selectExternalResources} で選択した要素を渡す。
  */
 export const fetchExternalResource: ContentFetcher = async (
   elements,
   fetcher = fetch,
 ) => {
+  const urls = elements.flatMap((element) => {
+    const urls = resolveExternalResourceUrls(element);
+    if (urls.length === 0) {
+      throw new Error(
+        `<${element.localName}> is not a target element of External Resource Integrity`,
+      );
+    }
+    return urls;
+  });
+
   return await Promise.all(
-    elements.map(async (element) => {
-      const src = resolveExternalResourceUrl(element);
-      if (!src) {
-        throw new Error(
-          `<${element.localName}> is not a target element of External Resource Integrity`,
-        );
-      }
+    urls.map(async (url) => {
       try {
-        return await fetcher(src);
+        return await fetcher(url);
       } catch (e) {
         if (e instanceof Error || e instanceof window.Error) {
           throw new FetchFailed(`Failed to fetch`, e);
@@ -194,7 +191,7 @@ export const selectByCssOrIntegrity: ElementSelector = (params) =>
  */
 export const selectExternalResources: ElementSelector = (params) =>
   selectByCssOrIntegrity(params).filter(
-    (element) => resolveExternalResourceUrl(element) !== undefined,
+    (element) => resolveExternalResourceUrls(element).length > 0,
   );
 
 /**

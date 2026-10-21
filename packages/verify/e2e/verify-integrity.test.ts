@@ -142,7 +142,7 @@ test("verifyIntegrity() should not verify ExternalResourceTargetIntegrity if any
   expect((await handle.jsonValue()).valid).toBe(false);
 });
 
-test("verifyIntegrity() should verify the source element selected in a picture element by currentSrc", async function ({
+test("verifyIntegrity() should verify the source element in a picture element even if it is not selected", async function ({
   page,
 }) {
   await page.goto("/");
