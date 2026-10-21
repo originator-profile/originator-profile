@@ -1,0 +1,26 @@
+{
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://originator-profile.org/ns/credentials/v1",
+    "https://originator-profile.org/ns/cip/v1",
+    {
+      "@language": "ja-JP"
+    }
+  ],
+  "type": ["VerifiableCredential", "ProfileAnnotation"],
+  "issuer": "dns:localhost",
+  "validFrom": "2024-03-01T00:00:00Z",
+  "credentialSubject": {
+    "id": "dns:localhost",
+    "type": "Membership",
+    "name": "架空業界団体 会員",
+    "description": "この組織は、架空業界団体の会員であることが確認できました。",
+    "annotation": {
+      "id": "urn:uuid:5688c8af-386e-4d09-9ec3-cab18f0ecccd",
+      "type": "ProfileAnnotationPolicy",
+      "name": "架空業界団体 会員資格",
+      "description": "架空業界団体が定める入会審査を経て、会員として登録された組織であることを示します。",
+      "ref": "https://example.org/membership"
+    }
+  }
+}
