@@ -32,6 +32,8 @@ require_once __DIR__ . '/includes/bulk-admin.php';
 \Profile\BulkAdmin\init();
 require_once __DIR__ . '/includes/diagnostics.php';
 \Profile\Diagnostics\init();
+require_once __DIR__ . '/includes/issue-status.php';
+\Profile\IssueStatus\init();
 
 require_once __DIR__ . '/includes/post.php';
 \Profile\Post\init();
