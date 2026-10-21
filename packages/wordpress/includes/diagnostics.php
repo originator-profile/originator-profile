@@ -195,7 +195,11 @@ function check_authentication( string $base_endpoint, string $admin_secret, int 
 	return classify_authentication( (int) \wp_remote_retrieve_response_code( $res ), $anonymous_status );
 }
 
-/** 保存済みの設定で接続確認を行う */
+/**
+ * 保存済みの設定で接続確認を行う
+ *
+ * 副作用: CAサーバー（OIDC・CCSP ではトークンURLも）へ通信し、取得・更新したトークンを通常の CA 発行と同様に保存する。CA は発行しない。
+ */
 function diagnose(): array {
 	$base_endpoint    = build_ca_base_endpoint();
 	$res              = \wp_remote_request( $base_endpoint . '/ca', request_args() );
