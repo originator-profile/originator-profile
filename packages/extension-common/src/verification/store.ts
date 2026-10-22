@@ -182,7 +182,9 @@ export function trackDocument(
       return [];
     }
     const removedTopLevel = forgetOrigins(index, removed);
-    await chrome.storage.session.set({ [tabKey(tabId)]: index });
+    // NOTE: 追い出しがこのタブの索引から外した文書も、ここで書き戻す。結果のない
+    // 文書は、表示されるときに検証を求められて検証し直される
+    await setWithEviction({ [tabKey(tabId)]: index });
     await removeDocuments(removed);
     if (removedTopLevel) await pruneSiteProfiles();
     return removed;
