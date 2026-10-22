@@ -255,6 +255,41 @@ export function setupVerificationPipeline() {
   };
 
   /**
+   * オリジンの Site Profile を用いて確定した結果を無効にし、検証し直しを求める
+   *
+   * bfcache にある文書には届かないが、復元されたときに無効の結果は再利用されない。
+   */
+  const invalidateSiteProfileUsers = async (origin: string) => {
+    const now = new Date();
+    const reason = {
+      type: InvalidationType.SiteProfileUpdated,
+      title: "Site Profile used for verification was updated",
+    };
+    const users = (await listVerificationEntries()).flatMap((entry) =>
+      entry.state === "settled" &&
+      entry.subject.origin === origin &&
+      entry.result.inputRange.some(({ kind }) => kind === "site-profile")
+        ? [entry]
+        : [],
+    );
+    await Promise.all(
+      users.map(async (entry) => {
+        const { tabId, frameId, documentId } = entry.subject;
+        await setVerificationEntry(invalidate(entry, reason, now));
+        verificationMessenger
+          .sendMessage(
+            "resync",
+            { documentId, force: false },
+            { tabId, frameId },
+          )
+          .catch(() => {
+            // 文書が bfcache にある、またはすでに破棄されている
+          });
+      }),
+    );
+  };
+
+  /**
    * オリジンの Site Profile を検証する。同じオリジンの結果があれば再利用する
    * @param destination Site Profile を取得するトップレベル文書
    */
@@ -294,6 +329,12 @@ export function setupVerificationPipeline() {
         result: withoutSources(verification),
       };
       await setSiteProfileEntry(entry);
+      invalidateSiteProfileUsers(origin).catch((error: unknown) => {
+        console.warn(
+          `[verification] Failed to invalidate results using the Site Profile of ${origin}:`,
+          error,
+        );
+      });
       return entry;
     })()
       .catch(async (error: unknown) => {

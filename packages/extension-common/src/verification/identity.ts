@@ -28,6 +28,8 @@ export const InvalidationType = {
   AllowedUrlChanged: problemType("INVALIDATED_ALLOWED_URL_CHANGED"),
   /** 検証した target の入力依存対象が変化した */
   InputChanged: problemType("INVALIDATED_INPUT_CHANGED"),
+  /** 検証に用いた Site Profile を取得し直した */
+  SiteProfileUpdated: problemType("INVALIDATED_SITE_PROFILE_UPDATED"),
 } as const;
 
 /**
