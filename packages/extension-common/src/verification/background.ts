@@ -138,6 +138,14 @@ const emptyResult = (url: string): DocumentVerificationResult => ({
   inputRange: [{ kind: "document", url }],
 });
 
+/** オリジンの Site Profile を用いて確定した結果か */
+const usesSiteProfileOf =
+  (origin: string) =>
+  (entry: VerificationEntry): entry is SettledEntry =>
+    entry.state === "settled" &&
+    entry.subject.origin === origin &&
+    entry.result.inputRange.some(({ kind }) => kind === "site-profile");
+
 /** 検証を完了できなかった文書の結果。表示が確定しないまま残らないようにする */
 const incompleteEntry = (
   subject: VerificationSubject,
@@ -256,6 +264,24 @@ export function setupVerificationPipeline() {
     for (const id of documentIds) generations.delete(id);
   };
 
+  /** Site Profile が取得し直された結果を無効にし、検証し直しを求める */
+  const reverifyWithUpdatedSiteProfile = async (
+    entry: SettledEntry,
+    now: Date,
+  ) => {
+    const { tabId, frameId, documentId } = entry.subject;
+    const reason = {
+      type: InvalidationType.SiteProfileUpdated,
+      title: "Site Profile used for verification was updated",
+    };
+    if (!(await setVerificationEntry(invalidate(entry, reason, now)))) return;
+    verificationMessenger
+      .sendMessage("resync", { documentId, force: false }, { tabId, frameId })
+      .catch(() => {
+        // 文書がすでに破棄されている
+      });
+  };
+
   /**
    * オリジンの Site Profile を用いて確定した結果を、検証し直させる
    *
@@ -263,34 +289,12 @@ export function setupVerificationPipeline() {
    * 結果を破棄し、復元されたときに検証し直させる。
    */
   const invalidateSiteProfileUsers = async (origin: string) => {
-    const usesSiteProfile = (entry: VerificationEntry): entry is SettledEntry =>
-      entry.state === "settled" &&
-      entry.subject.origin === origin &&
-      entry.result.inputRange.some(({ kind }) => kind === "site-profile");
+    const usesSiteProfile = usesSiteProfileOf(origin);
     forget(await removeCachedEntries(usesSiteProfile));
-
     const now = new Date();
-    const reason = {
-      type: InvalidationType.SiteProfileUpdated,
-      title: "Site Profile used for verification was updated",
-    };
     const users = (await listVerificationEntries()).filter(usesSiteProfile);
     await Promise.all(
-      users.map(async (entry) => {
-        const { tabId, frameId, documentId } = entry.subject;
-        if (!(await setVerificationEntry(invalidate(entry, reason, now)))) {
-          return;
-        }
-        verificationMessenger
-          .sendMessage(
-            "resync",
-            { documentId, force: false },
-            { tabId, frameId },
-          )
-          .catch(() => {
-            // 文書がすでに破棄されている
-          });
-      }),
+      users.map((entry) => reverifyWithUpdatedSiteProfile(entry, now)),
     );
   };
 
@@ -389,6 +393,35 @@ export function setupVerificationPipeline() {
   };
 
   /**
+   * 確定した結果を書き込み、検証のあいだの変化を確かめる
+   *
+   * NOTE: Site Profile を取得し直したときの無効化は、そのとき確定していた結果に
+   * しか届かない。書き込んだ後に、検証に用いた Site Profile と比べて取りこぼさない
+   * @param site 検証に用いた Site Profile の検証結果
+   * @param startUrl 検証を開始した時点の document's URL
+   */
+  const recordSettled = async (
+    destination: Destination,
+    entry: SettledEntry,
+    site: SettledSiteProfile | undefined,
+    startUrl: string,
+  ) => {
+    const written = await setVerificationEntry(entry);
+    const { origin } = entry.subject;
+    if (written && site && usesSiteProfileOf(origin)(entry)) {
+      const current = await getSiteProfileEntry(origin);
+      if (
+        current?.state === "settled" &&
+        current.result.verifiedAt !== site.result.verifiedAt
+      ) {
+        await reverifyWithUpdatedSiteProfile(entry, new Date());
+        return;
+      }
+    }
+    await reevaluateSinceStart(destination, startUrl);
+  };
+
+  /**
    * 文書を検証して結果を書き込む
    * @param subject 検証対象の文書の識別。取得したクレデンシャルの URL で更新する
    */
@@ -469,14 +502,14 @@ export function setupVerificationPipeline() {
     );
 
     if (!isCurrent()) return;
-    await setVerificationEntry({
+    const settled: SettledEntry = {
       state: "settled",
       subject,
       credentials: toStoredCredentials({ ops, cas, opMeta }),
       result: toStoredResult(result),
       inputIdentity: { ...inputIdentity, evaluatedUrl: startUrl },
-    });
-    await reevaluateSinceStart(destination, startUrl);
+    };
+    await recordSettled(destination, settled, site, startUrl);
   };
 
   const verifyFrameDocument = async (
