@@ -271,9 +271,25 @@ export function setupVerificationPipeline() {
     if (destination) run(destination, data);
   });
 
-  verificationMessenger.onMessage("inputChanged", ({ sender }) => {
+  verificationMessenger.onMessage("inputChanged", async ({ sender }) => {
     const destination = destinationOf(sender);
-    if (destination) run(destination, { force: true });
+    if (!destination) return;
+    // NOTE: 検証し直す前に無効にする。確定した結果が残っていると、後から始まった
+    // 再利用する検証がそれを再利用し、入力の変わった結果が残り続ける
+    const entry = await getVerificationEntry(destination.documentId);
+    if (entry?.state === "settled") {
+      await setVerificationEntry(
+        invalidate(
+          entry,
+          {
+            type: InvalidationType.InputChanged,
+            title: "Input of a verified target changed",
+          },
+          new Date(),
+        ),
+      );
+    }
+    run(destination, { force: true });
   });
 
   /** same-document navigation で allowedUrl の評価結果が変われば結果を無効にする */

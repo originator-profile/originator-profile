@@ -138,6 +138,10 @@ type と入力依存対象の対応は、仕様の定めるものを `@originato
 
 ※ 結果が `rendered-result` に依存していれば再利用しない。
 
+検証した target の要素が変化したら、検証し直す前に `invalidated` を書き込む。
+確定した結果が残っていると、同時に届いた `documentChanged` の検証がそれを
+再利用してしまうため。
+
 same-document navigation で allowedUrl の評価結果が変わったら、検証し直さずに
 `invalidated` を書き込む。
 
