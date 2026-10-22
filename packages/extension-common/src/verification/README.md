@@ -188,6 +188,8 @@ same-document navigation で allowedUrl の評価結果が変わったら、検�
 | `parsed-dom`      | セレクターに一致する要素の集合の変化と、一致した要素の部分木の変化 |
 | `rendered-result` | 上に加えて、要素の大きさの変化とビューポートの大きさの変化         |
 
+検証したときに一致する要素がなかった target も監視し、要素が現れたら検証し直す。
+
 変化を 1 度検知したら監視を止め、次の検証で監視し直す。DOM の変化は、クレデンシャルの
 script 要素の検知と同じ `MutationObserver` で受ける。
 

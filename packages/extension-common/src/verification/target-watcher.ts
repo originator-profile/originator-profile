@@ -63,12 +63,18 @@ export function createTargetWatcher(onChange: () => void) {
     });
   };
 
-  /** 検証した target を監視に加える */
+  /**
+   * 検証した target を監視に加える
+   *
+   * 一致する要素がなかった target も、要素が現れたことを検知するために加える。
+   */
   const watch = (content: Target) => {
     const elements = select(content);
-    if (elements.length === 0) return;
     watched.push({ content, elements });
-    if (targetInputDependency[content.type] === "rendered-result") {
+    if (
+      elements.length > 0 &&
+      targetInputDependency[content.type] === "rendered-result"
+    ) {
       watchLayout(elements);
     }
   };

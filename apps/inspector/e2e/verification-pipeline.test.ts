@@ -186,6 +186,57 @@ test("target の部分木の外でセレクターに一致する要素が増え�
   ).toMatchObject({ status: false });
 });
 
+test("検証したときに要素のなかった target は、要素が現れたら改めて検証される", async ({
+  context,
+  page,
+  missingSiteProfile: _missingSiteProfile,
+  credentialsPage,
+  validCredentials,
+}) => {
+  const target =
+    '<p id="text-target-integrity">target を後から描画するテストページ</p>';
+  const html = (body: string) => `
+<!doctype html>
+<html lang="ja" dir="ltr">
+<head>
+  <meta charset="UTF-8" />
+  <title>target を後から描画するテストページ</title>
+</head>
+<body>
+  <script src="http://localhost:8080/examples/ops.json" type="application/op-set+json"></script>
+  <script src="http://localhost:8080/examples/cas.json" type="application/ca-set+json"></script>
+  ${body}
+</body>
+</html>`;
+  await validCredentials(
+    { publicKey, privateKey },
+    html(target),
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
+  // target の要素を含まない状態で配信する
+  const endpoint = "http://localhost:8080/examples/late-target.html";
+  await page.route(endpoint, async (route) =>
+    route.fulfill({ body: html(""), contentType: "text/html" }),
+  );
+  await page.goto("about:blank");
+  const worker = await backgroundWorker(context);
+
+  await page.goto(endpoint);
+  expect(
+    await settledResult(worker, endpoint, 1, { status: false }),
+  ).toMatchObject({ status: false });
+
+  await page.evaluate((markup) => {
+    document.body.insertAdjacentHTML("beforeend", markup);
+  }, target);
+
+  expect(
+    await settledResult(worker, endpoint, 1, { status: true }),
+  ).toMatchObject({ status: true });
+  await page.unroute(endpoint);
+});
+
 test("CAS の script 要素の内容や type 属性が書き換えられたら改めて検証される", async ({
   context,
   page,
