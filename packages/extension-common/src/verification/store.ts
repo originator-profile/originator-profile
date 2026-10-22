@@ -192,6 +192,40 @@ export function trackDocument(
 }
 
 /**
+ * bfcache にある文書のうち、条件に当てはまる結果を破棄する
+ *
+ * 破棄した文書は bfcache の索引からも外す。復元されたら結果がないため検証し直される。
+ * @param matches 破棄する結果か
+ * @returns 破棄した文書
+ */
+export function removeCachedEntries(
+  matches: (entry: VerificationEntry) => boolean,
+): Promise<string[]> {
+  return serialize(async () => {
+    const stored = await chrome.storage.session.get(null);
+    const indexes: Record<string, TabIndex> = {};
+    const removed: string[] = [];
+    for (const [key, value] of Object.entries(stored)) {
+      if (!key.startsWith(TAB_PREFIX)) continue;
+      const index = value as TabIndex;
+      const stale = index.cached.filter((id) => {
+        const entry = stored[documentKey(id)] as VerificationEntry | undefined;
+        return entry !== undefined && matches(entry);
+      });
+      if (stale.length === 0) continue;
+      index.cached = index.cached.filter((id) => !stale.includes(id));
+      forgetOrigins(index, stale);
+      indexes[key] = index;
+      removed.push(...stale);
+    }
+    if (removed.length === 0) return [];
+    await chrome.storage.session.set(indexes);
+    await removeDocuments(removed);
+    return removed;
+  });
+}
+
+/**
  * タブの文書の結果をすべて破棄する
  * @returns 破棄した文書
  */

@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import {
   documentKey,
+  removeCachedEntries,
   setSiteProfileEntry,
   setVerificationEntry,
   siteProfileKey,
@@ -267,6 +268,41 @@ describe("setVerificationEntry", () => {
     expect(fake.storage.has(documentKey("ad"))).toBe(false);
     expect(fake.storage.has(documentKey("hidden"))).toBe(true);
     expect(fake.storage.has(documentKey("shown"))).toBe(true);
+  });
+});
+
+describe("removeCachedEntries", () => {
+  test("bfcache にある文書の結果だけを破棄し、復元されたら記録し直せる", async () => {
+    const fake = fakeChrome();
+    fake.frames.push({
+      tabId: 1,
+      frameId: 0,
+      documentId: "before",
+      documentLifecycle: "active",
+    });
+    await trackDocument(1, 0, "before", "https://www.example.org");
+    await setVerificationEntry(unverified(subject(1, 0, "before")));
+    fake.frames[0].documentLifecycle = "cached";
+    fake.frames.push({
+      tabId: 1,
+      frameId: 0,
+      documentId: "after",
+      documentLifecycle: "active",
+    });
+    await trackDocument(1, 0, "after", "https://www.example.org");
+    await setVerificationEntry(unverified(subject(1, 0, "after")));
+
+    expect(await removeCachedEntries(() => true)).toEqual(["before"]);
+    expect(fake.storage.has(documentKey("before"))).toBe(false);
+    expect(fake.storage.has(documentKey("after"))).toBe(true);
+
+    // bfcache から復元された
+    fake.frames[0].documentLifecycle = "active";
+    fake.frames[1].documentLifecycle = "cached";
+    await trackDocument(1, 0, "before", "https://www.example.org");
+    expect(
+      await setVerificationEntry(unverified(subject(1, 0, "before"))),
+    ).toBe(true);
   });
 });
 
