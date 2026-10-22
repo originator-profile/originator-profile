@@ -316,3 +316,10 @@ Sub-->>Panel: 新しいスナップショット
 - `rendered-result` に依存する type は非推奨のため、文書の可視性の変化は監視しない
 - Service Worker が停止すると、進行中の検証は失われる。起動したときに、確定して
   いない文書へ `resync` を送って検証をやり直す
+- `response`・`rendered-result` に依存する target は、文書の読み込みの完了
+  (`complete`) まで期限なしに待つ。読み込みの終わらない文書では、トップレベル
+  文書の結果が確定せず、サイドパネルは読み込み中のままになる
+- オーバーレイは iframe を `body` に追加する。`body`・`html` を target にした CA は、
+  オーバーレイを開くと target の変化として検証し直される。
+  `HtmlTargetIntegrity` ではオーバーレイを含む DOM でダイジェストを求めるため、
+  検証に失敗する
