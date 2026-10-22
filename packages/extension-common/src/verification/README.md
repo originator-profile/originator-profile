@@ -17,7 +17,8 @@
    2. トップレベル文書なら、Site Profile の取得と検証を並行して始める
    3. クレデンシャルを取得し、保持している結果を再利用できれば終える
    4. `unverified` を書き込み、入力依存対象が検証可能になるまで待つ
-   5. `verifying` を書き込み、`verifyDocument` で検証して `settled` を書き込む
+   5. `verifying` を書き込み、`verifyDocument` で検証して `settled` を書き込む。
+      トップレベル文書は、Site Profile の検証結果を待ってから検証する
 3. 購読する側が `storage.onChanged` を受けてストアを読み直す
 
 ```mermaid
@@ -46,6 +47,7 @@ and 文書の検証
     SW->>CS: awaitInputDependency
     CS-->>SW: 検証可能になった
     SW->>Store: verifying
+    Note over SW: トップレベル文書なら<br/>Site Profile の検証結果を待つ
     loop target ごと
       SW->>CS: verifyDocumentIntegrity
       CS-->>SW: 完全性の検証結果 (target を監視に加える)
@@ -93,11 +95,18 @@ documentId と一致しないメッセージを拒否する。documentId は `re
 | `unverified`  | 検証を開始していない (入力依存対象を待っている)               |
 | `verifying`   | 検証を開始したが結果が確定していない                          |
 | `settled`     | 検証済みまたは検証失敗。どちらかは `result.status` で判別する |
-| `invalidated` | 確定した結果が、入力の変化または時刻の経過で有効でなくなった  |
+| `invalidated` | 確定した結果が有効でなくなった。理由は `reason` に持つ        |
 
-時刻の境界 (`result.validUntil`) を過ぎた結果は書き換えず、読み出すときに
-`invalidated` として扱う ([identity.ts](./identity.ts) の `resolveEntry`)。
-提示する側は、無効を検証失敗と区別する (`VerificationInvalidated`)。
+無効になる理由 ([identity.ts](./identity.ts) の `InvalidationType`) は次のとおり。
+
+| 理由                | 契機                                                        |
+| ------------------- | ----------------------------------------------------------- |
+| `Expired`           | 時刻の境界 (`result.validUntil`) を過ぎた                   |
+| `AllowedUrlChanged` | same-document navigation で allowedUrl の評価結果が変わった |
+| `InputChanged`      | 検証した target の要素が変化した                            |
+
+時刻の境界を過ぎた結果は書き換えず、読み出すときに `invalidated` として扱う
+(`resolveEntry`)。提示する側は、無効を検証失敗と区別する (`VerificationInvalidated`)。
 
 Site Profile の検証結果 (`SiteProfileEntry`) は、トップレベル文書ごとに 1 度だけ
 検証して保持する。再読み込みボタンで検証を求められたときは取得し直す。
@@ -173,15 +182,18 @@ same-document navigation で allowedUrl の評価結果が変わったら、検�
 | ------------ | ---------------------------------------------------------------------------------- |
 | サイドパネル | `tabVerificationStoreOf` (購読ストア)、`requestTabVerification` (再読み込みボタン) |
 | バッジ       | `readTabVerification` (`storage.onChanged` を受けて)                               |
-| リンク検証   | `waitForTabSiteProfile`                                                            |
+| リンク検証   | `waitForTabSiteProfile` (自分では検証を求めず、確定するまで 10 秒を上限に待つ)     |
 
 `readTabVerification` は、`webNavigation.getAllFrames` が返すフレームの文書の結果
-だけを返す。
+だけを返す。`watchTabVerification` は、`storage.onChanged` に加えてタブの遷移
+(`webNavigation` の `onCommitted`・`onDOMContentLoaded`・`onCompleted`) でも
+読み直す。フレームの構成は、エントリが変わらなくても変わるため。
 
 サイドパネルは、タブごとの購読ストア ([subscription-store.ts](./subscription-store.ts))
 を介して読む。購読ストアは検証結果ストアの変化を購読し、`useSyncExternalStore` に
 渡せる形で提供する。検証を求めたときの到達確認の結果 (`reachable`・`loading`) を
-加えるが、検証結果は保持せず、変化のたびに検証結果ストアから読み直す。
+加えるが、検証結果は保持せず、変化のたびに検証結果ストアから読み直す。開いている
+あいだにトップレベル文書が入れ替わり、その文書の結果がまだなければ、検証を求め直す。
 
 `verifyTab` はタブ内の全フレームに `resync` を送り、届いた文書を返す。読み込みを
 終えても応えない文書には content script を注入して送り直す。
@@ -196,7 +208,7 @@ participant Store as 検証結果ストア
 
 Panel->>Sub: subscribe (useSyncExternalStore)
 Sub->>SW: verifyTab
-Sub->>Store: watchTabVerification (storage.onChanged を購読する)
+Sub->>Store: watchTabVerification (storage.onChanged とタブの遷移を購読する)
 SW->>CS: resync
 CS-->>SW: 応答 (届いた文書)
 opt 応えない文書 (読み込み後)
@@ -234,6 +246,8 @@ Sub-->>Panel: 新しいスナップショット
 
 - target の監視は、検証時に選択された要素だけを対象にする。後から挿入されて
   セレクターに一致するようになった要素は検知しない
+- クレデンシャルの script 要素は、挿入と削除だけを検知する。既存の要素の内容や
+  `src`・`type` 属性の書き換えは検知しない
 - `rendered-result` に依存する target について、ビューポートの大きさや文書の
   可視性の変化は検知しない
 - Service Worker が停止すると、進行中の検証は失われる。起動したときに、確定して
