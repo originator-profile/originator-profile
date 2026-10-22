@@ -173,6 +173,34 @@ describe("trackDocument", () => {
 
     expect(removed).toEqual(["a"]);
   });
+
+  test("容量が足りなければ追い出してから文書を記録する", async () => {
+    const fake = fakeChrome({ quota: 1_000 });
+    fake.active.add(1);
+    const padded = (s: VerificationSubject): VerificationEntry => ({
+      state: "unverified",
+      subject: { ...s, url: "x".repeat(300) },
+    });
+    const longId = "y".repeat(400);
+    fake.frames.push(
+      {
+        tabId: 2,
+        frameId: 0,
+        documentId: "hidden",
+        documentLifecycle: "active",
+      },
+      { tabId: 2, frameId: 1, documentId: "ad", documentLifecycle: "active" },
+      { tabId: 1, frameId: 0, documentId: longId, documentLifecycle: "active" },
+    );
+    await trackDocument(2, 0, "hidden", "https://www.example.org");
+    await trackDocument(2, 1, "ad", "https://www.example.org");
+    await setVerificationEntry(padded(subject(2, 1, "ad")));
+
+    await trackDocument(1, 0, longId, "https://www.example.org");
+
+    expect(fake.storage.has(documentKey("ad"))).toBe(false);
+    expect(fake.storage.has("verification:tab:1")).toBe(true);
+  });
 });
 
 describe("setVerificationEntry", () => {
