@@ -169,6 +169,11 @@ URL で評価し直す。
 ※ 結果が `rendered-result` に依存していれば再利用しない。
 
 再読み込みボタンでは、トップレベル文書のオリジンの Site Profile も取得し直す。
+
+検証した target の要素が変化したら、検証し直す前に `invalidated` を書き込む。
+確定した結果が残っていると、同時に届いた `documentChanged` の検証がそれを
+再利用してしまうため。
+
 same-document navigation で allowedUrl の評価結果が変わったら、検証し直さずに
 `invalidated` を書き込む。
 

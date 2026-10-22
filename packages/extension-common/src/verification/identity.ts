@@ -26,6 +26,8 @@ export const InvalidationType = {
   Expired: problemType("INVALIDATED_EXPIRED"),
   /** same-document navigation で allowedUrl の評価結果が一致しなくなった */
   AllowedUrlChanged: problemType("INVALIDATED_ALLOWED_URL_CHANGED"),
+  /** 検証した target の入力依存対象が変化した */
+  InputChanged: problemType("INVALIDATED_INPUT_CHANGED"),
 } as const;
 
 /**

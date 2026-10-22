@@ -118,6 +118,42 @@ test("検証済みの target が変化したら改めて検証される", async 
   ).toMatchObject({ status: false });
 });
 
+test("target の変化と同時にクレデンシャルの script 要素が変わっても、改めて検証される", async ({
+  context,
+  page,
+  missingSiteProfile: _missingSiteProfile,
+  credentialsPage,
+  validCredentials,
+}) => {
+  await validCredentials(
+    { publicKey, privateKey },
+    credentialsPage.contents,
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
+  await page.goto("about:blank");
+  const worker = await backgroundWorker(context);
+
+  await page.goto(credentialsPage.endpoint);
+  expect(
+    await settledResult(worker, credentialsPage.endpoint, 1),
+  ).toMatchObject({ status: true });
+
+  // 本文を描き直す SPA のように、target と同じ内容の CAS の script 要素を同時に置き換える
+  await page.evaluate(() => {
+    const target = document.getElementById("text-target-integrity");
+    if (target) target.textContent = "改ざんされた本文";
+    const cas = document.querySelector(
+      'script[type="application/ca-set+json"]',
+    );
+    cas?.replaceWith(cas.cloneNode());
+  });
+
+  expect(
+    await settledResult(worker, credentialsPage.endpoint, 1, { status: false }),
+  ).toMatchObject({ status: false });
+});
+
 test("target の部分木の外でセレクターに一致する要素が増えても改めて検証される", async ({
   context,
   page,
