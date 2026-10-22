@@ -14,7 +14,7 @@ WordPress での記事の公開時の Content Attestation (CA) の発行に役�
 ### Verified
 
 - OS: Ubuntu 24.04
-- Base image: `wordpress:6.9.4-php8.2`
+- Base image: `wordpress:7.1.3-php8.2`
 
 ### Development
 

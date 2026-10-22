@@ -1,4 +1,4 @@
-FROM wordpress:6.9.4-php8.2@sha256:29a3af5db27d8c1716367575280bbf449cd231ced707daf8ce411895c042ed76
+FROM wordpress:7.1.3-php8.2@sha256:841fdef84001500e47ccc605a9429ecd0dc3df83735636645d2ba0563679998d
 
 # Install composer
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
