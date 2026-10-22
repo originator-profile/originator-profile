@@ -37,6 +37,7 @@ import {
   getSiteProfileEntry,
   getVerificationEntry,
   listVerificationEntries,
+  removeCachedEntries,
   removeSiteProfileEntry,
   setRegistryEntry,
   setSiteProfileEntry,
@@ -56,6 +57,7 @@ import type {
 } from "./types";
 
 type SettledSiteProfile = Extract<SiteProfileEntry, { state: "settled" }>;
+type SettledEntry = Extract<VerificationEntry, { state: "settled" }>;
 
 type Destination = { tabId: number; frameId: number; documentId: string };
 
@@ -255,27 +257,30 @@ export function setupVerificationPipeline() {
   };
 
   /**
-   * オリジンの Site Profile を用いて確定した結果を無効にし、検証し直しを求める
+   * オリジンの Site Profile を用いて確定した結果を、検証し直させる
    *
-   * bfcache にある文書には届かないが、復元されたときに無効の結果は再利用されない。
+   * フレームにある文書は結果を無効にして検証し直しを求める。bfcache にある文書は
+   * 結果を破棄し、復元されたときに検証し直させる。
    */
   const invalidateSiteProfileUsers = async (origin: string) => {
+    const usesSiteProfile = (entry: VerificationEntry): entry is SettledEntry =>
+      entry.state === "settled" &&
+      entry.subject.origin === origin &&
+      entry.result.inputRange.some(({ kind }) => kind === "site-profile");
+    forget(await removeCachedEntries(usesSiteProfile));
+
     const now = new Date();
     const reason = {
       type: InvalidationType.SiteProfileUpdated,
       title: "Site Profile used for verification was updated",
     };
-    const users = (await listVerificationEntries()).flatMap((entry) =>
-      entry.state === "settled" &&
-      entry.subject.origin === origin &&
-      entry.result.inputRange.some(({ kind }) => kind === "site-profile")
-        ? [entry]
-        : [],
-    );
+    const users = (await listVerificationEntries()).filter(usesSiteProfile);
     await Promise.all(
       users.map(async (entry) => {
         const { tabId, frameId, documentId } = entry.subject;
-        await setVerificationEntry(invalidate(entry, reason, now));
+        if (!(await setVerificationEntry(invalidate(entry, reason, now)))) {
+          return;
+        }
         verificationMessenger
           .sendMessage(
             "resync",
@@ -283,7 +288,7 @@ export function setupVerificationPipeline() {
             { tabId, frameId },
           )
           .catch(() => {
-            // 文書が bfcache にある、またはすでに破棄されている
+            // 文書がすでに破棄されている
           });
       }),
     );
