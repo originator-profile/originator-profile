@@ -573,6 +573,69 @@ test("時刻の境界を過ぎた Site Profile の検証結果は再利用せず
   expect(fetched).toBe(2);
 });
 
+test("Site Profile を取得し直したら、それを用いて検証した文書を検証し直す", async ({
+  context,
+  page,
+  validSiteProfile,
+  credentialsPage,
+  credentialsMissingPage,
+  validCredentials,
+}) => {
+  const key = { publicKey, privateKey };
+  await validSiteProfile(key, credentialsPage.issuer, credentialsPage.holder);
+  await validCredentials(
+    key,
+    credentialsPage.contents,
+    credentialsPage.issuer,
+    credentialsPage.holder,
+  );
+  await page.goto("about:blank");
+  const worker = await backgroundWorker(context);
+  await page.goto(credentialsPage.endpoint);
+  await settledResult(worker, credentialsPage.endpoint, 1);
+  const verifiedAtOf = () =>
+    worker.evaluate(async (url) => {
+      const stored = await chrome.storage.session.get(null);
+      const entry = Object.values(stored).find(
+        (value) =>
+          (value as VerificationEntry).subject?.url === url &&
+          (value as VerificationEntry).state === "settled",
+      ) as Extract<VerificationEntry, { state: "settled" }> | undefined;
+      return entry?.result.verifiedAt;
+    }, credentialsPage.endpoint);
+  const verifiedAt = await verifiedAtOf();
+  expect(verifiedAt).toBeDefined();
+
+  // 保持した Site Profile の検証結果を時刻の境界を過ぎたものにし、
+  // 同じオリジンの別のタブで取得し直させる
+  await worker.evaluate(async () => {
+    const stored = await chrome.storage.session.get(null);
+    const [key, entry] =
+      Object.entries(stored).find(([key]) =>
+        key.startsWith("verification:site-profile:"),
+      ) ?? [];
+    if (!key) throw new Error("Site Profile の検証結果を保持しているはず");
+    const { result } = entry as { result: object };
+    await chrome.storage.session.set({
+      [key]: {
+        ...(entry as object),
+        result: { ...result, validUntil: new Date(0).toISOString() },
+      },
+    });
+  });
+  const other = await context.newPage();
+  await other.goto(credentialsMissingPage.endpoint);
+  await settledResult(worker, credentialsMissingPage.endpoint, 0);
+
+  await expect
+    .poll(async () => {
+      const current = await verifiedAtOf();
+      return current !== undefined && current !== verifiedAt;
+    })
+    .toBe(true);
+  await other.close();
+});
+
 test("時刻の境界を過ぎた Site Profile の検証結果は、検証失敗とは別に無効として示す", async ({
   context,
   page,
