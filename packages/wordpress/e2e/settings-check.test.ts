@@ -25,7 +25,13 @@ async function save(page: Page, settings: Settings) {
   await field(page, "profile_ca_server_admin_secret").fill(
     settings.profile_ca_server_admin_secret,
   );
-  await page.locator("#profile-ca-settings [type=submit]").click();
+  // 元の設定が未入力の場合も戻せるよう、ブラウザーの必須入力チェックを通さずに送信する。
+  // 保存ボタンの name が submit のため、form.submit ではなく HTMLFormElement の submit を呼ぶ。
+  await page
+    .locator("#profile-ca-settings")
+    .evaluate((form: HTMLFormElement) =>
+      HTMLFormElement.prototype.submit.call(form),
+    );
   // 管理画面の JavaScript が URL から settings-updated を取り除くため、保存完了の通知で待つ。
   await expect(page.locator("#setting-error-settings_updated")).toBeVisible();
 }
