@@ -1,1 +1,1 @@
-export * from "./verify-documents";
+export * from "./verify-document";
