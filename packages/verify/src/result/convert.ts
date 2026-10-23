@@ -18,6 +18,13 @@ export type OriginatorPayload = {
   media?: (WebMediaProfile | null)[];
 };
 
+/**
+ * 検証済みの発信者の Core Profile を、検証鍵や発行者の探索に用いる形で得る
+ * @param originators 検証済みの発信者の復号ペイロード
+ */
+export const coreProfilesOf = (originators: OriginatorPayload[]) =>
+  originators.flatMap(({ core }) => (core ? [{ core: { doc: core } }] : []));
+
 /** 復号した Content Attestation Set の要素 */
 export type CasPayload = {
   main: boolean;
@@ -70,7 +77,7 @@ function toSecuringResult(
   at: string,
   status: boolean,
 ): SecuringResult {
-  const doc = asRecord(vc?.doc);
+  const doc = asRecord(vc?.doc) ?? {};
 
   return compact({
     pointer: at,
@@ -80,8 +87,10 @@ function toSecuringResult(
     algorithm: asString(vc?.algorithm),
     issuedAt: asIsoString(vc?.issuedAt),
     expiredAt: asIsoString(vc?.expiredAt),
+    validFrom: asString(doc.validFrom),
+    validUntil: asString(doc.validUntil),
     verificationKey: asJwk(vc?.verificationKey),
-    controller: asString(doc?.issuer),
+    controller: asString(doc.issuer),
   });
 }
 
