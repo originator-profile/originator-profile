@@ -3,6 +3,9 @@
 
 namespace Profile\SettingsCheck;
 
+require_once __DIR__ . '/config.php';
+use const Profile\Config\PROFILE_DEFAULT_CA_SERVER_HOSTNAME;
+
 /** OIDC の認証情報に必要なキー（CasApiAuthClient::init_oidc と同じ） */
 const OIDC_KEYS = array( 'providerUrl', 'provider', 'authorizeUrl', 'tokenUrl', 'redirectUrl', 'clientId', 'clientSec', 'jwksUri' );
 
@@ -76,7 +79,8 @@ function render_saved_notice() {
 	$problems = check_settings(
 		array(
 			'profile_ca_issuer_id'           => \get_option( 'profile_ca_issuer_id', '' ),
-			'profile_ca_server_hostname'     => \get_option( 'profile_ca_server_hostname', '' ),
+			// 未保存のときは、CA 発行 (build_ca_base_endpoint) と同じく初期値を使う。
+			'profile_ca_server_hostname'     => \get_option( 'profile_ca_server_hostname', PROFILE_DEFAULT_CA_SERVER_HOSTNAME ),
 			'profile_ca_server_admin_secret' => \get_option( 'profile_ca_server_admin_secret', '' ),
 			'profile_ca_server_id_token'     => \get_option( 'profile_ca_server_id_token', '' ),
 		)
