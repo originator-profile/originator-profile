@@ -45,7 +45,7 @@
     "dotenv": "17.4.2",
     "esbuild": "0.28.1",
     "esbuild-copy-static-files": "0.1.0",
-    "happy-dom": "20.8.9",
+    "happy-dom": "21.0.4",
     "just-flush": "2.3.0",
     "just-safe-get": "4.2.0",
     "npm-run-all2": "8.0.4",
