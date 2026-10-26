@@ -10,4 +10,5 @@ export * from "./registry";
 export * from "./result";
 export * from "./site-profile/";
 export * from "./verify-allowed-origin";
+export * from "./verify-allowed-url";
 export * from "./website";

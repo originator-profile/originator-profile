@@ -2,12 +2,12 @@ import {
   OpsInvalid,
   OpsVerifyFailed,
   problemType,
-  type DocumentsOutcome,
+  type DocumentOutcome,
   type VerificationResult,
   type VerificationTarget,
 } from "@originator-profile/verify";
 import { describe, expect, test } from "vitest";
-import { toLegacyDocuments } from "./to-legacy-result";
+import { toLegacyDocument } from "./to-legacy-result";
 
 /**
  * OPS の検証に失敗した結果を組み立てる
@@ -16,9 +16,21 @@ import { toLegacyDocuments } from "./to-legacy-result";
  */
 const opsFailure = (
   code: string,
-): VerificationResult<DocumentsOutcome<VerificationTarget>> => ({
+): VerificationResult<DocumentOutcome<VerificationTarget>> => ({
   status: false,
-  outcome: { originators: [{ core: null }], documents: [] },
+  outcome: {
+    target: {
+      ops: [],
+      cas: [],
+      url: "https://www.example.org/",
+      frameType: "outermost_frame",
+      verifyIntegrity: () => {
+        throw new Error("verifyIntegrity should not be called");
+      },
+    },
+    originators: [{ core: null }],
+    cas: [],
+  },
   securingResults: [],
   warnings: [],
   info: [],
@@ -32,15 +44,15 @@ const opsFailure = (
   ],
 });
 
-describe("toLegacyDocuments", () => {
+describe("toLegacyDocument", () => {
   test("OPS が無効な結果は OpsInvalid に戻す", () => {
-    const legacy = toLegacyDocuments(opsFailure(OpsInvalid.code));
+    const legacy = toLegacyDocument(opsFailure(OpsInvalid.code));
 
     expect(legacy).toBeInstanceOf(OpsInvalid);
   });
 
   test("OPS の検証に失敗した結果は OpsVerifyFailed に戻す", () => {
-    const legacy = toLegacyDocuments(opsFailure(OpsVerifyFailed.code));
+    const legacy = toLegacyDocument(opsFailure(OpsVerifyFailed.code));
 
     expect(legacy).toBeInstanceOf(OpsVerifyFailed);
   });

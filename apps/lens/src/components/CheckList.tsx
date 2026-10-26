@@ -688,7 +688,6 @@ function CheckList({
   const opsError = findError(codedErrors, [
     "ERR_ORIGINATOR_PROFILE_SET_INVALID",
     "ERR_ORIGINATOR_PROFILE_SET_VERIFY_FAILED",
-    "ERR_FETCH_CREDENTIALS_MESSAGING_FAILED",
   ]);
 
   const originatorProfileSet = opsError ?? ops;
