@@ -68,7 +68,7 @@ PHP 7.4 のように下限を下回る環境では、現在のコードのまま
 4. プラグインの設定:
    WordPress 管理者画面の「設定 > CA Manager」にアクセスし、以下の必要項目を入力 (後述)
 5. `/.well-known/sp.json` の配置:
-   詳細は「[サイトのOP対応](https://cip.docs.originator-profile.org/studies/general-instruction/sp-setup-guide/)」を参照
+   詳細は「[Site Profile の設置ガイド](https://docs.originator-profile.org/ja/tutorial/sp-setup-guide/)」を参照
 
 ## 設定
 
@@ -318,7 +318,7 @@ HTML中にscript要素を用いてOPを埋め込むことが可能です。
 </script>
 ```
 
-詳細は「[サイトのOP対応](https://cip.docs.originator-profile.org/studies/general-instruction/sp-setup-guide/)」または「[Linking Content Attestation Set and Originator Profile Set to A HTML Document](https://docs.originator-profile.org/opb/link-to-html/)」をご確認ください。
+詳細は「[Content Attestation の設置ガイド](https://docs.originator-profile.org/ja/tutorial/cas-setup-guide/)」または「[Linking Content Attestation Set and Originator Profile Set to A HTML Document](https://docs.originator-profile.org/opb/link-to-html/)」をご確認ください。
 
 ## 処理の流れ
 

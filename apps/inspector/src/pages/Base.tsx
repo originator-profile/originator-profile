@@ -1,5 +1,4 @@
 import {
-  FetchCredentialsMessagingFailed,
   FramesVerifiedCas,
   SupportedVerifiedCas,
   overlayExtensionMessenger,
@@ -19,23 +18,27 @@ import {
   VerifiedSp,
 } from "@originator-profile/verify";
 import flush from "just-flush";
-import { Navigate } from "react-router";
+import { Navigate, useLocation } from "react-router";
 import { useMount } from "react-use";
 import { useCredentials } from "../components/credentials";
-import { useFrameCasLocationProvider } from "../components/frameCas";
 import Loading from "../components/Loading";
 import { useSiteProfile } from "../components/siteProfile";
 import Unsupported from "../components/Unsupported";
 import { buildPublUrl, routes } from "../utils/routes";
 
+/** CA のないまま site 画面に着地したことを示す遷移の state */
+const LANDED_WITHOUT_CA = "landed-without-ca";
+
 function Redirect({
   tabId,
   ops,
   framesCas,
+  replace,
 }: {
   tabId: number;
   ops?: VerifiedOps;
   framesCas?: FramesVerifiedCas;
+  replace?: boolean;
 }) {
   const cas: SupportedVerifiedCas | undefined = framesCas
     ?.sort((a, b) => a.parentFrameId - b.parentFrameId)
@@ -57,7 +60,26 @@ function Redirect({
     }
   });
 
-  return <Navigate to={buildPublUrl(tabId, ca?.attestation.doc)} />;
+  return (
+    <Navigate
+      to={buildPublUrl(tabId, ca?.attestation.doc)}
+      replace={replace}
+      state={ca ? undefined : LANDED_WITHOUT_CA}
+    />
+  );
+}
+
+/**
+ * CA のないまま着地した site 画面で、後から CA が届いたら publ 画面へ遷移し直す
+ *
+ * 文書の検証結果は文書ごとに届くため、着地した後に確定する文書の CA もある。
+ * 利用者が自分で移った画面は変えない。
+ */
+export function FollowLanding() {
+  const { state } = useLocation();
+  const { tabId, ops, cas, framesCas } = useCredentials();
+  if (state !== LANDED_WITHOUT_CA || !cas || cas.length === 0) return null;
+  return <Redirect tabId={tabId} ops={ops} framesCas={framesCas} replace />;
 }
 
 function Prohibition({ tabId }: { tabId: number }) {
@@ -111,7 +133,6 @@ function isCredentialsVerifyError(credentialsError?: Error) {
 function Base() {
   const { tabId, siteProfile, error: spError } = useSiteProfile();
   const { ops, cas, framesCas, error: credentialsError } = useCredentials();
-  useFrameCasLocationProvider(tabId, framesCas ?? []);
 
   if (isLoading({ siteProfile, spError, ops, cas, credentialsError })) {
     return <Loading />;
@@ -132,8 +153,7 @@ function Base() {
     ): error is
       | SiteProfileFetchFailed
       | SiteProfileFetchInvalid
-      | OpsInvalid
-      | FetchCredentialsMessagingFailed => {
+      | OpsInvalid => {
       if (!error) {
         return false;
       }
