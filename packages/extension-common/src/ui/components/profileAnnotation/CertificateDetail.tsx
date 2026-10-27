@@ -53,11 +53,7 @@ function CertificateDetailContent({
     <>
       <header className="flex items-center gap-3 mb-4">
         <Image
-          src={
-            certificate.credentialSubject.type === "CertificateProperties"
-              ? certificate.credentialSubject.image?.id
-              : undefined
-          }
+          src={certificate.credentialSubject.image?.id}
           placeholderSrc={placeholderLogoMainUrl}
           alt=""
           width={60}
