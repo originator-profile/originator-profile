@@ -18,6 +18,9 @@ use function Profile\Exclusion\parse_absolute_url;
 // 設定画面で接続確認の表示 (render) に使う。フックの登録 (init) は ca-manager.php で行う。
 require_once __DIR__ . '/diagnostics.php';
 
+require_once __DIR__ . '/settings-check.php';
+use function Profile\SettingsCheck\render_notice as render_settings_notice;
+
 /** 管理者画面の初期化 */
 function init() {
 	\add_action( 'admin_menu', '\Profile\Admin\add_options_page' );
@@ -126,6 +129,7 @@ function settings_page() {
 	?>
 		<div class="wrap">
 			<h1>CA Manager</h1>
+			<?php render_settings_notice(); ?>
 			<p><a href="<?php echo \esc_url( \admin_url( 'tools.php?page=ca-manager-bulk' ) ); ?>">既存記事のCA一括発行</a></p>
 			<?php exclusion_settings(); ?>
 			<form id="profile-ca-settings" method="post" action="options.php">
