@@ -15,7 +15,10 @@ async function mockStatus(page: Page, state: { message: string | null }) {
     requests.push(body);
     return route.fulfill({
       contentType: "application/json",
-      body: JSON.stringify({ success: true, data: { message: state.message } }),
+      body: JSON.stringify({
+        success: true,
+        data: { post_id: Number(body.get("post_id")), message: state.message },
+      }),
     });
   });
   return requests;
@@ -44,6 +47,50 @@ test("編集画面で発行失敗を通知し、保存後に解消されれば�
   // 保存が終わるたびに確認し直す。表示言語に依存しないようショートカットで保存する。
   await page.keyboard.press("ControlOrMeta+s");
   await expect.poll(() => requests.length).toBeGreaterThan(before);
+  await expect(notice).toHaveCount(0);
+});
+
+test("前後して返った古い応答で最新の状態を上書きしない", async ({
+  admin,
+  page,
+}) => {
+  // 開いたときの問い合わせ（失敗あり）を、保存後の問い合わせ（失敗なし）より後に返す。
+  let releaseFirst = () => {};
+  const firstHeld = new Promise<void>((resolve) => {
+    releaseFirst = resolve;
+  });
+  let count = 0;
+  await page.route("**/admin-ajax.php", async (route) => {
+    const body = new URLSearchParams(route.request().postData() || "");
+    if (body.get("action") !== "profile_ca_issue_status") {
+      return route.continue();
+    }
+    const index = count++;
+    if (index === 0) {
+      await firstHeld;
+    }
+    return route.fulfill({
+      contentType: "application/json",
+      body: JSON.stringify({
+        success: true,
+        data: {
+          post_id: Number(body.get("post_id")),
+          message: index === 0 ? failure : null,
+        },
+      }),
+    });
+  });
+  await admin.createNewPost({ title: "古い応答の確認" });
+  await expect.poll(() => count).toBe(1);
+  await page.keyboard.press("ControlOrMeta+s");
+  await expect.poll(() => count).toBe(2);
+  releaseFirst();
+
+  const notice = page.locator(".components-notice.is-error", {
+    hasText: "CAの発行に失敗しました",
+  });
+  // 古い応答が反映されないことを、反映に十分な時間を置いて確かめる。
+  await page.waitForTimeout(1000);
   await expect(notice).toHaveCount(0);
 });
 
