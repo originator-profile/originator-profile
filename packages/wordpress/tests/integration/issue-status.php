@@ -10,6 +10,7 @@ if ( ! defined( 'WP_CLI' ) || ! WP_CLI ) {
 }
 
 use const Profile\IssueStatus\FAILURE_META;
+use const Profile\Delivery\BLOCKED_META;
 
 /**
  * Check an issue status assertion.
@@ -27,11 +28,14 @@ function profile_issue_status_assert( bool $condition, string $message ): void {
 $previous_user = get_current_user_id();
 $post_ids      = array();
 $ca_response   = null;
+$excluded      = array();
 $filters       = array(
 	'pre_option_profile_ca_server_hostname'     => static fn () => 'ca.example.net',
 	'pre_option_profile_ca_issuer_id'           => static fn () => 'dns:example.test',
 	'pre_option_profile_ca_server_admin_secret' => static fn () => 'test:secret',
-	'pre_option_profile_ca_excluded_urls'       => static fn () => array(),
+	'pre_option_profile_ca_excluded_urls'       => static function () use ( &$excluded ) {
+		return $excluded;
+	},
 	'pre_http_request'                          => static function () use ( &$ca_response ) {
 		return $ca_response;
 	},
@@ -75,7 +79,13 @@ try {
 	$failure     = \Profile\IssueStatus\get_failure( $published_id );
 	profile_issue_status_assert( 'failed' === $result['status'], 'The CA server error should fail issuance.' );
 	profile_issue_status_assert( null !== $failure && $result['message'] === $failure['message'], 'The failure should be recorded.' );
-	profile_issue_status_assert( str_contains( \Profile\IssueStatus\failure_message( $failure ), $result['message'] ), 'The notice should include the failure message.' );
+	$admin_message  = \Profile\IssueStatus\failure_message( $published_id, $failure, true );
+	$editor_message = \Profile\IssueStatus\failure_message( $published_id, $failure, false );
+	profile_issue_status_assert( str_contains( $admin_message, $result['message'] ), 'The notice should include the failure message.' );
+	// Issuance suspends delivery before contacting the CA server, so the notice must not imply the CA is still served.
+	profile_issue_status_assert( '' !== get_post_meta( $published_id, BLOCKED_META, true ) && str_contains( $admin_message, 'CAは配信していません' ), 'The notice should state that delivery is stopped.' );
+	profile_issue_status_assert( str_contains( $admin_message, 'この記事を更新するとCAを再発行' ) && ! str_contains( $admin_message, '管理者に' ), 'Administrators should be told how to reissue.' );
+	profile_issue_status_assert( str_contains( $editor_message, '管理者に、この記事とエラー内容を連絡' ), 'Editors should be told to contact an administrator.' );
 
 	// A successful issuance clears the failure.
 	$ca_response = $response( 200, '["test-ca"]' );
@@ -89,6 +99,18 @@ try {
 	$result = \Profile\Issue\issue_post( get_post( $published_id ), true );
 	profile_issue_status_assert( 'skipped' === $result['status'], 'Missing-only issuance should skip a post with CA.' );
 	profile_issue_status_assert( null !== \Profile\IssueStatus\get_failure( $published_id ), 'Skipping should keep the latest failure.' );
+
+	// A failure before suspension leaves the previously issued CA in delivery.
+	delete_post_meta( $published_id, BLOCKED_META );
+	profile_issue_status_assert( str_contains( \Profile\IssueStatus\failure_message( $published_id, \Profile\IssueStatus\get_failure( $published_id ), true ), '以前に発行したCAを配信しています' ), 'The notice should state that the previous CA is delivered.' );
+
+	// Excluded posts do not show the failure, but the record is kept for when the exclusion is removed.
+	$excluded = array( get_permalink( $published_id ) );
+	profile_issue_status_assert( null === \Profile\IssueStatus\get_failure( $published_id ) && '' !== get_post_meta( $published_id, FAILURE_META, true ), 'Excluded posts should hide but keep the failure.' );
+	$excluded = 'invalid';
+	profile_issue_status_assert( null !== \Profile\IssueStatus\get_failure( $published_id ), 'An unreadable exclusion setting should not hide the failure.' );
+	$excluded = array();
+	profile_issue_status_assert( null !== \Profile\IssueStatus\get_failure( $published_id ), 'Removing the exclusion should show the failure again.' );
 
 	// Failures are not shown for posts that are not published.
 	$draft_id   = wp_insert_post(
@@ -110,7 +132,7 @@ try {
 	);
 	profile_issue_status_assert( null === \Profile\IssueStatus\get_failure( $draft_id ), 'Drafts should not show failures.' );
 
-	WP_CLI::success( 'Issue status checks passed: failure recorded, success clears, skip keeps, drafts hidden.' );
+	WP_CLI::success( 'Issue status checks passed: failure recorded, delivery state, next steps, success clears, skip keeps, exclusion hides, drafts hidden.' );
 } finally {
 	foreach ( $post_ids as $created_id ) {
 		if ( is_int( $created_id ) && $created_id > 0 ) {
