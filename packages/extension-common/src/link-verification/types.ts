@@ -25,6 +25,12 @@ export type LinkVerificationResult = {
   /** 遷移先サイトが署名で示す、実際にサイトを運営している組織 */
   actualOperator?: OrgRef;
   reason?: string;
+  /**
+   * 照合に用いた Web サイトの検証結果の時刻の境界
+   *
+   * 過ぎた結果は、履歴の移動で復元しない。
+   */
+  validUntil?: string;
 };
 
 /**

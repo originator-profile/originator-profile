@@ -1,14 +1,17 @@
 import { LocalKeys, type Keys } from "@originator-profile/cryptography";
-import { Jwks } from "@originator-profile/model";
+import { CoreProfile, Jwks } from "@originator-profile/model";
 import { DecodedOps } from "../originator-profile-set";
 
 type OpId = string;
 
 /**
  * OPS から鍵を取得する
+ * @param ops Core Profile を持つ OP の集合 (復号した OPS、または検証済みの OP)
  * @returns OP ID, JWKS の連想配列
  */
-export function getMappedKeys(ops: DecodedOps): Record<OpId, Jwks> {
+export function getMappedKeys(
+  ops: { core: { doc: CoreProfile } }[],
+): Record<OpId, Jwks> {
   const groupedOps = Object.groupBy(
     ops,
     (op) => op.core.doc.credentialSubject.id,
