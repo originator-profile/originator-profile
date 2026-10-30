@@ -3,6 +3,10 @@
 
 namespace Profile\IssueStatus;
 
+require_once __DIR__ . '/delivery.php';
+use function Profile\Delivery\is_post_excluded;
+use const Profile\Delivery\BLOCKED_META;
+
 /** 直近の CA 発行失敗を保存する投稿メタのキー */
 const FAILURE_META = '_profile_ca_issue_failure';
 
@@ -42,18 +46,29 @@ function record_result( int $post_id, array $result ): array {
 }
 
 /**
- * 公開中の記事の直近の発行失敗
+ * 公開中で、CA発行の対象になっている記事の直近の発行失敗
+ *
+ * 除外中の記事には表示しない（記録は残すため、除外を外すと再び表示する）。
  *
  * @param int $post_id 投稿 ID
  * @return ?array 失敗していなければ null。message と、表示用の日時 time を含む
  */
 function get_failure( int $post_id ): ?array {
-	if ( 'publish' !== \get_post_status( $post_id ) ) {
+	$post = \get_post( $post_id );
+	if ( ! $post instanceof \WP_Post || 'publish' !== $post->post_status ) {
 		return null;
 	}
 	$failure = \get_post_meta( $post_id, FAILURE_META, true );
 	if ( ! is_array( $failure ) || ! isset( $failure['message'], $failure['time'] ) ) {
 		return null;
+	}
+	try {
+		if ( is_post_excluded( $post ) ) {
+			return null;
+		}
+	} catch ( \InvalidArgumentException $error ) {
+		// 除外を判定できない場合は、失敗を隠さずに表示する。
+		unset( $error );
 	}
 	return array(
 		'message' => (string) $failure['message'],
@@ -62,12 +77,27 @@ function get_failure( int $post_id ): ?array {
 }
 
 /**
- * 通知の本文
+ * 通知の本文（失敗の内容・CAの配信状態・次の操作）
  *
+ * 発行に失敗すると、多くの場合は再発行前に配信を停止しているため、実際の配信状態を添える。
+ *
+ * @param int   $post_id 投稿 ID
  * @param array $failure get_failure() の結果
+ * @param bool  $can_manage 設定を変更できる管理者か
  */
-function failure_message( array $failure ): string {
-	return "CAの発行に失敗しました（{$failure['time']}）：{$failure['message']}";
+function failure_message( int $post_id, array $failure, bool $can_manage ): string {
+	// issue.php は issue-status.php より後に関数を定義するが、呼び出し時には読み込み済み。
+	$delivering = ! \get_post_meta( $post_id, BLOCKED_META, true ) && \Profile\Issue\has_post_cas( $post_id );
+	return implode(
+		' ',
+		array(
+			"CAの発行に失敗しました（{$failure['time']}）：{$failure['message']}",
+			$delivering ? 'この記事には以前に発行したCAを配信しています（最新の内容のCAではありません）。' : 'この記事のCAは配信していません。',
+			$can_manage
+				? 'CAサーバーの設定を確認したあと、この記事を更新するとCAを再発行します。'
+				: '管理者に、この記事とエラー内容を連絡してください。管理者が設定を確認したあと、この記事を更新するとCAを再発行します。',
+		)
+	);
 }
 
 /** 発行失敗の状態を返す AJAX ハンドラー */
@@ -78,7 +108,12 @@ function ajax_status() {
 		\wp_send_json_error( null, 403 );
 	}
 	$failure = get_failure( $post_id );
-	\wp_send_json_success( array( 'message' => $failure ? failure_message( $failure ) : null ) );
+	\wp_send_json_success(
+		array(
+			'post_id' => $post_id,
+			'message' => $failure ? failure_message( $post_id, $failure, \current_user_can( 'manage_options' ) ) : null,
+		)
+	);
 }
 
 /** 投稿の編集画面（ブロックエディター）でだけ通知の JavaScript を読み込む */
@@ -121,7 +156,7 @@ function render_classic_notice() {
 	?>
 		<div id="profile-ca-issue-failure" class="notice notice-error">
 			<p>
-				<?php echo \esc_html( failure_message( $failure ) ); ?>
+				<?php echo \esc_html( failure_message( $post->ID, $failure, \current_user_can( 'manage_options' ) ) ); ?>
 				<?php if ( \current_user_can( 'manage_options' ) ) : ?>
 					<a href="<?php echo \esc_url( \admin_url( 'options-general.php?page=ca-manager' ) ); ?>">CAサーバーへの接続確認</a>
 				<?php endif; ?>

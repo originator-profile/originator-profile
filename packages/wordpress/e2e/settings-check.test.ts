@@ -80,13 +80,38 @@ test("保存した設定の形式に問題があれば警告する", async ({ pa
     profile_ca_server_hostname: "https://playground.originator-profile.org/",
     profile_ca_server_admin_secret: "password-only",
   });
-  await expect(notice(page)).toContainText("保存した設定に問題があります。");
+  await expect(notice(page)).toContainText("保存済みの設定に問題があります。");
   await expect(notice(page).locator("li")).toHaveText([
     /「https:\/\/」やパスを付けず/,
     /「ユーザー名:パスワード」の形式/,
   ]);
 
-  // 保存直後の画面でだけ表示する。
+  // 問題が残っている間は、設定画面を開き直しても表示し続ける。
   await page.goto(settingsUrl);
+  await expect(notice(page).locator("li")).toHaveCount(2);
+});
+
+test("OIDCの未認証は警告ではなく次の手順として案内する", async ({ page }) => {
+  const keys = [
+    "providerUrl",
+    "provider",
+    "authorizeUrl",
+    "tokenUrl",
+    "redirectUrl",
+    "clientId",
+    "clientSec",
+    "jwksUri",
+  ];
+  const config = Object.fromEntries(keys.map((key) => [key, "value"]));
+  await save(page, {
+    profile_ca_issuer_id: "dns:media.example.com",
+    profile_ca_server_hostname: "playground.originator-profile.org",
+    profile_ca_server_admin_secret: `OIDC:${Buffer.from(JSON.stringify(config)).toString("base64")}`,
+  });
   await expect(notice(page)).toHaveCount(0);
+  const nextStep = page.locator("#profile-ca-oidc-next-step");
+  await expect(nextStep).toContainText("次にOIDCの認証を完了してください。");
+  await expect(
+    nextStep.getByRole("link", { name: "OIDC認証を開始" }),
+  ).toHaveAttribute("href", /oidc-callback=1/);
 });

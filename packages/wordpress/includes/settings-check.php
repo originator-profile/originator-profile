@@ -1,10 +1,13 @@
 <?php
-/** 設定保存時の形式チェック */
+/** 保存済み設定の形式チェック */
 
 namespace Profile\SettingsCheck;
 
 require_once __DIR__ . '/config.php';
 use const Profile\Config\PROFILE_DEFAULT_CA_SERVER_HOSTNAME;
+
+require_once __DIR__ . '/oidc-callback.php';
+use const Profile\CasApiOidcCallback\OIDC_CALLBACK_ENDPOINT;
 
 /** OIDC の認証情報に必要なキー（CasApiAuthClient::init_oidc と同じ） */
 const OIDC_KEYS = array( 'providerUrl', 'provider', 'authorizeUrl', 'tokenUrl', 'redirectUrl', 'clientId', 'clientSec', 'jwksUri' );
@@ -45,7 +48,7 @@ function check_settings( array $value ): array {
 	$hostname = (string) ( $value['profile_ca_server_hostname'] ?? '' );
 	if ( '' === $hostname ) {
 		$problems[] = 'CAサーバーホスト名が未設定です。';
-	} elseif ( ! preg_match( '/\A[A-Za-z0-9.-]+(?::\d{1,5})?\z/', $hostname ) ) {
+	} elseif ( ! preg_match( '/\A[A-Za-z0-9.-]+(?::(?:[1-9]\d{0,3}|[1-5]\d{4}|6[0-4]\d{3}|65[0-4]\d{2}|655[0-2]\d|6553[0-5]))?\z/', $hostname ) ) {
 		$problems[] = 'CAサーバーホスト名には「https://」やパスを付けず、ホスト名だけを入力してください（例: playground.originator-profile.org）。';
 	}
 
@@ -60,8 +63,6 @@ function check_settings( array $value ): array {
 			$problems[] = "{$prefix}の認証情報を読み取れません。「{$prefix}:」の後に、設定のJSONをBase64で符号化した値を入力してください。";
 		} elseif ( $missing ) {
 			$problems[] = "{$prefix}の認証情報に必要な項目がありません：" . implode( '、', $missing );
-		} elseif ( 'OIDC' === $prefix && empty( $value['profile_ca_server_id_token'] ) ) {
-			$problems[] = 'OIDCの認証がまだ済んでいません。プラグイン一覧の「API認証(OIDC)」から認証してください。';
 		}
 	} elseif ( ! str_contains( $admin_secret, ':' ) ) {
 		$problems[] = '認証情報は「ユーザー名:パスワード」の形式で入力してください。';
@@ -70,32 +71,52 @@ function check_settings( array $value ): array {
 	return $problems;
 }
 
-/** 設定の保存直後だけ、形式に問題があれば警告を表示する */
-function render_saved_notice() {
-	// phpcs:ignore WordPress.Security.NonceVerification.Recommended -- 保存後の画面の表示だけに使い、データは変更しない。
-	if ( ! isset( $_GET['settings-updated'] ) || 'true' !== $_GET['settings-updated'] ) {
-		return;
+/**
+ * OIDC の認証が必要か（設定の誤りではなく、設定を保存したあとの初期設定の手順）
+ *
+ * 認証は保存済みの認証情報を使うため、設定を保存してから行う。
+ *
+ * @param array $value check_settings() と同じ設定値
+ */
+function needs_oidc_authentication( array $value ): bool {
+	$admin_secret = (string) ( $value['profile_ca_server_admin_secret'] ?? '' );
+	if ( 'OIDC' !== explode( ':', $admin_secret, 2 )[0] || ! empty( $value['profile_ca_server_id_token'] ) ) {
+		return false;
 	}
-	$problems = check_settings(
-		array(
-			'profile_ca_issuer_id'           => \get_option( 'profile_ca_issuer_id', '' ),
-			// 未保存のときは、CA 発行 (build_ca_base_endpoint) と同じく初期値を使う。
-			'profile_ca_server_hostname'     => \get_option( 'profile_ca_server_hostname', PROFILE_DEFAULT_CA_SERVER_HOSTNAME ),
-			'profile_ca_server_admin_secret' => \get_option( 'profile_ca_server_admin_secret', '' ),
-			'profile_ca_server_id_token'     => \get_option( 'profile_ca_server_id_token', '' ),
-		)
+	$config = decode_auth_config( $admin_secret );
+	return null !== $config && ! array_diff( OIDC_KEYS, array_keys( $config ) );
+}
+
+/** 設定画面を開くたびに、保存済みの設定の問題と、残っている初期設定の手順を表示する */
+function render_notice() {
+	$value    = array(
+		'profile_ca_issuer_id'           => \get_option( 'profile_ca_issuer_id', '' ),
+		// 未保存のときは、CA 発行 (build_ca_base_endpoint) と同じく初期値を使う。
+		'profile_ca_server_hostname'     => \get_option( 'profile_ca_server_hostname', PROFILE_DEFAULT_CA_SERVER_HOSTNAME ),
+		'profile_ca_server_admin_secret' => \get_option( 'profile_ca_server_admin_secret', '' ),
+		'profile_ca_server_id_token'     => \get_option( 'profile_ca_server_id_token', '' ),
 	);
-	if ( ! $problems ) {
-		return;
+	$problems = check_settings( $value );
+	if ( $problems ) {
+		?>
+			<div id="profile-ca-settings-check" class="notice notice-warning">
+				<p>保存済みの設定に問題があります。このままではCAを発行できない可能性があります。</p>
+				<ul class="ul-disc">
+					<?php foreach ( $problems as $problem ) : ?>
+						<li><?php echo \esc_html( $problem ); ?></li>
+					<?php endforeach; ?>
+				</ul>
+			</div>
+		<?php
 	}
-	?>
-		<div id="profile-ca-settings-check" class="notice notice-warning">
-			<p>保存した設定に問題があります。このままではCAを発行できない可能性があります。</p>
-			<ul class="ul-disc">
-				<?php foreach ( $problems as $problem ) : ?>
-					<li><?php echo \esc_html( $problem ); ?></li>
-				<?php endforeach; ?>
-			</ul>
-		</div>
-	<?php
+	if ( needs_oidc_authentication( $value ) ) {
+		?>
+			<div id="profile-ca-oidc-next-step" class="notice notice-info">
+				<p>
+					次にOIDCの認証を完了してください。認証が終わったら、下の「接続確認」で確認できます。
+					<a href="<?php echo \esc_url( \add_query_arg( OIDC_CALLBACK_ENDPOINT, '1', \home_url( '/' ) ) ); ?>" target="_blank">OIDC認証を開始</a>
+				</p>
+			</div>
+		<?php
+	}
 }
