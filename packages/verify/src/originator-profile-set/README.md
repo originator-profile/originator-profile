@@ -42,8 +42,9 @@ verified; // VerifiedOps
 ### Profile Annotation Issuer の認可確認
 
 `OpsVerifier` は検証成功後、各 Profile Annotation の発行者が OP レジストリによって認可された Profile Annotation Issuer であるかどうかを、発行者が保有する [Profile Annotation Issuer 認定証 PA](https://docs.originator-profile.org/opb/pa-model/profile-annotation-issuer-accreditation/) を用いて確認します。
-認定証 PA の `credentialSubject.type` は `ProfileAnnotationIssuerAccreditation` です。
+認定証 PA の `credentialSubject.type` は `IssuerAccreditation` です。
 後方互換性のため、旧名称「登録証」の type `ProfileAnnotationIssuerRegistration` も認定証 PA として扱います。
+`credentialSubject.annotationScheme` を持たない認定証 PA は、Profile Annotation Issuer としての認定ではないため、この確認には使いません。
 確認は次の手順で行います。
 
 1. 認定証 PA の `issuer` が、`OpsVerifier` に渡した OP ID（トラストアンカーとなる OP レジストリ）と一致することを確認します

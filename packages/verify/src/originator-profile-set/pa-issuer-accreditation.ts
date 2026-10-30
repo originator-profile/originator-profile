@@ -1,6 +1,6 @@
 import {
   CertificationSystem,
-  ProfileAnnotationIssuerAccreditation,
+  IssuerAccreditation,
   ProfileAnnotationIssuerRegistration,
   ProfileAnnotationPolicy,
 } from "@originator-profile/model";
@@ -36,17 +36,15 @@ const isProfileAnnotation = (doc: Certificate): boolean =>
   (doc.type as readonly string[]).includes("ProfileAnnotation");
 
 /**
- * Profile Annotation Issuer 認定証 PA かどうか
+ * Issuer Accreditation (Profile Annotation Issuer 認定証 PA) かどうか
  *
  * 後方互換性のため、旧 type `ProfileAnnotationIssuerRegistration` (旧名称「登録証」) も認定証 PA として扱う
  */
-export function isProfileAnnotationIssuerAccreditation(
+export function isIssuerAccreditation(
   doc: Certificate,
-): doc is
-  | ProfileAnnotationIssuerAccreditation
-  | ProfileAnnotationIssuerRegistration {
+): doc is IssuerAccreditation | ProfileAnnotationIssuerRegistration {
   return (
-    doc.credentialSubject.type === "ProfileAnnotationIssuerAccreditation" ||
+    doc.credentialSubject.type === "IssuerAccreditation" ||
     isProfileAnnotationIssuerRegistration(doc)
   );
 }
@@ -54,7 +52,7 @@ export function isProfileAnnotationIssuerAccreditation(
 /**
  * 旧 type `ProfileAnnotationIssuerRegistration` の PA かどうか
  *
- * @deprecated 新 type を含めて判定する `isProfileAnnotationIssuerAccreditation` を使用すること
+ * @deprecated 新 type を含めて判定する `isIssuerAccreditation` を使用すること
  */
 export function isProfileAnnotationIssuerRegistration(
   doc: Certificate,
@@ -75,9 +73,11 @@ function buildProfileAnnotationPolicy(
   const policy: ProfileAnnotationPolicyMap = new Map();
   const annotations = verifiedOps.flatMap((op) => op.annotations ?? []);
   for (const { doc } of annotations) {
-    if (!isProfileAnnotationIssuerAccreditation(doc)) continue;
+    if (!isIssuerAccreditation(doc)) continue;
     if (!paIssuerAccreditationIssuers.has(doc.issuer)) continue;
     const { id: accreditedIssuer, annotationScheme } = doc.credentialSubject;
+    // annotationScheme を持たない Issuer Accreditation は Profile Annotation Issuer としての認定ではないため対象外
+    if (!Array.isArray(annotationScheme)) continue;
     const allowedPolicy = policy.get(accreditedIssuer) ?? new Set<string>();
     for (const scheme of annotationScheme) allowedPolicy.add(scheme);
     policy.set(accreditedIssuer, allowedPolicy);

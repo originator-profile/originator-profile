@@ -3,7 +3,7 @@ import { describe, expect, test } from "vitest";
 import { isDisplayableProfileAnnotation } from "./profile-annotation";
 
 describe("isDisplayableProfileAnnotation", () => {
-  test("ProfileAnnotationIssuerAccreditation は表示対象外", () => {
+  test("IssuerAccreditation は表示対象外", () => {
     const accreditation: Certificate = {
       "@context": [
         "https://www.w3.org/ns/credentials/v2",
@@ -15,7 +15,7 @@ describe("isDisplayableProfileAnnotation", () => {
       issuer: "dns:op-registry.example.org",
       credentialSubject: {
         id: "dns:pa-issuer.example.org",
-        type: "ProfileAnnotationIssuerAccreditation",
+        type: "IssuerAccreditation",
         name: "Profile Annotation Issuer 認定証",
         description:
           "OP レジストリは、この組織を組織実在性証明書の発行者として認定しました。",

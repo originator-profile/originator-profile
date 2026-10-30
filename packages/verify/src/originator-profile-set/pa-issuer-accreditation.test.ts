@@ -1,8 +1,8 @@
 import { LocalKeys } from "@originator-profile/cryptography";
 import {
+  IssuerAccreditation,
   JapaneseExistencePA,
   OriginatorProfileSet,
-  ProfileAnnotationIssuerAccreditation,
   ProfileAnnotationIssuerRegistration,
 } from "@originator-profile/model";
 import { signJwtVc } from "@originator-profile/securing-mechanism";
@@ -76,9 +76,7 @@ describe("Profile Annotation Issuer 認定証チェック", async () => {
     },
   };
 
-  const buildAccreditation = (
-    schemes: string[],
-  ): ProfileAnnotationIssuerAccreditation => ({
+  const buildAccreditation = (schemes: string[]): IssuerAccreditation => ({
     "@context": [
       "https://www.w3.org/ns/credentials/v2",
       "https://originator-profile.org/ns/credentials/v1",
@@ -91,7 +89,7 @@ describe("Profile Annotation Issuer 認定証チェック", async () => {
     issuer: opId.authority,
     credentialSubject: {
       id: opId.certifier,
-      type: "ProfileAnnotationIssuerAccreditation",
+      type: "IssuerAccreditation",
       annotationIssuerName: "テスト Profile Annotation Issuer",
       annotationScheme: schemes,
       annotation: {
@@ -116,9 +114,7 @@ describe("Profile Annotation Issuer 認定証チェック", async () => {
     };
   };
 
-  const buildSelfAccreditation = (
-    schemes: string[],
-  ): ProfileAnnotationIssuerAccreditation => {
+  const buildSelfAccreditation = (schemes: string[]): IssuerAccreditation => {
     const accreditation = buildAccreditation(schemes);
     accreditation.credentialSubject.id = opId.authority;
     return accreditation;
@@ -132,9 +128,7 @@ describe("Profile Annotation Issuer 認定証チェック", async () => {
   });
 
   const certifierOpWithAccreditation = async (
-    accreditation:
-      | ProfileAnnotationIssuerAccreditation
-      | ProfileAnnotationIssuerRegistration,
+    accreditation: IssuerAccreditation | ProfileAnnotationIssuerRegistration,
     signer = authority.privateKey,
   ) => ({
     core: await signCp(certifierCp, authority.privateKey, signOptions),
@@ -193,6 +187,29 @@ describe("Profile Annotation Issuer 認定証チェック", async () => {
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
     expect(infoSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining("OP[2]"),
+      expect.anything(),
+    );
+  });
+
+  test("annotationScheme を持たない IssuerAccreditation は認可に使わない", async () => {
+    const { annotationScheme: _, ...credentialSubject } = buildAccreditation([
+      POLICY_ID,
+    ]).credentialSubject;
+    const target: OriginatorProfileSet = [
+      authorityOp,
+      await certifierOpWithAccreditation({
+        ...buildAccreditation([]),
+        credentialSubject,
+      } as IssuerAccreditation),
+      await originatorOpWithPa(),
+    ];
+
+    const result = await OpsVerifier(target, keys, opId.authority)();
+
+    expect(result).not.instanceOf(OpsInvalid);
+    expect(result).not.instanceOf(OpsVerifyFailed);
+    expect(infoSpy).toHaveBeenCalledWith(
       expect.stringContaining("OP[2]"),
       expect.anything(),
     );

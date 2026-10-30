@@ -1,8 +1,8 @@
 import { generateKey, LocalKeys } from "@originator-profile/cryptography";
 import {
+  IssuerAccreditation,
   JapaneseExistencePA,
   ProfileAnnotation,
-  ProfileAnnotationIssuerAccreditation,
   ProfileAnnotationIssuerRegistration,
 } from "@originator-profile/model";
 import {
@@ -92,7 +92,7 @@ const issuerAccreditationPa = {
   issuer: "dns:op-registry.example.org",
   credentialSubject: {
     id: "dns:pa-issuer.example.org",
-    type: "ProfileAnnotationIssuerAccreditation",
+    type: "IssuerAccreditation",
     name: "Profile Annotation Issuer 認定証",
     description:
       "OP レジストリは、この組織を組織実在性証明書および広告認証証明書の発行者として認定しました。",
@@ -110,7 +110,7 @@ const issuerAccreditationPa = {
       ref: "https://op-registry.example.org/profile-annotation-issuer-accreditation",
     },
   },
-} as const satisfies ProfileAnnotationIssuerAccreditation;
+} as const satisfies IssuerAccreditation;
 
 /** 旧 type `ProfileAnnotationIssuerRegistration` の PA */
 const issuerRegistrationPa = {
@@ -182,9 +182,8 @@ describe("ProfileAnnotation", () => {
   test("Profile Annotation Issuer 認定証 PA の検証に成功", async () => {
     const { publicKey, privateKey } = await generateKey();
     const keys = LocalKeys({ keys: [publicKey] });
-    const validator = VcValidator<
-      VerifiedJwtVc<ProfileAnnotationIssuerAccreditation>
-    >(ProfileAnnotationIssuerAccreditation);
+    const validator =
+      VcValidator<VerifiedJwtVc<IssuerAccreditation>>(IssuerAccreditation);
     const verifier = JwtVcVerifier(
       keys,
       "dns:op-registry.example.org",

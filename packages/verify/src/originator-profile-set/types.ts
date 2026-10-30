@@ -1,10 +1,10 @@
 import {
   Certificate as BasicCertificate,
   CoreProfile,
+  IssuerAccreditation,
   JapaneseExistenceCertificate,
   JapaneseExistencePA,
   ProfileAnnotation,
-  ProfileAnnotationIssuerAccreditation,
   ProfileAnnotationIssuerRegistration,
   WebMediaProfile,
 } from "@originator-profile/model";
@@ -28,7 +28,7 @@ export type Certificate =
   | JapaneseExistenceCertificate
   | ProfileAnnotation
   | JapaneseExistencePA
-  | ProfileAnnotationIssuerAccreditation
+  | IssuerAccreditation
   | ProfileAnnotationIssuerRegistration;
 
 /** Originator Profile 復号失敗 */

@@ -3,9 +3,9 @@ import { OpCipContext } from "../context/op-cip-context";
 import { ProfileAnnotation } from "./profile-annotation";
 import { ProfileAnnotationProperties } from "./profile-annotation-properties";
 
-export const ProfileAnnotationIssuerAccreditationProperties =
-  ProfileAnnotationProperties.extend({
-    type: z.literal("ProfileAnnotationIssuerAccreditation"),
+export const IssuerAccreditationProperties = ProfileAnnotationProperties.extend(
+  {
+    type: z.literal("IssuerAccreditation"),
     annotationIssuerName: z
       .string()
       .describe("Name of the Profile Annotation Issuer"),
@@ -14,13 +14,12 @@ export const ProfileAnnotationIssuerAccreditationProperties =
       .describe(
         "URIs identifying Profile Annotations the issuer is authorized to issue",
       ),
-  });
+  },
+);
 
-export const ProfileAnnotationIssuerAccreditation = ProfileAnnotation.extend({
+export const IssuerAccreditation = ProfileAnnotation.extend({
   "@context": OpCipContext,
-  credentialSubject: ProfileAnnotationIssuerAccreditationProperties,
+  credentialSubject: IssuerAccreditationProperties,
 });
 
-export type ProfileAnnotationIssuerAccreditation = z.infer<
-  typeof ProfileAnnotationIssuerAccreditation
->;
+export type IssuerAccreditation = z.infer<typeof IssuerAccreditation>;
