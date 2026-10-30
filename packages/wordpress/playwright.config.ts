@@ -4,7 +4,8 @@ export default defineConfig({
   testDir: "e2e",
   globalSetup: "e2e/setup.ts",
   globalTeardown: "e2e/teardown.ts",
-  workers: process.env.CI ? 1 : undefined,
+  // WordPress の設定とローカル CA サーバーのポートを共有するため直列に実行する.
+  workers: 1,
   reporter: [["html"], process.env.CI ? ["dot"] : ["line"]],
   retries: process.env.CI ? 2 : 0,
   webServer: {
