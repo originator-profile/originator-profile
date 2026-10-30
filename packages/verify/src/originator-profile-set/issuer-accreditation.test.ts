@@ -1,5 +1,6 @@
 import { LocalKeys } from "@originator-profile/cryptography";
 import {
+  IssuerAccreditation,
   JapaneseExistencePA,
   OriginatorProfileSet,
   ProfileAnnotationIssuerRegistration,
@@ -20,7 +21,7 @@ import { OpsInvalid, OpsVerifyFailed } from "./errors";
 import { buildOpsFixture, signOptions } from "./helper";
 import { OpsVerifier } from "./verify-ops";
 
-describe("Profile Annotation Issuer 登録証チェック", async () => {
+describe("Profile Annotation Issuer 認定証チェック", async () => {
   const { authority, certifier, certifierCp, authorityOp, certifierOp, ops } =
     await buildOpsFixture();
 
@@ -40,7 +41,7 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
   /** 認可判定に用いる Profile Annotation Policy ID */
   const POLICY_ID = "urn:uuid:70ca5f83-db7f-4440-bc7b-714996eaea8b";
   const OTHER_POLICY_ID = "urn:uuid:dbefee1f-db36-47a9-852f-afefd6a0287e";
-  const REGISTRATION_POLICY_ID =
+  const ACCREDITATION_POLICY_ID =
     "urn:uuid:d1c6f93a-468f-4cef-a710-a1b665960fd2";
 
   const keys = LocalKeys({ keys: [authority.publicKey] });
@@ -75,9 +76,7 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     },
   };
 
-  const buildRegistration = (
-    schemes: string[],
-  ): ProfileAnnotationIssuerRegistration => ({
+  const buildAccreditation = (schemes: string[]): IssuerAccreditation => ({
     "@context": [
       "https://www.w3.org/ns/credentials/v2",
       "https://originator-profile.org/ns/credentials/v1",
@@ -90,23 +89,35 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     issuer: opId.authority,
     credentialSubject: {
       id: opId.certifier,
-      type: "ProfileAnnotationIssuerRegistration",
+      type: "IssuerAccreditation",
       annotationIssuerName: "テスト Profile Annotation Issuer",
       annotationScheme: schemes,
       annotation: {
-        id: REGISTRATION_POLICY_ID,
+        id: ACCREDITATION_POLICY_ID,
         type: "ProfileAnnotationPolicy",
-        name: "OP レジストリ Profile Annotation Issuer 登録制度",
+        name: "OP レジストリ Profile Annotation Issuer 認定制度",
       },
     },
   });
 
-  const buildSelfRegistration = (
+  /** 旧 type `ProfileAnnotationIssuerRegistration` の PA */
+  const buildLegacyRegistration = (
     schemes: string[],
   ): ProfileAnnotationIssuerRegistration => {
-    const registration = buildRegistration(schemes);
-    registration.credentialSubject.id = opId.authority;
-    return registration;
+    const accreditation = buildAccreditation(schemes);
+    return {
+      ...accreditation,
+      credentialSubject: {
+        ...accreditation.credentialSubject,
+        type: "ProfileAnnotationIssuerRegistration",
+      },
+    };
+  };
+
+  const buildSelfAccreditation = (schemes: string[]): IssuerAccreditation => {
+    const accreditation = buildAccreditation(schemes);
+    accreditation.credentialSubject.id = opId.authority;
+    return accreditation;
   };
 
   const originatorOpWithPa = async () => ({
@@ -116,17 +127,17 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     ],
   });
 
-  const certifierOpWithRegistration = async (
-    registration: ProfileAnnotationIssuerRegistration,
+  const certifierOpWithAccreditation = async (
+    accreditation: IssuerAccreditation | ProfileAnnotationIssuerRegistration,
     signer = authority.privateKey,
   ) => ({
     core: await signCp(certifierCp, authority.privateKey, signOptions),
-    annotations: [await signJwtVc(registration, signer, signOptions)],
+    annotations: [await signJwtVc(accreditation, signer, signOptions)],
   });
 
   const NOT_REGISTERED = "Profile Annotation Issuer is not registered";
 
-  test("登録のない PA は console.info で通知", async () => {
+  test("認定のない PA は console.info で通知", async () => {
     const target: OriginatorProfileSet = [
       authorityOp,
       certifierOp,
@@ -147,10 +158,10 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     );
   });
 
-  test("登録証に含まれる PA は何もしない", async () => {
+  test("認定証に含まれる PA は何もしない", async () => {
     const target: OriginatorProfileSet = [
       authorityOp,
-      await certifierOpWithRegistration(buildRegistration([POLICY_ID])),
+      await certifierOpWithAccreditation(buildAccreditation([POLICY_ID])),
       await originatorOpWithPa(),
     ];
 
@@ -164,10 +175,50 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     );
   });
 
-  test("登録証に含まれない場合は通知される", async () => {
+  test("旧 type ProfileAnnotationIssuerRegistration も認定証として扱う", async () => {
     const target: OriginatorProfileSet = [
       authorityOp,
-      await certifierOpWithRegistration(buildRegistration([OTHER_POLICY_ID])),
+      await certifierOpWithAccreditation(buildLegacyRegistration([POLICY_ID])),
+      await originatorOpWithPa(),
+    ];
+
+    const result = await OpsVerifier(target, keys, opId.authority)();
+
+    expect(result).not.instanceOf(OpsInvalid);
+    expect(result).not.instanceOf(OpsVerifyFailed);
+    expect(infoSpy).not.toHaveBeenCalledWith(
+      expect.stringContaining("OP[2]"),
+      expect.anything(),
+    );
+  });
+
+  test("annotationScheme を持たない IssuerAccreditation は認可に使わない", async () => {
+    const { annotationScheme: _, ...credentialSubject } = buildAccreditation([
+      POLICY_ID,
+    ]).credentialSubject;
+    const target: OriginatorProfileSet = [
+      authorityOp,
+      await certifierOpWithAccreditation({
+        ...buildAccreditation([]),
+        credentialSubject,
+      } as IssuerAccreditation),
+      await originatorOpWithPa(),
+    ];
+
+    const result = await OpsVerifier(target, keys, opId.authority)();
+
+    expect(result).not.instanceOf(OpsInvalid);
+    expect(result).not.instanceOf(OpsVerifyFailed);
+    expect(infoSpy).toHaveBeenCalledWith(
+      expect.stringContaining("OP[2]"),
+      expect.anything(),
+    );
+  });
+
+  test("認定証に含まれない場合は通知される", async () => {
+    const target: OriginatorProfileSet = [
+      authorityOp,
+      await certifierOpWithAccreditation(buildAccreditation([OTHER_POLICY_ID])),
       await originatorOpWithPa(),
     ];
 
@@ -181,13 +232,13 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     );
   });
 
-  test("登録証 PA は非 CP issuer が発行しても免除されず通知される", async () => {
+  test("認定証 PA は非 CP issuer が発行しても免除されず通知される", async () => {
     const target: OriginatorProfileSet = [
       authorityOp,
-      // certifier 自身が発行した登録証 PA (issuer=certifier)。CP issuer の認可は無い
+      // certifier 自身が発行した認定証 PA (issuer=certifier)。CP issuer の認可は無い
       // （検証鍵はこの OP 自身の Core Profile から解決されるため certifierOp は不要）
-      await certifierOpWithRegistration(
-        { ...buildRegistration([POLICY_ID]), issuer: opId.certifier },
+      await certifierOpWithAccreditation(
+        { ...buildAccreditation([POLICY_ID]), issuer: opId.certifier },
         certifier.privateKey,
       ),
     ];
@@ -202,10 +253,10 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     );
   });
 
-  test("登録証 PA は CP issuer 自身が発行しても免除されず通知される", async () => {
+  test("認定証 PA は CP issuer 自身が発行しても免除されず通知される", async () => {
     const target: OriginatorProfileSet = [
       authorityOp,
-      await certifierOpWithRegistration(buildRegistration([POLICY_ID])),
+      await certifierOpWithAccreditation(buildAccreditation([POLICY_ID])),
     ];
 
     const result = await OpsVerifier(target, keys, opId.authority)();
@@ -218,17 +269,17 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     );
   });
 
-  test("複数の登録証は発行者ごとに annotationScheme の和集合をとる", async () => {
-    const certifierWithTwoRegistrations = {
+  test("複数の認定証は発行者ごとに annotationScheme の和集合をとる", async () => {
+    const certifierWithTwoAccreditations = {
       core: await signCp(certifierCp, authority.privateKey, signOptions),
       annotations: [
         await signJwtVc(
-          buildRegistration([OTHER_POLICY_ID]),
+          buildAccreditation([OTHER_POLICY_ID]),
           authority.privateKey,
           signOptions,
         ),
         await signJwtVc(
-          buildRegistration([POLICY_ID]),
+          buildAccreditation([POLICY_ID]),
           authority.privateKey,
           signOptions,
         ),
@@ -237,7 +288,7 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
 
     const target: OriginatorProfileSet = [
       authorityOp,
-      certifierWithTwoRegistrations,
+      certifierWithTwoAccreditations,
       await originatorOpWithPa(),
     ];
 
@@ -264,15 +315,15 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     );
   });
 
-  test("OP レジストリが認可した発行者は登録証 PA 発行可能", async () => {
+  test("OP レジストリが認可した発行者は認定証 PA 発行可能", async () => {
     const target: OriginatorProfileSet = [
       authorityOp,
-      await certifierOpWithRegistration(
-        buildRegistration([REGISTRATION_POLICY_ID]),
+      await certifierOpWithAccreditation(
+        buildAccreditation([ACCREDITATION_POLICY_ID]),
       ),
-      await certifierOpWithRegistration(
+      await certifierOpWithAccreditation(
         {
-          ...buildRegistration([]),
+          ...buildAccreditation([]),
           issuer: opId.certifier,
         },
         certifier.privateKey,
@@ -293,16 +344,16 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     );
   });
 
-  test("認可の連鎖は再帰しない: CP→certifier 認可済みでも certifier 発行登録証は下流 PA を認可しない", async () => {
+  test("認可の連鎖は再帰しない: CP→certifier 認可済みでも certifier 発行認定証は下流 PA を認可しない", async () => {
     const target: OriginatorProfileSet = [
       authorityOp,
-      // ① CP issuer が certifier に登録制度を認可（certifier は登録証 PA を発行可能になる）
-      await certifierOpWithRegistration(
-        buildRegistration([REGISTRATION_POLICY_ID]),
+      // ① CP issuer が certifier に認定制度を認可（certifier は認定証 PA を発行可能になる）
+      await certifierOpWithAccreditation(
+        buildAccreditation([ACCREDITATION_POLICY_ID]),
       ),
-      // ② certifier 自身が POLICY_ID を付与する登録証 PA を発行（issuer=certifier）
-      await certifierOpWithRegistration(
-        { ...buildRegistration([POLICY_ID]), issuer: opId.certifier },
+      // ② certifier 自身が POLICY_ID を付与する認定証 PA を発行（issuer=certifier）
+      await certifierOpWithAccreditation(
+        { ...buildAccreditation([POLICY_ID]), issuer: opId.certifier },
         certifier.privateKey,
       ),
       // ③ certifier 発行の通常 PA（policy=POLICY_ID）を originator が保有
@@ -343,19 +394,19 @@ describe("Profile Annotation Issuer 登録証チェック", async () => {
     expect(infoSpy).not.toHaveBeenCalled();
   });
 
-  test("Core Profile Issuer が自己宛に登録制度スキームで発行した登録証が基底となる", async () => {
+  test("Core Profile Issuer が自己宛に認定制度スキームで発行した認定証が基底となる", async () => {
     const target: OriginatorProfileSet = [
       {
         ...authorityOp,
         annotations: [
           await signJwtVc(
-            buildSelfRegistration([REGISTRATION_POLICY_ID]),
+            buildSelfAccreditation([ACCREDITATION_POLICY_ID]),
             authority.privateKey,
             signOptions,
           ),
         ],
       },
-      await certifierOpWithRegistration(buildRegistration([POLICY_ID])),
+      await certifierOpWithAccreditation(buildAccreditation([POLICY_ID])),
     ];
 
     const result = await OpsVerifier(target, keys, opId.authority)();

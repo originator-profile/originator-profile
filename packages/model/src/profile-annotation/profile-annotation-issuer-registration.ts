@@ -1,26 +1,31 @@
 import { z } from "zod";
 import { OpCipContext } from "../context/op-cip-context";
+import { IssuerAccreditationProperties } from "./issuer-accreditation";
 import { ProfileAnnotation } from "./profile-annotation";
-import { ProfileAnnotationProperties } from "./profile-annotation-properties";
 
+/**
+ * @deprecated 旧名称「Profile Annotation Issuer 登録証」の type。
+ * 後方互換性のために残している。
+ * `IssuerAccreditationProperties` を使用すること。
+ */
 export const ProfileAnnotationIssuerRegistrationProperties =
-  ProfileAnnotationProperties.extend({
+  IssuerAccreditationProperties.extend({
     type: z.literal("ProfileAnnotationIssuerRegistration"),
-    annotationIssuerName: z
-      .string()
-      .describe("Name of the Profile Annotation Issuer"),
-    annotationScheme: z
-      .array(z.url())
-      .describe(
-        "URIs identifying Profile Annotations the issuer is authorized to issue",
-      ),
   });
 
+/**
+ * @deprecated 後方互換性のために残している。
+ * `IssuerAccreditation` を使用すること。
+ */
 export const ProfileAnnotationIssuerRegistration = ProfileAnnotation.extend({
   "@context": OpCipContext,
   credentialSubject: ProfileAnnotationIssuerRegistrationProperties,
 });
 
+/**
+ * @deprecated 後方互換性のために残している。
+ * `IssuerAccreditation` を使用すること。
+ */
 export type ProfileAnnotationIssuerRegistration = z.infer<
   typeof ProfileAnnotationIssuerRegistration
 >;

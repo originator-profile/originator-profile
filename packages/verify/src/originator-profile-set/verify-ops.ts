@@ -10,8 +10,8 @@ import { pointer } from "../result/pointer";
 import { verifyAnnotations } from "./annotations";
 import { decodeOps } from "./decode-ops";
 import { OpsInvalid, OpsVerifyFailed, OpVerifyFailed } from "./errors";
+import { verifyAnnotationIssuerAccreditation } from "./issuer-accreditation";
 import { verifyMedia } from "./media";
-import { verifyAnnotationIssuerRegistration } from "./pa-issuer-registration";
 import type {
   OpsVerificationResult,
   OpVerificationResult,
@@ -158,7 +158,7 @@ export function OpsVerifier(
       return new OpsVerifyFailed(msg, resultOps);
     }
 
-    return verifyAnnotationIssuerRegistration(resultOps, issuer, logger);
+    return verifyAnnotationIssuerAccreditation(resultOps, issuer, logger);
   }
   return verify;
 }
