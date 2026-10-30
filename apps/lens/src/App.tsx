@@ -4,11 +4,10 @@ import { Navigate, Route, Routes } from "react-router";
 import { useDocumentNavigation, useTabTracking } from "./components/activeTab";
 import { EnvironmentBanner } from "./components/environment";
 import Base, { FollowLanding } from "./pages/Base";
-import Credentials from "./pages/Credentials";
 import DetailInfo from "./pages/DetailInfo";
 import Org from "./pages/Org";
+import Popup from "./pages/Popup";
 import Prohibition from "./pages/Prohibition";
-import SiteProfile from "./pages/SiteProfile";
 import Warning from "./pages/Warning";
 import { buildPublUrl, paths } from "./utils/routes";
 
@@ -46,7 +45,7 @@ function App() {
                 element={
                   <div className="flex flex-col divide-y divide-gray-200">
                     <FollowLanding />
-                    <SiteProfile />
+                    <Popup />
                   </div>
                 }
               />
@@ -57,8 +56,7 @@ function App() {
                 index
                 element={
                   <div className="flex flex-col divide-y divide-gray-200">
-                    <SiteProfile />
-                    <Credentials />
+                    <Popup />
                   </div>
                 }
               />

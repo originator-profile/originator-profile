@@ -385,5 +385,66 @@
   },
   "SiteProfile_Missing_Reason": {
     "message": "サイトプロファイルを取得できなかった可能性があります。サイトの安全性を否定するものではありません。"
+  },
+  "Popup_Label_WebsiteProfile": {
+    "message": "このサイトの運営者"
+  },
+  "Popup_Label_ContentAttestation": {
+    "message": "この$content_type$の作成者",
+    "placeholders": {
+      "content_type": {
+        "content": "$1",
+        "example": "記事"
+      }
+    }
+  },
+  "Popup_Description": {
+    "message": "$wmp_name$は、第三者組織により「$pa$」として実在が確認されています。",
+    "placeholders": {
+      "wmp_name": {
+        "content": "$1",
+        "example": "OP株式会社"
+      },
+      "pa": {
+        "content": "$2",
+        "example": "日本のインターネットメディア"
+      }
+    }
+  },
+  "Popup_ContentAttestation_Title": {
+    "message": "が作成した$content_type$です",
+    "placeholders": {
+      "content_type": {
+        "content": "$1",
+        "example": "記事"
+      }
+    }
+  },
+  "Popup_SiteProfile_Title": {
+    "message": "が運営しているサイトです"
+  },
+  "Popup_ContentAttestation_Header": {
+    "message": "この$content_type$の「出どころ」",
+    "placeholders": {
+      "content_type": {
+        "content": "$1",
+        "example": "記事"
+      }
+    }
+  },
+  "Popup_ContentAttestation_Detail": {
+    "message": "この$content_type$の出どころについてもっと詳しく",
+    "placeholders": {
+      "content_type": {
+        "content": "$1",
+        "example": "記事"
+      }
+    }
+  },
+  "Popup_SiteProfile_Detail": {
+    "message": "このサイトの運営者についてもっと詳しく"
+  },
+  "Popup_ProfileAnnotation_Type": {
+    "message": "日本のインターネットメディア"
   }
 }
