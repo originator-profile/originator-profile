@@ -3,6 +3,7 @@ import {
   JapaneseExistenceCertificate,
   JapaneseExistencePA,
   ProfileAnnotation,
+  ProfileAnnotationIssuerAccreditation,
   ProfileAnnotationIssuerRegistration,
 } from "@originator-profile/model";
 import type {
@@ -64,6 +65,7 @@ export async function verifyAnnotations(
           // TODO: Profile Annotation とその派生のスキーマとして整理
           z.union([
             JapaneseExistencePA,
+            ProfileAnnotationIssuerAccreditation,
             ProfileAnnotationIssuerRegistration,
             ProfileAnnotation,
             JapaneseExistenceCertificate,

@@ -11,7 +11,7 @@ import { verifyAnnotations } from "./annotations";
 import { decodeOps } from "./decode-ops";
 import { OpsInvalid, OpsVerifyFailed, OpVerifyFailed } from "./errors";
 import { verifyMedia } from "./media";
-import { verifyAnnotationIssuerRegistration } from "./pa-issuer-registration";
+import { verifyAnnotationIssuerAccreditation } from "./pa-issuer-accreditation";
 import type {
   OpsVerificationResult,
   OpVerificationResult,
@@ -158,7 +158,7 @@ export function OpsVerifier(
       return new OpsVerifyFailed(msg, resultOps);
     }
 
-    return verifyAnnotationIssuerRegistration(resultOps, issuer, logger);
+    return verifyAnnotationIssuerAccreditation(resultOps, issuer, logger);
   }
   return verify;
 }
