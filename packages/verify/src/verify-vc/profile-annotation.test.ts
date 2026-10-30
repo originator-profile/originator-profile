@@ -107,7 +107,7 @@ const issuerAccreditationPa = {
       name: "OP レジストリ Profile Annotation Issuer 認定制度",
       description:
         "OP レジストリが運営する Profile Annotation Issuer の認定制度です。",
-      ref: "https://op-registry.example.org/profile-annotation-issuer-accreditation",
+      ref: "https://op-registry.example.org/issuer-accreditation",
     },
   },
 } as const satisfies IssuerAccreditation;

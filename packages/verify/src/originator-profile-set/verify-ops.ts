@@ -10,8 +10,8 @@ import { pointer } from "../result/pointer";
 import { verifyAnnotations } from "./annotations";
 import { decodeOps } from "./decode-ops";
 import { OpsInvalid, OpsVerifyFailed, OpVerifyFailed } from "./errors";
+import { verifyAnnotationIssuerAccreditation } from "./issuer-accreditation";
 import { verifyMedia } from "./media";
-import { verifyAnnotationIssuerAccreditation } from "./pa-issuer-accreditation";
 import type {
   OpsVerificationResult,
   OpVerificationResult,

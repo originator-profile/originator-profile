@@ -25,7 +25,7 @@ describe("isDisplayableProfileAnnotation", () => {
           id: "urn:uuid:5927e1da-e422-47c8-a5b8-efa6f5a45dd7",
           type: "ProfileAnnotationPolicy",
           name: "OP レジストリ Profile Annotation Issuer 認定制度",
-          ref: "https://op-registry.example.org/profile-annotation-issuer-accreditation",
+          ref: "https://op-registry.example.org/issuer-accreditation",
         },
       },
     };
