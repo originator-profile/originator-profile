@@ -143,7 +143,7 @@ function reportUnauthorizedAnnotation({
  * @param paIssuerAccreditationIssuer 基底となる Profile Annotation Issuer 認定証 PA Issuer の OP ID
  * @param logger ロガー (デフォルト: `console`)
  *
- * @see https://docs.originator-profile.org/opb/pa-model/issuer-accreditation/
+ * @see https://docs.originator-profile.org/ja/opb/pa-model/issuer-accreditation/
  */
 export function verifyAnnotationIssuerAccreditation(
   verifiedOps: VerifiedOps,
