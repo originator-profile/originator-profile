@@ -8,7 +8,11 @@
     const { select, dispatch, subscribe } = window.wp.data;
     const editor = () => select("core/editor");
 
+    // 開いたときと保存後の問い合わせが前後して返っても、最新の問い合わせの結果だけを反映する。
+    let latestRequest = 0;
+
     async function refresh(postId) {
+      const request = ++latestRequest;
       try {
         const response = await fetch(config.ajaxUrl, {
           method: "POST",
@@ -20,7 +24,11 @@
           }),
         });
         const payload = await response.json();
-        if (!payload.success) {
+        if (
+          request !== latestRequest ||
+          !payload.success ||
+          payload.data.post_id !== editor().getCurrentPostId()
+        ) {
           return;
         }
         const notices = dispatch("core/notices");
