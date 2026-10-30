@@ -83,7 +83,7 @@ export default function Popup(props: PopupProps) {
               <span className="mr-2 whitespace-nowrap text-sm font-bold">
                 {_("Popup_Label_ContentAttestation", caType)}
               </span>
-              <div className="flex-grow border-t border-gray"></div>
+              <div className="flex-grow border-t"></div>
             </div>
             {props.wmp && props.certificates && (
               <InformationSummary
@@ -105,7 +105,7 @@ export default function Popup(props: PopupProps) {
             <span className="mr-2 whitespace-nowrap text-sm font-bold">
               {_("Popup_Label_WebsiteProfile")}
             </span>
-            <div className="flex-grow border-t border-gray"></div>
+            <div className="flex-grow border-t"></div>
           </div>
           {props.siteProfileWmp && props.siteProfileCertificates && (
             <InformationSummary

@@ -10,7 +10,7 @@ type Props = {
 };
 
 export default function InformationSummary({ wmp, certificates }: Props) {
-  const hasExistencePa = certificates.find(
+  const hasExistencePa = certificates.some(
     (a) =>
       a.credentialSubject.type === "JP-OrganizationExistenceCertificate" ||
       getAnnotationPolicy(a).id ===
