@@ -95,7 +95,7 @@ const issuerAccreditationPa = {
     type: "ProfileAnnotationIssuerAccreditation",
     name: "Profile Annotation Issuer 認定証",
     description:
-      "組織実在性証明書および広告認証証明書の発行を認められた Profile Annotation Issuer です。",
+      "OP レジストリは、この組織を組織実在性証明書および広告認証証明書の発行者として認定しました。",
     annotationIssuerName: "株式会社〇〇認証機構",
     annotationScheme: [
       "urn:uuid:def09cbd-6e8e-4c73-856d-5e00dffde643",

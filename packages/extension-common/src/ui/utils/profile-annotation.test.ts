@@ -17,7 +17,8 @@ describe("isDisplayableProfileAnnotation", () => {
         id: "dns:pa-issuer.example.org",
         type: "ProfileAnnotationIssuerAccreditation",
         name: "Profile Annotation Issuer 認定証",
-        description: "認定証",
+        description:
+          "OP レジストリは、この組織を組織実在性証明書の発行者として認定しました。",
         annotationIssuerName: "架空組織実在性検証局",
         annotationScheme: ["urn:uuid:def09cbd-6e8e-4c73-856d-5e00dffde643"],
         annotation: {
