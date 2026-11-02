@@ -1,6 +1,6 @@
 {
   "name": "@originator-profile/cas-monitor",
-  "version": "0.7.1",
+  "version": "0.7.2",
   "license": "Apache-2.0",
   "private": true,
   "homepage": "https://docs.originator-profile.org",
