@@ -150,7 +150,9 @@ describe("Profile Annotation Issuer 認定証チェック", async () => {
     expect(result).not.instanceOf(OpsVerifyFailed);
     expect(infoSpy).toHaveBeenCalledWith(
       expect.stringContaining(NOT_ACCREDITED),
-      expect.anything(),
+      expect.objectContaining({
+        type: "https://docs.originator-profile.org/error-reference/INFO_PA_ISSUER_NOT_ACCREDITED/",
+      }),
     );
     expect(warnSpy).not.toHaveBeenCalledWith(
       expect.stringContaining(NOT_ACCREDITED),
