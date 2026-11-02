@@ -77,6 +77,7 @@ function buildProfileAnnotationPolicy(
     if (!paIssuerAccreditationIssuers.has(doc.issuer)) continue;
     const { id: accreditedIssuer, annotationScheme } = doc.credentialSubject;
     // annotationScheme を持たない Issuer Accreditation は Profile Annotation Issuer としての認定ではないため対象外
+    // (型の上では必須だが、汎用の ProfileAnnotation スキーマで検証を通った PA では欠けていることがある)
     if (!Array.isArray(annotationScheme)) continue;
     const allowedPolicy = policy.get(accreditedIssuer) ?? new Set<string>();
     for (const scheme of annotationScheme) allowedPolicy.add(scheme);
@@ -137,7 +138,7 @@ function reportUnauthorizedAnnotation({
 /**
  * Profile Annotation Issuer 認定証 PA に基づく発行者の認可を確認
  *
- * 各 Profile Annotation の発行者が、基底となる Profile Annotation Issuer 認定証 PA によって、その PA が準拠する 認証制度（Profile Annotation Policy）の発行を認可されているかを検証
+ * 各 Profile Annotation の発行者が、基底となる Profile Annotation Issuer 認定証 PA によって、その PA が準拠する認証制度（Profile Annotation Policy）の発行を認可されているかを検証
  *
  * @param verifiedOps 検証済み Originator Profile Set
  * @param paIssuerAccreditationIssuer 基底となる Profile Annotation Issuer 認定証 PA Issuer の OP ID
