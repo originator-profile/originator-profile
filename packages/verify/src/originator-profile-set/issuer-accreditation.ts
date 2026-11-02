@@ -125,7 +125,7 @@ function reportUnauthorizedAnnotation({
     policyId && policy.get(profileAnnotationIssuer)?.has(policyId);
   if (!isAllowed) {
     const scheme = policyId ?? "unknown";
-    const message = `Profile Annotation Issuer is not registered for this annotation scheme (${location} issuer: ${profileAnnotationIssuer}, scheme: ${scheme})`;
+    const message = `Profile Annotation Issuer is not accredited for this annotation scheme (${location} issuer: ${profileAnnotationIssuer}, scheme: ${scheme})`;
     logger.info(message, {
       type: ProblemType.PaIssuerNotRegistered,
       title: message,

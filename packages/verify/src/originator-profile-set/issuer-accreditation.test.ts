@@ -135,7 +135,7 @@ describe("Profile Annotation Issuer 認定証チェック", async () => {
     annotations: [await signJwtVc(accreditation, signer, signOptions)],
   });
 
-  const NOT_REGISTERED = "Profile Annotation Issuer is not registered";
+  const NOT_ACCREDITED = "Profile Annotation Issuer is not accredited";
 
   test("認定のない PA は console.info で通知", async () => {
     const target: OriginatorProfileSet = [
@@ -149,11 +149,11 @@ describe("Profile Annotation Issuer 認定証チェック", async () => {
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
     expect(infoSpy).toHaveBeenCalledWith(
-      expect.stringContaining(NOT_REGISTERED),
+      expect.stringContaining(NOT_ACCREDITED),
       expect.anything(),
     );
     expect(warnSpy).not.toHaveBeenCalledWith(
-      expect.stringContaining(NOT_REGISTERED),
+      expect.stringContaining(NOT_ACCREDITED),
       expect.anything(),
     );
   });
@@ -227,7 +227,7 @@ describe("Profile Annotation Issuer 認定証チェック", async () => {
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
     expect(infoSpy).toHaveBeenCalledWith(
-      expect.stringContaining(NOT_REGISTERED),
+      expect.stringContaining(NOT_ACCREDITED),
       expect.anything(),
     );
   });
@@ -248,7 +248,7 @@ describe("Profile Annotation Issuer 認定証チェック", async () => {
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
     expect(infoSpy).toHaveBeenCalledWith(
-      expect.stringContaining(NOT_REGISTERED),
+      expect.stringContaining(NOT_ACCREDITED),
       expect.anything(),
     );
   });
@@ -264,7 +264,7 @@ describe("Profile Annotation Issuer 認定証チェック", async () => {
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
     expect(infoSpy).toHaveBeenCalledWith(
-      expect.stringContaining(NOT_REGISTERED),
+      expect.stringContaining(NOT_ACCREDITED),
       expect.anything(),
     );
   });
@@ -296,12 +296,12 @@ describe("Profile Annotation Issuer 認定証チェック", async () => {
 
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
-    const notRegisteredInfos = infoSpy.mock.calls.filter(
+    const notAccreditedInfos = infoSpy.mock.calls.filter(
       ([message]) =>
-        typeof message === "string" && message.includes(NOT_REGISTERED),
+        typeof message === "string" && message.includes(NOT_ACCREDITED),
     );
-    expect(notRegisteredInfos).toHaveLength(2);
-    expect(notRegisteredInfos.some(([m]) => m.includes("OP[2]"))).toBe(false);
+    expect(notAccreditedInfos).toHaveLength(2);
+    expect(notAccreditedInfos.some(([m]) => m.includes("OP[2]"))).toBe(false);
   });
 
   test("非推奨 Certificate は認可ゲートの対象外", async () => {
@@ -310,7 +310,7 @@ describe("Profile Annotation Issuer 認定証チェック", async () => {
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
     expect(infoSpy).not.toHaveBeenCalledWith(
-      expect.stringContaining(NOT_REGISTERED),
+      expect.stringContaining(NOT_ACCREDITED),
       expect.anything(),
     );
   });
@@ -365,13 +365,13 @@ describe("Profile Annotation Issuer 認定証チェック", async () => {
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
 
-    const notRegisteredInfos = infoSpy.mock.calls.filter(
+    const notAccreditedInfos = infoSpy.mock.calls.filter(
       ([message]) =>
-        typeof message === "string" && message.includes(NOT_REGISTERED),
+        typeof message === "string" && message.includes(NOT_ACCREDITED),
     );
-    expect(notRegisteredInfos).toHaveLength(2);
-    expect(notRegisteredInfos[0]?.[0]).toContain("OP[1]");
-    expect(notRegisteredInfos[1]?.[0]).toContain("OP[3]");
+    expect(notAccreditedInfos).toHaveLength(2);
+    expect(notAccreditedInfos[0]?.[0]).toContain("OP[1]");
+    expect(notAccreditedInfos[1]?.[0]).toContain("OP[3]");
   });
 
   test("logger を指定した場合、console の代わりに通知を受け取る", async () => {
@@ -389,7 +389,7 @@ describe("Profile Annotation Issuer 認定証チェック", async () => {
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
     expect(infos).toEqual(
-      expect.arrayContaining([expect.stringContaining(NOT_REGISTERED)]),
+      expect.arrayContaining([expect.stringContaining(NOT_ACCREDITED)]),
     );
     expect(infoSpy).not.toHaveBeenCalled();
   });
@@ -414,7 +414,7 @@ describe("Profile Annotation Issuer 認定証チェック", async () => {
     expect(result).not.instanceOf(OpsInvalid);
     expect(result).not.instanceOf(OpsVerifyFailed);
     expect(infoSpy).not.toHaveBeenCalledWith(
-      expect.stringContaining(NOT_REGISTERED),
+      expect.stringContaining(NOT_ACCREDITED),
       expect.anything(),
     );
   });
