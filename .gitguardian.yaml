@@ -1,0 +1,15 @@
+version: 2
+secret:
+  # 開発環境専用のダミー値による誤検知を抑止する (#394)
+  # ここに列挙するのはローカル開発でのみ使用する公開前提のダミー値の SHA-256 のみ。
+  # 本物の認証情報をここに追加してはいけません。
+  ignored_matches:
+    # packages/wordpress/.env.development の WORDPRESS_DB_PASSWORD (開発用ダミー)
+    - name: wordpress dev dummy db password
+      match: 24e8122361f69f29275fb1868d060b2faa0b583894b18f39edcb6137fef52563
+    # packages/wordpress/.env.development の WORDPRESS_DB_ROOT_PASSWORD (開発用ダミー)
+    - name: wordpress dev dummy db root password
+      match: 64065897a1513085749432f8609b815e735ffdf2cfb17ba8c1707e2c4ff72e8e
+    # packages/demo-page/.env.development の SIGNING_KEY_* に共通の開発用ダミー秘密鍵 ("d" の値)
+    - name: demo-page dev dummy signing key (JWK d)
+      match: 17f6e3c3290164b7dc27f93a61fd6c8f161a1f7a1a9a315841d7316fc82fe5c6
