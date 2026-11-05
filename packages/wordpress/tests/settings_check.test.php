@@ -57,8 +57,11 @@ final class Settings_Check extends TestCase {
 
 	public function test_形式の誤りを指摘する() {
 		$this->assertStringContainsString( 'dns:media.example.com', check_settings( $this->settings( array( 'profile_ca_issuer_id' => 'media.example.com' ) ) )[0] );
-		foreach ( array( 'https://playground.originator-profile.org', 'playground.originator-profile.org/', 'ca.example.com/api', 'ca example.com', 'ca.example.com:0', 'ca.example.com:65536', 'ca.example.com:99999' ) as $hostname ) {
+		foreach ( array( 'https://playground.originator-profile.org', 'playground.originator-profile.org/', 'ca.example.com/api', 'ca example.com', 'https://ca.example.com:8443' ) as $hostname ) {
 			$this->assertStringContainsString( 'https://', check_settings( $this->settings( array( 'profile_ca_server_hostname' => $hostname ) ) )[0], $hostname );
+		}
+		foreach ( array( 'ca.example.com:0', 'ca.example.com:08443', 'ca.example.com:65536', 'ca.example.com:70000' ) as $hostname ) {
+			$this->assertStringContainsString( 'ポート番号は1〜65535', check_settings( $this->settings( array( 'profile_ca_server_hostname' => $hostname ) ) )[0], $hostname );
 		}
 		$this->assertStringContainsString( 'ユーザー名:パスワード', check_settings( $this->settings( array( 'profile_ca_server_admin_secret' => 'password-only' ) ) )[0] );
 	}
