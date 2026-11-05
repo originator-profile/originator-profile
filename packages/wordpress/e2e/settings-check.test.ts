@@ -92,6 +92,7 @@ test("保存した設定の形式に問題があれば警告する", async ({ pa
 });
 
 test("OIDCの未認証は警告ではなく次の手順として案内する", async ({ page }) => {
+  // settings-check.php の OIDC_KEYS と同じ一覧。キーを変えたときは両方を直す。
   const keys = [
     "providerUrl",
     "provider",
