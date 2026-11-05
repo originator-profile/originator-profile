@@ -89,6 +89,7 @@ function check_settings( array $value ): array {
  * 認証は保存済みの認証情報を使うため、設定を保存してから行う。
  *
  * @param array $value check_settings() と同じ設定値
+ * @return bool OIDC の認証が済んでいない場合は true
  */
 function needs_oidc_authentication( array $value ): bool {
 	$admin_secret = (string) ( $value['profile_ca_server_admin_secret'] ?? '' );
