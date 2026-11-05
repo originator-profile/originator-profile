@@ -7,6 +7,10 @@ require_once __DIR__ . '/delivery.php';
 use function Profile\Delivery\is_post_excluded;
 use const Profile\Delivery\BLOCKED_META;
 
+// issue.php もこのファイルを読み込むが、require_once のため二重には読み込まれない。
+require_once __DIR__ . '/issue.php';
+use function Profile\Issue\has_post_cas;
+
 /** 直近の CA 発行失敗を保存する投稿メタのキー */
 const FAILURE_META = '_profile_ca_issue_failure';
 
@@ -63,12 +67,13 @@ function get_failure( int $post_id ): ?array {
 		return null;
 	}
 	try {
-		if ( is_post_excluded( $post ) ) {
-			return null;
-		}
-	} catch ( \InvalidArgumentException $error ) {
+		$excluded = is_post_excluded( $post );
+	} catch ( \InvalidArgumentException ) {
 		// 除外を判定できない場合は、失敗を隠さずに表示する。
-		unset( $error );
+		$excluded = false;
+	}
+	if ( $excluded ) {
+		return null;
 	}
 	return array(
 		'message' => (string) $failure['message'],
@@ -86,8 +91,7 @@ function get_failure( int $post_id ): ?array {
  * @param bool  $can_manage 設定を変更できる管理者か
  */
 function failure_message( int $post_id, array $failure, bool $can_manage ): string {
-	// issue.php は issue-status.php より後に関数を定義するが、呼び出し時には読み込み済み。
-	$delivering = ! \get_post_meta( $post_id, BLOCKED_META, true ) && \Profile\Issue\has_post_cas( $post_id );
+	$delivering = ! \get_post_meta( $post_id, BLOCKED_META, true ) && has_post_cas( $post_id );
 	return implode(
 		' ',
 		array(
