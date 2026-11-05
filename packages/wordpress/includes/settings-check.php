@@ -30,6 +30,16 @@ function decode_auth_config( string $admin_secret ): ?array {
 }
 
 /**
+ * ポート番号が 1〜65535 か（先頭の 0 は認めない）
+ *
+ * @param string $port 数字だけの文字列
+ */
+function is_valid_port( string $port ): bool {
+	$number = (int) $port;
+	return (string) $number === $port && $number >= 1 && $number <= 65535;
+}
+
+/**
  * 保存済みの設定を通信せずに検査する
  *
  * @param array $value 設定値（profile_ca_issuer_id・profile_ca_server_hostname・profile_ca_server_admin_secret・profile_ca_server_id_token）
@@ -48,10 +58,10 @@ function check_settings( array $value ): array {
 	$hostname = (string) ( $value['profile_ca_server_hostname'] ?? '' );
 	if ( '' === $hostname ) {
 		$problems[] = 'CAサーバーホスト名が未設定です。';
-	} elseif ( preg_match( '/\A[A-Za-z0-9.-]+:(\d+)\z/', $hostname, $matches ) && ! preg_match( '/\A(?:[1-9]\d{0,3}|[1-5]\d{4}|6[0-4]\d{3}|65[0-4]\d{2}|655[0-2]\d|6553[0-5])\z/', $matches[1] ) ) {
-		$problems[] = "CAサーバーホスト名のポート番号「{$matches[1]}」は使えません。ポート番号は1〜65535で指定してください。";
-	} elseif ( ! preg_match( '/\A[A-Za-z0-9.-]+(?::(?:[1-9]\d{0,3}|[1-5]\d{4}|6[0-4]\d{3}|65[0-4]\d{2}|655[0-2]\d|6553[0-5]))?\z/', $hostname ) ) {
+	} elseif ( ! preg_match( '/\A[A-Za-z0-9.-]+(?::(\d+))?\z/', $hostname, $matches ) ) {
 		$problems[] = 'CAサーバーホスト名には「https://」やパスを付けず、ホスト名だけを入力してください（例: playground.originator-profile.org）。';
+	} elseif ( isset( $matches[1] ) && ! is_valid_port( $matches[1] ) ) {
+		$problems[] = "CAサーバーホスト名のポート番号「{$matches[1]}」は使えません。ポート番号は1〜65535で指定してください。";
 	}
 
 	$admin_secret = (string) ( $value['profile_ca_server_admin_secret'] ?? '' );
