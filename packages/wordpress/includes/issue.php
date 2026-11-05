@@ -71,66 +71,6 @@ function sign_post( string $new_status, string $old_status, \WP_Post $post ) {
 }
 
 /**
- * 保存済みの投稿 CAS が、少なくとも一つの空でない CA 文字列を含むか判定する。
- *
- * @param int $post_id Post ID.
- * @return bool 空でない CA 文字列が保存されている場合は true.
- */
-function has_post_cas( int $post_id ): bool {
-	return has_cas_value( \get_post_meta( $post_id, '_profile_post_cas', true ) );
-}
-
-/**
- * 保存値が、少なくとも一つの空でないページ CAS を含むか判定する。
- *
- * @param mixed $post_cas 保存済みの投稿 CAS.
- * @return bool 発行済みの CAS を含む場合は true.
- */
-function has_cas_value( mixed $post_cas ): bool {
-	if ( is_string( $post_cas ) ) {
-		return '' !== trim( $post_cas );
-	}
-
-	if ( ! is_array( $post_cas ) || empty( $post_cas ) ) {
-		return false;
-	}
-
-	// 旧形式の単一ページ CAS（array<string>）も受け付ける。
-	if ( is_nonempty_ca_array( $post_cas ) ) {
-		return true;
-	}
-
-	// 通常形式はページごとの CAS 配列（array<array<string>>）。
-	foreach ( $post_cas as $page_cas ) {
-		if ( is_array( $page_cas ) && is_nonempty_ca_array( $page_cas ) ) {
-			return true;
-		}
-	}
-
-	return false;
-}
-
-/**
- * 配列が空でない CA 文字列の配列か判定する。
- *
- * @param mixed $cas 値.
- * @return bool 空でない文字列だけで構成される場合は true.
- */
-function is_nonempty_ca_array( mixed $cas ): bool {
-	if ( ! is_array( $cas ) || empty( $cas ) ) {
-		return false;
-	}
-
-	foreach ( $cas as $value ) {
-		if ( ! is_string( $value ) || '' === trim( $value ) ) {
-			return false;
-		}
-	}
-
-	return true;
-}
-
-/**
  * 投稿一件分の Content Attestation を発行する。
  *
  * @param \WP_Post $post 投稿オブジェクト.
