@@ -7,8 +7,7 @@ require_once __DIR__ . '/delivery.php';
 use function Profile\Delivery\is_post_excluded;
 use const Profile\Delivery\BLOCKED_META;
 
-// issue.php もこのファイルを読み込むが、require_once のため二重には読み込まれない。
-require_once __DIR__ . '/issue.php';
+require_once __DIR__ . '/ca-storage.php';
 use function Profile\Issue\has_post_cas;
 
 /** 直近の CA 発行失敗を保存する投稿メタのキー */
@@ -89,6 +88,7 @@ function get_failure( int $post_id ): ?array {
  * @param int   $post_id 投稿 ID
  * @param array $failure get_failure() の結果
  * @param bool  $can_manage 設定を変更できる管理者か
+ * @return string 編集画面に表示する通知文
  */
 function failure_message( int $post_id, array $failure, bool $can_manage ): string {
 	$delivering = ! \get_post_meta( $post_id, BLOCKED_META, true ) && has_post_cas( $post_id );
