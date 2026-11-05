@@ -116,7 +116,7 @@ function render_notice() {
 			<div id="profile-ca-oidc-next-step" class="notice notice-info">
 				<p>
 					次にOIDCの認証を完了してください。認証が終わったら、下の「接続確認」で確認できます。
-					<a href="<?php echo \esc_url( \add_query_arg( OIDC_CALLBACK_ENDPOINT, '1', \home_url( '/' ) ) ); ?>" target="_blank">OIDC認証を開始</a>
+					<a href="<?php echo \esc_url( \add_query_arg( OIDC_CALLBACK_ENDPOINT, '1', \home_url( '/' ) ) ); ?>" target="_blank" rel="noopener noreferrer">OIDC認証を開始</a>
 				</p>
 			</div>
 		<?php
