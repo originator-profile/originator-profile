@@ -48,6 +48,8 @@ function check_settings( array $value ): array {
 	$hostname = (string) ( $value['profile_ca_server_hostname'] ?? '' );
 	if ( '' === $hostname ) {
 		$problems[] = 'CAサーバーホスト名が未設定です。';
+	} elseif ( preg_match( '/\A[A-Za-z0-9.-]+:(\d+)\z/', $hostname, $matches ) && ! preg_match( '/\A(?:[1-9]\d{0,3}|[1-5]\d{4}|6[0-4]\d{3}|65[0-4]\d{2}|655[0-2]\d|6553[0-5])\z/', $matches[1] ) ) {
+		$problems[] = "CAサーバーホスト名のポート番号「{$matches[1]}」は使えません。ポート番号は1〜65535で指定してください。";
 	} elseif ( ! preg_match( '/\A[A-Za-z0-9.-]+(?::(?:[1-9]\d{0,3}|[1-5]\d{4}|6[0-4]\d{3}|65[0-4]\d{2}|655[0-2]\d|6553[0-5]))?\z/', $hostname ) ) {
 		$problems[] = 'CAサーバーホスト名には「https://」やパスを付けず、ホスト名だけを入力してください（例: playground.originator-profile.org）。';
 	}
