@@ -271,14 +271,9 @@ function sign_published_post( \WP_Post $post, bool $only_missing = false ): arra
 			);
 		}
 
-		$uuid = extract_uuid_from_cas( $post );
-
-		if ( false === $uuid ) {
-			debug( "UUID not available or failed to decode UUID for post ID {$post->ID}. Continuing with new UCA issuance" );
-			$uca_list = create_uca_list( $post, $issuer_id ); // UUIDなしで新規発行
-		} else {
-			$uca_list = create_uca_list( $post, $issuer_id, $uuid );
-		}
+		// 更新対象の CA ID は、記事ロック取得後に読んだ保存値からページごとに取り出す。
+		$saved_cas = 1 === count( $initial_cas ) ? \maybe_unserialize( $initial_cas[0]['meta_value'] ) : null;
+		$uca_list  = create_uca_list( $post, $issuer_id, $saved_cas );
 
 		if ( empty( $uca_list ) ) {
 			debug( "No UCA generated for post ID: {$post->ID}. Skipping CA issuance, preserving saved CAS and keeping delivery suspended." );
@@ -486,33 +481,50 @@ function extract_uuid_from_jwt( string $jwt ) {
 }
 
 /**
- * CAS から UUID を抽出する関数
+ * 保存済み CAS から、全ページの CA ID を取り出す。
  *
- * @param \WP_Post $post Post object.
- * @return string|false UUID(取得できなければ false)
+ * CA ID を取り出せないページは含めない。
+ *
+ * @param mixed $post_cas 保存済みの投稿 CAS.
+ * @return list<string> CA ID の一覧 (ページ順、重複なし)
  */
-function extract_uuid_from_cas( \WP_Post $post ) {
-	$cas  = \get_post_meta( $post->ID, '_profile_post_cas', true );
-	$page = \max( 1, \get_query_var( 'page' ) );
-	$cas  = is_array( $cas ) ? ( $cas[ $page - 1 ] ?? null ) : $cas;
+function extract_cas_uuids( mixed $post_cas ): array {
+	$pages = is_array( $post_cas ) && is_array( $post_cas[0] ?? null ) ? count( $post_cas ) : 1;
+	$uuids = array();
+	for ( $page = 1; $page <= $pages; ++$page ) {
+		$uuid = extract_page_uuid( $post_cas, $page );
+		if ( false !== $uuid && ! in_array( $uuid, $uuids, true ) ) {
+			$uuids[] = $uuid;
+		}
+	}
+	return $uuids;
+}
+
+/**
+ * 保存済み CAS から、指定したページの CA ID を取り出す。
+ *
+ * 保存形式は、ページごとの CAS の配列、単一の CAS (JWT の配列)、
+ * 旧形式の JWT 文字列のいずれか。
+ *
+ * @param mixed $post_cas 保存済みの投稿 CAS.
+ * @param int   $page ページ番号 (1 始まり).
+ * @return string|false CA ID (取得できなければ false)
+ */
+function extract_page_uuid( mixed $post_cas, int $page ) {
+	if ( is_array( $post_cas ) && is_array( $post_cas[0] ?? null ) ) {
+		$cas = $post_cas[ $page - 1 ] ?? null;
+	} else {
+		// ページ分割前の形式は 1 ページ目の CAS として扱う.
+		$cas = 1 === $page ? $post_cas : null;
+	}
 
 	if ( is_array( $cas ) && isset( $cas[0] ) && is_string( $cas[0] ) ) {
-		$jwt = $cas[0];
-	} elseif ( is_string( $cas ) ) {
-		$jwt = $cas;
-	} else {
-		// CAS が存在しないか、予期した形式でない場合はここで処理される
-		debug( "No CAS found for post ID {$post->ID}, page {$page}" );
-		$jwt = null;
+		return extract_uuid_from_jwt( $cas[0] );
 	}
-
-	if ( null !== $jwt ) {
-		$uuid = extract_uuid_from_jwt( $jwt );
-	} else {
-		$uuid = false;
+	if ( is_string( $cas ) ) {
+		return extract_uuid_from_jwt( $cas );
 	}
-
-	return $uuid;
+	return false;
 }
 
 /**
@@ -534,10 +546,10 @@ function create_integrity( string $file ): string {
  *
  * @param \WP_Post $post Post object.
  * @param string   $issuer_id CA 発行者 ID
- * @param ?string  $uuid CA ID uuid
+ * @param mixed    $saved_cas (optional) 保存済みの投稿 CAS。各ページの CA ID を更新対象として指定する。
  * @return list<Uca> 未署名 Content Attestation の一覧
  */
-function create_uca_list( \WP_Post $post, string $issuer_id, ?string $uuid = null ): array {
+function create_uca_list( \WP_Post $post, string $issuer_id, mixed $saved_cas = null ): array {
 	global $wp_rewrite;
 
 	/**
@@ -598,6 +610,8 @@ function create_uca_list( \WP_Post $post, string $issuer_id, ?string $uuid = nul
 		}
 
 		$locale = \str_replace( '_', '-', \get_locale() );
+		$uuid   = null === $saved_cas ? false : extract_page_uuid( $saved_cas, $page );
+		$uuid   = false === $uuid ? null : $uuid;
 
 		$uca = new Uca(
 			issuer: $issuer_id,
@@ -803,37 +817,56 @@ function build_ca_endpoint( string $endpoint_path ): string {
 /**
  * Content Attestation の発行
  *
+ * CA ID を指定した更新で、CA サーバーに該当する CA が無い (404) 場合は、
+ * CA ID を指定せずに新規登録し直す。CA サーバー側でデータが削除された場合や
+ * CA サーバーを切り替えた場合に、記事の更新で CA を発行できなくなるのを防ぐ。
+ *
  * @param Uca    $uca 未署名 Content Attestation オブジェクト
  * @param string $admin_secret Content Attestation サーバー認証情報
  * @return mixed 成功した場合は Content Attestation Set、失敗した場合は false
  */
 function issue_ca( Uca $uca, string $admin_secret ): mixed {
-	$endpoint = build_ca_endpoint( '/ca' );
-	return request_ca( $endpoint, $admin_secret, 'POST', $uca->to_json() );
+	$endpoint    = build_ca_endpoint( '/ca' );
+	$status_code = null;
+	$cas         = request_ca( $endpoint, $admin_secret, 'POST', $uca->to_json(), $status_code );
+	if ( false !== $cas || null === $uca->subject || 404 !== $status_code ) {
+		return $cas;
+	}
+
+	debug( "CA {$uca->subject} was not found on the CA server. Registering it as a new CA." );
+	$new_uca          = clone $uca;
+	$new_uca->subject = null;
+	return request_ca( $endpoint, $admin_secret, 'POST', $new_uca->to_json() );
 }
 
 /**
  * Content Attestation の削除
  *
+ * 分割記事は全ページの CA を削除する。一部のページで削除に失敗しても、残りのページの削除を続ける。
+ *
  * @param string   $admin_secret Content Attestation サーバー認証情報
  * @param \WP_Post $post 投稿オブジェクト
- * @return bool
+ * @return bool 全ページの CA を削除できた場合は true
  */
 function delete_ca( string $admin_secret, \WP_Post $post ): bool {
-	$uuid = extract_uuid_from_cas( $post );
-	if ( false === $uuid ) {
+	$uuids = extract_cas_uuids( \get_post_meta( $post->ID, '_profile_post_cas', true ) );
+	if ( empty( $uuids ) ) {
 		debug( "delete_ca: UUID not found for post ID {$post->ID}. Skipping deletion." );
 		return false;
 	}
-	$endpoint = build_ca_endpoint( "/ca/{$uuid}" );
-	$res      = request_ca( $endpoint, $admin_secret, 'DELETE' );
 
-	if ( false === $res ) {
-		debug( "Failed to delete CA for post ID {$post->ID}" );
-		return false;
+	$deleted = true;
+	foreach ( $uuids as $uuid ) {
+		$endpoint = build_ca_endpoint( "/ca/{$uuid}" );
+		if ( false === request_ca( $endpoint, $admin_secret, 'DELETE' ) ) {
+			debug( "Failed to delete CA {$uuid} for post ID {$post->ID}" );
+			$deleted = false;
+		}
 	}
-	debug( "Successfully deleted CA for post ID {$post->ID}" );
-	return true;
+	if ( $deleted ) {
+		debug( "Successfully deleted CA for post ID {$post->ID}" );
+	}
+	return $deleted;
 }
 
 /**
@@ -843,10 +876,12 @@ function delete_ca( string $admin_secret, \WP_Post $post ): bool {
  * @param string  $admin_secret Content Attestation サーバー認証情報
  * @param string  $method Content Attestation サーバーへのリクエストメソッド
  * @param ?string $body (optional) Content Attestation サーバーへのリクエストボディ
+ * @param ?int    $status_code (optional) HTTP ステータスコードの格納先。応答を得られなかった場合は null
  * @return mixed 成功した場合はレスポンスボディをデコードした結果または true 、失敗した場合は false
  */
-function request_ca( string $endpoint, string $admin_secret, string $method = 'POST', ?string $body = null ): mixed {
-	$args = array(
+function request_ca( string $endpoint, string $admin_secret, string $method = 'POST', ?string $body = null, ?int &$status_code = null ): mixed {
+	$status_code = null;
+	$args        = array(
 		'method'  => $method,
 		'timeout' => PROFILE_DEFAULT_CA_SERVER_REQUEST_TIMEOUT,
 		'headers' => array(),
@@ -888,6 +923,7 @@ function request_ca( string $endpoint, string $admin_secret, string $method = 'P
 		return false;
 	}
 
+	$status_code = (int) $res['response']['code'];
 	if ( 200 !== $res['response']['code'] && 204 !== $res['response']['code'] ) {
 		debug( "HTTP {$res['response']['code']}: {$res['body']}" );
 		return false;
