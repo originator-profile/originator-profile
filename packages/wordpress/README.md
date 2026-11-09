@@ -498,21 +498,26 @@ Pro版では、画像がCDN経由で変換され、URLが変化する場合が�
 
 **回避策**： 一度記事を非公開にすることで、メタデータがクリアされます。その後再度公開することで UUID を指定しない新規登録となり、正常に登録されます。
 
-### 他の投稿に添付済みの画像を再利用した場合、Integrityが正しく付与されないことがある
+### 画像に Integrity が付与されない場合
 
-WordPressの `get_attached_media()` は、`post_parent`（画像がどの投稿にアップロードされたか）が対象の投稿と一致する添付ファイルのみを返します。
+CA 発行時には、投稿に添付された画像（`get_attached_media()`）に加えて、本文の画像ブロックが参照する画像（他の投稿にアップロード済みの画像を再利用した場合を含む）の Integrity メタデータ（`_profile_attachment_integrity`）を計算し直します。
+画像ファイルの場所は、WordPress のアップロード先の設定（`UPLOADS` 定数、`upload_path` オプション、マルチサイト）に従って求めます。
 
-そのため、画像ブロックの「メディアライブラリ」タブから、既に他の投稿にアップロード済みの画像を選択して挿入した場合、その画像は `get_attached_media()` で取得されず、Integrityメタデータ（`_profile_attachment_integrity`）が生成されないことがあります。この場合、該当する画像は CA の署名対象（External Resource）に含まれません。
+画像ファイルを読み込めずハッシュ値を計算できなかったサイズは保存せず、ログに記録します。
+以前のバージョンで保存された、ハッシュ部分が空の値（例: `integrity="sha256-"`）は `integrity` 属性に出力しません。記事を更新すると、CA 発行時に計算し直されます。
 
-また、画像をアップロードした時点でIntegrityメタデータの計算自体には成功していても、何らかの理由で値が壊れた状態（例: `integrity="sha256-"` のようにハッシュ部分が空）で保存されている場合、`get_attached_media()` で再取得・再検証されない限りその状態が残り続け、CA検証エラー（`ERR_CONTENT_ATTESTATION_SET_VERIFY_FAILED`）の原因になることがあります。
+次の場合は Integrity が付与されず、その画像は CA の署名対象（External Resource）に含まれません。
 
-**確認方法**: ログ出力を有効にすると、Integrityが欠落または不正な状態の画像のURLが記録されます。
+- 画像ブロックに添付ファイル ID が無い（外部 URL の画像など）
+- 画像ファイルをサーバー上で読み込めない（外部ストレージのみに置いている場合など）
+- 再利用ブロック（同期パターン）内の画像で、Integrity メタデータが計算されていない
+
+**確認方法**: ログ出力を有効にすると、Integrity が欠落または不正な状態の画像の URL と、ハッシュ値を計算できなかったファイルが記録されます。
 
 ```
-Post ID <投稿ID>, page <ページ番号>: image(s) with missing or invalid integrity (possibly not returned by get_attached_media(), or hash could not be computed): <画像URL>, ...
+Post ID <投稿ID>, page <ページ番号>: image(s) with missing or invalid integrity (the image block has no attachment ID, or the image file could not be read): <画像URL>, ...
+Attachment ID <添付ID>: failed to compute integrity for size '<サイズ>' (<ファイルパス>)
 ```
-
-**回避策**: 該当する画像をメディアライブラリから直接アップロードし直すことで、その投稿に添付され、Integrityメタデータが生成されます。
 
 ### もっと古い PHP (7.4 など) でも動かせますか?
 
