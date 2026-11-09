@@ -80,7 +80,7 @@ for (const fixture of fixtures) {
       if (index) url.searchParams.set("page", String(index + 1));
       await page.goto(url.href);
       const cas = await page
-        .locator('script[type="application/cas+json"]')
+        .locator('script[type="application/ca-set+json"]')
         .textContent();
       if (!cas)
         throw new Error("Expected embedded CAS: " + localCa.errors.join("; "));
