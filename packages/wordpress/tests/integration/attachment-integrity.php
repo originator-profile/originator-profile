@@ -36,6 +36,7 @@ $previous_user   = get_current_user_id();
 $basedir         = WP_CONTENT_DIR . '/profile-integrity-uploads-' . wp_generate_password( 8, false );
 $baseurl         = content_url( basename( $basedir ) );
 $attachment_id   = 0;
+$document_id     = 0;
 $parent_id       = 0;
 $fixture_post_id = 0;
 $request_body    = null;
