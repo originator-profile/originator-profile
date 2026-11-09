@@ -510,7 +510,7 @@ function extract_cas_uuids( mixed $post_cas ): array {
  * @param int   $page ページ番号 (1 始まり).
  * @return string|false CA ID (取得できなければ false)
  */
-function extract_page_uuid( mixed $post_cas, int $page ) {
+function extract_page_uuid( mixed $post_cas, int $page ): string|false {
 	if ( is_array( $post_cas ) && is_array( $post_cas[0] ?? null ) ) {
 		$cas = $post_cas[ $page - 1 ] ?? null;
 	} else {
@@ -843,10 +843,11 @@ function issue_ca( Uca $uca, string $admin_secret ): mixed {
  * Content Attestation の削除
  *
  * 分割記事は全ページの CA を削除する。一部のページで削除に失敗しても、残りのページの削除を続ける。
+ * CA サーバーに存在しない (404) CA は削除済みとして扱う。
  *
  * @param string   $admin_secret Content Attestation サーバー認証情報
  * @param \WP_Post $post 投稿オブジェクト
- * @return bool 全ページの CA を削除できた場合は true
+ * @return bool 全ページの CA を削除できた (または CA サーバーに存在しなかった) 場合は true
  */
 function delete_ca( string $admin_secret, \WP_Post $post ): bool {
 	$uuids = extract_cas_uuids( \get_post_meta( $post->ID, '_profile_post_cas', true ) );
@@ -857,8 +858,14 @@ function delete_ca( string $admin_secret, \WP_Post $post ): bool {
 
 	$deleted = true;
 	foreach ( $uuids as $uuid ) {
-		$endpoint = build_ca_endpoint( "/ca/{$uuid}" );
-		if ( false === request_ca( $endpoint, $admin_secret, 'DELETE' ) ) {
+		$endpoint    = build_ca_endpoint( "/ca/{$uuid}" );
+		$status_code = null;
+		if ( false === request_ca( $endpoint, $admin_secret, 'DELETE', null, $status_code ) ) {
+			// CA サーバー側で削除済みの CA は、削除できたものとして扱う.
+			if ( 404 === $status_code ) {
+				debug( "CA {$uuid} for post ID {$post->ID} was already absent on the CA server." );
+				continue;
+			}
 			debug( "Failed to delete CA {$uuid} for post ID {$post->ID}" );
 			$deleted = false;
 		}

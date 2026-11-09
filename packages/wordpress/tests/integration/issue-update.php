@@ -171,13 +171,20 @@ try {
 	profile_update_assert( ! \Profile\Issue\delete_ca( 'test:secret', get_post( $test_post_id ) ), 'A partial deletion failure was reported as success.' );
 	profile_update_assert( 2 === count( $requests ) && str_ends_with( $requests[1]['url'], "/ca/{$old_b}" ), 'Deletion stopped after the first failure.' );
 
+	// CA サーバー側で削除済み (404) の CA は、削除できたものとして扱う.
+	update_post_meta( $test_post_id, '_profile_post_cas', $paginated );
+	$requests  = array();
+	$responses = array( $not_found, array( 204, '' ) );
+	profile_update_assert( \Profile\Issue\delete_ca( 'test:secret', get_post( $test_post_id ) ), 'A CA already absent on the server was reported as a deletion failure.' );
+	profile_update_assert( 2 === count( $requests ), 'Deletion stopped after a 404.' );
+
 	// 修正前の不具合で全ページが同じ CA ID の場合は、1 回だけ削除する.
 	update_post_meta( $test_post_id, '_profile_post_cas', array( array( profile_update_jwt( $old_a ) ), array( profile_update_jwt( $old_a ) ) ) );
 	$requests  = array();
 	$responses = array( array( 204, '' ) );
 	profile_update_assert( \Profile\Issue\delete_ca( 'test:secret', get_post( $test_post_id ) ) && 1 === count( $requests ), 'A shared CA ID was deleted more than once.' );
 
-	WP_CLI::success( 'CA update checks passed: existing update, missing CA re-registration, failed re-registration, non-404 failure, new registration 404, per-page CA IDs, added page and per-page deletion.' );
+	WP_CLI::success( 'CA update checks passed: existing update, missing CA re-registration, failed re-registration, non-404 failure, new registration 404, per-page CA IDs, added page, per-page deletion and already deleted CA.' );
 } finally {
 	$responses = array();
 	if ( is_int( $test_post_id ) && $test_post_id > 0 ) {
