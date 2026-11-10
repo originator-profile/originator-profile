@@ -9,6 +9,13 @@
   --default-transition-timing-function: ease;
 }
 
+@theme inline {
+  /* 浮いているもの (ページ上のタグ) の影。NOTE: 複数の影をそれぞれの
+     drop-shadow() に展開させるため inline にする */
+  --drop-shadow-floating:
+    0 0 2px rgb(0 0 0 / 0.1), 0 1px 0.5px rgb(0 0 0 / 0.3);
+}
+
 /* 開閉をアニメーションするアコーディオン (details 要素に付ける) */
 @utility accordion {
   &::details-content {

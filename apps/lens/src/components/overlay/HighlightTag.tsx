@@ -1,7 +1,6 @@
 import { Image } from "@originator-profile/extension-common/ui";
 import placeholderLogoMainUrl from "@originator-profile/extension-common/ui/assets/placeholder-logo-main.png";
 import { twMerge } from "tailwind-merge";
-import tooltipTailUrl from "../../assets/tooltip-tail.svg";
 import type { HighlightLabel } from "../../overlay/protocol";
 import { CountryFlag } from "../sidepanel/CountryFlag";
 
@@ -11,6 +10,19 @@ export type HighlightTagPlacement = "above" | "inside";
 const logoSize: Record<HighlightTagPlacement, number> = {
   above: 16,
   inside: 24,
+};
+
+/**
+ * しっぽ。本体の外側に接する三角形を疑似要素で描く
+ *
+ * NOTE: 本体と重ねて描くと、半透明の背景が重なったところだけ濃くなり、影も
+ * 別々に付く。重ねずに接させれば、本体の drop-shadow が一体の形に付く
+ */
+const tail: Record<HighlightTagPlacement, string> = {
+  above:
+    "after:top-full after:border-x-8 after:border-t-8 after:border-x-transparent after:border-t-white/90",
+  inside:
+    "after:bottom-full after:border-x-8 after:border-b-8 after:border-x-transparent after:border-b-white/90",
 };
 
 /** 強調した範囲に添える、発信者の組織のタグ */
@@ -23,7 +35,12 @@ export function HighlightTag({
 }) {
   const size = logoSize[placement];
   return (
-    <div className="relative flex items-center gap-2 rounded-lg bg-white/90 px-4 py-2 drop-shadow-[0_0_2px_rgba(0,0,0,0.1)] drop-shadow-[0_1px_0.5px_rgba(0,0,0,0.3)]">
+    <div
+      className={twMerge(
+        "relative flex items-center gap-2 rounded-lg bg-white/90 px-4 py-2 drop-shadow-floating after:absolute after:left-1/2 after:-translate-x-1/2",
+        tail[placement],
+      )}
+    >
       <Image
         className="shrink-0"
         src={label.logo}
@@ -36,18 +53,6 @@ export function HighlightTag({
         {label.name}
       </p>
       {label.country && <CountryFlag country={label.country} />}
-      <img
-        className={twMerge(
-          "absolute left-1/2 -translate-x-1/2",
-          placement === "above"
-            ? "-bottom-[5.5px] -rotate-45"
-            : "-top-[5.5px] rotate-135",
-        )}
-        src={tooltipTailUrl}
-        alt=""
-        width={11}
-        height={11}
-      />
     </div>
   );
 }
