@@ -27,7 +27,11 @@ type Props = {
   ref?: Ref<HTMLDivElement>;
 };
 
-/** 強調した範囲に添える、発信者の組織のタグ */
+/**
+ * 強調した範囲に添える、発信者の組織のタグ
+ *
+ * 形を保つため幅に上限を設け、組織名が収まらなければ末尾を省略する
+ */
 export function HighlightTag({
   label,
   direction,
@@ -40,7 +44,7 @@ export function HighlightTag({
     <div
       ref={ref}
       className={twMerge(
-        "relative flex items-center gap-2 rounded-lg bg-white/90 px-4 py-2 whitespace-nowrap drop-shadow-floating after:absolute after:left-(--tail-x) after:-translate-x-1/2 after:border-x-8 after:border-x-transparent",
+        "relative flex max-w-[min(20rem,calc(100vw-1rem))] items-center gap-2 rounded-lg bg-white/90 px-4 py-2 whitespace-nowrap drop-shadow-floating after:absolute after:left-(--tail-x) after:-translate-x-1/2 after:border-x-8 after:border-x-transparent",
         tail[direction],
       )}
       style={
@@ -57,7 +61,9 @@ export function HighlightTag({
         width={size}
         height={size}
       />
-      <p className="text-xs font-medium text-black">{label.name}</p>
+      <p className="min-w-0 truncate text-xs font-medium text-black">
+        {label.name}
+      </p>
       {label.country && <CountryFlag country={label.country} />}
     </div>
   );
