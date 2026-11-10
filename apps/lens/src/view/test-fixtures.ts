@@ -32,7 +32,12 @@ export const existencePa = (id: string, addressCountry: string) => ({
   credentialSubject: {
     id,
     type: "JP-OrganizationExistenceCertificate",
-    annotation: { id: "urn:uuid:existence", type: "ProfileAnnotationPolicy" },
+    annotation: {
+      id: "urn:uuid:existence",
+      type: "ProfileAnnotationPolicy",
+      name: "組織実在証",
+      ref: "https://pa-issuer.example/policy",
+    },
     addressCountry,
   },
 });
@@ -44,7 +49,7 @@ export const membershipPa = (id: string, policy: string) => ({
   credentialSubject: {
     id,
     type: "Membership",
-    annotation: { id: policy, type: "ProfileAnnotationPolicy" },
+    annotation: { id: policy, type: "ProfileAnnotationPolicy", name: policy },
   },
 });
 

@@ -167,10 +167,19 @@
   "Sidepanel_ShowDetail": {
     "message": "Show details"
   },
+  "Detail_ThirdPartyVerification": {
+    "message": "Third-party verification"
+  },
+  "Detail_IssuancePolicy": {
+    "message": "Issuance policy"
+  },
   "Link_OpensInNewTab": {
     "message": " (opens in a new tab)"
   },
   "Link_OpensInNewWindow": {
     "message": " (opens in a new window)"
+  },
+  "Detail_VerifiedBy": {
+    "message": "Verified by: "
   }
 }
