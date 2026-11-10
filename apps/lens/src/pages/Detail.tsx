@@ -7,8 +7,11 @@ import Template from "../templates/Detail";
 
 function Detail() {
   const { id = "" } = useParams<{ id: string }>();
-  const { data, isLoading } = useSWR(["organization-detail", id], () =>
-    loadDetail(id),
+  const { data, isLoading } = useSWR(
+    ["organization-detail", id],
+    () => loadDetail(id),
+    // NOTE: 保存した詳細は読み直しても変わらないので、失敗しても再試行しない
+    { shouldRetryOnError: false },
   );
   if (isLoading) return <Loading />;
   if (!data) {
