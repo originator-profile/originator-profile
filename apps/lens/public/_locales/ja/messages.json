@@ -167,6 +167,9 @@
   "Sidepanel_ShowDetail": {
     "message": "詳細はこちら"
   },
+  "Sidepanel_ShowDetailFailed": {
+    "message": "詳細を開けませんでした。もう一度お試しください。"
+  },
   "Detail_ThirdPartyVerification": {
     "message": "第三者機関による確認"
   },
