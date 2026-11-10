@@ -1,9 +1,5 @@
-import {
-  deduplicateCas,
-  type TabVerification,
-} from "@originator-profile/extension-common";
-import type { VerifiedCas } from "@originator-profile/verify";
-import { toLegacyDocument } from "../../utils/to-legacy-result";
+import type { TabVerification } from "@originator-profile/extension-common";
+import { contentsOf, type DocumentCas } from "../../view/contents";
 
 /**
  * タブのバッジに表示するクレデンシャルの件数を数える
@@ -14,14 +10,13 @@ import { toLegacyDocument } from "../../utils/to-legacy-result";
  * @param verification タブが表示している文書群の検証の状態
  */
 export function countCredentials({ frames }: TabVerification): number {
-  const cas: VerifiedCas = [];
+  const documents: DocumentCas[] = [];
   for (const { frame, entry } of frames) {
     if (frame.frameType === "fenced_frame") continue;
     if (entry?.state === "invalidated") return 0;
     if (entry?.state !== "settled") continue;
-    const legacy = toLegacyDocument(entry.result);
-    if (legacy instanceof Error) return 0;
-    cas.push(...legacy.cas);
+    if (!entry.result.status) return 0;
+    documents.push({ frame: entry.subject, cas: entry.result.outcome.cas });
   }
-  return deduplicateCas(cas).length;
+  return contentsOf(documents).length;
 }

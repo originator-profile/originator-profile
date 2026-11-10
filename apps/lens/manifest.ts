@@ -21,7 +21,7 @@ const base = {
     128: "icons/128x128.png",
   },
   default_locale: "en",
-  action: { default_popup: "index.html" },
+  action: {},
   content_scripts: [
     {
       match_about_blank: true,
@@ -60,6 +60,7 @@ const chromium = {
   background: {
     service_worker: "background.js",
   },
+  side_panel: { default_path: "index.html" },
 };
 
 const firefox = {
@@ -75,6 +76,12 @@ const firefox = {
   },
   background: {
     page: "background.html",
+  },
+  sidebar_action: {
+    default_panel: "index.html",
+    default_title: "__MSG_extensionName__",
+    default_icon: { 48: "icons/48x48.png", 128: "icons/128x128.png" },
+    open_at_install: false,
   },
 };
 

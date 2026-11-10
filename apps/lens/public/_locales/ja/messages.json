@@ -5,21 +5,6 @@
   "extensionDescription": {
     "message": "OP Lensは、閲覧中のコンテンツを誰が作成し誰が掲載したのかをOriginator Profileで確認するためのブラウザー拡張機能です。"
   },
-  "CaFilter_All": {
-    "message": "すべて"
-  },
-  "CaFilter_MainContent": {
-    "message": "メインコンテンツ"
-  },
-  "CaFilter_Article": {
-    "message": "記事"
-  },
-  "CaFilter_Advertorial": {
-    "message": "記事広告"
-  },
-  "CaFilter_Advertisements": {
-    "message": "広告"
-  },
   "ContentType_MainContent": {
     "message": "メインコンテンツ"
   },
@@ -34,21 +19,6 @@
   },
   "ContentType_Unknown": {
     "message": "種別不明のコンテンツ"
-  },
-  "ContentType_Document": {
-    "message": "ドキュメント"
-  },
-  "ContentType_Site": {
-    "message": "ウェブサイト"
-  },
-  "WebMediaProfileSummary_InformationTransmissionPolicy": {
-    "message": "情報発信ポリシー"
-  },
-  "WebMediaProfileSummary_EditorialGuidelines": {
-    "message": "編集ガイドライン"
-  },
-  "WebMediaProfileSummary_PrivacyPolicy": {
-    "message": "プライバシーポリシー"
   },
   "Loading_RetrievingAndValidatingProfile": {
     "message": "$of_origin$プロファイルを取得検証しています...",
@@ -68,27 +38,6 @@
       }
     }
   },
-  "ReliabilityGuide_SiteOperator": {
-    "message": "このサイトは次の組織が運営しています"
-  },
-  "ReliabilityGuide_Publisher": {
-    "message": "この$content_type$は次の組織が発信しています",
-    "placeholders": {
-      "content_type": {
-        "content": "$1",
-        "example": "出版物"
-      }
-    }
-  },
-  "ReliabilityGuide_AboutReliabilityInformation": {
-    "message": "どのように確認されますか"
-  },
-  "ReliabilityGuide_VerifiedOrganizationStatementTitle": {
-    "message": "真正性・信頼性を確認する仕組み"
-  },
-  "ReliabilityGuide_VerifiedOrganizationStatement": {
-    "message": "表示されている画像、テキスト等は署名をともなうデータであり、署名の正しさによって改ざんされていないことが確認されました。この組織の信頼性の判断指標として、自ら定める情報発信ポリシーのほか、第三者によって発行された追加情報が閲覧できます。追加情報には、組織の実在性、業種・業態に応じた適格性等が示されます。"
-  },
   "Unsupported_ERR_SITE_PROFILE_FETCH_FAILED": {
     "message": "サイトの運営者またはコンテンツ作成者を検証するためのデータが取得できませんでした"
   },
@@ -107,191 +56,11 @@
   "Unsupported_OpNotSupported": {
     "message": "このサイトはまだOPに対応していません"
   },
-  "Org_InformationTransmissionPolicy": {
-    "message": "情報発信ポリシー"
-  },
-  "Org_EditorialGuidelines": {
-    "message": "編集ガイドライン"
-  },
-  "Org_PrivacyPolicy": {
-    "message": "プライバシーポリシー"
-  },
-  "Org_CredentialInformation": {
-    "message": "検証済み属性"
-  },
-  "Credentials_UntitledContent": {
-    "message": "タイトル未設定のコンテンツ"
-  },
   "Prohibition_Warning": {
     "message": "正規のコンテンツではない可能性があります"
   },
   "Prohibition_Site": {
     "message": "発信者の詐称やコンテンツの改竄（かいざん）がされている可能性があります"
-  },
-  "CertificateDetail_Loading": {
-    "message": "証明書を読み込み中です..."
-  },
-  "CertificateDetail_Details": {
-    "message": "くわしくはこちら"
-  },
-  "CertificateDetail_IssuedBy": {
-    "message": "$ISSUER$ 発行",
-    "placeholders": {
-      "issuer": {
-        "content": "$1",
-        "example": "PA 発行者"
-      }
-    }
-  },
-  "CertificateSummary_IssuedBy": {
-    "message": "$ISSUER$ 発行",
-    "placeholders": {
-      "issuer": {
-        "content": "$1",
-        "example": "PA 発行者"
-      }
-    }
-  },
-  "Description_Description": {
-    "message": "説明"
-  },
-  "WebMediaProfileTable_Holder": {
-    "message": "所有者"
-  },
-  "WebMediaProfileTable_Address": {
-    "message": "所在地"
-  },
-  "WebMediaProfileTable_AddressData": {
-    "message": "〒$postal_code$ $region$$locality$$street_address$",
-    "placeholders": {
-      "postal_code": {
-        "content": "$1",
-        "example": "000-0123"
-      },
-      "region": {
-        "content": "$2",
-        "example": "〇〇県"
-      },
-      "locality": {
-        "content": "$3",
-        "example": "□□市"
-      },
-      "street_address": {
-        "content": "$4",
-        "example": "××町△△"
-      }
-    }
-  },
-  "WebMediaProfileTable_URL": {
-    "message": "URL"
-  },
-  "WebMediaProfileTable_PhoneNum": {
-    "message": "電話番号"
-  },
-  "WebMediaProfileTable_Email": {
-    "message": "メールアドレス"
-  },
-  "WebMediaProfileTable_CorpNum": {
-    "message": "法人番号"
-  },
-  "WebMediaProfileTable_Contact": {
-    "message": "問い合わせ"
-  },
-  "WebMediaProfileTable_PrivacyPolicy": {
-    "message": "プライバシーポリシー"
-  },
-  "WebMediaProfileTable_Principle": {
-    "message": "編集ガイドライン"
-  },
-  "WebMediaProfile_Missing": {
-    "message": "このサイト運営者に対応する組織情報を正しく読み取れませんでした"
-  },
-  "WebMediaProfile_Missing_Reason": {
-    "message": "サイト運営者に対応する組織情報が含まれていないか、取得できなかった可能性があります。\nサイト内に記載されている運営管理者にお問い合わせください。"
-  },
-  "ProjectSummary_Statement_1": {
-    "message": "Originator Profile 技術は、ウェブコンテンツの作成者や広告主などの情報を検証可能な形で付与することで、第三者認証済みの良質な記事やメディアを容易に見分けられるようにする技術です。"
-  },
-  "ProjectSummary_Statement_2": {
-    "message": "コンテンツ作成者や流通経路の透明性を高め、信頼できる発信者を識別可能にすることで、責任ある良質な記事やメディアの増加と価値向上を助けます。"
-  },
-  "ProjectTitle_TechSummary": {
-    "message": "良質な記事やメディアを容易に見分けられるようにする技術"
-  },
-  "TechInfo_TechInfo": {
-    "message": "技術情報"
-  },
-  "ArticleTable_PublishDate": {
-    "message": "公開日"
-  },
-  "ArticleTable_LastModified": {
-    "message": "最終更新日"
-  },
-  "ArticleTable_EditorInChief": {
-    "message": "編集責任者"
-  },
-  "ArticleTable_Author": {
-    "message": "記事執筆者"
-  },
-  "ArticleTable_Sponsor": {
-    "message": "スポンサー"
-  },
-  "ArticleTable_Category": {
-    "message": "ジャンル"
-  },
-  "AdvertisementTable_LandingPage": {
-    "message": "ランディングページ"
-  },
-  "AdvertisementTable_AdReportContact": {
-    "message": "広告に対する報告窓口"
-  },
-  "AdvertisementTable_AdReviewGuidelines": {
-    "message": "広告審査ガイドライン"
-  },
-  "AdvertisementTable_TargetingPolicy": {
-    "message": "ターゲティング広告に関するポリシー"
-  },
-  "AdvertisementTable_AdDataHandlingPolicy": {
-    "message": "広告配信に関する情報の取り扱いについての説明"
-  },
-  "AdvertisementTable_AdDisplayRationale": {
-    "message": "この広告が表示されている理由"
-  },
-  "BackHeader_Back": {
-    "message": "戻る"
-  },
-  "DetailInfo": {
-    "message": "詳細情報"
-  },
-  "DetailInfo_VerificationResults": {
-    "message": "検証結果"
-  },
-  "OtherErrors": {
-    "message": "その他のエラー"
-  },
-  "DetailInfo_LinkVerification": {
-    "message": "リンク先確認"
-  },
-  "DetailInfo_LinkVerificationStatus": {
-    "message": "判定"
-  },
-  "DetailInfo_LinkVerificationReason": {
-    "message": "理由"
-  },
-  "DetailInfo_ExpectedLinkDestination": {
-    "message": "意図したリンク先"
-  },
-  "DetailInfo_SourceAdOrganization": {
-    "message": "リンク元広告の組織"
-  },
-  "DetailInfo_ActualSiteOperator": {
-    "message": "実際のサイト運営者"
-  },
-  "DetailInfo_Warnings": {
-    "message": "警告"
-  },
-  "DetailInfo_Info": {
-    "message": "情報"
   },
   "Link_OriginatorProfile": {
     "message": "Originator Profile についてより詳しく（外部サイト）"
@@ -377,74 +146,31 @@
   "Verification_OpidMismatch": {
     "message": "OPID不一致"
   },
-  "GlobalHeader_Reload": {
-    "message": "再読み込み"
+  "ContentType_Media": {
+    "message": "単体メディア"
   },
-  "SiteProfile_Missing": {
-    "message": "サイトプロファイルが見つかりませんでした"
+  "Sidepanel_SiteOperator": {
+    "message": "サイト運営者"
   },
-  "SiteProfile_Missing_Reason": {
-    "message": "サイトプロファイルを取得できなかった可能性があります。サイトの安全性を否定するものではありません。"
+  "Sidepanel_NoSiteOperator": {
+    "message": "サイト運営者情報はありません"
   },
-  "Popup_Label_WebsiteProfile": {
-    "message": "このサイトの運営者"
+  "Sidepanel_Originator": {
+    "message": "作成者"
   },
-  "Popup_Label_ContentAttestation": {
-    "message": "この$content_type$の作成者",
-    "placeholders": {
-      "content_type": {
-        "content": "$1",
-        "example": "記事"
-      }
-    }
+  "Sidepanel_NoMainContent": {
+    "message": "このページにはメインコンテンツの出どころの情報がありません。"
   },
-  "Popup_Description": {
-    "message": "$wmp_name$は、第三者組織により「$pa$」として実在が確認されています。",
-    "placeholders": {
-      "wmp_name": {
-        "content": "$1",
-        "example": "OP株式会社"
-      },
-      "pa": {
-        "content": "$2",
-        "example": "日本のインターネットメディア"
-      }
-    }
+  "Sidepanel_OfficialSite": {
+    "message": "公式サイト"
   },
-  "Popup_ContentAttestation_Title": {
-    "message": "が作成した$content_type$です",
-    "placeholders": {
-      "content_type": {
-        "content": "$1",
-        "example": "記事"
-      }
-    }
+  "Sidepanel_ShowDetail": {
+    "message": "詳細はこちら"
   },
-  "Popup_SiteProfile_Title": {
-    "message": "が運営しているサイトです"
+  "Link_OpensInNewTab": {
+    "message": "（新しいタブで開きます）"
   },
-  "Popup_ContentAttestation_Header": {
-    "message": "この$content_type$の「出どころ」",
-    "placeholders": {
-      "content_type": {
-        "content": "$1",
-        "example": "記事"
-      }
-    }
-  },
-  "Popup_ContentAttestation_Detail": {
-    "message": "この$content_type$の出どころについてもっと詳しく",
-    "placeholders": {
-      "content_type": {
-        "content": "$1",
-        "example": "記事"
-      }
-    }
-  },
-  "Popup_SiteProfile_Detail": {
-    "message": "このサイトの運営者についてもっと詳しく"
-  },
-  "Popup_ProfileAnnotation_Type": {
-    "message": "日本のインターネットメディア"
+  "Link_OpensInNewWindow": {
+    "message": "（新しいウインドウで開きます）"
   }
 }

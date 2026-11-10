@@ -31,7 +31,7 @@ function Image({
   cover = false,
 }: Props) {
   return (
-    <figure
+    <span
       className={twMerge(
         "flex justify-center items-center overflow-hidden",
         className,
@@ -55,7 +55,7 @@ function Image({
           console.error(message);
         }}
       />
-    </figure>
+    </span>
   );
 }
 
