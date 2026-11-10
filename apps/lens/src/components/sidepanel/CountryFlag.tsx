@@ -1,6 +1,6 @@
 import { twMerge } from "tailwind-merge";
 import jpFlagUrl from "../../assets/flags/jp.svg";
-import ukFlagUrl from "../../assets/flags/uk.svg";
+import gbFlagUrl from "../../assets/flags/gb.svg";
 import { uiLocale } from "../../utils/ui-locale";
 
 /**
@@ -40,7 +40,7 @@ function UsFlag({ label }: { label?: string }) {
 
 const flagUrls: Record<string, string> = {
   JP: jpFlagUrl,
-  GB: ukFlagUrl,
+  GB: gbFlagUrl,
 };
 
 type Props = {
