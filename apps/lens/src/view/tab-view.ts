@@ -17,7 +17,7 @@ import {
   type ProblemDetails,
   type VerificationResult,
 } from "@originator-profile/verify";
-import { contentsOf, type Content, type ContentFrame } from "./contents";
+import { contentsOf, type Content } from "./contents";
 import { organizationOf, type Organization } from "./organization";
 
 /** Web サイトの運営者の提示のしかた */
@@ -48,8 +48,6 @@ export type TabView =
   | {
       state: "ready";
       tabId: number;
-      /** 検証に成功した文書のフレーム。トップレベル文書を先頭とする */
-      frames: ContentFrame[];
       site: SiteView;
       contents: Content[];
       /** CA 発行者ごとの組織。発行者を確認できないものは含まない */
@@ -228,11 +226,7 @@ function verifiedOf(
       cas: result.status ? result.outcome.cas : [],
     })),
   );
-  return {
-    originators,
-    contents,
-    frames: verified.map(({ subject }) => subject),
-  };
+  return { originators, contents };
 }
 
 /** CA 発行者ごとの組織 */
@@ -271,7 +265,7 @@ export function tabViewOf(
     return { state: "prohibited" };
   }
 
-  const { originators, contents, frames } = verifiedOf(subscribed, documents);
+  const { originators, contents } = verifiedOf(subscribed, documents);
 
   if (siteFailure !== null && contents.length === 0) {
     return {
@@ -284,7 +278,6 @@ export function tabViewOf(
   return {
     state: "ready",
     tabId,
-    frames,
     site: siteOf(subscribed, originators, contents),
     contents,
     issuers: issuersOf(contents, originators),

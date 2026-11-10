@@ -42,19 +42,13 @@ export type FrameTargets = FrameResponse & {
  */
 export type LensOverlayProtocolMap = {
   /** サイドパネル → トップレベル文書: 強調の開始・更新 */
-  showHighlight(message: {
-    highlight: Highlight;
-    /** 検証に成功した文書のフレーム。位置を親フレームへ送るときに用いる */
-    frames: DocumentFrame[];
-  }): void;
+  showHighlight(message: Highlight): void;
   /** トップレベル文書 → Service Worker: サブフレームでの位置の計測を求める */
-  locateTargets(message: {
-    target: FrameTargets;
-    frames: Array<FrameResponse & FrameLocation>;
-  }): void;
+  locateTargets(message: FrameTargets): void;
   /** Service Worker → サブフレーム: 位置を計測して親フレームへ送る */
   measureTargets(message: {
     target: FrameTargets;
+    /** タブの文書のフレーム。位置を親フレームへ送るときにオリジンを引く */
     frames: Array<FrameResponse & FrameLocation>;
   }): void;
 };
