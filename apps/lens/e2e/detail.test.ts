@@ -99,6 +99,35 @@ test("詳細のウインドウを閉じると、保存した詳細を消す", as
   await expect.poll(() => savedDetailKeys(context)).toHaveLength(0);
 });
 
+test("詳細のウインドウを開けなければ、そのことを示す", async ({
+  context,
+  page,
+  validSiteProfile,
+  credentialsMissingPage,
+}) => {
+  await validSiteProfile(
+    { privateKey, publicKey },
+    credentialsMissingPage.issuer,
+    credentialsMissingPage.holder,
+  );
+  await page.goto(credentialsMissingPage.endpoint);
+  const ext = await sidepanel(context);
+  await ext.evaluate(() => {
+    chrome.windows.create = () => Promise.reject(new Error("blocked"));
+  });
+  await ext
+    .getByTestId("site-header")
+    .locator("summary", { hasText: organizationName })
+    .click();
+  const button = ext.getByRole("button", { name: "詳細はこちら" });
+  await button.click();
+
+  await expect(ext.getByRole("status")).toHaveText(
+    "詳細を開けませんでした。もう一度お試しください。",
+  );
+  await expect(button).toHaveAttribute("aria-disabled", "false");
+});
+
 test("保存した詳細が無ければ、そのことを示す", async ({ context }) => {
   const ext = await sidepanel(context);
   await ext.goto(ext.url().replace(/#.*$/, "#/detail/unknown"));

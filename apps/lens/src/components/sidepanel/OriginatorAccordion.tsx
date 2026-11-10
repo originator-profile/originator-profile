@@ -1,6 +1,7 @@
 import IconChevronDown from "@iconify-react/fa6-solid/chevron-down";
 import { _, Image } from "@originator-profile/extension-common/ui";
 import placeholderLogoMainUrl from "@originator-profile/extension-common/ui/assets/placeholder-logo-main.png";
+import { useState } from "react";
 import { twMerge } from "tailwind-merge";
 import type { Organization } from "../../view";
 import { ExternalLink } from "../detail/ExternalLink";
@@ -14,7 +15,7 @@ type Props = {
   /** 開閉したとき。開いていれば true */
   onToggle: (open: boolean) => void;
   /** 「詳細はこちら」を押したとき。未指定ならボタンを出さない */
-  onShowDetail?: () => void;
+  onShowDetail?: () => Promise<void>;
   className?: string;
 };
 
@@ -55,12 +56,53 @@ function Summary({
   );
 }
 
+/**
+ * 「詳細はこちら」のボタン
+ *
+ * 開き終えるまでは押しても何もしない。開けなければ、ボタンの下にそのことを示す
+ */
+function DetailButton({ onShowDetail }: { onShowDetail: () => Promise<void> }) {
+  const [pending, setPending] = useState(false);
+  const [failed, setFailed] = useState(false);
+  const showDetail = async () => {
+    if (pending) return;
+    setPending(true);
+    setFailed(false);
+    try {
+      await onShowDetail();
+    } catch (error) {
+      console.warn("Failed to open the organization detail:", error);
+      setFailed(true);
+    } finally {
+      setPending(false);
+    }
+  };
+  return (
+    <div className="flex flex-col">
+      {/* NOTE: disabled 属性はフォーカスを外してしまうため aria-disabled にする */}
+      <button
+        type="button"
+        className="w-full cursor-pointer rounded-md border border-gray-500 px-4 py-2.5 text-left text-xs leading-normal text-black transition-colors hover:bg-gray-50"
+        aria-disabled={pending}
+        onClick={() => void showDetail()}
+      >
+        {_("Sidepanel_ShowDetail")}
+        <span className="sr-only">{_("Link_OpensInNewWindow")}</span>
+      </button>
+      {/* NOTE: 読み上げさせるため、空のうちから置いて中身だけを変える */}
+      <output className="text-xs leading-normal text-black not-empty:mt-2">
+        {failed && _("Sidepanel_ShowDetailFailed")}
+      </output>
+    </div>
+  );
+}
+
 function Body({
   organization: { media, country },
   onShowDetail,
 }: {
   organization: Organization;
-  onShowDetail?: () => void;
+  onShowDetail?: () => Promise<void>;
 }) {
   const url = media?.credentialSubject.url;
   return (
@@ -74,16 +116,7 @@ function Body({
       {url && (
         <ExternalLink href={url}>{_("Sidepanel_OfficialSite")}</ExternalLink>
       )}
-      {onShowDetail && (
-        <button
-          type="button"
-          className="w-full cursor-pointer rounded-md border border-gray-500 px-4 py-2.5 text-left text-xs leading-normal text-black transition-colors hover:bg-gray-50"
-          onClick={onShowDetail}
-        >
-          {_("Sidepanel_ShowDetail")}
-          <span className="sr-only">{_("Link_OpensInNewWindow")}</span>
-        </button>
-      )}
+      {onShowDetail && <DetailButton onShowDetail={onShowDetail} />}
     </div>
   );
 }

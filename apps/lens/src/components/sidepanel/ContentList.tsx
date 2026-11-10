@@ -74,7 +74,7 @@ export function ContentList(props: Props) {
       name={name}
       open={openKey === key}
       onToggle={toggle(key)}
-      onShowDetail={() => void openDetail(detailOf(organization, originators))}
+      onShowDetail={() => openDetail(detailOf(organization, originators))}
     />
   );
 

@@ -167,6 +167,9 @@
   "Sidepanel_ShowDetail": {
     "message": "Show details"
   },
+  "Sidepanel_ShowDetailFailed": {
+    "message": "Couldn't open the details. Please try again."
+  },
   "Detail_ThirdPartyVerification": {
     "message": "Third-party verification"
   },
