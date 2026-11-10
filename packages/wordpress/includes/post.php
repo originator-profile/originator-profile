@@ -15,6 +15,9 @@ require_once __DIR__ . '/delivery.php';
 use function Profile\Delivery\get_cas;
 use function Profile\Delivery\external_url;
 
+require_once __DIR__ . '/issue.php';
+use function Profile\Issue\valid_integrity_values;
+
 /** 投稿閲覧画面の初期化 */
 function init() {
 	\add_action( 'wp_head', '\Profile\Post\cas_script' );
@@ -66,13 +69,14 @@ function block_image( string $content, array $block ): string {
 		return $content;
 	}
 
-	$integrity = \get_post_meta( $id, '_profile_attachment_integrity', true );
-	$integrity = \is_array( $integrity ) ? \implode( ' ', $integrity ) : null;
+	$integrity = valid_integrity_values( \get_post_meta( $id, '_profile_attachment_integrity', true ) );
 
-	if ( ! $integrity ) {
-		debug( "No Integrity metadata found for attachment ID: {$id}" );
+	if ( empty( $integrity ) ) {
+		debug( "No valid Integrity metadata found for attachment ID: {$id}" );
 		return $content;
 	}
+
+	$integrity = \implode( ' ', $integrity );
 
 	return \str_replace( '<img ', '<img integrity="' . \esc_attr( $integrity ) . '" ', $content );
 }

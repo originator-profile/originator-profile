@@ -255,9 +255,13 @@ function sign_published_post( \WP_Post $post, bool $only_missing = false ): arra
 			'permalink'    => $url,
 		);
 
-		foreach ( \get_attached_media( 'image', $post->ID ) as $attachment ) {
-			$metadata = \wp_get_attachment_metadata( $attachment->ID );
-			update_attachment_integrity_metadata( $metadata, $attachment->ID );
+		foreach ( collect_image_attachment_ids( $post ) as $attachment_id ) {
+			$metadata = \wp_get_attachment_metadata( $attachment_id );
+			if ( ! \is_array( $metadata ) ) {
+				debug( "Post ID {$post->ID}: attachment ID {$attachment_id} has no metadata, skipping integrity update" );
+				continue;
+			}
+			update_attachment_integrity_metadata( $metadata, $attachment_id );
 		}
 
 		$admin_secret = \get_option( 'profile_ca_server_admin_secret' );
@@ -405,32 +409,127 @@ function delete_post( int $post_id ) {
 }
 
 /**
+ * 投稿の画像の添付ファイル ID の一覧
+ *
+ * 投稿に添付された画像を返す get_attached_media() だけでは、他の投稿に添付された画像を再利用した場合などを取得できないため、
+ * 本文の画像ブロックが参照する添付ファイル ID も含める。
+ *
+ * @param \WP_Post $post Post object.
+ * @return list<int> 添付ファイル ID の一覧
+ */
+function collect_image_attachment_ids( \WP_Post $post ): array {
+	$ids = array();
+
+	foreach ( \get_attached_media( 'image', $post->ID ) as $attachment ) {
+		$ids[] = (int) $attachment->ID;
+	}
+
+	$ids = \array_merge( $ids, image_block_attachment_ids( \parse_blocks( $post->post_content ) ) );
+
+	return \array_values( \array_unique( $ids ) );
+}
+
+/**
+ * 画像ブロックが参照する添付ファイル ID の一覧
+ *
+ * @param array $blocks parse_blocks() の結果
+ * @return list<int> 添付ファイル ID の一覧
+ */
+function image_block_attachment_ids( array $blocks ): array {
+	$ids = array();
+
+	foreach ( $blocks as $block ) {
+		if ( 'core/image' === ( $block['blockName'] ?? null ) && isset( $block['attrs']['id'] ) && (int) $block['attrs']['id'] > 0 ) {
+			$ids[] = (int) $block['attrs']['id'];
+		}
+		if ( ! empty( $block['innerBlocks'] ) ) {
+			$ids = \array_merge( $ids, image_block_attachment_ids( $block['innerBlocks'] ) );
+		}
+	}
+
+	return $ids;
+}
+
+/**
  * 添付ファイルの整合性メタデータの更新
+ *
+ * 画像以外の添付ファイルは対象外とする。ハッシュ値を計算できなかったサイズは保存しない。
+ * 1 つも計算できなかった場合はメタデータを削除する。
  *
  * @param array $metadata Attachment metadata.
  * @param int   $attachment_id Attachment ID.
  * @return array Attachment metadata.
  */
 function update_attachment_integrity_metadata( array $metadata, int $attachment_id ): array {
-	$original_file = WP_CONTENT_DIR . "/uploads/{$metadata['file']}";
+	// 動画や PDF などのファイル全体のハッシュ計算を避けるため、画像ブロックで使われる画像のみを対象とする.
+	if ( ! \wp_attachment_is_image( $attachment_id ) ) {
+		return $metadata;
+	}
+
+	$original_file = attachment_original_file( $metadata, $attachment_id );
 	$integrity     = array();
 
-	// 'full' は画像のオリジナルサイズ
-	$integrity['full'] = create_integrity( $original_file );
+	if ( null === $original_file ) {
+		debug( "Attachment ID {$attachment_id}: original file path could not be determined, skipping integrity update" );
+		\delete_post_meta( $attachment_id, '_profile_attachment_integrity' );
+		return $metadata;
+	}
 
-	foreach ( $metadata['sizes'] as $size => $data ) {
+	// 'full' は画像のオリジナルサイズ
+	$files = array( 'full' => $original_file );
+
+	$sizes = isset( $metadata['sizes'] ) && \is_array( $metadata['sizes'] ) ? $metadata['sizes'] : array();
+	foreach ( $sizes as $size => $data ) {
 		if ( ! isset( $data['file'] ) ) {
 			debug( "Size '{$size}' has no file data for attachment ID: {$attachment_id}" );
 			continue;
 		}
 
-		$file               = \dirname( $original_file ) . "/{$data['file']}";
-		$integrity[ $size ] = create_integrity( $file );
+		$files[ $size ] = \dirname( $original_file ) . "/{$data['file']}";
+	}
+
+	foreach ( $files as $size => $file ) {
+		$value = create_integrity( $file );
+		if ( null === $value ) {
+			debug( "Attachment ID {$attachment_id}: failed to compute integrity for size '{$size}' ({$file})" );
+			continue;
+		}
+		$integrity[ $size ] = $value;
+	}
+
+	if ( empty( $integrity ) ) {
+		\delete_post_meta( $attachment_id, '_profile_attachment_integrity' );
+		return $metadata;
 	}
 
 	\update_post_meta( $attachment_id, '_profile_attachment_integrity', $integrity );
 
 	return $metadata;
+}
+
+/**
+ * 添付ファイルのオリジナル画像のファイルパス
+ *
+ * アップロード先の変更 (UPLOADS 定数や upload_path オプション) やマルチサイトにも対応するため、
+ * get_attached_file() で解決する。
+ *
+ * @param array $metadata Attachment metadata.
+ * @param int   $attachment_id Attachment ID.
+ * @return ?string ファイルパス。解決できない場合は null
+ */
+function attachment_original_file( array $metadata, int $attachment_id ): ?string {
+	$file = \get_attached_file( $attachment_id );
+	if ( \is_string( $file ) && '' !== $file ) {
+		return $file;
+	}
+
+	// wp_generate_attachment_metadata フィルターの時点で _wp_attached_file が無い場合に備え、メタデータから解決する.
+	if ( isset( $metadata['file'] ) && \is_string( $metadata['file'] ) && '' !== $metadata['file'] ) {
+		$uploads = \wp_get_upload_dir();
+		return \path_join( $uploads['basedir'], $metadata['file'] );
+	}
+
+	return null;
 }
 
 /**
@@ -519,14 +618,43 @@ function extract_uuid_from_cas( \WP_Post $post ) {
  * Integrity の計算
  *
  * @param string $file ファイルパス
- * @return string Integrity Metadata
+ * @return ?string Integrity Metadata。ファイルを読み込めない場合は null
  */
-function create_integrity( string $file ): string {
-	$alg  = 'sha256';
+function create_integrity( string $file ): ?string {
+	$alg = 'sha256';
+	if ( ! \is_file( $file ) || ! \is_readable( $file ) ) {
+		return null;
+	}
 	$hash = \hash_file( $alg, $file, true );
+	if ( false === $hash || '' === $hash ) {
+		return null;
+	}
 	// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
 	$val = \base64_encode( $hash );
 	return "{$alg}-{$val}";
+}
+
+/**
+ * 有効な Integrity Metadata の一覧
+ *
+ * 以前のバージョンで保存された、ハッシュ値が空の値 (例: "sha256-") などを除外する。
+ *
+ * @param mixed $integrity _profile_attachment_integrity メタデータ
+ * @return list<string> 有効な Integrity Metadata の一覧
+ */
+function valid_integrity_values( mixed $integrity ): array {
+	if ( ! \is_array( $integrity ) ) {
+		return array();
+	}
+
+	$valid = array();
+	foreach ( $integrity as $value ) {
+		if ( \is_string( $value ) && \preg_match( '/^sha(256|384|512)-[A-Za-z0-9+\/]+={0,2}$/', $value ) ) {
+			$valid[] = $value;
+		}
+	}
+
+	return $valid;
 }
 
 /**
@@ -570,7 +698,7 @@ function create_uca_list( \WP_Post $post, string $issuer_id, ?string $uuid = nul
 
 		$images_without_integrity = find_images_without_integrity( $html );
 		if ( ! empty( $images_without_integrity ) ) {
-			debug( "Post ID {$post->ID}, page {$page}: image(s) with missing or invalid integrity (possibly not returned by get_attached_media(), or hash could not be computed): " . implode( ', ', $images_without_integrity ) );
+			debug( "Post ID {$post->ID}, page {$page}: image(s) with missing or invalid integrity (the image block has no attachment ID, or the image file could not be read): " . implode( ', ', $images_without_integrity ) );
 		}
 
 		if ( defined( 'WP_DEBUG' ) && WP_DEBUG ) {
@@ -744,8 +872,8 @@ function external_resources_from_html( string $html, string $xpath_query ): arra
 /**
  * 署名対象HTMLの中で、Integrityが付与されていない、または壊れている画像のsrc一覧を取得
  *
- * 他の投稿に添付済みの画像を再利用した場合など、get_attached_media() で取得できない画像は
- * Integrityメタデータが生成されない、または壊れた値のまま残ることがあるため、この一覧に含まれる。
+ * 画像ブロックに添付ファイル ID が無い画像や、画像ファイルを読み込めずハッシュ値を計算できなかった画像は
+ * Integrityメタデータが無いため、この一覧に含まれる。
  *
  * @param string $html HTML
  * @return array<string> Integrityが付与されていない、または壊れている画像のsrc一覧
