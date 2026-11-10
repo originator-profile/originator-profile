@@ -1,5 +1,6 @@
 export * from "./collect-problems";
 export * from "./convert";
+export * from "./metadata";
 export * from "./pointer";
 export * from "./problem-types";
 export * from "./to-problem-details";

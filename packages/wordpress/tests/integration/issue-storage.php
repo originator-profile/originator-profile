@@ -278,7 +278,44 @@ try {
 	profile_storage_assert( $original_title === $other->get_var( $other->prepare( "SELECT post_title FROM {$wpdb->posts} WHERE ID = %d", $test_post_id ) ), 'The caller transaction was committed.' );
 	$wpdb->query( 'ROLLBACK' );
 	profile_storage_assert( 20 === $http_count, 'Unexpected HTTP request count.' );
-	WP_CLI::success( 'CA storage checks passed: 18 stale-cache cases, 4 missing-only empty values, query errors, duplicates, conflicts, post changes, row locks, reconnects, failed commit, caller transaction.' );
+
+	// A more expansion failure on a later page must preserve CA with delivery suspended.
+	clean_post_cache( $test_post_id );
+	wp_update_post(
+		array(
+			'ID'           => $test_post_id,
+			'post_content' => 'Intro<!--more-->Body<!--nextpage--><!-- wp:more ' . str_repeat( 'x', 200 ) . ' --><!--more-->Second page',
+		)
+	);
+	$previous_cas = array( array( 'saved-before-more-error' ) );
+	update_post_meta( $test_post_id, '_profile_post_cas', $previous_cas );
+	delete_post_meta( $test_post_id, \Profile\Delivery\BLOCKED_META );
+	$requests_before = $http_count;
+	$limit           = ini_get( 'pcre.backtrack_limit' );
+	try {
+		// phpcs:ignore WordPress.PHP.IniSet -- Reproduce a regex failure and restore the limit in finally.
+		ini_set( 'pcre.backtrack_limit', '100' );
+		$result = \Profile\Issue\issue_post( get_post( $test_post_id ) );
+	} finally {
+		// phpcs:ignore WordPress.PHP.IniSet -- Restore the original regex limit.
+		ini_set( 'pcre.backtrack_limit', $limit );
+	}
+	profile_storage_assert( 'failed' === $result['status'] && str_contains( $result['message'], '署名対象のデータを作成できなかった' ), 'A more expansion failure was not rejected before issuance.' );
+	profile_storage_assert( $requests_before === $http_count, 'A partial CA was issued after a more expansion failure.' );
+	profile_storage_assert( get_post_meta( $test_post_id, '_profile_post_cas', true ) === $previous_cas, 'A more expansion failure overwrote the saved CA.' );
+	profile_storage_assert( (bool) get_post_meta( $test_post_id, \Profile\Delivery\BLOCKED_META, true ), 'A more expansion failure did not suspend delivery.' );
+
+	wp_update_post(
+		array(
+			'ID'           => $test_post_id,
+			'post_content' => 'Intro<!--more-->Body<!--nextpage-->Intro2<!--more-->Body2',
+		)
+	);
+	$result = \Profile\Issue\issue_post( get_post( $test_post_id ) );
+	profile_storage_assert( 'success' === $result['status'] && $requests_before + 2 === $http_count, 'Reissuing all pages after fixing more content failed.' );
+	profile_storage_assert( array( array( 'test-ca' ), array( 'test-ca' ) ) === get_post_meta( $test_post_id, '_profile_post_cas', true ), 'Reissuing more content did not replace every page CA.' );
+	profile_storage_assert( ! get_post_meta( $test_post_id, \Profile\Delivery\BLOCKED_META, true ), 'Successful reissuance did not resume delivery.' );
+	WP_CLI::success( 'CA storage checks passed: 18 stale-cache cases, 4 missing-only empty values, query errors, duplicates, conflicts, post changes, row locks, reconnects, failed commit, caller transaction, more expansion failure and recovery.' );
 } finally {
 	if ( $query_filter ) {
 		remove_filter( 'query', $query_filter );

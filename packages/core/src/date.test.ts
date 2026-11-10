@@ -58,6 +58,14 @@ describe("isExpired(dateObject)", () => {
   });
 });
 
+describe("isExpired(expiredAt, now)", () => {
+  test("与えた時刻で判定する", () => {
+    const now = new Date("2050-01-01T00:00:00.000+09:00");
+    expect(isExpired("2050-01-01T00:00:00.000+09:00", now)).toBeTruthy();
+    expect(isExpired("2050-01-01T00:00:00.001+09:00", now)).toBeFalsy();
+  });
+});
+
 describe("isExpired(string)", () => {
   const mockDate = new Date("2050-01-01T00:00:00.000+09:00");
   test("現在時刻と期限切れ時刻が等しい", () => {

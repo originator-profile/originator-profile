@@ -385,5 +385,66 @@
   },
   "SiteProfile_Missing_Reason": {
     "message": "It is possible that the site profile could not be retrieved. This does not indicate any issues regarding the site's safety."
+  },
+  "Popup_Label_WebsiteProfile": {
+    "message": "The operator of this website"
+  },
+  "Popup_Label_ContentAttestation": {
+    "message": "The creator of this $content_type$",
+    "placeholders": {
+      "content_type": {
+        "content": "$1",
+        "example": "Article"
+      }
+    }
+  },
+  "Popup_Description": {
+    "message": "The existence of $wmp_name$ has been verified as '$pa$' by a third-party organization.",
+    "placeholders": {
+      "wmp_name": {
+        "content": "$1",
+        "example": "OP Inc."
+      },
+      "pa": {
+        "content": "$2",
+        "example": "Japanese internet media"
+      }
+    }
+  },
+  "Popup_ContentAttestation_Title": {
+    "message": "created this $content_type$",
+    "placeholders": {
+      "content_type": {
+        "content": "$1",
+        "example": "Article"
+      }
+    }
+  },
+  "Popup_SiteProfile_Title": {
+    "message": "operates this website"
+  },
+  "Popup_ContentAttestation_Header": {
+    "message": "The source of this $content_type$",
+    "placeholders": {
+      "content_type": {
+        "content": "$1",
+        "example": "Article"
+      }
+    }
+  },
+  "Popup_ContentAttestation_Detail": {
+    "message": "Learn more about the source of this $content_type$",
+    "placeholders": {
+      "content_type": {
+        "content": "$1",
+        "example": "Article"
+      }
+    }
+  },
+  "Popup_SiteProfile_Detail": {
+    "message": "Learn more about the operator of this website"
+  },
+  "Popup_ProfileAnnotation_Type": {
+    "message": "Japanese internet media"
   }
 }

@@ -27,8 +27,13 @@ export const ProblemType = {
   DigestSriMissing: problemType("WARN_DIGEST_SRI_MISSING"),
   /** digestSRI の検証に失敗した */
   DigestSriInvalid: problemType("WARN_DIGEST_SRI_INVALID"),
-  /** Profile Annotation Issuer がその認証制度の発行を認可されていない */
-  PaIssuerNotRegistered: problemType("INFO_PA_ISSUER_NOT_REGISTERED"),
+  /** Profile Annotation Issuer がその認証制度の発行を認定されていない */
+  PaIssuerNotAccredited: problemType("INFO_PA_ISSUER_NOT_ACCREDITED"),
+  /**
+   * @deprecated 後方互換性のために残している。`PaIssuerNotAccredited` を使用すること。
+   * 値は `PaIssuerNotAccredited` と同じ。
+   */
+  PaIssuerNotRegistered: problemType("INFO_PA_ISSUER_NOT_ACCREDITED"),
   /** 種類が特定されていない通知 */
   Unspecified: problemType("UNSPECIFIED"),
 } as const;

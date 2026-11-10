@@ -1,5 +1,6 @@
 import { generateKey, LocalKeys } from "@originator-profile/cryptography";
 import {
+  IssuerAccreditation,
   JapaneseExistencePA,
   ProfileAnnotation,
   ProfileAnnotationIssuerRegistration,
@@ -78,6 +79,40 @@ const adQualityPA = {
   validUntil: "2024-03-31T14:59:59Z",
 } as const satisfies ProfileAnnotation;
 
+const issuerAccreditationPa = {
+  "@context": [
+    "https://www.w3.org/ns/credentials/v2",
+    "https://originator-profile.org/ns/credentials/v1",
+    "https://originator-profile.org/ns/cip/v1",
+    {
+      "@language": "ja-JP",
+    },
+  ],
+  type: ["VerifiableCredential", "ProfileAnnotation"],
+  issuer: "dns:op-registry.example.org",
+  credentialSubject: {
+    id: "dns:pa-issuer.example.org",
+    type: "IssuerAccreditation",
+    name: "Profile Annotation Issuer 認定証",
+    description:
+      "OP レジストリは、この組織を組織実在性証明書および広告認証証明書の発行者として認定しました。",
+    annotationIssuerName: "株式会社〇〇認証機構",
+    annotationScheme: [
+      "urn:uuid:def09cbd-6e8e-4c73-856d-5e00dffde643",
+      "urn:uuid:8029ece0-b327-4a7e-b586-3e442cb82d92",
+    ],
+    annotation: {
+      id: "urn:uuid:5927e1da-e422-47c8-a5b8-efa6f5a45dd7",
+      type: "ProfileAnnotationPolicy",
+      name: "OP レジストリ Profile Annotation Issuer 認定制度",
+      description:
+        "OP レジストリが運営する Profile Annotation Issuer の認定制度です。",
+      ref: "https://op-registry.example.org/issuer-accreditation",
+    },
+  },
+} as const satisfies IssuerAccreditation;
+
+/** 旧 type `ProfileAnnotationIssuerRegistration` の PA */
 const issuerRegistrationPa = {
   "@context": [
     "https://www.w3.org/ns/credentials/v2",
@@ -144,7 +179,27 @@ describe("ProfileAnnotation", () => {
     expect(result.doc).toStrictEqual(adQualityPA);
   });
 
-  test("Profile Annotation Issuer 登録証 PA の検証に成功", async () => {
+  test("Profile Annotation Issuer 認定証 PA の検証に成功", async () => {
+    const { publicKey, privateKey } = await generateKey();
+    const keys = LocalKeys({ keys: [publicKey] });
+    const validator =
+      VcValidator<VerifiedJwtVc<IssuerAccreditation>>(IssuerAccreditation);
+    const verifier = JwtVcVerifier(
+      keys,
+      "dns:op-registry.example.org",
+      validator,
+    );
+    const jwt = await signJwtVc(issuerAccreditationPa, privateKey, {
+      issuedAt,
+      expiredAt,
+    });
+    const result = await verifier(jwt);
+    expect(result).not.toBeInstanceOf(Error);
+    // @ts-expect-error assert
+    expect(result.doc).toStrictEqual(issuerAccreditationPa);
+  });
+
+  test("旧 type の Profile Annotation Issuer 登録証 PA の検証に成功", async () => {
     const { publicKey, privateKey } = await generateKey();
     const keys = LocalKeys({ keys: [publicKey] });
     const validator = VcValidator<
