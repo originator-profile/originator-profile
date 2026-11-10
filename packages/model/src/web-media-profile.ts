@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { OpCipContext } from "./context/op-cip-context";
+import { OpContext } from "./context/op-context";
 import { Description } from "./description";
 import { Image } from "./image";
 import { OpId } from "./op-id";
@@ -40,7 +41,12 @@ const subject = z.looseObject({
 });
 
 export const WebMediaProfile = z.looseObject({
-  "@context": OpCipContext,
+  /**
+   * WMP の `@context` は OP VC Data Model に従う。`https://originator-profile.org/ns/cip/v1` は仕様上不要だが、
+   * 後方互換性のため含むものも許容する。
+   * @see https://docs.originator-profile.org/opb/web-media-profile/
+   */
+  "@context": z.union([OpContext, OpCipContext]),
   type: z.tuple([
     z.literal("VerifiableCredential"),
     z.literal("WebMediaProfile"),
