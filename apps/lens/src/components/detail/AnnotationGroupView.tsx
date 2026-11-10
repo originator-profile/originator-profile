@@ -6,9 +6,9 @@ import { ExternalLink } from "./ExternalLink";
 function Annotation({ annotation }: { annotation: AnnotationView }) {
   const { name, description, image, policyUrl } = annotation;
   return (
-    // NOTE: しっぽは本体の外側に接する三角形を疑似要素で描く。本体と重ねると
-    // 影が別々に付く
-    <li className="jumpu-balloon relative flex flex-col gap-2 rounded-lg p-4 drop-shadow-[0_0_0.5px_rgba(0,0,0,0.8)] after:absolute after:top-full after:right-[30px] after:border-x-10 after:border-t-10 after:border-x-transparent after:border-t-gray-100">
+    // NOTE: しっぽは疑似要素の三角形を 2 つ重ねて描く。::before が枠線の色で
+    // 1px 大きく、::after が塗りの色で、本体の枠線のうちしっぽの付け根を覆う
+    <li className="jumpu-balloon relative flex flex-col gap-2 rounded-lg border border-gray-300 p-4 before:absolute before:top-full before:right-[29px] before:border-x-11 before:border-t-11 before:border-x-transparent before:border-t-gray-300 after:absolute after:top-full after:right-[30px] after:border-x-10 after:border-t-10 after:border-x-transparent after:border-t-gray-100">
       <div className="flex items-center gap-3.5">
         {image && (
           <Image
