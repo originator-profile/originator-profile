@@ -6,5 +6,5 @@
  */
 export function uiLocale(): string {
   const locale = globalThis.chrome?.i18n?.getMessage("@@ui_locale");
-  return locale ? locale.replace("_", "-") : navigator.language;
+  return locale ? locale.replaceAll("_", "-") : navigator.language;
 }
