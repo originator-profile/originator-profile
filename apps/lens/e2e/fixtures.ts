@@ -78,9 +78,11 @@ export async function sidepanel(ctx: BrowserContext): Promise<Page> {
   const panelPage = await ctx.newPage();
   await panelPage.goto(url);
 
-  // Loading 完了を待つ（全ページで GlobalHeader が表示される）
+  // Loading 完了を待つ（表示・未対応・閲覧禁止のいずれかになる）
   await panelPage
-    .getByTestId("global-header-menu-button")
+    .getByTestId("sidepanel")
+    .or(panelPage.getByTestId("p-elm-unsupported-message"))
+    .or(panelPage.getByTestId("p-elm-prohibition-message"))
     .waitFor({ state: "visible" });
   return panelPage;
 }

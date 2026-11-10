@@ -5,21 +5,6 @@
   "extensionDescription": {
     "message": "OP Lens shows who created and who published the content you are viewing, based on Originator Profile."
   },
-  "CaFilter_All": {
-    "message": "All"
-  },
-  "CaFilter_MainContent": {
-    "message": "Main Content"
-  },
-  "CaFilter_Article": {
-    "message": "Articles"
-  },
-  "CaFilter_Advertorial": {
-    "message": "Advertorials"
-  },
-  "CaFilter_Advertisements": {
-    "message": "Advertisements"
-  },
   "ContentType_MainContent": {
     "message": "Main Content"
   },
@@ -34,21 +19,6 @@
   },
   "ContentType_Unknown": {
     "message": "N/A"
-  },
-  "ContentType_Document": {
-    "message": "Document"
-  },
-  "ContentType_Site": {
-    "message": "Website"
-  },
-  "WebMediaProfileSummary_InformationTransmissionPolicy": {
-    "message": "Information Transmission Policy"
-  },
-  "WebMediaProfileSummary_EditorialGuidelines": {
-    "message": "Editorial Guidelines"
-  },
-  "WebMediaProfileSummary_PrivacyPolicy": {
-    "message": "Privacy Policy"
   },
   "Loading_RetrievingAndValidatingProfile": {
     "message": "Retrieving and validating profile $of_origin$...",
@@ -68,27 +38,6 @@
       }
     }
   },
-  "ReliabilityGuide_SiteOperator": {
-    "message": "This site is operated by the following organizations"
-  },
-  "ReliabilityGuide_Publisher": {
-    "message": "This $content_type$ is published by the following organizations",
-    "placeholders": {
-      "content_type": {
-        "content": "$1",
-        "example": "publication"
-      }
-    }
-  },
-  "ReliabilityGuide_AboutReliabilityInformation": {
-    "message": "How is it verified"
-  },
-  "ReliabilityGuide_VerifiedOrganizationStatementTitle": {
-    "message": "Mechanism for verifying authenticity and trustworthiness"
-  },
-  "ReliabilityGuide_VerifiedOrganizationStatement": {
-    "message": "The displayed images, text, and other data are accompanied by a signature, and the validity of the signature confirms that the content has not been tampered with. As indicators of this organization's trustworthiness, you can view both its self-defined information disclosure policy and supplementary information issued by third parties. This supplementary information shows the organization's existence and its eligibility according to its industry and business type."
-  },
   "Unsupported_ERR_SITE_PROFILE_FETCH_FAILED": {
     "message": "Failed to retrieve the data required to verify the site operator or content creator"
   },
@@ -107,191 +56,11 @@
   "Unsupported_OpNotSupported": {
     "message": "This site does not support OP yet"
   },
-  "Org_InformationTransmissionPolicy": {
-    "message": "Information Transmission Policy"
-  },
-  "Org_EditorialGuidelines": {
-    "message": "Editorial Guidelines"
-  },
-  "Org_PrivacyPolicy": {
-    "message": "Privacy Policy"
-  },
-  "Org_CredentialInformation": {
-    "message": "Verified Attribute"
-  },
-  "Credentials_UntitledContent": {
-    "message": "Untitled Content"
-  },
   "Prohibition_Warning": {
     "message": "This content may not be legitimate"
   },
   "Prohibition_Site": {
     "message": "There is a possibility of sender spoofing or content tampering"
-  },
-  "CertificateDetail_Loading": {
-    "message": "Loading Certificate..."
-  },
-  "CertificateDetail_Details": {
-    "message": "For more details"
-  },
-  "CertificateDetail_IssuedBy": {
-    "message": "Issued by $ISSUER$",
-    "placeholders": {
-      "issuer": {
-        "content": "$1",
-        "example": "PA Issuer"
-      }
-    }
-  },
-  "CertificateSummary_IssuedBy": {
-    "message": "Issued by $ISSUER$",
-    "placeholders": {
-      "issuer": {
-        "content": "$1",
-        "example": "PA Issuer"
-      }
-    }
-  },
-  "Description_Description": {
-    "message": "Description"
-  },
-  "WebMediaProfileTable_Holder": {
-    "message": "Holder"
-  },
-  "WebMediaProfileTable_Address": {
-    "message": "Address"
-  },
-  "WebMediaProfileTable_AddressData": {
-    "message": "$street_address$, $locality$, $region$, $postal_code$",
-    "placeholders": {
-      "postal_code": {
-        "content": "$1",
-        "example": "000-0123"
-      },
-      "region": {
-        "content": "$2",
-        "example": "AA Prefecture"
-      },
-      "locality": {
-        "content": "$3",
-        "example": "BB City"
-      },
-      "street_address": {
-        "content": "$4",
-        "example": "CC Town DD"
-      }
-    }
-  },
-  "WebMediaProfileTable_URL": {
-    "message": "URL"
-  },
-  "WebMediaProfileTable_PhoneNum": {
-    "message": "Phone Number"
-  },
-  "WebMediaProfileTable_Email": {
-    "message": "Email Address"
-  },
-  "WebMediaProfileTable_CorpNum": {
-    "message": "Corporate Number"
-  },
-  "WebMediaProfileTable_Contact": {
-    "message": "Contact"
-  },
-  "WebMediaProfileTable_PrivacyPolicy": {
-    "message": "Privacy Policy"
-  },
-  "WebMediaProfileTable_Principle": {
-    "message": "Editorial Guidelines"
-  },
-  "WebMediaProfile_Missing": {
-    "message": "The organization information corresponding to this site operator could not be correctly retrieved"
-  },
-  "WebMediaProfile_Missing_Reason": {
-    "message": "It is possible that the organization information corresponding to the site operator is not included or could not be retrieved. Please contact the site administrator listed on the site."
-  },
-  "ProjectSummary_Statement_1": {
-    "message": "Originator Profile technology is a technology that makes it easy to distinguish high-quality articles and media that have been verified by third parties by attaching verifiable information about web content creators and advertisers."
-  },
-  "ProjectSummary_Statement_2": {
-    "message": "By increasing the transparency of content creators and distribution channels, and making it possible to identify reliable publishers, it helps increase and enhance the value of responsible, high-quality articles and media."
-  },
-  "ProjectTitle_TechSummary": {
-    "message": "Technology to easily distinguish high-quality articles and media"
-  },
-  "TechInfo_TechInfo": {
-    "message": "Technical Information"
-  },
-  "ArticleTable_PublishDate": {
-    "message": "Publish Date"
-  },
-  "ArticleTable_LastModified": {
-    "message": "Last Modified"
-  },
-  "ArticleTable_EditorInChief": {
-    "message": "Editor-in-Chief"
-  },
-  "ArticleTable_Author": {
-    "message": "Article Author"
-  },
-  "ArticleTable_Sponsor": {
-    "message": "Sponsor"
-  },
-  "ArticleTable_Category": {
-    "message": "Genre"
-  },
-  "AdvertisementTable_LandingPage": {
-    "message": "LandingPage"
-  },
-  "AdvertisementTable_AdReportContact": {
-    "message": "Reporting Contact for Advertisements"
-  },
-  "AdvertisementTable_AdReviewGuidelines": {
-    "message": "Advertising Review Guidelines"
-  },
-  "AdvertisementTable_TargetingPolicy": {
-    "message": "Policy on Targeted Advertising"
-  },
-  "AdvertisementTable_AdDataHandlingPolicy": {
-    "message": "Explanation of Information Handling in Advertising"
-  },
-  "AdvertisementTable_AdDisplayRationale": {
-    "message": "Why this Ad"
-  },
-  "BackHeader_Back": {
-    "message": "Back"
-  },
-  "DetailInfo": {
-    "message": "Detailed Information"
-  },
-  "DetailInfo_VerificationResults": {
-    "message": "Verification Results"
-  },
-  "OtherErrors": {
-    "message": "Other Errors"
-  },
-  "DetailInfo_LinkVerification": {
-    "message": "Link Verification"
-  },
-  "DetailInfo_LinkVerificationStatus": {
-    "message": "Status"
-  },
-  "DetailInfo_LinkVerificationReason": {
-    "message": "Reason"
-  },
-  "DetailInfo_ExpectedLinkDestination": {
-    "message": "Expected Link Destination"
-  },
-  "DetailInfo_SourceAdOrganization": {
-    "message": "Source Ad Organization"
-  },
-  "DetailInfo_ActualSiteOperator": {
-    "message": "Actual site operator"
-  },
-  "DetailInfo_Warnings": {
-    "message": "Warnings"
-  },
-  "DetailInfo_Info": {
-    "message": "Info"
   },
   "Link_OriginatorProfile": {
     "message": "Learn more about Originator Profile (external site)"
@@ -377,74 +146,31 @@
   "Verification_OpidMismatch": {
     "message": "OPID mismatch"
   },
-  "GlobalHeader_Reload": {
-    "message": "Reload"
+  "ContentType_Media": {
+    "message": "Media"
   },
-  "SiteProfile_Missing": {
-    "message": "Site Profile not found"
+  "Sidepanel_SiteOperator": {
+    "message": "Site operator"
   },
-  "SiteProfile_Missing_Reason": {
-    "message": "It is possible that the site profile could not be retrieved. This does not indicate any issues regarding the site's safety."
+  "Sidepanel_NoSiteOperator": {
+    "message": "No site operator information"
   },
-  "Popup_Label_WebsiteProfile": {
-    "message": "The operator of this website"
+  "Sidepanel_Originator": {
+    "message": "Creator"
   },
-  "Popup_Label_ContentAttestation": {
-    "message": "The creator of this $content_type$",
-    "placeholders": {
-      "content_type": {
-        "content": "$1",
-        "example": "Article"
-      }
-    }
+  "Sidepanel_NoMainContent": {
+    "message": "This page has no information about the origin of its main content."
   },
-  "Popup_Description": {
-    "message": "The existence of $wmp_name$ has been verified as '$pa$' by a third-party organization.",
-    "placeholders": {
-      "wmp_name": {
-        "content": "$1",
-        "example": "OP Inc."
-      },
-      "pa": {
-        "content": "$2",
-        "example": "Japanese internet media"
-      }
-    }
+  "Sidepanel_OfficialSite": {
+    "message": "Official site"
   },
-  "Popup_ContentAttestation_Title": {
-    "message": "created this $content_type$",
-    "placeholders": {
-      "content_type": {
-        "content": "$1",
-        "example": "Article"
-      }
-    }
+  "Sidepanel_ShowDetail": {
+    "message": "Show details"
   },
-  "Popup_SiteProfile_Title": {
-    "message": "operates this website"
+  "Link_OpensInNewTab": {
+    "message": " (opens in a new tab)"
   },
-  "Popup_ContentAttestation_Header": {
-    "message": "The source of this $content_type$",
-    "placeholders": {
-      "content_type": {
-        "content": "$1",
-        "example": "Article"
-      }
-    }
-  },
-  "Popup_ContentAttestation_Detail": {
-    "message": "Learn more about the source of this $content_type$",
-    "placeholders": {
-      "content_type": {
-        "content": "$1",
-        "example": "Article"
-      }
-    }
-  },
-  "Popup_SiteProfile_Detail": {
-    "message": "Learn more about the operator of this website"
-  },
-  "Popup_ProfileAnnotation_Type": {
-    "message": "Japanese internet media"
+  "Link_OpensInNewWindow": {
+    "message": " (opens in a new window)"
   }
 }
