@@ -39,7 +39,8 @@ function Tag({
   useLayoutEffect(() => {
     const tag = ref.current;
     if (tag) setSize({ width: tag.offsetWidth, height: tag.offsetHeight });
-  }, [label.name, label.logo, label.country, page]);
+    // NOTE: タグの最大幅は画面の幅で変わるので、画面の幅でも測り直す
+  }, [label.name, label.logo, label.country, page, viewport.width]);
   const { placement, top, left, tailX } = tagPositionOf(rect, viewport, size);
   const above = placement === "above";
 
