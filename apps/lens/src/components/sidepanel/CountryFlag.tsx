@@ -1,6 +1,6 @@
 import { twMerge } from "tailwind-merge";
-import jpFlagUrl from "../../assets/flags/jp.svg";
 import gbFlagUrl from "../../assets/flags/gb.svg";
+import jpFlagUrl from "../../assets/flags/jp.svg";
 import { uiLocale } from "../../utils/ui-locale";
 
 /**
