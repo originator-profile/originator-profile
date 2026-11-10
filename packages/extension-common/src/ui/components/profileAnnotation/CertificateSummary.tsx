@@ -33,11 +33,7 @@ export function CertificateSummary({
       onClick={handleClick}
     >
       <Image
-        src={
-          certificate.credentialSubject.type === "CertificateProperties"
-            ? certificate.credentialSubject.image?.id
-            : undefined
-        }
+        src={certificate.credentialSubject.image?.id}
         placeholderSrc={placeholderLogoMainUrl}
         alt=""
         width={60}

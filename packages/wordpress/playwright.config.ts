@@ -4,9 +4,12 @@ export default defineConfig({
   testDir: "e2e",
   globalSetup: "e2e/setup.ts",
   globalTeardown: "e2e/teardown.ts",
-  workers: process.env.CI ? 1 : undefined,
+  // WordPress の設定とローカル CA サーバーのポートを共有するため直列に実行する.
+  workers: 1,
   reporter: [["html"], process.env.CI ? ["dot"] : ["line"]],
   retries: process.env.CI ? 2 : 0,
+  // CI ではジョブの timeout-minutes (15 分) より先に打ち切り、失敗したテストの結果とレポートを残す.
+  globalTimeout: process.env.CI ? 10 * 60 * 1000 : 0,
   webServer: {
     command: "docker compose --env-file .env.development up",
     url: "http://localhost:9000",

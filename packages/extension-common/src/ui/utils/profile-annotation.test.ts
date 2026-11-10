@@ -3,7 +3,36 @@ import { describe, expect, test } from "vitest";
 import { isDisplayableProfileAnnotation } from "./profile-annotation";
 
 describe("isDisplayableProfileAnnotation", () => {
-  test("ProfileAnnotationIssuerRegistration は表示対象外", () => {
+  test("IssuerAccreditation は表示対象外", () => {
+    const accreditation: Certificate = {
+      "@context": [
+        "https://www.w3.org/ns/credentials/v2",
+        "https://originator-profile.org/ns/credentials/v1",
+        "https://originator-profile.org/ns/cip/v1",
+        { "@language": "ja-JP" },
+      ],
+      type: ["VerifiableCredential", "ProfileAnnotation"],
+      issuer: "dns:op-registry.example.org",
+      credentialSubject: {
+        id: "dns:pa-issuer.example.org",
+        type: "IssuerAccreditation",
+        name: "Profile Annotation Issuer 認定証",
+        description:
+          "OP レジストリは、この組織を組織実在性証明書の発行者として認定しました。",
+        annotationIssuerName: "架空組織実在性検証局",
+        annotationScheme: ["urn:uuid:def09cbd-6e8e-4c73-856d-5e00dffde643"],
+        annotation: {
+          id: "urn:uuid:5927e1da-e422-47c8-a5b8-efa6f5a45dd7",
+          type: "ProfileAnnotationPolicy",
+          name: "OP レジストリ Profile Annotation Issuer 認定制度",
+          ref: "https://op-registry.example.org/issuer-accreditation",
+        },
+      },
+    };
+    expect(isDisplayableProfileAnnotation(accreditation)).toBe(false);
+  });
+
+  test("旧 type ProfileAnnotationIssuerRegistration も表示対象外", () => {
     const registration: Certificate = {
       "@context": [
         "https://www.w3.org/ns/credentials/v2",

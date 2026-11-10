@@ -1,6 +1,7 @@
 import {
   Certificate as BasicCertificate,
   CoreProfile,
+  IssuerAccreditation,
   JapaneseExistenceCertificate,
   JapaneseExistencePA,
   ProfileAnnotation,
@@ -27,6 +28,7 @@ export type Certificate =
   | JapaneseExistenceCertificate
   | ProfileAnnotation
   | JapaneseExistencePA
+  | IssuerAccreditation
   | ProfileAnnotationIssuerRegistration;
 
 /** Originator Profile 復号失敗 */

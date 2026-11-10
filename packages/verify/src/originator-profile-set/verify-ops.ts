@@ -11,8 +11,8 @@ import { pointer } from "../result/pointer";
 import { verifyAnnotations } from "./annotations";
 import { decodeOps } from "./decode-ops";
 import { OpsInvalid, OpsVerifyFailed, OpVerifyFailed } from "./errors";
+import { verifyAnnotationIssuerAccreditation } from "./issuer-accreditation";
 import { verifyMedia } from "./media";
-import { verifyAnnotationIssuerRegistration } from "./pa-issuer-registration";
 import type {
   OpsVerificationResult,
   OpVerificationResult,
@@ -83,7 +83,7 @@ export function OpsVerifier(
     /**
      * 検証済みの共有の OP (レジストリ、Web サイトの発信者など)
      *
-     * 検証し直さずに、PA・WMP の検証鍵と PA Issuer 登録証の引き先に加える。
+     * 検証し直さずに、PA・WMP の検証鍵と PA Issuer 認定証の引き先に加える。
      * 結果と問題の位置は `ops` の中を指し、`trusted` を含まない。
      */
     trusted?: OriginatorPayload[];
@@ -169,7 +169,7 @@ export function OpsVerifier(
       return new OpsVerifyFailed(msg, resultOps);
     }
 
-    return verifyAnnotationIssuerRegistration(
+    return verifyAnnotationIssuerAccreditation(
       resultOps,
       issuer,
       logger,

@@ -1,5 +1,6 @@
 import {
   Certificate as CertificateSchema,
+  IssuerAccreditation,
   JapaneseExistenceCertificate,
   JapaneseExistencePA,
   ProfileAnnotation,
@@ -64,6 +65,7 @@ export async function verifyAnnotations(
           // TODO: Profile Annotation とその派生のスキーマとして整理
           z.union([
             JapaneseExistencePA,
+            IssuerAccreditation,
             ProfileAnnotationIssuerRegistration,
             ProfileAnnotation,
             JapaneseExistenceCertificate,

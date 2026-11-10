@@ -1,5 +1,6 @@
 import {
   CertificationSystem,
+  IssuerAccreditation,
   ProfileAnnotationIssuerRegistration,
   ProfileAnnotationPolicy,
 } from "@originator-profile/model";
@@ -35,7 +36,25 @@ export function getAnnotationPolicy(
 const isProfileAnnotation = (doc: Certificate): boolean =>
   (doc.type as readonly string[]).includes("ProfileAnnotation");
 
-/** Profile Annotation Issuer 登録証 PA かどうか */
+/**
+ * Issuer Accreditation (Profile Annotation Issuer 認定証 PA) かどうか
+ *
+ * 後方互換性のため、旧 type `ProfileAnnotationIssuerRegistration` (旧名称「登録証」) も認定証 PA として扱う
+ */
+export function isIssuerAccreditation(
+  doc: Certificate,
+): doc is IssuerAccreditation | ProfileAnnotationIssuerRegistration {
+  return (
+    doc.credentialSubject.type === "IssuerAccreditation" ||
+    isProfileAnnotationIssuerRegistration(doc)
+  );
+}
+
+/**
+ * 旧 type `ProfileAnnotationIssuerRegistration` の PA かどうか
+ *
+ * @deprecated 新 type を含めて判定する `isIssuerAccreditation` を使用すること
+ */
 export function isProfileAnnotationIssuerRegistration(
   doc: Certificate,
 ): doc is ProfileAnnotationIssuerRegistration {
@@ -44,22 +63,25 @@ export function isProfileAnnotationIssuerRegistration(
 
 /**
  * 認可される対象の OP ID ごとの Profile Annotation Policy を集約
- * (PA Issuer Registration Issuer が発行した登録証 PA のみを採用)
+ * (PA Issuer Accreditation Issuer が発行した認定証 PA のみを採用)
  */
 function buildProfileAnnotationPolicy(
   /** 検証済みの PA */
   annotations: Certificate[],
-  /** PA Issuer Registration Issuer の OP ID の集合 */
-  paIssuerRegistrationIssuers: ReadonlySet<string>,
+  /** PA Issuer Accreditation Issuer の OP ID の集合 */
+  paIssuerAccreditationIssuers: ReadonlySet<string>,
 ): ProfileAnnotationPolicyMap {
   const policy: ProfileAnnotationPolicyMap = new Map();
   for (const doc of annotations) {
-    if (!isProfileAnnotationIssuerRegistration(doc)) continue;
-    if (!paIssuerRegistrationIssuers.has(doc.issuer)) continue;
-    const { id: registrationIssuer, annotationScheme } = doc.credentialSubject;
-    const allowedPolicy = policy.get(registrationIssuer) ?? new Set<string>();
+    if (!isIssuerAccreditation(doc)) continue;
+    if (!paIssuerAccreditationIssuers.has(doc.issuer)) continue;
+    const { id: accreditedIssuer, annotationScheme } = doc.credentialSubject;
+    // annotationScheme を持たない Issuer Accreditation は Profile Annotation Issuer としての認定ではないため対象外
+    // (型の上では必須だが、汎用の ProfileAnnotation スキーマで検証を通った PA では欠けていることがある)
+    if (!Array.isArray(annotationScheme)) continue;
+    const allowedPolicy = policy.get(accreditedIssuer) ?? new Set<string>();
     for (const scheme of annotationScheme) allowedPolicy.add(scheme);
-    policy.set(registrationIssuer, allowedPolicy);
+    policy.set(accreditedIssuer, allowedPolicy);
   }
   return policy;
 }
@@ -103,9 +125,9 @@ function reportUnauthorizedAnnotation({
     policyId && policy.get(profileAnnotationIssuer)?.has(policyId);
   if (!isAllowed) {
     const scheme = policyId ?? "unknown";
-    const message = `Profile Annotation Issuer is not registered for this annotation scheme (${location} issuer: ${profileAnnotationIssuer}, scheme: ${scheme})`;
+    const message = `Profile Annotation Issuer is not accredited for this annotation scheme (${location} issuer: ${profileAnnotationIssuer}, scheme: ${scheme})`;
     logger.info(message, {
-      type: ProblemType.PaIssuerNotRegistered,
+      type: ProblemType.PaIssuerNotAccredited,
       title: message,
       detail: `issuer: ${profileAnnotationIssuer}, scheme: ${scheme}`,
       pointer: at,
@@ -114,25 +136,25 @@ function reportUnauthorizedAnnotation({
 }
 
 /**
- * Profile Annotation Issuer 登録証 PA に基づく発行者の認可を確認
+ * Profile Annotation Issuer 認定証 PA に基づく発行者の認可を確認
  *
- * 各 Profile Annotation の発行者が、基底となる Profile Annotation Issuer 登録証 PA によって、その PA が準拠する 認証制度（Profile Annotation Policy）の発行を認可されているかを検証
+ * 各 Profile Annotation の発行者が、基底となる Profile Annotation Issuer 認定証 PA によって、その PA が準拠する認証制度（Profile Annotation Policy）の発行を認可されているかを検証
  *
  * @param verifiedOps 検証済み Originator Profile Set
- * @param paIssuerRegistrationIssuer 基底となる Profile Annotation Issuer 登録証 PA Issuer の OP ID
+ * @param paIssuerAccreditationIssuer 基底となる Profile Annotation Issuer 認定証 PA Issuer の OP ID
  * @param logger ロガー (デフォルト: `console`)
- * @param trusted 検証済みの共有の OP。登録証 PA の引き先に加える
+ * @param trusted 検証済みの共有の OP。認定証 PA の引き先に加える
  *
- * @see https://docs.originator-profile.org/opb/pa-model/profile-annotation-issuer-registration/
+ * @see https://docs.originator-profile.org/opb/pa-model/issuer-accreditation/
  */
-export function verifyAnnotationIssuerRegistration(
+export function verifyAnnotationIssuerAccreditation(
   verifiedOps: VerifiedOps,
-  paIssuerRegistrationIssuer: string | string[],
+  paIssuerAccreditationIssuer: string | string[],
   logger: Logger = console,
   trusted: OriginatorPayload[] = [],
 ): VerifiedOps {
-  const paIssuerRegistrationIssuers = new Set(
-    [paIssuerRegistrationIssuer].flat(),
+  const paIssuerAccreditationIssuers = new Set(
+    [paIssuerAccreditationIssuer].flat(),
   );
   const policy = buildProfileAnnotationPolicy(
     [
@@ -143,7 +165,7 @@ export function verifyAnnotationIssuerRegistration(
         .flatMap((op) => op.annotations ?? [])
         .map(({ doc }) => doc),
     ],
-    paIssuerRegistrationIssuers,
+    paIssuerAccreditationIssuers,
   );
   for (const [opIndex, op] of verifiedOps.entries()) {
     for (const [paIndex, annotation] of op.annotations?.entries() ?? []) {
@@ -158,3 +180,10 @@ export function verifyAnnotationIssuerRegistration(
   }
   return verifiedOps;
 }
+
+/**
+ * @deprecated 後方互換性のために残している。
+ * `verifyAnnotationIssuerAccreditation` を使用すること。
+ */
+export const verifyAnnotationIssuerRegistration =
+  verifyAnnotationIssuerAccreditation;
