@@ -1,13 +1,14 @@
 import { _, Image } from "@originator-profile/extension-common/ui";
 import placeholderLogoMainUrl from "@originator-profile/extension-common/ui/assets/placeholder-logo-main.png";
-import bubbleTailUrl from "../../assets/bubble-tail.svg";
 import type { AnnotationGroup, AnnotationView } from "../../view";
 import { ExternalLink } from "./ExternalLink";
 
 function Annotation({ annotation }: { annotation: AnnotationView }) {
   const { name, description, image, policyUrl } = annotation;
   return (
-    <li className="jumpu-balloon relative flex flex-col gap-2 rounded-lg p-4 drop-shadow-[0_0_0.5px_rgba(0,0,0,0.8)]">
+    // NOTE: しっぽは本体の外側に接する三角形を疑似要素で描く。本体と重ねると
+    // 影が別々に付く
+    <li className="jumpu-balloon relative flex flex-col gap-2 rounded-lg p-4 drop-shadow-[0_0_0.5px_rgba(0,0,0,0.8)] after:absolute after:top-full after:right-[30px] after:border-x-10 after:border-t-10 after:border-x-transparent after:border-t-gray-100">
       <div className="flex items-center gap-3.5">
         {image && (
           <Image
@@ -29,13 +30,6 @@ function Annotation({ annotation }: { annotation: AnnotationView }) {
           {_("Detail_IssuancePolicy")}
         </ExternalLink>
       )}
-      <img
-        className="absolute right-[33px] -bottom-[7px] -rotate-45"
-        src={bubbleTailUrl}
-        alt=""
-        width={14}
-        height={14}
-      />
     </li>
   );
 }
@@ -44,10 +38,10 @@ function Annotation({ annotation }: { annotation: AnnotationView }) {
 export function AnnotationGroupView({ group }: { group: AnnotationGroup }) {
   const { issuer, annotations } = group;
   return (
-    <section className="flex flex-col gap-3">
+    <div className="flex flex-col gap-3">
       <ul className="flex flex-col gap-3">
-        {annotations.map((annotation, index) => (
-          <Annotation key={index} annotation={annotation} />
+        {annotations.map((annotation) => (
+          <Annotation key={annotation.id} annotation={annotation} />
         ))}
       </ul>
       <div className="jumpu-card flex items-center gap-3 rounded-xl p-4">
@@ -67,6 +61,6 @@ export function AnnotationGroupView({ group }: { group: AnnotationGroup }) {
           {issuer.name ?? issuer.id}
         </p>
       </div>
-    </section>
+    </div>
   );
 }
