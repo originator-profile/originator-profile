@@ -1,5 +1,8 @@
+import { overlayExtensionMessenger } from "@originator-profile/extension-common";
 import { _ } from "@originator-profile/extension-common/ui";
-import { useId, useState } from "react";
+import { useEffect, useEffectEvent, useId, useState } from "react";
+import { highlightOf } from "../../overlay/highlight";
+import { lensOverlayMessenger } from "../../overlay/protocol";
 import {
   sectionsOf,
   type ContentCategory,
@@ -25,9 +28,35 @@ type Props = Extract<TabView, { state: "ready" }>;
  *
  * NOTE: アコーディオンは同時に 1 つしか開かない
  */
-export function ContentList({ site, contents, issuers }: Props) {
+export function ContentList(props: Props) {
+  const { tabId, frames, site, contents, issuers } = props;
   // NOTE: 開いているアコーディオン。Web サイトの運営者は "site"、コンテンツは key
   const [openKey, setOpenKey] = useState<string>();
+  const highlight = highlightOf(props, openKey);
+
+  // 開いているアコーディオンに対応する範囲をページ上で強調する
+  const sendHighlight = useEffectEvent(() => {
+    if (highlight) {
+      void lensOverlayMessenger.sendMessage(
+        "showHighlight",
+        { highlight, frames },
+        tabId,
+      );
+    } else {
+      void overlayExtensionMessenger.sendMessage("leave", null, tabId);
+    }
+  });
+  // NOTE: 表示は検証の状態が変わるたびに作り直されるため、内容が変わったときだけ送る
+  const highlightKey = JSON.stringify({ highlight, frames });
+  useEffect(() => {
+    sendHighlight();
+  }, [tabId, highlightKey]);
+  useEffect(
+    () => () => {
+      void overlayExtensionMessenger.sendMessage("leave", null, tabId);
+    },
+    [tabId],
+  );
   const name = useId();
   const toggle = (key: string) => (open: boolean) =>
     setOpenKey((current) => {

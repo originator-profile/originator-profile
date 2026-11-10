@@ -1,3 +1,5 @@
+import { uiLocale } from "../../utils/ui-locale";
+
 export class Overlay {
   private iframe: HTMLIFrameElement;
   activate() {
@@ -11,9 +13,12 @@ export class Overlay {
   }
   constructor() {
     this.iframe = document.createElement("iframe");
+    // NOTE: 強調とタグはサイドパネルの内容の複製なので、フォーカスも支援技術も
+    // 向けない。pointer-events: none はマウスにしか効かない
+    this.iframe.inert = true;
     this.iframe.srcdoc = `
       <!doctype html>
-      <html>
+      <html lang='${uiLocale()}'>
         <head>
           <link rel='stylesheet' href='${chrome.runtime.getURL("main.css")}'>
         </head>
@@ -39,6 +44,7 @@ export class Overlay {
       visibility: visible;
       outline: 0;
       z-index: calc(infinity);
+      pointer-events: none;
   `;
   }
   get window() {

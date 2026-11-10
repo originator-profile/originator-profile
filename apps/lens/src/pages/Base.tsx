@@ -5,7 +5,7 @@ import Sidepanel from "../templates/Sidepanel";
 import { useTabView } from "../view";
 
 function Base() {
-  const { view } = useTabView();
+  const view = useTabView();
 
   switch (view.state) {
     case "loading":

@@ -2,7 +2,6 @@ import {
   type AncestorFrameCoordinate,
   type CasCoordinate,
   type FrameCasCoordinate,
-  frameCasExtensionMessenger,
   frameCasWindowMessenger,
   FrameLocation,
   FrameResponse,
@@ -12,11 +11,9 @@ import {
   setupFrameHandlers,
   setupOnce,
 } from "@originator-profile/extension-common/content-script";
-import {
-  normalizeCasItem,
-  TargetIntegrityAlgorithm,
-} from "@originator-profile/verify";
+import { TargetIntegrityAlgorithm } from "@originator-profile/verify";
 import { isFrameVisible } from "./components/frameCas";
+import { lensOverlayMessenger } from "./overlay/protocol";
 
 const updateAncestor = (
   source: WindowProxy | MessagePort | ServiceWorker | null,
@@ -68,13 +65,12 @@ setupOnce("content-script-all-frames", () => {
   setupFrameHandlers();
   setupAdClickDetection();
 
-  frameCasExtensionMessenger.onMessage(
-    "locating",
-    async ({ data: { frameCas, frames } }) => {
-      const casItems = frameCas.cas.map(normalizeCasItem);
-      const cas: CasCoordinate = casItems.map(({ attestation }) => ({
-        id: attestation.doc.credentialSubject.id,
-        target: attestation.doc.target.flatMap((content) => {
+  lensOverlayMessenger.onMessage(
+    "measureTargets",
+    async ({ data: { target, frames } }) => {
+      const cas: CasCoordinate = target.cas.map(({ id, targets }) => ({
+        id,
+        target: targets.flatMap((content) => {
           const elements = TargetIntegrityAlgorithm[
             content.type
           ].elementSelector({ ...content, document });
@@ -85,16 +81,15 @@ setupOnce("content-script-all-frames", () => {
         "locating",
         {
           frameCas: {
-            frameId: frameCas.frameId,
-            parentFrameId: frameCas.parentFrameId,
+            frameId: target.frameId,
+            parentFrameId: target.parentFrameId,
             ancestor: [],
             cas,
           },
           frames,
         },
         window.parent,
-        frames.find(({ frameId }) => frameId === frameCas.parentFrameId)
-          ?.origin,
+        frames.find(({ frameId }) => frameId === target.parentFrameId)?.origin,
       );
     },
   );
