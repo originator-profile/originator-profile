@@ -4,23 +4,18 @@ import {
 } from "@originator-profile/extension-common";
 import { setupOnce } from "@originator-profile/extension-common/content-script";
 import { Overlay } from "./components/overlay";
-import {
-  lensOverlayMessenger,
-  type LensOverlayProtocolMap,
-} from "./overlay/protocol";
+import { lensOverlayMessenger, type Highlight } from "./overlay/protocol";
 import { lensOverlayWindowMessenger } from "./overlay/window-protocol";
-
-type ShowHighlight = Parameters<LensOverlayProtocolMap["showHighlight"]>[0];
 
 setupOnce("content-script", () => {
   const overlay = new Overlay();
-  let current: ShowHighlight | undefined;
+  let current: Highlight | undefined;
 
   const show = () => {
     if (!current) return;
     lensOverlayWindowMessenger.sendMessage(
       "showHighlight",
-      current.highlight,
+      current,
       overlay.window,
     );
   };
@@ -44,16 +39,12 @@ setupOnce("content-script", () => {
   });
 
   frameCasWindowMessenger.onMessage("startLocate", () => {
-    const highlight = current?.highlight;
-    if (highlight?.kind !== "content" || highlight.frame.frameId === 0) return;
-    const { frameId, parentFrameId } = highlight.frame;
+    if (current?.kind !== "content" || current.frame.frameId === 0) return;
+    const { frameId, parentFrameId } = current.frame;
     void lensOverlayMessenger.sendMessage("locateTargets", {
-      target: {
-        frameId,
-        parentFrameId,
-        cas: [{ id: highlight.key, targets: highlight.targets }],
-      },
-      frames: current?.frames ?? [],
+      frameId,
+      parentFrameId,
+      cas: [{ id: current.key, targets: current.targets }],
     });
   });
 });

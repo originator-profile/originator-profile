@@ -2,13 +2,7 @@ import { describe, expect, test } from "vitest";
 import type { TabView } from "../view";
 import { contentsOf } from "../view/contents";
 import { organizationOf } from "../view/organization";
-import {
-  ca,
-  existencePa,
-  originator,
-  subFrame,
-  topFrame,
-} from "../view/test-fixtures";
+import { ca, existencePa, originator, subFrame } from "../view/test-fixtures";
 import { highlightOf } from "./highlight";
 
 const operator = "dns:operator.example";
@@ -36,7 +30,6 @@ const view = (
 ): Extract<TabView, { state: "ready" }> => ({
   state: "ready",
   tabId: 1,
-  frames: [topFrame, subFrame],
   site,
   contents,
   issuers: new Map([[publisher, organization(publisher)]]),

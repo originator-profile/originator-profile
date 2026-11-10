@@ -1,5 +1,7 @@
+import { readTabVerification } from "@originator-profile/extension-common";
 import { setupBackground } from "@originator-profile/extension-common/background";
 import { countCredentials } from "./components/tabBadge";
+import { documentFramesOf } from "./overlay/frames";
 import { lensOverlayMessenger } from "./overlay/protocol";
 
 setupBackground({
@@ -9,11 +11,13 @@ setupBackground({
 });
 
 // サブフレームでの位置の計測を、そのフレームの content script に中継する
-lensOverlayMessenger.onMessage("locateTargets", ({ data, sender }) => {
+lensOverlayMessenger.onMessage("locateTargets", async ({ data, sender }) => {
   const tabId = sender.tab?.id;
   if (tabId === undefined) return;
-  void lensOverlayMessenger.sendMessage("measureTargets", data, {
-    tabId,
-    frameId: data.target.frameId,
-  });
+  const frames = documentFramesOf(await readTabVerification(tabId));
+  void lensOverlayMessenger.sendMessage(
+    "measureTargets",
+    { target: data, frames },
+    { tabId, frameId: data.frameId },
+  );
 });
