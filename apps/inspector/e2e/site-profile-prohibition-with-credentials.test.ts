@@ -43,8 +43,9 @@ test("CAS/OPSの取得に成功するがSPの検証に失敗した場合閲覧�
 
   await gotoDetailPage(ext);
   await expectStatus(ext, "site-profile", "cancel");
-  await expectStatus(ext, "originator-profile-set-top", "check");
-  await expectStatus(ext, "content-attestation-set", "check");
+  // NOTE: Site Profile の検証に失敗した文書は、OPS と CAS を検証しない
+  await expectStatus(ext, "originator-profile-set-top", "null");
+  await expectStatus(ext, "content-attestation-set", "null");
   await expectStatus(ext, "core-profile", "cancel");
   await expectStatus(ext, "profile-annotation", "cancel");
   await expectStatus(ext, "web-media-profile", "cancel");
@@ -97,7 +98,7 @@ test("SPの署名がその発行者のOPで配布される検証鍵を使って�
   await gotoDetailPage(ext);
   await expectStatus(ext, "site-profile", "cancel");
   await expectStatus(ext, "originator-profile-set-top", "null");
-  await expectStatus(ext, "content-attestation-set", "cancel");
+  await expectStatus(ext, "content-attestation-set", "null");
   await expectStatus(ext, "core-profile", "cancel");
   await expectStatus(ext, "profile-annotation", "cancel");
   await expectStatus(ext, "web-media-profile", "cancel");
@@ -123,7 +124,7 @@ test("SPとCAの署名がその発行者のOPまたはSPで配布される検証
   await gotoDetailPage(ext);
   await expectStatus(ext, "site-profile", "cancel");
   await expectStatus(ext, "originator-profile-set-top", "null");
-  await expectStatus(ext, "content-attestation-set", "cancel");
+  await expectStatus(ext, "content-attestation-set", "null");
   await expectStatus(ext, "core-profile", "cancel");
   await expectStatus(ext, "profile-annotation", "cancel");
   await expectStatus(ext, "web-media-profile", "cancel");

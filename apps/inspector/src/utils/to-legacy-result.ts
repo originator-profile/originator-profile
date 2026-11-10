@@ -185,6 +185,21 @@ export function toLegacyWebsite(
     : new SiteProfileVerifyFailed(message, value as never);
 }
 
+/**
+ * 発信者の検証結果 (レジストリ、Web サイト) を、従来の検証済み OPS の形に戻す
+ * @param result 検証結果
+ * @returns 検証済みの発信者、または検証失敗を表すエラー
+ */
+export function toLegacyOriginators(
+  result: VerificationResult<{ originators: OriginatorPayload[] }>,
+): VerifiedOps | Error {
+  if (!result.outcome) return toError(result.errors?.[0]);
+
+  const ops = toLegacyOps(result.outcome.originators, createIndex(result));
+  if (result.status) return ops as VerifiedOps;
+  return ops instanceof Error ? ops : toError(result.errors[0]);
+}
+
 /** 従来の形に戻した文書の検証結果 */
 export type LegacyDocument = {
   ops: VerifiedOps;

@@ -222,3 +222,65 @@ test.describe("リンク検証", () => {
     ).toBeVisible();
   });
 });
+
+test("有効期限を過ぎた照合結果は、履歴の移動で復元しない", async ({
+  context,
+  page,
+}) => {
+  await page.goto(VERIFY_LINK_PAGE);
+  await ensureServiceWorker(context, page);
+  await page.frameLocator("iframe >> nth=0").locator("a").first().click();
+  await page.waitForURL((url) =>
+    url.href.includes("/examples/valid-dest.html"),
+  );
+  const worker = context.serviceWorkers()[0];
+  if (!worker) throw new Error("Service Worker が起動しているはず");
+
+  // 保持した照合結果を、有効期限を過ぎたものにする
+  /* eslint-disable no-await-in-loop -- Service Worker内で逐次ポーリングするため意図的 */
+  await worker.evaluate(async () => {
+    type Cache = Record<number, Record<string, { validUntil?: string }>>;
+    for (let i = 0; i < 50; i++) {
+      const { verificationCache } =
+        await chrome.storage.session.get("verificationCache");
+      const cache = verificationCache as Cache | undefined;
+      const results = Object.values(cache ?? {}).flatMap(Object.values);
+      if (results.some(({ validUntil }) => validUntil)) {
+        const expired = Object.fromEntries(
+          Object.entries(cache ?? {}).map(([tabId, byUrl]) => [
+            tabId,
+            Object.fromEntries(
+              Object.entries(byUrl).map(([url, result]) => [
+                url,
+                { ...result, validUntil: new Date(0).toISOString() },
+              ]),
+            ),
+          ]),
+        );
+        await chrome.storage.session.set({ verificationCache: expired });
+        return;
+      }
+      await new Promise((resolve) => {
+        setTimeout(resolve, 100);
+      });
+    }
+    throw new Error("照合結果を保持しているはず");
+  });
+  /* eslint-enable no-await-in-loop */
+
+  await page.goBack();
+  // NOTE: 照合結果はメモリにも読み込まれているため、Service Worker を止めて
+  // 書き換えた結果を読み込ませる
+  const cdp = await context.newCDPSession(page);
+  await cdp.send("ServiceWorker.enable");
+  await cdp.send("ServiceWorker.stopAllWorkers");
+  await page.goForward();
+  await page.waitForLoadState("load");
+  await page.waitForTimeout(1000);
+
+  const restarted = context.serviceWorkers()[0] ?? worker;
+  const { verificationResults } = await restarted.evaluate(() =>
+    chrome.storage.session.get("verificationResults"),
+  );
+  expect(Object.keys(verificationResults ?? {})).toHaveLength(0);
+});
