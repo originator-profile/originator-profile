@@ -1,4 +1,4 @@
-import { mergeTests } from "@playwright/test";
+import { mergeTests, type BrowserContext } from "@playwright/test";
 import privateKey from "./account-key.example.priv.json" with { type: "json" };
 import publicKey from "./account-key.example.pub.json" with { type: "json" };
 import { test as credentialsTest } from "./credentials-fixtures";
@@ -58,5 +58,53 @@ test("「詳細はこちら」で組織の詳細を別ウインドウに開き�
   await detail.reload();
   await expect(
     detail.getByRole("heading", { level: 1, name: organizationName }),
+  ).toBeVisible();
+});
+
+/** 保存した組織の詳細のキー */
+async function savedDetailKeys(context: BrowserContext) {
+  const [worker] = context.serviceWorkers();
+  if (!worker) throw new Error("Service Worker not found");
+  const keys = await worker.evaluate(async () =>
+    Object.keys(await chrome.storage.session.get(null)),
+  );
+  return keys.filter((key) => key.startsWith("lens:organization-detail"));
+}
+
+test("詳細のウインドウを閉じると、保存した詳細を消す", async ({
+  context,
+  page,
+  validSiteProfile,
+  credentialsMissingPage,
+}) => {
+  await validSiteProfile(
+    { privateKey, publicKey },
+    credentialsMissingPage.issuer,
+    credentialsMissingPage.holder,
+  );
+  await page.goto(credentialsMissingPage.endpoint);
+  const ext = await sidepanel(context);
+  await ext
+    .getByTestId("site-header")
+    .locator("summary", { hasText: organizationName })
+    .click();
+  const [detail] = await Promise.all([
+    context.waitForEvent("page"),
+    ext.getByRole("button", { name: "詳細はこちら" }).click(),
+  ]);
+  await detail.getByTestId("detail").waitFor();
+  await expect.poll(() => savedDetailKeys(context)).toHaveLength(2);
+
+  await detail.close();
+  await expect.poll(() => savedDetailKeys(context)).toHaveLength(0);
+});
+
+test("保存した詳細が無ければ、そのことを示す", async ({ context }) => {
+  const ext = await sidepanel(context);
+  await ext.goto(ext.url().replace(/#.*$/, "#/detail/unknown"));
+  await expect(
+    ext.getByText(
+      "組織の詳細を表示できません。サイドパネルから開き直してください。",
+    ),
   ).toBeVisible();
 });

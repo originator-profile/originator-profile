@@ -181,5 +181,8 @@
   },
   "Detail_VerifiedBy": {
     "message": "Verified by: "
+  },
+  "Detail_NotFound": {
+    "message": "The organization details are not available. Open them again from the side panel."
   }
 }

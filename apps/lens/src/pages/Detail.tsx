@@ -1,3 +1,4 @@
+import { _ } from "@originator-profile/extension-common/ui";
 import { useParams } from "react-router";
 import useSWR from "swr";
 import Loading from "../components/Loading";
@@ -10,7 +11,13 @@ function Detail() {
     loadDetail(id),
   );
   if (isLoading) return <Loading />;
-  if (!data) return null;
+  if (!data) {
+    return (
+      <main className="p-6">
+        <p className="text-sm text-black">{_("Detail_NotFound")}</p>
+      </main>
+    );
+  }
   return <Template detail={data} />;
 }
 
