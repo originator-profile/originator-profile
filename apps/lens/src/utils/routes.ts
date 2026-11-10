@@ -14,6 +14,7 @@ export function route<Path extends string>(path: Path) {
 export const paths = {
   base: "tab/:tabId",
   warning: "warning",
+  detail: "detail/:id",
 } as const;
 
 export const routes = {

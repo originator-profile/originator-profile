@@ -167,10 +167,19 @@
   "Sidepanel_ShowDetail": {
     "message": "詳細はこちら"
   },
+  "Detail_ThirdPartyVerification": {
+    "message": "第三者機関による確認"
+  },
+  "Detail_IssuancePolicy": {
+    "message": "発行ポリシー"
+  },
   "Link_OpensInNewTab": {
     "message": "（新しいタブで開きます）"
   },
   "Link_OpensInNewWindow": {
     "message": "（新しいウインドウで開きます）"
+  },
+  "Detail_VerifiedBy": {
+    "message": "確認した機関: "
   }
 }

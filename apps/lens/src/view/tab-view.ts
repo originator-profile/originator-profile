@@ -52,6 +52,8 @@ export type TabView =
       contents: Content[];
       /** CA 発行者ごとの組織。発行者を確認できないものは含まない */
       issuers: Map<string, Organization>;
+      /** 検証に成功した発信者。PA 発行者の組織を引くのに用いる */
+      originators: OriginatorPayload[];
     };
 
 type Settled = Extract<VerificationEntry, { state: "settled" }>;
@@ -281,5 +283,6 @@ export function tabViewOf(
     site: siteOf(subscribed, originators, contents),
     contents,
     issuers: issuersOf(contents, originators),
+    originators,
   };
 }

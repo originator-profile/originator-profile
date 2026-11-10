@@ -1,9 +1,9 @@
-import IconArrowUpRightFromSquare from "@iconify-react/fa6-solid/arrow-up-right-from-square";
 import IconChevronDown from "@iconify-react/fa6-solid/chevron-down";
 import { _, Image } from "@originator-profile/extension-common/ui";
 import placeholderLogoMainUrl from "@originator-profile/extension-common/ui/assets/placeholder-logo-main.png";
 import { twMerge } from "tailwind-merge";
 import type { Organization } from "../../view";
+import { ExternalLink } from "../detail/ExternalLink";
 import { CountryFlag, countryName } from "./CountryFlag";
 
 type Props = {
@@ -72,19 +72,7 @@ function Body({
         </p>
       )}
       {url && (
-        <a
-          className="flex items-center gap-2 self-start text-xs leading-normal font-medium text-black underline transition-[text-decoration-thickness] hover:decoration-2"
-          href={url}
-          target="_blank"
-          rel="noreferrer noopener"
-        >
-          {_("Sidepanel_OfficialSite")}
-          <IconArrowUpRightFromSquare
-            className="size-2 text-gray-500"
-            aria-hidden
-          />
-          <span className="sr-only">{_("Link_OpensInNewTab")}</span>
-        </a>
+        <ExternalLink href={url}>{_("Sidepanel_OfficialSite")}</ExternalLink>
       )}
       {onShowDetail && (
         <button

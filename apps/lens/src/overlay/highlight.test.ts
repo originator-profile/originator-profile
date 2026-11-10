@@ -33,6 +33,7 @@ const view = (
   site,
   contents,
   issuers: new Map([[publisher, organization(publisher)]]),
+  originators,
 });
 
 describe("highlightOf", () => {
