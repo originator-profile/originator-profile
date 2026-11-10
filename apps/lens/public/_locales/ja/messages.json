@@ -181,5 +181,8 @@
   },
   "Detail_VerifiedBy": {
     "message": "確認した機関: "
+  },
+  "Detail_NotFound": {
+    "message": "組織の詳細を表示できません。サイドパネルから開き直してください。"
   }
 }
