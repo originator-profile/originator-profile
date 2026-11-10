@@ -7,6 +7,9 @@ import ReactDOM from "react-dom/client";
 import { HashRouter } from "react-router";
 import App from "./App";
 import "./style.css";
+import { uiLocale } from "./utils/ui-locale";
+
+document.documentElement.lang = uiLocale();
 
 // サイドパネルが非表示になったとき、アクティブタブのオーバーレイを解除する。
 // React のライフサイクルに依存せず、サイドパネルが存在する限り有効。

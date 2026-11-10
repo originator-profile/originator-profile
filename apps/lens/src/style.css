@@ -1,3 +1,34 @@
 @import "tailwindcss";
 @import "tailwind-config-originator-profile";
 @source "../../../packages/extension-common/src";
+
+@theme {
+  /* NOTE: OP Lens のインタラクションは ease 100ms に揃える。transition 系の
+     ユーティリティはこの既定値を使う */
+  --default-transition-duration: 100ms;
+  --default-transition-timing-function: ease;
+}
+
+/* 開閉をアニメーションするアコーディオン (details 要素に付ける) */
+@utility accordion {
+  &::details-content {
+    /* block-size を内容の高さ (auto) との間で遷移させる */
+    interpolate-size: allow-keywords;
+    overflow: clip;
+    contain: layout;
+  }
+
+  &:not([open])::details-content {
+    block-size: 0;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    &::details-content {
+      transition-property: block-size, content-visibility;
+      transition-duration: var(--default-transition-duration);
+      transition-timing-function: var(--default-transition-timing-function);
+      /* 閉じ終えるまで内容を描画したままにする */
+      transition-behavior: allow-discrete;
+    }
+  }
+}

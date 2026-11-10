@@ -199,24 +199,6 @@ importers:
       '@iconify-react/fa6-solid':
         specifier: 1.0.2
         version: 1.0.2(react@19.3.1)
-      '@iconify-react/gg':
-        specifier: 1.0.2
-        version: 1.0.2(react@19.3.1)
-      '@iconify-react/ic':
-        specifier: 1.0.2
-        version: 1.0.2(react@19.3.1)
-      '@iconify-react/ion':
-        specifier: 1.0.3
-        version: 1.0.3(react@19.3.1)
-      '@iconify-react/material-symbols':
-        specifier: 1.0.30
-        version: 1.0.30(react@19.3.1)
-      '@iconify-react/mdi':
-        specifier: 1.0.2
-        version: 1.0.2(react@19.3.1)
-      '@iconify-react/solar':
-        specifier: 1.0.2
-        version: 1.0.2(react@19.3.1)
       '@originator-profile/core':
         specifier: workspace:*
         version: link:../../packages/core
@@ -229,9 +211,6 @@ importers:
       '@originator-profile/model':
         specifier: workspace:*
         version: link:../../packages/model
-      '@originator-profile/presentation':
-        specifier: workspace:*
-        version: link:../../packages/presentation
       '@originator-profile/securing-mechanism':
         specifier: workspace:*
         version: link:../../packages/securing-mechanism
@@ -259,9 +238,6 @@ importers:
       '@types/react-dom':
         specifier: 19.2.3
         version: 19.2.3(@types/react@19.2.14)
-      '@uiw/react-json-view':
-        specifier: 2.0.0-alpha.42
-        version: 2.0.0-alpha.42(@babel/runtime@7.29.10)(react-dom@19.3.1(react@19.3.1))(react@19.3.1)
       astro:
         specifier: 7.3.3
         version: 7.3.3(@emnapi/core@1.11.1)(@emnapi/runtime@1.11.3)(@types/node@25.6.0)(jiti@2.7.0)(tsx@4.23.15)(yaml@2.9.1)
@@ -283,12 +259,6 @@ importers:
       happy-dom:
         specifier: 21.0.4
         version: 21.0.4
-      just-flush:
-        specifier: 2.3.0
-        version: 2.3.0
-      just-safe-get:
-        specifier: 4.2.0
-        version: 4.2.0
       npm-run-all2:
         specifier: 8.0.4
         version: 8.0.4
