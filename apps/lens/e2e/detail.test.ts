@@ -99,7 +99,7 @@ test("詳細のウインドウを閉じると、保存した詳細を消す", as
   await expect.poll(() => savedDetailKeys(context)).toHaveLength(0);
 });
 
-test("詳細のウインドウを開けなければ、そのことを示す", async ({
+test("詳細のウインドウを開けなければ、そのことを示し、保存した詳細を消す", async ({
   context,
   page,
   validSiteProfile,
@@ -126,6 +126,7 @@ test("詳細のウインドウを開けなければ、そのことを示す", as
     "詳細を開けませんでした。もう一度お試しください。",
   );
   await expect(button).toHaveAttribute("aria-disabled", "false");
+  expect(await savedDetailKeys(context)).toHaveLength(0);
 });
 
 test("保存した詳細が無ければ、そのことを示す", async ({ context }) => {
