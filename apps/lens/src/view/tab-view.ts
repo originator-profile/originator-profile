@@ -17,7 +17,7 @@ import {
   type ProblemDetails,
   type VerificationResult,
 } from "@originator-profile/verify";
-import { contentsOf, type Content } from "./contents";
+import { contentsOf, type Content, type ContentFrame } from "./contents";
 import { organizationOf, type Organization } from "./organization";
 
 /** Web サイトの運営者の提示のしかた */
@@ -47,6 +47,9 @@ export type TabView =
   | { state: "unsupported"; codes: (string | undefined)[] }
   | {
       state: "ready";
+      tabId: number;
+      /** 検証に成功した文書のフレーム。トップレベル文書を先頭とする */
+      frames: ContentFrame[];
       site: SiteView;
       contents: Content[];
       /** CA 発行者ごとの組織。発行者を確認できないものは含まない */
@@ -225,7 +228,11 @@ function verifiedOf(
       cas: result.status ? result.outcome.cas : [],
     })),
   );
-  return { originators, contents };
+  return {
+    originators,
+    contents,
+    frames: verified.map(({ subject }) => subject),
+  };
 }
 
 /** CA 発行者ごとの組織 */
@@ -245,9 +252,13 @@ const issuersOf = (contents: Content[], originators: OriginatorPayload[]) =>
  * - Site Profile、OPS、CAS のいずれかの検証に失敗していれば閲覧禁止
  * - Site Profile か CA のいずれかを提示できれば表示する
  * - いずれも提示できなければ未対応とし、その理由を示す
+ * @param tabId タブID
  * @param subscribed タブの検証の状態
  */
-export function tabViewOf(subscribed: SubscribedTabVerification): TabView {
+export function tabViewOf(
+  tabId: number,
+  subscribed: SubscribedTabVerification,
+): TabView {
   const siteFailure = siteFailureOf(subscribed);
   const documents = documentsOf(subscribed);
   if (isLoading(subscribed, siteFailure, documents)) {
@@ -260,7 +271,7 @@ export function tabViewOf(subscribed: SubscribedTabVerification): TabView {
     return { state: "prohibited" };
   }
 
-  const { originators, contents } = verifiedOf(subscribed, documents);
+  const { originators, contents, frames } = verifiedOf(subscribed, documents);
 
   if (siteFailure !== null && contents.length === 0) {
     return {
@@ -272,6 +283,8 @@ export function tabViewOf(subscribed: SubscribedTabVerification): TabView {
   }
   return {
     state: "ready",
+    tabId,
+    frames,
     site: siteOf(subscribed, originators, contents),
     contents,
     issuers: issuersOf(contents, originators),

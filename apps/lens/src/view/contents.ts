@@ -1,4 +1,7 @@
-import type { SupportedCa } from "@originator-profile/extension-common";
+import type {
+  DocumentFrame,
+  SupportedCa,
+} from "@originator-profile/extension-common";
 import type { ContentAttestation } from "@originator-profile/model";
 
 /** 提示するコンテンツの区分 */
@@ -26,12 +29,7 @@ export const categoryOrder: ContentCategory[] = [
 ];
 
 /** 文書が読み込まれているフレーム */
-export type ContentFrame = {
-  frameId: number;
-  parentFrameId: number;
-  documentId: string;
-  frameType: chrome.extensionTypes.FrameType;
-};
+export type ContentFrame = DocumentFrame;
 
 /** 提示するコンテンツ */
 export type Content = {
