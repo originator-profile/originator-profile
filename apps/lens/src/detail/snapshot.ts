@@ -30,12 +30,18 @@ export async function loadDetail(
 /** 組織の詳細を別ウインドウで開く */
 export async function openDetail(detail: OrganizationDetail) {
   const id = await saveDetail(detail);
-  const created = await chrome.windows.create({
-    url: chrome.runtime.getURL(`index.html#/detail/${id}`),
-    type: "popup",
-    width: 480,
-    height: 720,
-  });
+  const created = await chrome.windows
+    .create({
+      url: chrome.runtime.getURL(`index.html#/detail/${id}`),
+      type: "popup",
+      width: 480,
+      height: 720,
+    })
+    .catch(async (error: unknown) => {
+      // NOTE: ウインドウが無いと閉じたときの後始末も働かないので、ここで消す
+      await chrome.storage.session.remove(keyOf(id));
+      throw error;
+    });
   if (created?.id !== undefined) {
     await chrome.storage.session.set({ [windowKeyOf(created.id)]: id });
   }
