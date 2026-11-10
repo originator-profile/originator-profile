@@ -78,6 +78,8 @@ test("運営者のアコーディオンを開くと、ページ全体を強調�
   await expect(area).toHaveCount(1);
   const box = await area.boundingBox();
   expect(box).toMatchObject({ x: 0, y: 0, ...page.viewportSize() });
+  // NOTE: ページ全体は枠だけで囲み、塗らない
+  await expect(area).toHaveCSS("background-color", "rgba(0, 0, 0, 0)");
 });
 
 test("サブフレームのコンテンツも強調する", async ({ context, page }) => {

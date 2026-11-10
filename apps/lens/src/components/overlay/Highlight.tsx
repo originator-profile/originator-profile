@@ -2,6 +2,7 @@ import type { FrameCasCoordinate } from "@originator-profile/extension-common";
 import type { Target } from "@originator-profile/model";
 import { useEffect } from "react";
 import { useWindowSize } from "react-use";
+import { twMerge } from "tailwind-merge";
 import type { Highlight, HighlightLabel } from "../../overlay/protocol";
 import { useFrameCaRects } from "../frameCas/use-frame-ca-rects";
 import { useLocatedCasCoordinate } from "../frameCas/use-located-cas-coordinate";
@@ -9,12 +10,28 @@ import { HighlightTag } from "./HighlightTag";
 import useElements from "./use-elements";
 import useRect from "./use-rect";
 
-/** 強調する矩形と、その上に添えるタグ */
-function Area({ rect, label }: { rect: DOMRect; label?: HighlightLabel }) {
+/**
+ * 強調する矩形と、そこに添えるタグ
+ *
+ * コンテンツは塗りと枠で範囲を示し、タグを範囲の上に置く。ページ全体は枠だけで
+ * 囲み、タグを枠の内側の上端に置く
+ */
+function Area({
+  rect,
+  label,
+  page = false,
+}: {
+  rect: DOMRect;
+  label?: HighlightLabel;
+  page?: boolean;
+}) {
   return (
     <>
       <div
-        className="absolute rounded-[2px] border-[1.5px] border-primary-700 bg-primary-700/12 transition-opacity starting:opacity-0"
+        className={twMerge(
+          "absolute rounded-[2px] border-[1.5px] border-primary-700 transition-opacity starting:opacity-0",
+          !page && "bg-primary-700/12",
+        )}
         style={{
           top: rect.top,
           left: rect.left,
@@ -25,13 +42,16 @@ function Area({ rect, label }: { rect: DOMRect; label?: HighlightLabel }) {
       />
       {label && (
         <div
-          className="absolute -translate-x-1/2 -translate-y-full pb-2 transition-opacity starting:opacity-0"
+          className={twMerge(
+            "absolute -translate-x-1/2 transition-opacity starting:opacity-0",
+            page ? "pt-2" : "-translate-y-full pb-2",
+          )}
           style={{
-            top: Math.max(rect.top, 40),
+            top: page ? rect.top : Math.max(rect.top, 40),
             left: rect.left + rect.width / 2,
           }}
         >
-          <HighlightTag label={label} />
+          <HighlightTag label={label} placement={page ? "inside" : "above"} />
         </div>
       )}
     </>
@@ -109,7 +129,7 @@ function FrameContent({
 /** ページ全体 */
 function PageArea({ label }: { label: HighlightLabel }) {
   const { width, height } = useWindowSize();
-  return <Area rect={new DOMRect(0, 0, width, height)} label={label} />;
+  return <Area rect={new DOMRect(0, 0, width, height)} label={label} page />;
 }
 
 /** ページ上の強調 */
