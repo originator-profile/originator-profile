@@ -103,8 +103,7 @@ function Body({
 /**
  * 発信者の組織のアコーディオン
  *
- * NOTE: 同じ name の組では、ブラウザーが開いていたものを閉じる。name に対応しない
- * ブラウザーでは、呼び出し側が open で 1 つだけ開いた状態に保つ
+ * NOTE: 同じ name の組では、1 つを開くとブラウザーがほかを閉じる
  */
 export function OriginatorAccordion({
   organization,
