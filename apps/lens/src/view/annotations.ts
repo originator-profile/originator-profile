@@ -8,6 +8,11 @@ import { organizationOf, type Organization } from "./organization";
 
 /** 第三者による確認 (Profile Annotation) */
 export type AnnotationView = {
+  /**
+   * Profile Annotation Policy ID。同じ発行者の確認のあいだで一意
+   * (PA は発行者・対象・ポリシーの組で 1 つに選ばれている)
+   */
+  id: string;
   /** PA の型 (JP-OrganizationExistenceCertificate、Membership など) */
   type: string;
   name: string;
@@ -42,6 +47,7 @@ function toView(annotation: Certificate): AnnotationView {
   const policy = getAnnotationPolicy(annotation);
   const subject = annotation.credentialSubject;
   return {
+    id: policy.id,
     type: subject.type,
     name:
       ("name" in subject && typeof subject.name === "string"
