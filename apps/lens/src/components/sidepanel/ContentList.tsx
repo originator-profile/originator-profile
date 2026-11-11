@@ -44,14 +44,16 @@ export function ContentList(props: Props) {
   });
   // NOTE: 表示は検証の状態が変わるたびに作り直される。送り直すのは、強調を
   // 決める値が変わったときだけにする。コンテンツの範囲は、CA と文書が同じなら
-  // 変わらない。開いていたコンテンツが一覧から消えると documentId が外れ、
+  // 変わらない。開いていたコンテンツが一覧から消えると documentIds が外れ、
   // 強調を終える
-  const documentId =
-    highlight?.kind === "content" ? highlight.frame.documentId : undefined;
+  const documentIds =
+    highlight?.kind === "content"
+      ? highlight.frames.map(({ documentId }) => documentId).join()
+      : undefined;
   const label = highlight?.label;
   useEffect(() => {
     sendHighlight();
-  }, [tabId, openKey, documentId, label?.name, label?.logo, label?.country]);
+  }, [tabId, openKey, documentIds, label?.name, label?.logo, label?.country]);
   useEffect(
     () => () => {
       void overlayExtensionMessenger.sendMessage("leave", null, tabId);

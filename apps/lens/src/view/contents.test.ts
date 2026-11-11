@@ -32,13 +32,13 @@ describe("contentsOf", () => {
     ).toEqual(["main", "article", "advertorial", "ad"]);
   });
 
-  test("発行者と CA ID が同じものは後のものを残す", () => {
+  test("発行者と CA ID が同じものは 1 つにまとめ、出ているフレームをすべて持つ", () => {
     const contents = contentsOf([
-      { frame: topFrame, cas: [article("same")] },
+      { frame: topFrame, cas: [article("same"), article("same")] },
       { frame: subFrame, cas: [article("same")] },
     ]);
     expect(contents).toHaveLength(1);
-    expect(contents[0]?.frame).toBe(subFrame);
+    expect(contents[0]?.frames).toEqual([topFrame, subFrame]);
   });
 
   test("復号できなかった CA は除く", () => {

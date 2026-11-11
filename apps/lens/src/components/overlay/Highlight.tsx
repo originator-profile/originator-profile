@@ -164,25 +164,26 @@ function FrameContentAreas({
 }
 
 /** サブフレームのコンテンツ */
-function FrameContent({
-  frameId,
+function FrameContents({
+  frameIds,
   label,
 }: {
-  frameId: number;
+  frameIds: number[];
   label?: HighlightLabel;
 }) {
+  // NOTE: 位置の計測はここで 1 回だけ求める。サブフレームごとに求めると、
+  // 計測の依頼がサブフレームの数だけ重なる
   const { framesCasCoordinate, isLocating } = useLocatedCasCoordinate();
-  const coordinate = framesCasCoordinate.find(
-    (coordinate) => coordinate.frameId === frameId,
-  );
-  if (!coordinate) return null;
-  return (
-    <FrameContentAreas
-      coordinate={coordinate}
-      label={label}
-      locating={isLocating}
-    />
-  );
+  return framesCasCoordinate
+    .filter(({ frameId }) => frameIds.includes(frameId))
+    .map((coordinate) => (
+      <FrameContentAreas
+        key={coordinate.frameId}
+        coordinate={coordinate}
+        label={label}
+        locating={isLocating}
+      />
+    ));
 }
 
 /** ページ全体 */
@@ -194,9 +195,15 @@ function PageArea({ label }: { label: HighlightLabel }) {
 /** ページ上の強調 */
 export function HighlightView({ highlight }: { highlight: Highlight }) {
   if (highlight.kind === "page") return <PageArea label={highlight.label} />;
-  return highlight.frame.frameId === 0 ? (
-    <PageContent targets={highlight.targets} label={highlight.label} />
-  ) : (
-    <FrameContent frameId={highlight.frame.frameId} label={highlight.label} />
+  const { frames, targets, label } = highlight;
+  const frameIds = frames.map(({ frameId }) => frameId);
+  const subFrameIds = frameIds.filter((frameId) => frameId !== 0);
+  return (
+    <>
+      {frameIds.includes(0) && <PageContent targets={targets} label={label} />}
+      {subFrameIds.length > 0 && (
+        <FrameContents frameIds={subFrameIds} label={label} />
+      )}
+    </>
   );
 }

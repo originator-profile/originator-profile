@@ -24,7 +24,8 @@ export type Highlight =
       kind: "content";
       /** コンテンツの同一性 */
       key: string;
-      frame: DocumentFrame;
+      /** コンテンツが出ているフレーム */
+      frames: DocumentFrame[];
       targets: Target[];
       label?: HighlightLabel;
     };
@@ -43,8 +44,13 @@ export type FrameTargets = FrameResponse & {
 export type LensOverlayProtocolMap = {
   /** サイドパネル → トップレベル文書: 強調の開始・更新 */
   showHighlight(message: Highlight): void;
-  /** トップレベル文書 → Service Worker: サブフレームでの位置の計測を求める */
-  locateTargets(message: FrameTargets): void;
+  /**
+   * トップレベル文書 → Service Worker: サブフレームでの位置の計測を求める
+   *
+   * NOTE: Service Worker はタブの検証の状態を読んでから中継する。フレームごとに
+   * 送ると読み直しが重なるため、計測するフレームをまとめて送る
+   */
+  locateTargets(message: FrameTargets[]): void;
   /** Service Worker → サブフレーム: 位置を計測して親フレームへ送る */
   measureTargets(message: {
     target: FrameTargets;

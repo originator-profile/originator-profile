@@ -39,12 +39,17 @@ setupOnce("content-script", () => {
   });
 
   frameCasWindowMessenger.onMessage("startLocate", () => {
-    if (current?.kind !== "content" || current.frame.frameId === 0) return;
-    const { frameId, parentFrameId } = current.frame;
-    void lensOverlayMessenger.sendMessage("locateTargets", {
-      frameId,
-      parentFrameId,
-      cas: [{ id: current.key, targets: current.targets }],
-    });
+    if (current?.kind !== "content") return;
+    const { key, targets } = current;
+    const frames = current.frames.filter(({ frameId }) => frameId !== 0);
+    if (frames.length === 0) return;
+    void lensOverlayMessenger.sendMessage(
+      "locateTargets",
+      frames.map(({ frameId, parentFrameId }) => ({
+        frameId,
+        parentFrameId,
+        cas: [{ id: key, targets }],
+      })),
+    );
   });
 });
