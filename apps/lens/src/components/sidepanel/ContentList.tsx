@@ -1,5 +1,8 @@
+import { overlayExtensionMessenger } from "@originator-profile/extension-common";
 import { _ } from "@originator-profile/extension-common/ui";
-import { useId, useState } from "react";
+import { useEffect, useEffectEvent, useId, useState } from "react";
+import { highlightOf } from "../../overlay/highlight";
+import { lensOverlayMessenger } from "../../overlay/protocol";
 import {
   sectionsOf,
   type ContentCategory,
@@ -25,9 +28,38 @@ type Props = Extract<TabView, { state: "ready" }>;
  *
  * NOTE: アコーディオンは同時に 1 つしか開かない
  */
-export function ContentList({ site, contents, issuers }: Props) {
+export function ContentList(props: Props) {
+  const { tabId, site, contents, issuers } = props;
   // NOTE: 開いているアコーディオン。Web サイトの運営者は "site"、コンテンツは key
   const [openKey, setOpenKey] = useState<string>();
+  const highlight = highlightOf(props, openKey);
+
+  // 開いているアコーディオンに対応する範囲をページ上で強調する
+  const sendHighlight = useEffectEvent(() => {
+    if (highlight) {
+      void lensOverlayMessenger.sendMessage("showHighlight", highlight, tabId);
+    } else {
+      void overlayExtensionMessenger.sendMessage("leave", null, tabId);
+    }
+  });
+  // NOTE: 表示は検証の状態が変わるたびに作り直される。送り直すのは、強調を
+  // 決める値が変わったときだけにする。コンテンツの範囲は、CA と文書が同じなら
+  // 変わらない。開いていたコンテンツが一覧から消えると documentIds が外れ、
+  // 強調を終える
+  const documentIds =
+    highlight?.kind === "content"
+      ? highlight.frames.map(({ documentId }) => documentId).join()
+      : undefined;
+  const label = highlight?.label;
+  useEffect(() => {
+    sendHighlight();
+  }, [tabId, openKey, documentIds, label?.name, label?.logo, label?.country]);
+  useEffect(
+    () => () => {
+      void overlayExtensionMessenger.sendMessage("leave", null, tabId);
+    },
+    [tabId],
+  );
   const name = useId();
   const toggle = (key: string) => (open: boolean) =>
     setOpenKey((current) => {

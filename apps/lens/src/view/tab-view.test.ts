@@ -37,6 +37,7 @@ const topDocument = document(
 describe("tabViewOf", () => {
   test("Site Profile が確定するまで読み込み中", () => {
     const view = tabViewOf(
+      1,
       subscribed({
         frames: [{ frame: topFrame, entry: settled(topFrame, topDocument) }],
       }),
@@ -46,6 +47,7 @@ describe("tabViewOf", () => {
 
   test("確定していないサブフレームの文書は、確定するまで提示に加えない", () => {
     const view = tabViewOf(
+      1,
       subscribed({
         frames: [
           { frame: topFrame, entry: settled(topFrame, topDocument) },
@@ -62,6 +64,7 @@ describe("tabViewOf", () => {
 
   test("運営者と作成者が異なれば、運営者を提示する", () => {
     const view = tabViewOf(
+      1,
       subscribed({
         frames: [{ frame: topFrame, entry: settled(topFrame, topDocument) }],
         siteProfile: site(),
@@ -84,6 +87,7 @@ describe("tabViewOf", () => {
 
   test("運営者がメインのコンテンツの作成者と同じなら、サイト名だけを提示する", () => {
     const view = tabViewOf(
+      1,
       subscribed({
         frames: [{ frame: topFrame, entry: settled(topFrame, topDocument) }],
         siteProfile: site(publisher),
@@ -97,6 +101,7 @@ describe("tabViewOf", () => {
 
   test("Site Profile が無ければ運営者を確認できないことを示す", () => {
     const view = tabViewOf(
+      1,
       subscribed({
         frames: [
           {
@@ -112,6 +117,7 @@ describe("tabViewOf", () => {
 
   test("Site Profile も CA も無ければ未対応", () => {
     const view = tabViewOf(
+      1,
       subscribed({
         frames: [
           {
@@ -137,6 +143,7 @@ describe("tabViewOf", () => {
     ["ERR_CONTENT_ATTESTATION_SET_VERIFY_FAILED", "document"],
   ])("%s なら閲覧禁止", (code, target) => {
     const view = tabViewOf(
+      1,
       subscribed({
         frames: [
           {
@@ -155,6 +162,7 @@ describe("tabViewOf", () => {
 
   test("OPS の形式が無効でも Site Profile があれば表示する", () => {
     const view = tabViewOf(
+      1,
       subscribed({
         frames: [
           {
@@ -177,6 +185,7 @@ describe("tabViewOf", () => {
 
   test("結果が無効になっていれば未対応とし、その理由を示す", () => {
     const view = tabViewOf(
+      1,
       subscribed({
         frames: [
           {
@@ -199,6 +208,7 @@ describe("tabViewOf", () => {
   test("fenced frame の CA は提示しない", () => {
     const fenced = { ...subFrame, frameType: "fenced_frame" as const };
     const view = tabViewOf(
+      1,
       subscribed({
         frames: [
           { frame: topFrame, entry: settled(topFrame, topDocument) },

@@ -1,4 +1,7 @@
-import type { SupportedCa } from "@originator-profile/extension-common";
+import type {
+  DocumentFrame,
+  SupportedCa,
+} from "@originator-profile/extension-common";
 import type { ContentAttestation } from "@originator-profile/model";
 
 /** 提示するコンテンツの区分 */
@@ -26,12 +29,7 @@ export const categoryOrder: ContentCategory[] = [
 ];
 
 /** 文書が読み込まれているフレーム */
-export type ContentFrame = {
-  frameId: number;
-  parentFrameId: number;
-  documentId: string;
-  frameType: chrome.extensionTypes.FrameType;
-};
+export type ContentFrame = DocumentFrame;
 
 /** 提示するコンテンツ */
 export type Content = {
@@ -47,7 +45,8 @@ export type Content = {
   /** サムネイルの URL */
   image?: string;
   attestation: ContentAttestation;
-  frame: ContentFrame;
+  /** コンテンツが出ているフレーム。文書の順に並ぶ */
+  frames: ContentFrame[];
 };
 
 /** 文書の Content Attestation */
@@ -84,8 +83,7 @@ function describe(ca: ContentAttestation): Pick<Content, "title" | "image"> {
 function toContent(
   main: boolean,
   attestation: ContentAttestation,
-  frame: ContentFrame,
-): Content {
+): Omit<Content, "frames"> {
   const type = attestation.credentialSubject.type;
   return {
     key: `${attestation.issuer}:${attestation.credentialSubject.id}`,
@@ -95,26 +93,30 @@ function toContent(
     issuer: attestation.issuer,
     ...describe(attestation),
     attestation,
-    frame,
   };
 }
 
 /**
  * 文書群の Content Attestation を、提示する順に並べる
  *
- * 発行者と CA ID が同じものは同じコンテンツとみなし、後のものを残す。
+ * 発行者と CA ID が同じものは同じコンテンツとみなす。CA は後のものを残し、
+ * 出ているフレームはすべて集める。
  * @param documents 文書ごとの Content Attestation。トップレベル文書を先頭とする
  */
 export function contentsOf(documents: DocumentCas[]): Content[] {
-  const contents = new Map(
-    documents
-      .flatMap(({ frame, cas }) =>
-        cas.flatMap(({ main, attestation }) =>
-          attestation ? [toContent(main, attestation, frame)] : [],
-        ),
-      )
-      .map((content) => [content.key, content]),
+  const occurrences = documents.flatMap(({ frame, cas }) =>
+    cas.flatMap(({ main, attestation }) =>
+      attestation ? [{ content: toContent(main, attestation), frame }] : [],
+    ),
   );
+  const contents = new Map<string, Content>();
+  for (const { content, frame } of occurrences) {
+    const frames = contents.get(content.key)?.frames ?? [];
+    contents.set(content.key, {
+      ...content,
+      frames: frames.includes(frame) ? frames : [...frames, frame],
+    });
+  }
   const rank = (content: Content) =>
     content.main ? -1 : categoryOrder.indexOf(content.category);
   return [...contents.values()].sort((a, b) => rank(a) - rank(b));
