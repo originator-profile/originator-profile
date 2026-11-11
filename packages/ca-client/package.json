@@ -19,7 +19,9 @@
     "LICENSE",
     "NOTICE"
   ],
-  "bin": "bin/run.js",
+  "bin": {
+    "opca": "bin/run.js"
+  },
   "exports": {
     "types": "./dist/index.d.ts",
     "default": "./dist/index.js"
