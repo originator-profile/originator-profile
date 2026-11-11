@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { CaClientError, CaClientErrorCode, isUnauthorized } from "./errors";
+import { CaClientError, CaClientErrorCode, isUnauthorized } from "./errors.ts";
 
 test("isUnauthorized: is true for HTTP 401", () => {
   expect(

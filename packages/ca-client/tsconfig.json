@@ -2,6 +2,8 @@
   "extends": "@originator-profile/tsconfig/tsconfig.json",
   "compilerOptions": {
     "noEmit": true,
+    "allowImportingTsExtensions": true,
+    // NOTE: outDir, rootDirs は bin/dev.ts の実行に必須
     "outDir": "dist",
     "rootDirs": ["src"]
   },

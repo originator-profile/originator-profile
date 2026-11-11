@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import { CaClientError, CaClientErrorCode } from "../errors";
-import { parseDates } from "./dates";
+import { CaClientError, CaClientErrorCode } from "../errors.ts";
+import { parseDates } from "./dates.ts";
 
 test("parseDates: returns issuedAt and expiredAt when expiredAt is after issuedAt", () => {
   const issuedAt = new Date("2024-01-01T00:00:00.000Z");

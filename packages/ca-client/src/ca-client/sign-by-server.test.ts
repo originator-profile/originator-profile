@@ -1,8 +1,8 @@
 import type { UnsignedContentAttestation } from "@originator-profile/model";
 import { expect, test, vi } from "vitest";
-import { CaClientError, CaClientErrorCode } from "../errors";
-import type { SignByCaServerOptions } from "./sign-by-ca-server";
-import { signByServer, type CaServerSign } from "./sign-by-server";
+import { CaClientError, CaClientErrorCode } from "../errors.ts";
+import type { SignByCaServerOptions } from "./sign-by-ca-server.ts";
+import { signByServer, type CaServerSign } from "./sign-by-server.ts";
 
 const uca = {} as UnsignedContentAttestation;
 

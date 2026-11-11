@@ -1,6 +1,6 @@
-import { CaClientError, CaClientErrorCode } from "../errors";
-import type { FetchOperations } from "../fetch-operations";
-import { isRecord } from "../is-record";
+import { CaClientError, CaClientErrorCode } from "../errors.ts";
+import type { FetchOperations } from "../fetch-operations.ts";
+import { isRecord } from "../is-record.ts";
 
 export interface CcspAuthConfig {
   authType: "client_secret_post";

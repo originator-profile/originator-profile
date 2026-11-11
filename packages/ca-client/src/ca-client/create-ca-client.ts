@@ -1,11 +1,11 @@
 import type { UnsignedContentAttestation } from "@originator-profile/model";
-import { createTokenManager } from "../auth";
-import { reSign } from "./re-sign";
+import { createTokenManager } from "../auth/index.ts";
+import { reSign } from "./re-sign.ts";
 import {
   serverSignOptions,
   signByServer,
   type CaServerSign,
-} from "./sign-by-server";
+} from "./sign-by-server.ts";
 
 export type CaClientConfig = {
   /** CA server endpoint URL */

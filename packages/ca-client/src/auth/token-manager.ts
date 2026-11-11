@@ -3,8 +3,8 @@ import {
   parseCcspConfig,
   type CcspAuthConfig,
   type CcspTokenResponse,
-} from "./ccsp-auth";
-import { getJwtExpiration } from "./jwt";
+} from "./ccsp-auth.ts";
+import { getJwtExpiration } from "./jwt.ts";
 
 interface CachedToken {
   accessToken: string;

@@ -1,7 +1,7 @@
 import type { UnsignedContentAttestation } from "@originator-profile/model";
 import { afterEach, expect, test, vi } from "vitest";
-import { createCaClient } from "./create-ca-client";
-import type { CaServerSign } from "./sign-by-server";
+import { createCaClient } from "./create-ca-client.ts";
+import type { CaServerSign } from "./sign-by-server.ts";
 
 const ccspConfig = Buffer.from(
   JSON.stringify({
