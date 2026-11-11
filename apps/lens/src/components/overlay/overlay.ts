@@ -27,14 +27,16 @@ export class Overlay {
         </body>
       </html>
     `;
+    // NOTE: 100vw・100vh はスクロールバーを含み、ページ全体の枠がスクロールバーの
+    // 下に入る。fixed の 100% はスクロールバーを除いたビューポートになる
     this.iframe.style.cssText = `
       background: transparent;
       border-radius: 0;
       border: none;
       box-shadow: none;
       display: block;
-      width: 100vw;
-      height: 100vh;
+      width: 100%;
+      height: 100%;
       position: fixed;
       top: 0;
       left: 0;
