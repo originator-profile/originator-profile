@@ -10,14 +10,16 @@ setupBackground({
   countCredentials,
 });
 
-// サブフレームでの位置の計測を、そのフレームの content script に中継する
+// サブフレームでの位置の計測を、それぞれのフレームの content script に中継する
 lensOverlayMessenger.onMessage("locateTargets", async ({ data, sender }) => {
   const tabId = sender.tab?.id;
   if (tabId === undefined) return;
   const frames = documentFramesOf(await readTabVerification(tabId));
-  void lensOverlayMessenger.sendMessage(
-    "measureTargets",
-    { target: data, frames },
-    { tabId, frameId: data.frameId },
-  );
+  for (const target of data) {
+    void lensOverlayMessenger.sendMessage(
+      "measureTargets",
+      { target, frames },
+      { tabId, frameId: target.frameId },
+    );
+  }
 });

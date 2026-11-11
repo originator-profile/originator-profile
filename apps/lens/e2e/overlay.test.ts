@@ -89,6 +89,10 @@ test("サブフレームのコンテンツも強調する", async ({ context, pa
   await ext.getByTestId("content-card").first().locator("summary").click();
   const overlay = overlayOf(page).contentFrame();
   await expect(overlay.getByTestId("highlight-area").first()).toBeVisible();
+  // NOTE: 同じ CA を読み込んだ iframe が 17 あり、そのすべてを強調する
+  await expect
+    .poll(() => overlay.getByTestId("highlight-area").count())
+    .toBe(17);
   // NOTE: 国名は文言 (_locales) と同じ言語で出す
   await expect(ext.locator("details[open]").getByText("日本")).toBeVisible();
 });

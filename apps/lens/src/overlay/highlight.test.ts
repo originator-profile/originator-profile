@@ -62,7 +62,7 @@ describe("highlightOf", () => {
     expect(highlightOf(view({ state: "absent" }), content?.key)).toMatchObject({
       kind: "content",
       key: content?.key,
-      frame: subFrame,
+      frames: [subFrame],
       targets: [
         { type: "TextTargetIntegrity", cssSelector: '[data-ca="urn:uuid:ad"]' },
       ],

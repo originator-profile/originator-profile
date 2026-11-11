@@ -35,7 +35,7 @@ export function highlightOf(
   return {
     kind: "content",
     key: content.key,
-    frame: content.frame,
+    frames: content.frames,
     targets: content.attestation.target,
     label: labelOf(issuers.get(content.issuer)),
   };
