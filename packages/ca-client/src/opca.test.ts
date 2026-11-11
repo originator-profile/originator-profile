@@ -14,14 +14,14 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join, relative } from "node:path";
 import { onTestFinished, test } from "vitest";
-import { json } from "./operations/json";
-import { parseConfig, type CaConfig } from "./site/config";
+import { Json } from "./commands/json";
 import { init } from "./operations/init";
 import { inject } from "./operations/inject";
-import { buildUnsignedCa } from "./site/page";
 import { renew } from "./operations/renew";
 import { signCaFile } from "./operations/sign";
 import { sync, UnissuablePagesError } from "./operations/sync";
+import { parseConfig, type CaConfig } from "./site/config";
+import { buildUnsignedCa } from "./site/page";
 
 const SELECTOR = "[itemprop='headline'], [itemprop='articleBody']";
 const ISSUER = "dns:example.com";
@@ -438,9 +438,21 @@ test("json と sign: HTML のパスを JSON に書き、署名時に読んで照
   const cwd = process.cwd();
   process.chdir(s.root);
   onTestFinished(() => process.chdir(cwd));
+  writeFileSync(
+    join(s.root, "ca.config.json"),
+    `${JSON.stringify({
+      issuer: s.config.issuer,
+      distDir: s.config.distDir,
+      publicDir: s.config.publicDir,
+      origins: s.config.origins,
+      selectors: s.config.selectors,
+      exclude: s.config.exclude,
+      defaults: s.config.defaults,
+      cas: s.config.cas,
+    })}\n`,
+  );
 
-  const { json: unsigned } = await json({ config: s.config, page: htmlFile });
-  writeFileSync(input, unsigned);
+  await Json.run([htmlFile, "--out", input], import.meta.url);
   const uca = JSON.parse(readFileSync(input, "utf-8"));
   assert.strictEqual(
     uca.target[0].content,

@@ -1,4 +1,10 @@
 {
   "extends": "@originator-profile/tsconfig/tsconfig.json",
+  "compilerOptions": {
+    "noEmit": true,
+    "allowImportingTsExtensions": true,
+    "outDir": "dist",
+    "rootDirs": ["src"]
+  },
   "exclude": ["dist", "node_modules"]
 }
