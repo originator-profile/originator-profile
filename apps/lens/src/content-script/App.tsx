@@ -23,7 +23,9 @@ function App() {
 
   if (!highlight) return null;
   return (
-    <div className="h-screen w-screen" data-testid="overlay">
+    // NOTE: 範囲は画面の外にもはみ出す。はみ出しで overlay の文書がスクロール
+    // できるようにならないよう、画面に固定した箱で切り取る
+    <div className="fixed inset-0 overflow-hidden" data-testid="overlay">
       <HighlightView
         key={highlight.kind === "content" ? highlight.key : "page"}
         highlight={highlight}

@@ -93,6 +93,13 @@ test("サブフレームのコンテンツも強調する", async ({ context, pa
   await expect
     .poll(() => overlay.getByTestId("highlight-area").count())
     .toBe(17);
+  const { scrollHeight, clientHeight } = await overlay
+    .locator("html")
+    .evaluate(({ scrollHeight, clientHeight }) => ({
+      scrollHeight,
+      clientHeight,
+    }));
+  expect(scrollHeight).toBe(clientHeight);
   // NOTE: 国名は文言 (_locales) と同じ言語で出す
   await expect(ext.locator("details[open]").getByText("日本")).toBeVisible();
 });
