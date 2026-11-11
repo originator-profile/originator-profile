@@ -3,16 +3,11 @@ import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { expect, test } from "vitest";
 import { CaClientError, CaClientErrorCode } from "../errors";
-import {
-  deleteCasFiles,
-  parseCasFileContent,
-  readCasFile,
-  resolveCasFilePath,
-  writeCasFile,
-} from "./file";
+import { parseCas } from "./cas";
+import { readCasFile, resolveCasFilePath, writeCasFile } from "./file";
 
 const withTempDir = async (run: (dir: string) => Promise<void>) => {
-  const dir = await mkdtemp(join(tmpdir(), "ca-client-cas-store-"));
+  const dir = await mkdtemp(join(tmpdir(), "ca-client-cas-"));
   try {
     await run(dir);
   } finally {
@@ -122,79 +117,6 @@ test("writeCasFile: wraps filesystem failures as CA_FILE", async () => {
   });
 });
 
-test("deleteCasFiles: deletes existing CAS files", async () => {
-  await withTempDir(async (dir) => {
-    const keep = join(dir, "cas", "keep.cas.json");
-    const drop = join(dir, "cas", "drop.cas.json");
-
-    await writeCasFile({ filePath: keep, jwt: "keep" });
-    await writeCasFile({ filePath: drop, jwt: "drop" });
-
-    await deleteCasFiles([drop]);
-
-    const kept = await readFile(keep, "utf8");
-    expect(JSON.parse(kept)).toEqual(["keep"]);
-    await expect(readFile(drop, "utf8")).rejects.toMatchObject({
-      code: "ENOENT",
-    });
-  });
-});
-
-test("deleteCasFiles: skips missing files", async () => {
-  await withTempDir(async (dir) => {
-    await expect(
-      deleteCasFiles([join(dir, "cas", "missing.cas.json")]),
-    ).resolves.toBeUndefined();
-  });
-});
-
-test("deleteCasFiles: does nothing for an empty list", async () => {
-  await expect(deleteCasFiles([])).resolves.toBeUndefined();
-});
-
-test("deleteCasFiles: rejects an empty filePath before deleting any files", async () => {
-  await withTempDir(async (dir) => {
-    const keep = join(dir, "cas", "keep.cas.json");
-    await writeCasFile({ filePath: keep, jwt: "keep" });
-
-    await expect(deleteCasFiles([keep, ""])).rejects.toMatchObject({
-      name: "CaClientError",
-      code: CaClientErrorCode.Validation,
-      message: "filePath must be a non-empty string",
-    });
-    await expect(deleteCasFiles([keep, "   "])).rejects.toMatchObject({
-      name: "CaClientError",
-      code: CaClientErrorCode.Validation,
-      message: "filePath must be a non-empty string",
-    });
-
-    const kept = await readFile(keep, "utf8");
-    expect(JSON.parse(kept)).toEqual(["keep"]);
-  });
-});
-
-test("deleteCasFiles: deletes multiple CAS files", async () => {
-  await withTempDir(async (dir) => {
-    const filePaths = [
-      join(dir, "cas", "one.cas.json"),
-      join(dir, "cas", "two.cas.json"),
-    ];
-    await Promise.all(
-      filePaths.map((filePath) => writeCasFile({ filePath, jwt: filePath })),
-    );
-
-    await deleteCasFiles(filePaths);
-
-    await Promise.all(
-      filePaths.map((filePath) =>
-        expect(readFile(filePath, "utf8")).rejects.toMatchObject({
-          code: "ENOENT",
-        }),
-      ),
-    );
-  });
-});
-
 test("resolveCasFilePath: resolves a relative path against process.cwd()", () => {
   expect(resolveCasFilePath("dist/cas/page.cas.json")).toBe(
     resolve(process.cwd(), "dist", "cas", "page.cas.json"),
@@ -228,49 +150,63 @@ const encodeJwt = (
 ) =>
   `${Buffer.from(JSON.stringify(header)).toString("base64url")}.${Buffer.from(JSON.stringify(payload)).toString("base64url")}.sig`;
 
-test("parseCasFileContent: returns the leading JWT", () => {
-  const token = "header.payload.signature";
-  expect(parseCasFileContent(JSON.stringify([token]))).toBe(token);
-});
-
-test("parseCasFileContent: accepts { main, attestation } items", () => {
-  const token = "header.payload.signature";
+test("parseCas: returns every string and { attestation } item", () => {
+  const first = "header.payload.signature";
+  const second = "header.other.signature";
+  expect(parseCas(JSON.stringify([first]))).toEqual([first]);
   expect(
-    parseCasFileContent(JSON.stringify([{ main: true, attestation: token }])),
-  ).toBe(token);
+    parseCas(
+      JSON.stringify([
+        { main: true, attestation: first },
+        { attestation: second },
+      ]),
+    ),
+  ).toEqual([{ main: true, attestation: first }, { attestation: second }]);
 });
 
-test("parseCasFileContent: rejects a non-array document", () => {
-  expect(() => parseCasFileContent(JSON.stringify({ notArray: true }))).toThrow(
+test("parseCas: returns an empty CAS", () => {
+  expect(parseCas("[]")).toEqual([]);
+});
+
+test("parseCas: rejects a non-array document", () => {
+  expect(() => parseCas(JSON.stringify({ notArray: true }))).toThrow(
     CaClientError,
   );
-  expect(() => parseCasFileContent(JSON.stringify({ notArray: true }))).toThrow(
+  expect(() => parseCas(JSON.stringify({ notArray: true }))).toThrow(
     INVALID_CAS_FORMAT,
   );
 });
 
-test("parseCasFileContent: surfaces JSON.parse errors as CA_VALIDATION", () => {
-  expect(() => parseCasFileContent("{invalid")).toThrow(CaClientError);
-  expect(() => parseCasFileContent("{invalid")).toThrow(/JSON/i);
+test("parseCas: surfaces JSON.parse errors as CA_VALIDATION", () => {
+  expect(() => parseCas("{invalid")).toThrow(CaClientError);
+  expect(() => parseCas("{invalid")).toThrow(/JSON/i);
 });
 
-test("readCasFile: returns jwt and payload with JWT registered claims stripped", async () => {
+test("readCasFile: returns every CA with its decoded payload", async () => {
   await withTempDir(async (dir) => {
-    const payload = {
+    const firstPayload = {
       target: [{ type: "TextTargetIntegrity" }],
       iss: "dns:x",
+      issuer: "dns:x",
       credentialSubject: { id: "urn:uuid:1" },
     };
-    const jwt = encodeJwt(payload);
+    const secondPayload = {
+      issuer: "dns:y",
+      credentialSubject: { id: "urn:uuid:2" },
+    };
+    const first = encodeJwt(firstPayload);
+    const second = encodeJwt(secondPayload);
     const filePath = join(dir, "ja-JP.about.cas.json");
-    await writeFile(filePath, JSON.stringify([jwt]));
+    await writeFile(
+      filePath,
+      JSON.stringify([first, { attestation: second, main: true }]),
+    );
 
     const result = await readCasFile(filePath);
-    expect(result.jwt).toBe(jwt);
-    expect(result.payload).toEqual({
-      target: payload.target,
-      credentialSubject: payload.credentialSubject,
-    });
+    expect(result).toEqual([
+      { jwt: first, payload: firstPayload },
+      { jwt: second, payload: secondPayload },
+    ]);
   });
 });
 
@@ -283,8 +219,7 @@ test("readCasFile: reads a file written by writeCasFile", async () => {
     await writeCasFile({ filePath, jwt });
     const result = await readCasFile(filePath);
 
-    expect(result.jwt).toBe(jwt);
-    expect(result.payload).toEqual(payload);
+    expect(result).toEqual([{ jwt, payload }]);
   });
 });
 
@@ -315,7 +250,7 @@ test("readCasFile: rejects an invalid JWT as CA_VALIDATION", async () => {
     await expect(readCasFile(filePath)).rejects.toMatchObject({
       name: "CaClientError",
       code: CaClientErrorCode.Validation,
-      message: "Failed to decode CAS JWT: JWT VC Decoding Failure",
+      message: "Invalid JWT: expected 3 parts, got 1",
     });
   });
 });

@@ -6,13 +6,7 @@ export {
 export {
   readCasFile,
   writeCasFile,
-  type ReadCasFileResult,
+  type CaEntry,
   type WriteCasFileOptions,
-} from "./cas-store/file";
-export {
-  detectDrift,
-  type DetectDriftOptions,
-  type DriftResult,
-  type NormalizedTarget,
-} from "./drift/compare";
+} from "./cas/file";
 export { CaClientError, CaClientErrorCode, isUnauthorized } from "./errors";

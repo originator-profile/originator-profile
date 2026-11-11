@@ -80,8 +80,8 @@ const extractDomTargets = async (
 };
 
 /**
- * Extract target integrity from HTML. Selectors come from the caller
- * (CAS-recorded values or `DetectDriftOptions`); there is no site-specific default.
+ * Extract target integrity from HTML. Selectors come from the caller.
+ * There is no site-specific default.
  */
 export const extractTargetsFromHtml = async (
   htmlContent: string,
