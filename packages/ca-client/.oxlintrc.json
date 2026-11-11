@@ -1,4 +1,18 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
-  "extends": ["../../.oxlintrc.json"]
+  "extends": ["../../.oxlintrc.json"],
+  "overrides": [
+    {
+      "files": [
+        "src/operations/**/*.ts",
+        "src/site/**/*.ts",
+        "src/cas/source.ts"
+      ],
+      "rules": {
+        "no-await-in-loop": "off",
+        "complexity": "off",
+        "max-depth": "off"
+      }
+    }
+  ]
 }

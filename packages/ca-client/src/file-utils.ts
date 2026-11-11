@@ -1,4 +1,10 @@
+import { isAbsolute, relative } from "node:path";
 import { CaClientError, CaClientErrorCode } from "./errors";
+
+export const isInside = (dir: string, file: string): boolean => {
+  const rel = relative(dir, file);
+  return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
+};
 
 export const isEnoent = (error: unknown): boolean =>
   typeof error === "object" &&

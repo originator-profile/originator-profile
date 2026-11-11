@@ -16,7 +16,7 @@ export type Recorded = { id?: string; selector?: string };
 const INVALID_CAS_FORMAT =
   "Invalid CAS file format (expected JSON array with JWT string)";
 
-const isCasItem = (value: unknown): value is CasItem => {
+export const isCasItem = (value: unknown): value is CasItem => {
   if (typeof value === "string") {
     return true;
   }
