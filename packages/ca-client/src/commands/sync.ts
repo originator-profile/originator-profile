@@ -8,7 +8,7 @@ import { sync as syncPages } from "../operations/sync";
 export class Sync extends BaseCommand {
   static override summary =
     "HTML と CAS を照合し、無いページとずれたページを署名する";
-  static override usage = "[paths...] [--check] [--report <file>]";
+  static override usage = "sync [paths...] [--check] [--report <file>]";
   static override strict = false;
   static override flags = {
     check,

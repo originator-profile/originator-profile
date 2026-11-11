@@ -2,7 +2,7 @@
 
 [![npm version](https://img.shields.io/npm/v/@originator-profile/ca-client)](https://www.npmjs.com/package/@originator-profile/ca-client) [![jsDocs.io](https://img.shields.io/badge/jsDocs.io-reference-blue)](https://www.jsdocs.io/package/@originator-profile/ca-client)
 
-Content Attestation (CA) を発行し、Content Attestation Set (CAS) として配信するための Node.js クライアントです。
+Content Attestation (CA) を発行し、Content Attestation Set (CAS) として配信するための Node.js クライアントです。コマンド `opca` は、静的サイトジェネレーターのビルドの最後と CI から、CAS の挿入、署名、照合、再発行を行います。
 
 <!-- prettier-ignore-start -->
 <!-- environments-start -->
@@ -23,19 +23,331 @@ Content Attestation (CA) を発行し、Content Attestation Set (CAS) として�
 <!-- environments-stop -->
 <!-- prettier-ignore-end -->
 
-## 使い方
+## インストール
 
-### インストール
-
-任意のパッケージマネージャーでインストールしてください。
+開発依存として入れ、ビルドの最後と CI から `npx` で実行します。
 
 ```bash
-npm install @originator-profile/ca-client
-# or
-yarn add @originator-profile/ca-client
-# or
-pnpm add @originator-profile/ca-client
+npm i -D @originator-profile/ca-client
+npx opca --help
 ```
+
+パッケージを入れずに一度だけ実行するときは、次のコマンドです。
+
+```bash
+npx -p @originator-profile/ca-client opca --help
+```
+
+## CLI
+
+ビルド済みの HTML に対して、CAS の `<script>` タグの挿入、CA の署名、HTML との照合、期限前の再発行をまとめて行うコマンドです。静的サイトジェネレーター（SSG）の出力ディレクトリと、CAS を置くディレクトリを対象にします。
+
+### はじめての設定
+
+```bash
+# 1. サイトをビルドする
+your-ssg build
+
+# 2. ビルド済み HTML を調べて ca.config.json を作る
+npx opca init
+
+# 3. CA サーバーの接続情報を設定する
+export CA_SERVER_URL="YOUR_CA_SERVER_URL"
+export CCSP_CONFIG="CCSP:eyJhds..."
+
+# 4. CAS のタグを入れて、CA を署名する
+npx opca inject dist
+npx opca sync dist
+```
+
+`CCSP_CONFIG` の作り方は、下の「[クライアントを生成する](#クライアントを生成する)」の `ccspConfig` と同じです。
+
+### 環境変数
+
+| 変数            | 使うコマンド            | 内容                                                   |
+| --------------- | ----------------------- | ------------------------------------------------------ |
+| `CA_SERVER_URL` | `sync`・`renew`・`sign` | CA サーバーのエンドポイント URL                        |
+| `CCSP_CONFIG`   | `sync`・`renew`・`sign` | OAuth の client credentials（`ccspConfig` と同じ形式） |
+
+`sync --check` と `inject` は CA サーバーを呼ばないので、環境変数は要りません。`sign` の issuer は、設定ファイルにあればその値を使い、設定ファイルが無ければ `--issuer` です。
+
+`SLACK_WEBHOOK_URL` を設定すると、コマンドが失敗したときに Slack へ通知します。未設定のときは何も出さずに終わります。
+
+### コマンド
+
+| コマンド                                                     | 内容                                                           |
+| ------------------------------------------------------------ | -------------------------------------------------------------- |
+| `opca init`                                                  | ビルド済み HTML を調べて `ca.config.json` を作る               |
+| `opca inject [paths...] [--check]`                           | CAS の `<script>` タグが無いページにタグを入れる               |
+| `opca sync [paths...] [--check] [--report f]`                | HTML と CAS を照合し、CAS が無いページとずれたページを署名する |
+| `opca renew [paths...] [--within n] [--all]`                 | 期限が近い CAS を再署名する                                    |
+| `opca json <page.html> [--out f]`                            | HTML 1 ページから未署名 CA の JSON を作る                      |
+| `opca sign --input <ca.json> [--out f] [--issuer <dns:...>]` | 未署名 CA の JSON を署名する                                   |
+
+すべてのコマンドは `--config <file>` で設定ファイルを指定できます。既定は `ca.config.json` です。
+
+`paths` には、ビルド出力のディレクトリの中の HTML ファイル、ディレクトリ、glob を渡せます。省略するとビルド出力全体が対象です。パスはカレントディレクトリ基準でも、ビルド出力のディレクトリ基準でも書けます。どのパスにも一致するファイルが無いときと、ビルド出力の外を指すときは失敗します。
+
+```bash
+npx opca sync dist/ja/news/hello/index.html
+npx opca sync "ja/news/**"
+```
+
+### opca init
+
+ビルド済み HTML を調べて、設定ファイルを作ります。
+
+端末で実行すると、次の項目を順に聞きます。推定した値を既定にし、候補ごとのページ数を質問の前に表示します。不正な答えは、理由を表示して聞き直します。
+
+| 項目                       | 推定のしかた                                                                                                  |
+| -------------------------- | ------------------------------------------------------------------------------------------------------------- |
+| ビルド出力のディレクトリ   | `dist`・`docs`・`out`・`build`・`_site`・`public` のうち HTML が一番多いもの                                  |
+| `issuer`                   | 推定しない（OP レジストリに登録した OP ID）                                                                   |
+| オリジン                   | `<link rel="canonical">` か `og:url` で一番多いオリジン                                                       |
+| selector                   | `[itemprop='headline'], [itemprop='articleBody']`・`article`・`main` のうち半数以上のページに当たる最初のもの |
+| 著者                       | `<meta name="author">` が無いページがあるときだけ聞く。そのページの CA の `author` になる                     |
+| 編集者                     | HTML から読めないので毎回聞く。既定は著者と同じ                                                               |
+| ジャンル                   | `<meta property="article:section">` が無いページがあるときだけ聞く                                            |
+| 除外パス                   | 推定しない。聞く前に、それまでの答えで CA を作れないページを表示する                                          |
+| CAS の置き場所             | 既定は `commit`                                                                                               |
+| 静的ファイルのディレクトリ | `public` か `static`（置き場所が `commit` のときだけ聞く）                                                    |
+
+CAS の置き場所によって、運用が変わります。
+
+| 置き場所         | 設定                                                                 | 運用                                                                                                             |
+| ---------------- | -------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------------- |
+| `commit`（既定） | 参照型（`cas.mode: "file"`）。CAS を静的ファイルのディレクトリに置く | `sync` が書いた CAS をリポジトリにコミットします。CA ID が保たれ、次のビルドからは変わったページだけを署名します |
+| `rebuild`        | 埋め込み型（`cas.mode: "inline"`）                                   | CAS はビルドのたびに消えるので、デプロイのたびに全ページを署名し直し、CA ID も変わります                         |
+
+著者・編集者・ジャンルは設定の `defaults` に入ります。著者と編集者はカンマ区切りで複数書けます。空のままにすると `defaults` に入れません。
+
+端末でないとき（CI など）は、フラグで渡した値と推定した値だけで作ります。`issuer` は推定できないので必須です。`<meta name="author">` が無いページがあるのに `--author` を渡していなければ、そのページの CA に `author` が入らないことを警告します。
+
+```bash
+npx opca init \
+  --issuer dns:example.com \
+  --dist dist \
+  --origin https://example.com --origin http://localhost:4321 \
+  --selector "article" \
+  --author "Example Inc." \
+  --editor "Example Inc." \
+  --genre technology \
+  --exclude "^/preview/" \
+  --persistence commit \
+  --public public
+```
+
+設定ファイルがすでにあるときは、同じ内容なら何もせず、違う内容なら差分を表示して止まります。上書きするには `--force` を付けます。
+
+書き込んだ後に、CA サーバーを呼ばずに全ページで未署名 CA を作ってみて、作れるページ数と、作れないページを理由ごとに表示します。
+
+### opca inject
+
+`sync` の前に、ビルド済み HTML に 2 つのものを書き込みます。対象は、除外パスに当たらず、selector に一致する要素を持つページです。
+
+- CAS の `<script>` タグ（無いページだけ）
+- `externalSelector`（既定は `.target-integrity`）の要素の `integrity` 属性
+
+どちらもビルドのたびに消えるので、ビルドの後に毎回流してください。サイトのビルド手順に組み込むのが確実です。
+
+```json
+"build": "your-ssg build && opca inject"
+```
+
+HTML に入れるのはこの 2 つだけで、selector が指す要素は足しません。selector の要素はサイト側で出力してください（[本文の要素に印を付ける](#本文の要素に印を付ける)）。
+
+| `cas.mode` | 入れるタグ                                                                    |
+| ---------- | ----------------------------------------------------------------------------- |
+| `file`     | `<script type="application/ca-set+json" src="/cas/{path}.cas.json"></script>` |
+| `inline`   | `<script type="application/ca-set+json">[]</script>`                          |
+
+`{path}` はページのパスの `/` を `.` に置き換えたものです（例: `/ja/news/hello` は `ja.news.hello`）。
+
+タグは `</head>` の直前に入れます。`</head>` が省かれていれば `<body>` の直前に、`<body>` も無ければ本文の最初の要素の直前に入れます。
+
+`integrity` 属性は、要素の `src` が指すビルド出力の中のファイルの SHA-256（`sha256-` に Base64）です。`src` はページからの相対パスでも、設定の `origins` のオリジンの URL でも構いません。検証者は CA に記録された値と同じ `integrity` 属性を持つ要素を探して画像などを取得し、ハッシュを比べます。そのため、この属性が無いと外部リソースは検証されません。値が古ければ書き直します。ビルド出力の外を指す `src` や、ファイルが無い `src` は、理由を表示して飛ばします。
+
+元の HTML の他のバイト列は変えません。何度実行しても同じ結果になります。`--check` を付けると書き込まず、タグが無いページと `integrity` が古いページを表示するだけです。
+
+#### 本文の要素に印を付ける
+
+selector は、ビルド済み HTML にすでにある要素を指す必要があります。`article` や `main` が本文だけを囲んでいればそのまま使えます。囲んでいないときや、ナビゲーションや広告まで含むときは、テンプレートで見出しと本文に `itemprop` を付けると、レイアウトを変えても同じ要素を指し続けられます。
+
+```html
+<h1 itemprop="headline">記事の見出し</h1>
+<div itemprop="articleBody">記事の本文</div>
+```
+
+```json
+{ "selector": "[itemprop='headline'], [itemprop='articleBody']" }
+```
+
+`div:nth-child(3) > div` のような構造に頼る selector は、テンプレートを少し直すだけで別の要素を指すようになるので避けてください。ビルド済み HTML に後から属性を足しても次のビルドで消えるので、印はテンプレートで出力します。
+
+Astro:
+
+```astro
+<h1 itemprop="headline">{post.title}</h1>
+<div itemprop="articleBody" set:html={post.content} />
+```
+
+React（Next.js など）:
+
+```jsx
+<h1 itemProp="headline">{post.title}</h1>
+<div itemProp="articleBody" dangerouslySetInnerHTML={{ __html: post.content }} />
+```
+
+Hugo:
+
+```go-html-template
+<h1 itemprop="headline">{{ .Title }}</h1>
+<div itemprop="articleBody">{{ .Content }}</div>
+```
+
+印を付けた要素は、クライアントの JavaScript が書き換えないようにしてください（[注意事項](#注意事項)）。
+
+### opca sync
+
+CAS の `<script>` タグを持つページを照合し、必要なページだけを署名します。
+
+| 状態         | 意味                                                                | `sync` の動き            |
+| ------------ | ------------------------------------------------------------------- | ------------------------ |
+| `ok`         | 自分の CA があり、HTML と一致し、期限まで余裕がある                 | 何もしない               |
+| `missing`    | 自分の CA が無い（埋め込み型ではタグの中身が `[]`）                 | 署名する                 |
+| `drifted`    | 本文の integrity か CA の項目が、今のページと合わない               | 署名する                 |
+| `expiring`   | 今のページと合うが、期限まで `renewWithinDays` 日以内               | 署名する                 |
+| `orphan`     | どのページからも参照されない CAS ファイル                           | 表示だけ                 |
+| `stale-copy` | ビルド出力の CAS が `publicDir` の CAS と違うか、無い（参照型のみ） | `publicDir` から写し直す |
+
+`drifted` は、本文の integrity に加えて、`headline`・`description`・`author`・`editor`・`datePublished`・`dateModified`・`genre`・`image` の `id`・`allowedUrl` を、今のページから作り直した値と比べます。既存の CA ID と `cssSelector` は引き継ぎます。
+
+署名した直後に、書いた CAS をビルド済み HTML と照合します。一致しなければ失敗します。参照型の CAS は、設定の `publicDir` と、ビルド出力の同じ位置の両方に書くので、ビルドし直さずにそのままデプロイできます。
+
+`--check` を付けると、CA サーバーを呼ばずに照合だけを行います。CA を作れないページ（`headline` や `description` が無い、日付が読めない、selector に一致しない、など）があれば失敗します。`missing` や `drifted` のページがあっても失敗しません。`--report <file>` を付けると、照合結果を JSON で書き出します。
+
+範囲を絞ったときは、範囲外のページが参照する CAS が分からないので、`orphan` は判定しません。
+
+`stale-copy` は、ビルドした後に `publicDir` の CAS を `sync` 以外の手段（`git restore` や手での編集など）で書き換えたときに起こります。そのままビルド出力をデプロイすると、古い CAS が配信されます。`sync --check` で見つかり、`sync` を流すか、ビルドし直すと直ります。
+
+#### 複数の CA と複数のタグ
+
+CAS には複数の CA を入れられ、1 ページに CAS のタグを複数置けます。CLI が扱うのは、`issuer` が設定の `issuer` と同じ CA だけです。他の発行者の CA は読まず、消しません。自分の CA を含むタグを選び、どのタグにも無ければ最初のタグの CAS の末尾に足します。設定の `origins` に無いオリジンを指す `src` のタグは使いません。`{ attestation, main: true }` の形の要素は、`attestation` だけを差し替えます。
+
+非推奨の `application/cas+json` のタグも読みますが、2027-11-01 以降はサポート外なので、使っているページがあれば警告します。
+
+### opca renew
+
+期限まで `renewWithinDays` 日以内の CAS を再署名し、`iat` と `exp` を新しくします。CA には有効期間を延長する仕組みが無いので、期限が切れる前に再発行して置き直す必要があります（[OP, SP, CA の有効期間](https://docs.originator-profile.org/ja/tech/validity-period/)）。
+
+```bash
+npx opca renew                 # 期限まで 30 日以内（renewWithinDays）の CAS だけ
+npx opca renew --within 60     # 日数を変える
+npx opca renew --all           # 期限に関係なく全件
+npx opca renew cas/ja.cas.json # CAS ファイルか HTML で絞る
+```
+
+既存の CA の payload をそのまま再署名するので、HTML とずれた CA はずれたまま延びます。ずれは `sync` が直します。パスを省略すると、`publicDir` の `**/*.cas.json` と、ビルド出力があればその HTML の埋め込み CAS が対象です。
+
+`renew` が見るのは CA の `exp` だけです。CA が実際に有効なのは、発行者の OP の有効期間と重なる間だけです。OP の期限は OP レジストリ側で管理してください。署名鍵を差し替えて古い公開鍵を OP から外すと、その鍵で署名した CA はすべて失効するので、`opca renew --all` で全件を再署名してください。
+
+### opca json と opca sign
+
+1 ページずつ発行するときに使います。
+
+```bash
+npx opca json dist/ja/news/hello/index.html --out ca.json
+npx opca sign --input ca.json --out public/cas/ja.news.hello.cas.json
+```
+
+`opca json` は `target[].content` に HTML 本体ではなく、カレントディレクトリからの相対パスを書きます。`opca sign` は、URL でも `<` で始まる HTML でもない `content` をファイルのパスとして読みます。`--out` があれば CAS を書いて HTML と照合し、無ければ JWT を標準出力に出します。設定ファイルが無いときは `--issuer` が必要です。
+
+### 設定ファイル
+
+`opca init` が作る `ca.config.json` は、直接編集もできます。パスは設定ファイルのあるディレクトリ基準です。
+
+| 項目               | 既定                   | 内容                                                                                                     |
+| ------------------ | ---------------------- | -------------------------------------------------------------------------------------------------------- |
+| `issuer`           | 必須                   | `dns:` で始まる OP ID                                                                                    |
+| `distDir`          | `dist`                 | ビルド済み HTML のディレクトリ                                                                           |
+| `publicDir`        | `public`               | 参照型の CAS を置くディレクトリ。ビルドで `distDir` に写る静的ファイルのディレクトリ                     |
+| `origins`          | なし                   | `allowedUrl` を作るオリジン。https だけ（http は localhost だけ）。無ければ canonical か `og:url` を使う |
+| `selectors`        | 必須                   | `{ match?, selector }` の配列。`match` はパスの正規表現で、パスに合う最初の selector を使う              |
+| `exclude`          | なし                   | 対象にしないパスの正規表現の配列                                                                         |
+| `externalSelector` | `.target-integrity`    | `ExternalResourceTargetIntegrity` にする要素の selector                                                  |
+| `defaults`         | なし                   | `author`・`editor`（文字列の配列）、`genre`（文字列）の既定値                                            |
+| `renewWithinDays`  | `30`                   | 期限までこの日数以内の CAS を、`sync` は `expiring`、`renew` は再署名の対象にする                        |
+| `cas.mode`         | `file`                 | `inject` が入れるタグ。`file` は参照型、`inline` は埋め込み型                                            |
+| `cas.path`         | `/cas/{path}.cas.json` | `file` のときの `src`                                                                                    |
+
+```json
+{
+  "issuer": "dns:example.com",
+  "distDir": "dist",
+  "publicDir": "public",
+  "origins": ["https://example.com", "http://localhost:4321"],
+  "selectors": [
+    { "match": "^/news$", "selector": "main" },
+    { "selector": "[itemprop='headline'], [itemprop='articleBody']" }
+  ],
+  "exclude": ["^/preview/"],
+  "defaults": { "author": ["Example Inc."], "genre": "technology" }
+}
+```
+
+### 未署名 CA の項目
+
+CLI はページの HTML から、`type` が `Article` の未署名 CA を作ります。
+
+| 項目                            | 読む場所（先にあるものを使う）                                                       |
+| ------------------------------- | ------------------------------------------------------------------------------------ |
+| `headline`                      | `[itemprop='headline']`、`og:title`、`<title>`                                       |
+| `description`                   | `og:description`、`<meta name="description">`                                        |
+| `datePublished`・`dateModified` | `[itemprop='datePublished']` などの `datetime`、`article:published_time` などの meta |
+| `author`                        | `<meta name="author">`、設定の `defaults.author`                                     |
+| `editor`・`genre`               | 設定の `defaults`（`genre` は `article:section` が先）                               |
+| `image`                         | `og:image`                                                                           |
+| `@language`                     | `<html lang>`                                                                        |
+| `allowedUrl`                    | 設定の `origins` とページのパス。無ければ canonical か `og:url`                      |
+| `target`                        | selector の `TextTargetIntegrity` と、`externalSelector` の要素の `integrity`        |
+
+日付は [Article](https://docs.originator-profile.org/ja/opb/ca-model/article/) の仕様どおり、秒とタイムゾーン付きの日時にそろえます。日付だけ（`2024-06-07`）なら `T00:00:00Z` を足します。タイムゾーンの無い日時は推測できないので、CA を作れません。
+
+### CI での運用
+
+`commit` の置き場所で、ビルドのたびに署名して CAS をコミットする例です。
+
+```yaml
+- run: npm run build
+- run: npx opca inject dist
+- run: npx opca sync dist
+  env:
+    CA_SERVER_URL: ${{ secrets.CA_SERVER_URL }}
+    CCSP_CONFIG: ${{ secrets.CCSP_CONFIG }}
+- run: |
+    git add public/cas
+    git diff --cached --quiet || git commit -m "chore: update CAS"
+```
+
+期限前の再発行は、ビルドとは別に定期実行します。
+
+```yaml
+on:
+  schedule:
+    - cron: "0 0 * * 1" # 毎週月曜
+# ...
+- run: npx opca renew --within 30
+```
+
+### 注意事項
+
+- 照合は、同じソースから同じ HTML が出ること（ビルドが決定的であること）を前提にしています。ビルドのたびに変わる値（日時、乱数など）が selector の範囲に入ると、毎回 `drifted` になります。
+- ブラウザは HTML をパースし終えた時点の DOM で検証を始め、その後に対象の要素が変わると検証結果は無効になります。クライアントの JavaScript（hydration など）が書き換える要素を selector に含めないでください（[CAS の検証処理](https://docs.originator-profile.org/ja/opb/verifier-processing-model/content-attestation-set/)）。
+- 作れる CA の `type` は `Article` だけです。
+
+## ライブラリ
+
+`opca` と同じ処理を、JavaScript から関数として呼べます。公開しているのは `createCaClient`、`readCasFile`、`writeCasFile`、`loadConfig`、`parseConfig`、`buildUnsignedCa`、`inject`、`sync`、`renew` です。
 
 ### クライアントを生成する
 
@@ -45,10 +357,10 @@ CA サーバーと連携するクライアントオブジェクトを生成し�
 import { createCaClient } from "@originator-profile/ca-client";
 
 const client = createCaClient({
-  endpoint: "YOUR_CA_SERVER_URL", // CA サーバーのエンドポイント URL
-  issuer: "YOUR_ISSUER", // 発行者 ID（例: `dns:example.com`）
-  ccspConfig: "YOUR_CCSP_CONFIG", // 下記 ccspConfig の設定を参照
-  // tokenBufferSeconds: 300, // トークン期限切れ前のバッファ（秒、デフォルト 300）
+  endpoint: "YOUR_CA_SERVER_URL",
+  issuer: "YOUR_ISSUER", // 例: dns:example.com
+  ccspConfig: "YOUR_CCSP_CONFIG",
+  // tokenBufferSeconds: 300, // トークン期限切れ前のバッファ（秒、既定 300）
 });
 ```
 
@@ -62,8 +374,6 @@ const client = createCaClient({
   "tokenUrl": "https://example.com/oauth/token"
 }
 ```
-
-次のような Node.js コマンドで JSON を Base64 エンコードし、先頭に `CCSP:` を付けます。
 
 ```bash
 node -e 'console.log("CCSP:" + Buffer.from(JSON.stringify({
@@ -79,157 +389,35 @@ node -e 'console.log("CCSP:" + Buffer.from(JSON.stringify({
 > [!NOTE]
 > `authType` は `client_secret_post` のみ対応しています。`clientSec` は OAuth の `client_secret` の略称です。
 
-### 基本的な使い方
-
-未署名 CA を CA サーバーで署名し、署名済み JWT を CAS ファイルとして書き出します。
+`sign` は未署名 CA を署名して JWT を返します。`reSign` は既存 CAS の JWT payload を再署名します。`createCaClient` に渡した `issuer` が、payload の `issuer` より優先されます。
 
 ```ts
-import { writeCasFile } from "@originator-profile/ca-client";
+import { readCasFile, writeCasFile } from "@originator-profile/ca-client";
 
 const jwt = await client.sign(unsignedCa);
+await writeCasFile({ filePath: "dist/cas/ja-JP.page.cas.json", jwt });
 
-await writeCasFile({
-  filePath: "dist/cas/ja-JP.hello.cas.json",
-  jwt,
-});
+const [entry] = await readCasFile("dist/cas/ja-JP.page.cas.json");
+const renewed = await client.reSign(
+  entry.payload,
+  "dist/cas/ja-JP.page.cas.json",
+);
 ```
 
-## APIメソッド
+`readCasFile` は CAS に入っている CA をすべて `{ jwt, payload }` で返します。payload は JWT payload そのものです。`writeCasFile` は JWT 1 件の JSON 配列を、末尾の改行付きで書き出します。
 
-### sign
-
-`sign` メソッドは、未署名の Content Attestation を CA サーバーで署名し、JWT 文字列を返します。
-
-引数は [Content Attestation のプロパティ一覧](https://docs.originator-profile.org/ja/opb/ca/#content-attestation-properties) に従う未署名 CA を指定します。
-
-戻り値は [OP VC Securing Mechanism](https://docs.originator-profile.org/ja/opb/securing-mechanism/#content-attestation) に従う署名済み CA の JWT です。
+照合だけなら、署名クライアントは要りません。
 
 ```ts
-const jwt = await client.sign({
-  "@context": [
-    "https://www.w3.org/ns/credentials/v2",
-    "https://originator-profile.org/ns/credentials/v1",
-  ],
-  type: ["VerifiableCredential", "ContentAttestation"],
-  issuer: "dns:example.com",
-  credentialSubject: {
-    type: "Article",
-    headline: "タイトル",
-  },
-  allowedUrl: ["https://example.com/ja-JP/about(/?)"],
-  target: [
-    {
-      type: "TextTargetIntegrity",
-      cssSelector: "main",
-    },
-  ],
-});
-```
+import { loadConfig, sync } from "@originator-profile/ca-client";
 
-### reSign
-
-`reSign` メソッドは、既存 CAS の JWT payload を再署名し、JWT 文字列を返します。
-第 1 引数は [署名済み CA の JWT](https://docs.originator-profile.org/ja/opb/securing-mechanism/#content-attestation) をデコードした payload です。
-第 2 引数は payload が不正なとき、エラーメッセージに埋め込む識別子です。
-
-```ts
-import { readCasFile } from "@originator-profile/ca-client";
-
-const { payload } = await readCasFile("dist/cas/ja-JP.page.cas.json");
-const renewed = await client.reSign(payload, "dist/cas/ja-JP.page.cas.json");
-```
-
-`createCaClient` に渡した `issuer` が、payload の `issuer` より優先されます。
-
-### writeCasFile
-
-`writeCasFile` は、署名済み JWT を [CAS](https://docs.originator-profile.org/ja/opb/content-attestation-set/) ファイルとして書き出します。`filePath`・`jwt` は必須です。
-
-```ts
-import { writeCasFile } from "@originator-profile/ca-client";
-
-await writeCasFile({
-  filePath: "dist/cas/ja-JP.page.cas.json",
-  jwt,
-});
-```
-
-生成されるファイルは JWT 1つを含む JSON 配列です。
-
-```json
-["eyJ..."]
-```
-
-### readCasFile
-
-`readCasFile` は、[CAS](https://docs.originator-profile.org/ja/opb/content-attestation-set/) ファイルを読み、先頭 JWT とデコード済み payload を返します。相対パスは cwd 基準です。
-
-payload は署名検証をしない VC 文書です。JWT の `iss` / `iat` / `exp` は含まれません。`reSign` にそのまま渡せます。複数要素の CAS は先頭 1 件のみ読みます。
-
-```ts
-import { readCasFile } from "@originator-profile/ca-client";
-
-const { jwt, payload } = await readCasFile("dist/cas/ja-JP.page.cas.json");
-```
-
-### detectDrift
-
-`detectDrift` は、ビルド後 HTML から target integrity を再計算し、CAS に記録された target とのずれを判定します。`html`・`filePath` は必須です。
-
-`html` には CAS が対象とするページの **HTML 文字列** を渡します。
-静的サイトならビルド成果物（例: `dist/ja-JP/page/index.html`）を、SSR ならそのページのレスポンス HTML を渡します。
-
-```ts
-import { readFile } from "node:fs/promises";
-import { detectDrift } from "@originator-profile/ca-client";
-
-const html = await readFile("dist/ja-JP/page/index.html", "utf8");
-
-const result = await detectDrift({
-  html,
-  filePath: "dist/cas/ja-JP.page.cas.json",
-});
-
-switch (result.status) {
-  case "ok":
-    break;
-  case "cas_missing":
-    // CAS ファイルが無い → 新規署名
-    break;
-  case "cas_invalid":
-    console.warn(result.reason);
-    break;
-  case "html_no_targets":
-    // セレクタに一致する要素が HTML に無い
-    break;
-  case "drifted":
-    // result.current / result.expected で差分を確認
-    break;
-}
-```
-
-| `status`          | 意味                                               |
-| ----------------- | -------------------------------------------------- |
-| `ok`              | HTML から再計算した target が CAS と一致する       |
-| `cas_missing`     | CAS ファイルが存在しない                           |
-| `cas_invalid`     | CAS の JSON / JWT が不正                           |
-| `html_no_targets` | HTML から target を抽出できない                    |
-| `drifted`         | target がずれている（`current` / `expected` 付き） |
-
-TextTargetIntegrity などの `cssSelector` は CAS に記録された値を使い、同じセレクタで HTML を再評価します。CAS にセレクタが無いときだけ、オプションで渡せます。
-
-```ts
-await detectDrift({
-  html,
-  filePath: "dist/cas/ja-JP.page.cas.json",
-  textSelector: "main",
-  externalSelector: ".op-resource",
-});
+const config = await loadConfig("ca.config.json");
+const report = await sync(config, { check: true, log: console });
 ```
 
 ### エラー
 
-失敗時はすべて `CaClientError` を throw します。失敗の層は `code` で、HTTP の詳細は `status` で判定してください。
+失敗時は `CaClientError` を throw します。失敗の層は `code` で、HTTP の詳細は `status` で判定してください。
 
 ```ts
 import {
@@ -250,7 +438,7 @@ try {
     ) {
       // サーバーのネットワーク障害、429、5xx
     } else if (isUnauthorized(error)) {
-      // 401 → OAuth 認証情報（`ccspConfig`）を再確認
+      // 401 → OAuth 認証情報（ccspConfig）を再確認
     }
     console.error(error.code, error.status, error.message);
   }
@@ -264,7 +452,193 @@ try {
 | `CA_VALIDATION` | 未署名 CA・CAS payload・日付・パス・JWT の不正                                                                                                                              | 入力を直してから再実行する                         |
 | `CA_HTTP`       | CA サーバーアクセス失敗。400 / 401 / 403 / 404 の原因は [CA Server のエラーリスト](https://docs.originator-profile.org/ja/error-reference/#ca-server-のエラーリスト) を参照 | `status` が 401 の場合: OAuth 認証情報を再確認     |
 | `CA_RESPONSE`   | 2xx だが `access_token` や JWT を含まない                                                                                                                                   | サーバー応答の形式を確認する                       |
-| `CA_FILE`       | CAS ファイルの読み取り・書き込み・削除に失敗した                                                                                                                            | パス・権限・ディスク空き容量を直してから再実行する |
+| `CA_FILE`       | CAS ファイルの読み取り・書き込みに失敗した                                                                                                                                  | パス・権限・ディスク空き容量を直してから再実行する |
+
+## コマンド一覧
+
+<!-- prettier-ignore-start -->
+<!-- commands -->
+* [`opca help [COMMAND]`](#opca-help-command)
+* [`opca init [--issuer <dns:...>] [--dist <dir>] [--origin <url>...] [--selector <css>] [--author <name>...] [--editor <name>...] [--genre <genre>] [--exclude <regexp>...] [--persistence commit|rebuild] [--public <dir>] [--force]`](#opca-init---issuer-dns---dist-dir---origin-url---selector-css---author-name---editor-name---genre-genre---exclude-regexp---persistence-commitrebuild---public-dir---force)
+* [`opca inject [paths...] [--check]`](#opca-inject-paths---check)
+* [`opca json <page.html> [--selector <css>] [--out <file>]`](#opca-json-pagehtml---selector-css---out-file)
+* [`opca renew [paths...] [--within <days>] [--all]`](#opca-renew-paths---within-days---all)
+* [`opca sign --input <unsigned-ca.json> [--out <cas.json>] [--issuer <dns:...>]`](#opca-sign---input-unsigned-cajson---out-casjson---issuer-dns)
+* [`opca sync [paths...] [--check] [--report <file>]`](#opca-sync-paths---check---report-file)
+
+## `opca help [COMMAND]`
+
+Display help for opca.
+
+```
+USAGE
+  $ opca help [COMMAND...] [-n]
+
+ARGUMENTS
+  [COMMAND...]  Command to show help for.
+
+FLAGS
+  -n, --nested-commands  Include all nested commands in the output.
+
+DESCRIPTION
+  Display help for opca.
+```
+
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/6.3.0/src/commands/help.ts)_
+
+## `opca init [--issuer <dns:...>] [--dist <dir>] [--origin <url>...] [--selector <css>] [--author <name>...] [--editor <name>...] [--genre <genre>] [--exclude <regexp>...] [--persistence commit|rebuild] [--public <dir>] [--force]`
+
+ビルド済み HTML を調べて ca.config.json を作る
+
+```
+USAGE
+  $ opca init [--issuer <dns:...>] [--dist <dir>] [--origin <url>...] [--selector <css>] [--author
+    <name>...] [--editor <name>...] [--genre <genre>] [--exclude <regexp>...] [--persistence commit|rebuild] [--public
+    <dir>] [--force]
+
+FLAGS
+  --author=<value>...    著者
+  --config=<value>       [default: ca.config.json] 設定ファイル
+  --dist=<value>         ビルド済み HTML のディレクトリ
+  --editor=<value>...    編集者
+  --exclude=<value>...   対象にしないパスの正規表現
+  --force                違う内容の設定ファイルを上書きする
+  --genre=<value>        ジャンル
+  --issuer=<value>       発行者 ID
+  --origin=<value>...    サイトのオリジン
+  --persistence=<value>  CAS の置き場所（commit か rebuild）
+  --public=<value>       CAS を置く静的ファイルのディレクトリ
+  --selector=<value>     証明する要素の CSS selector
+
+FLAG DESCRIPTIONS
+  --config=<value>  設定ファイル
+
+    既定は ca.config.json
+
+  --issuer=<value>  発行者 ID
+
+    dns: で始まる OP ID
+```
+
+_See code: [src/commands/init.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/init.ts)_
+
+## `opca inject [paths...] [--check]`
+
+CAS の script タグと integrity をビルド済み HTML に入れる
+
+```
+USAGE
+  $ opca inject [paths...] [--check]
+
+FLAGS
+  --check           書き込まずに照合だけする
+  --config=<value>  [default: ca.config.json] 設定ファイル
+
+FLAG DESCRIPTIONS
+  --config=<value>  設定ファイル
+
+    既定は ca.config.json
+```
+
+_See code: [src/commands/inject.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/inject.ts)_
+
+## `opca json <page.html> [--selector <css>] [--out <file>]`
+
+HTML 1 ページから未署名 CA の JSON を作る
+
+```
+USAGE
+  $ opca json <page.html> [--selector <css>] [--out <file>]
+
+ARGUMENTS
+  PAGE  ビルド済み HTML
+
+FLAGS
+  --config=<value>    [default: ca.config.json] 設定ファイル
+  --out=<value>       未署名 CA を書き出す JSON ファイル
+  --selector=<value>  証明する要素の CSS selector
+
+FLAG DESCRIPTIONS
+  --config=<value>  設定ファイル
+
+    既定は ca.config.json
+```
+
+_See code: [src/commands/json.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/json.ts)_
+
+## `opca renew [paths...] [--within <days>] [--all]`
+
+期限が近い CAS を再署名する
+
+```
+USAGE
+  $ opca renew [paths...] [--within <days>] [--all]
+
+FLAGS
+  --all             期限に関係なく全件を再署名する
+  --config=<value>  [default: ca.config.json] 設定ファイル
+  --within=<value>  期限までの日数
+
+FLAG DESCRIPTIONS
+  --config=<value>  設定ファイル
+
+    既定は ca.config.json
+
+  --within=<value>  期限までの日数
+
+    既定は config の renewWithinDays（30）
+```
+
+_See code: [src/commands/renew.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/renew.ts)_
+
+## `opca sign --input <unsigned-ca.json> [--out <cas.json>] [--issuer <dns:...>]`
+
+未署名 CA の JSON を署名する
+
+```
+USAGE
+  $ opca sign --input <unsigned-ca.json> [--out <cas.json>] [--issuer <dns:...>]
+
+FLAGS
+  --config=<value>  [default: ca.config.json] 設定ファイル
+  --input=<value>   (required) 未署名 CA の JSON
+  --issuer=<value>  発行者 ID
+  --out=<value>     署名した CAS を書き出すファイル
+
+FLAG DESCRIPTIONS
+  --config=<value>  設定ファイル
+
+    既定は ca.config.json
+
+  --issuer=<value>  発行者 ID
+
+    dns: で始まる OP ID
+```
+
+_See code: [src/commands/sign.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/sign.ts)_
+
+## `opca sync [paths...] [--check] [--report <file>]`
+
+HTML と CAS を照合し、無いページとずれたページを署名する
+
+```
+USAGE
+  $ opca sync [paths...] [--check] [--report <file>]
+
+FLAGS
+  --check           書き込まずに照合だけする
+  --config=<value>  [default: ca.config.json] 設定ファイル
+  --report=<value>  照合結果を書き出す JSON ファイル
+
+FLAG DESCRIPTIONS
+  --config=<value>  設定ファイル
+
+    既定は ca.config.json
+```
+
+_See code: [src/commands/sync.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/sync.ts)_
+<!-- commandsstop -->
+<!-- prettier-ignore-end -->
 
 ## ライセンス
 

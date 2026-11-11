@@ -6,7 +6,7 @@ import { renew as renewPages } from "../operations/renew";
 
 export class Renew extends BaseCommand {
   static override summary = "期限が近い CAS を再署名する";
-  static override usage = "[paths...] [--within <days>] [--all]";
+  static override usage = "renew [paths...] [--within <days>] [--all]";
   static override strict = false;
   static override flags = {
     within: within(),

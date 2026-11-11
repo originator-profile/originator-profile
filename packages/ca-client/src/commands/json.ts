@@ -5,7 +5,7 @@ import { json as jsonPage } from "../operations/json";
 
 export class Json extends BaseCommand {
   static override summary = "HTML 1 ページから未署名 CA の JSON を作る";
-  static override usage = "<page.html> [--selector <css>] [--out <file>]";
+  static override usage = "json <page.html> [--selector <css>] [--out <file>]";
   static override args = {
     page: Args.string({
       description: "ビルド済み HTML",

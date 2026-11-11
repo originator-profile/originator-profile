@@ -23,7 +23,9 @@
     "LICENSE",
     "NOTICE"
   ],
-  "bin": "bin/run.js",
+  "bin": {
+    "opca": "bin/run.js"
+  },
   "oclif": {
     "bin": "opca",
     "commands": "dist/commands",

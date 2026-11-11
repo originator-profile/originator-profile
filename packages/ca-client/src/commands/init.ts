@@ -8,7 +8,7 @@ import { init, parsePersistence } from "../operations/init";
 export class Init extends BaseCommand {
   static override summary = "ビルド済み HTML を調べて ca.config.json を作る";
   static override usage =
-    "[--issuer <dns:...>] [--dist <dir>] [--origin <url>...] [--selector <css>] [--author <name>...] [--editor <name>...] [--genre <genre>] [--exclude <regexp>...] [--persistence commit|rebuild] [--public <dir>] [--force]";
+    "init [--issuer <dns:...>] [--dist <dir>] [--origin <url>...] [--selector <css>] [--author <name>...] [--editor <name>...] [--genre <genre>] [--exclude <regexp>...] [--persistence commit|rebuild] [--public <dir>] [--force]";
   static override flags = {
     issuer,
     dist: Flags.string({ summary: "ビルド済み HTML のディレクトリ" }),
