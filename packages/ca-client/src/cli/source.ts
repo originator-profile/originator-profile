@@ -164,6 +164,7 @@ export const ownCaSourceOf = async (
 ): Promise<CasSource | undefined> => {
   const sources = localCasSourcesOf(dom, context, htmlFile, html);
   for (const source of sources) {
+    // oxlint-disable-next-line no-await-in-loop -- 自分の CA が見つかったら、後ろの CAS は読まない
     if ((await ownIndex(source, context.issuer)) >= 0) {
       return source;
     }
@@ -171,19 +172,30 @@ export const ownCaSourceOf = async (
   return sources[0];
 };
 
-export const loadSource = async (
-  htmlFile: string,
-  context: CasContext,
-): Promise<CasSource | undefined> => {
-  const html = await readFile(htmlFile, "utf-8");
+export type Page = { file: string; html: string; dom: JSDOM };
+
+export const withPage = async <T>(
+  file: string,
+  visit: (page: Page) => Promise<T> | T,
+): Promise<T> => {
+  const html = await readFile(file, "utf-8");
   const dom = parseHtml(html);
   try {
-    return await ownCaSourceOf(dom, context, htmlFile, html);
+    return await visit({ file, html, dom });
   } finally {
     dom.window.close();
   }
 };
 
+export const forEachPage = async (
+  files: string[],
+  visit: (page: Page) => Promise<void> | void,
+): Promise<void> => {
+  for (const file of files) {
+    // oxlint-disable-next-line no-await-in-loop -- jsdom はページごとにメモリを大きく使うので、1 ページずつ開いて閉じる
+    await withPage(file, visit);
+  }
+};
 // readCasFile は CAS の先頭の CA しか読まないので、自分の CA だけの CAS を一時ファイルにして渡す。
 const withOwnCasFile = async <T>(
   jwt: string,
@@ -275,10 +287,12 @@ export const upsertOwnCa = async (
       typeof item === "string" ? jwt : { ...item, attestation: jwt };
   }
   if (source.kind === "file") {
-    for (const path of copiesOf(source.path, context)) {
-      await mkdir(dirname(path), { recursive: true });
-      await writeFile(path, `${JSON.stringify(items, null, 2)}\n`);
-    }
+    await Promise.all(
+      copiesOf(source.path, context).map(async (path) => {
+        await mkdir(dirname(path), { recursive: true });
+        await writeFile(path, `${JSON.stringify(items, null, 2)}\n`);
+      }),
+    );
     return source;
   }
   const content = JSON.stringify(items);

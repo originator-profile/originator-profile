@@ -16,7 +16,7 @@ import {
   UnissuableError,
 } from "./page.ts";
 import { resolveFiles } from "./paths.ts";
-import { parseHtml } from "./source.ts";
+import { forEachPage, type Page } from "./source.ts";
 
 export type Persistence = "commit" | "rebuild";
 const PERSISTENCES: Persistence[] = ["commit", "rebuild"];
@@ -81,55 +81,55 @@ export const distCandidates = async (
     .filter(({ pages }) => pages > 0)
     .sort((a, b) => b.pages - a.pages);
 
+type PageTraits = {
+  origin?: string;
+  selectors: string[];
+  hasAuthor: boolean;
+  hasGenre: boolean;
+};
+
+const traitsOf = (document: Document): PageTraits => {
+  const url =
+    document.querySelector("link[rel='canonical']")?.getAttribute("href") ??
+    document.querySelector("meta[property='og:url']")?.getAttribute("content");
+  return {
+    origin: url && URL.canParse(url) ? new URL(url).origin : undefined,
+    selectors: SELECTOR_CANDIDATES.filter(
+      (selector) => document.querySelector(selector) !== null,
+    ),
+    hasAuthor: Boolean(
+      document.querySelector("meta[name='author']")?.getAttribute("content"),
+    ),
+    hasGenre: Boolean(
+      document
+        .querySelector("meta[property='article:section']")
+        ?.getAttribute("content"),
+    ),
+  };
+};
+
 export const scanSite = async (
   root: string,
   distDir: string,
 ): Promise<SiteScan> => {
   const files = await resolveFiles(distDir, [], ".html");
-  const origins: string[] = [];
-  const hits = new Map(SELECTOR_CANDIDATES.map((selector) => [selector, 0]));
-  let withoutAuthor = 0;
-  let withoutGenre = 0;
-  for (const file of files) {
-    const dom = parseHtml(await readFile(file, "utf-8"));
-    try {
-      const document = dom.window.document;
-      const url =
-        document.querySelector("link[rel='canonical']")?.getAttribute("href") ??
-        document
-          .querySelector("meta[property='og:url']")
-          ?.getAttribute("content");
-      if (url && URL.canParse(url)) {
-        origins.push(new URL(url).origin);
-      }
-      for (const selector of SELECTOR_CANDIDATES) {
-        if (document.querySelector(selector) !== null) {
-          hits.set(selector, (hits.get(selector) ?? 0) + 1);
-        }
-      }
-      if (
-        !document.querySelector("meta[name='author']")?.getAttribute("content")
-      ) {
-        withoutAuthor++;
-      }
-      if (
-        !document
-          .querySelector("meta[property='article:section']")
-          ?.getAttribute("content")
-      ) {
-        withoutGenre++;
-      }
-    } finally {
-      dom.window.close();
-    }
-  }
+  const traits: PageTraits[] = [];
+  await forEachPage(files, ({ dom }) => {
+    traits.push(traitsOf(dom.window.document));
+  });
   return {
     distDir,
     pages: files.length,
-    origins: countBy(origins).map(({ key, pages }) => ({ origin: key, pages })),
-    selectors: [...hits].map(([selector, pages]) => ({ selector, pages })),
-    withoutAuthor,
-    withoutGenre,
+    origins: countBy(traits.flatMap(({ origin }) => origin ?? [])).map(
+      ({ key, pages }) => ({ origin: key, pages }),
+    ),
+    selectors: SELECTOR_CANDIDATES.map((selector) => ({
+      selector,
+      pages: traits.filter((trait) => trait.selectors.includes(selector))
+        .length,
+    })),
+    withoutAuthor: traits.filter(({ hasAuthor }) => !hasAuthor).length,
+    withoutGenre: traits.filter(({ hasGenre }) => !hasGenre).length,
     publicDir: PUBLIC_CANDIDATES.map((name) => resolve(root, name)).find(
       (dir) => dir !== distDir && existsSync(dir),
     ),
@@ -144,43 +144,52 @@ export const suggestSelector = (scan: SiteScan): string | undefined => {
   )?.selector;
 };
 
+const requiredAnswers = (scan: SiteScan, answers: InitAnswers) => {
+  const selector = answers.selector ?? suggestSelector(scan);
+  const missing = [
+    ...(answers.issuer ? [] : ["--issuer"]),
+    ...(selector ? [] : ["--selector"]),
+  ];
+  if (missing.length > 0) {
+    throw new Error(`${missing.join(" と ")} が必要です`);
+  }
+  return { issuer: answers.issuer, selector };
+};
+
+const defaultsOf = (answers: InitAnswers) => ({
+  ...(answers.author?.length ? { author: answers.author } : {}),
+  ...(answers.editor?.length ? { editor: answers.editor } : {}),
+  ...(answers.genre ? { genre: answers.genre } : {}),
+});
+
+const publicDirOf = (
+  scan: SiteScan,
+  answers: InitAnswers,
+  configDir: string,
+): string =>
+  answers.publicDir ?? scan.publicDir ?? resolve(configDir, "public");
+
 export const proposeConfig = (
   scan: SiteScan,
   answers: InitAnswers,
   configDir: string,
 ): Proposal => {
-  const missing = [
-    ...(answers.issuer ? [] : ["--issuer"]),
-    ...((answers.selector ?? suggestSelector(scan)) ? [] : ["--selector"]),
-  ];
-  if (missing.length > 0) {
-    throw new Error(`${missing.join(" と ")} が必要です`);
-  }
+  const { issuer, selector } = requiredAnswers(scan, answers);
   const persistence = answers.persistence ?? "commit";
   const at = (dir: string) => relative(configDir, dir) || ".";
   const origins =
     answers.origins ?? scan.origins.slice(0, 1).map(({ origin }) => origin);
-  const defaults = {
-    ...(answers.author?.length ? { author: answers.author } : {}),
-    ...(answers.editor?.length ? { editor: answers.editor } : {}),
-    ...(answers.genre ? { genre: answers.genre } : {}),
-  };
+  const defaults = defaultsOf(answers);
   return {
     persistence,
     raw: {
-      issuer: answers.issuer,
+      issuer,
       distDir: at(scan.distDir),
       ...(persistence === "commit"
-        ? {
-            publicDir: at(
-              answers.publicDir ??
-                scan.publicDir ??
-                resolve(configDir, "public"),
-            ),
-          }
+        ? { publicDir: at(publicDirOf(scan, answers, configDir)) }
         : {}),
       ...(origins.length > 0 ? { origins } : {}),
-      selectors: [{ selector: answers.selector ?? suggestSelector(scan) }],
+      selectors: [{ selector }],
       ...(answers.exclude?.length ? { exclude: answers.exclude } : {}),
       ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
       cas: { mode: persistence === "commit" ? "file" : "inline" },
@@ -199,12 +208,11 @@ const askValid = async <T>(
   fallback: string | undefined,
   parse: (value: string) => T,
 ): Promise<T> => {
-  for (;;) {
-    try {
-      return parse(await ask(question, fallback));
-    } catch (error) {
-      log.log(`  ${error instanceof Error ? error.message : String(error)}`);
-    }
+  try {
+    return parse(await ask(question, fallback));
+  } catch (error) {
+    log.log(`  ${error instanceof Error ? error.message : String(error)}`);
+    return askValid(ask, log, question, fallback, parse);
   }
 };
 
@@ -250,46 +258,55 @@ export type IssuancePreview = {
   problems: { problem: string; pages: string[] }[];
 };
 
+const previewPage = (
+  config: CaConfig,
+  { file, html, dom }: Page,
+): "issuable" | "unmatched" | { problem: string } => {
+  const pathname = pathnameOf(config.distDir, file);
+  const document = dom.window.document;
+  const selector = selectorFor(config, pathname, undefined);
+  if (selector === undefined || document.querySelector(selector) === null) {
+    return "unmatched";
+  }
+  try {
+    buildUnsignedCa({
+      config,
+      document,
+      pathname,
+      recorded: undefined,
+      content: html,
+    });
+    return "issuable";
+  } catch (error) {
+    if (!(error instanceof UnissuableError)) {
+      throw error;
+    }
+    return { problem: error.message };
+  }
+};
+
 export const previewIssuance = async (
   config: CaConfig,
 ): Promise<IssuancePreview> => {
+  const files = (await resolveFiles(config.distDir, [], ".html")).filter(
+    (file) => !isExcluded(config, pathnameOf(config.distDir, file)),
+  );
   let issuable = 0;
   let unmatched = 0;
   const problems = new Map<string, string[]>();
-  for (const file of await resolveFiles(config.distDir, [], ".html")) {
-    const pathname = pathnameOf(config.distDir, file);
-    if (isExcluded(config, pathname)) {
-      continue;
-    }
-    const html = await readFile(file, "utf-8");
-    const dom = parseHtml(html);
-    try {
-      const document = dom.window.document;
-      const selector = selectorFor(config, pathname, undefined);
-      if (selector === undefined || document.querySelector(selector) === null) {
-        unmatched++;
-        continue;
-      }
-      buildUnsignedCa({
-        config,
-        document,
-        pathname,
-        recorded: undefined,
-        content: html,
-      });
+  await forEachPage(files, (page) => {
+    const result = previewPage(config, page);
+    if (result === "issuable") {
       issuable++;
-    } catch (error) {
-      if (!(error instanceof UnissuableError)) {
-        throw error;
-      }
-      problems.set(error.message, [
-        ...(problems.get(error.message) ?? []),
-        pathname,
+    } else if (result === "unmatched") {
+      unmatched++;
+    } else {
+      problems.set(result.problem, [
+        ...(problems.get(result.problem) ?? []),
+        pathnameOf(config.distDir, page.file),
       ]);
-    } finally {
-      dom.window.close();
     }
-  }
+  });
   return {
     issuable,
     unmatched,
@@ -319,14 +336,12 @@ const previewWith = async (
   return config;
 };
 
-const askAnswers = async (
+const askSite = async (
   scan: SiteScan,
-  given: InitAnswers,
+  answers: InitAnswers,
   ask: Ask,
-  configDir: string,
   log: Log,
-): Promise<InitAnswers> => {
-  const answers = { ...given };
+): Promise<void> => {
   answers.issuer ??= await askValid(
     ask,
     log,
@@ -363,6 +378,14 @@ const askAnswers = async (
       },
     );
   }
+};
+
+const askMetadata = async (
+  scan: SiteScan,
+  answers: InitAnswers,
+  ask: Ask,
+  log: Log,
+): Promise<void> => {
   if (answers.author === undefined && scan.withoutAuthor > 0) {
     log.log(
       `  <meta name="author"> が無いページ: ${scan.withoutAuthor} / ${scan.pages}`,
@@ -391,6 +414,15 @@ const askAnswers = async (
       )
     ).trim();
   }
+};
+
+const askPublishing = async (
+  scan: SiteScan,
+  answers: InitAnswers,
+  ask: Ask,
+  configDir: string,
+  log: Log,
+): Promise<void> => {
   if (answers.exclude === undefined) {
     await previewWith(scan, answers, configDir, log);
     answers.exclude = await askValid(
@@ -424,6 +456,19 @@ const askAnswers = async (
       ),
     );
   }
+};
+
+const askAnswers = async (
+  scan: SiteScan,
+  given: InitAnswers,
+  ask: Ask,
+  configDir: string,
+  log: Log,
+): Promise<InitAnswers> => {
+  const answers = { ...given };
+  await askSite(scan, answers, ask, log);
+  await askMetadata(scan, answers, ask, log);
+  await askPublishing(scan, answers, ask, configDir, log);
   return answers;
 };
 
@@ -447,18 +492,20 @@ const nextSteps = (config: CaConfig, persistence: Persistence) => {
       ];
 };
 
-export const init = async (options: {
+type InitOptions = {
   configFile: string;
   answers: InitAnswers;
   force: boolean;
   ask?: Ask;
   log: Pick<Console, "log">;
-}): Promise<CaConfig> => {
-  const { log, ask } = options;
-  const configFile = resolve(options.configFile);
-  const configDir = dirname(configFile);
+};
+
+const distDirOf = async (
+  { answers, ask, log }: InitOptions,
+  configDir: string,
+): Promise<string> => {
   const distDir =
-    options.answers.distDir ??
+    answers.distDir ??
     (ask
       ? await askDistDir(configDir, ask, log)
       : (await distCandidates(configDir))[0]?.dir);
@@ -467,6 +514,41 @@ export const init = async (options: {
       `ビルド済み HTML が見つかりません。先にビルドするか --dist で指定してください（探した場所: ${DIST_CANDIDATES.join(", ")}）`,
     );
   }
+  return distDir;
+};
+
+const writeConfigFile = async (
+  configFile: string,
+  json: string,
+  { force, log }: Pick<InitOptions, "force" | "log">,
+): Promise<void> => {
+  const current = existsSync(configFile)
+    ? await readFile(configFile, "utf-8")
+    : undefined;
+  if (current === json) {
+    log.log(`${relative(process.cwd(), configFile)} は変わりません`);
+    return;
+  }
+  if (current !== undefined && !force) {
+    throw new Error(
+      [
+        `${relative(process.cwd(), configFile)} がすでにあります。上書きするには --force を付けてください`,
+        "--- 今の内容",
+        current.trimEnd(),
+        "+++ 作る内容",
+        json.trimEnd(),
+      ].join("\n"),
+    );
+  }
+  await writeFile(configFile, json);
+  log.log(`✓ ${relative(process.cwd(), configFile)} を書きました`);
+};
+
+export const init = async (options: InitOptions): Promise<CaConfig> => {
+  const { log, ask } = options;
+  const configFile = resolve(options.configFile);
+  const configDir = dirname(configFile);
+  const distDir = await distDirOf(options, configDir);
   const scan = await scanSite(configDir, resolve(distDir));
   if (scan.pages === 0) {
     throw new Error(`${distDir} に HTML がありません`);
@@ -482,28 +564,11 @@ export const init = async (options: {
       `⚠ <meta name="author"> が無いページ ${scan.withoutAuthor} / ${scan.pages} の CA には author が入りません（--author で既定を渡せます）`,
     );
   }
-  const json = `${JSON.stringify(raw, null, 2)}\n`;
-
-  const current = existsSync(configFile)
-    ? await readFile(configFile, "utf-8")
-    : undefined;
-  if (current === json) {
-    log.log(`${relative(process.cwd(), configFile)} は変わりません`);
-  } else {
-    if (current !== undefined && !options.force) {
-      throw new Error(
-        [
-          `${relative(process.cwd(), configFile)} がすでにあります。上書きするには --force を付けてください`,
-          "--- 今の内容",
-          current.trimEnd(),
-          "+++ 作る内容",
-          json.trimEnd(),
-        ].join("\n"),
-      );
-    }
-    await writeFile(configFile, json);
-    log.log(`✓ ${relative(process.cwd(), configFile)} を書きました`);
-  }
+  await writeConfigFile(
+    configFile,
+    `${JSON.stringify(raw, null, 2)}\n`,
+    options,
+  );
 
   const config = await previewWith(scan, answers, configDir, log);
   for (const line of nextSteps(config, persistence)) {

@@ -69,15 +69,12 @@ export const resolveFiles = async (
       ? (await globby(`**/*${ext}`, { cwd: baseDir, absolute: true })).sort()
       : [];
   }
-  const files = new Set<string>();
-  for (const path of paths) {
-    const matched = await matchFiles(baseDir, path, ext);
-    if (matched.length === 0) {
-      throw notFound(path, [baseDir]);
-    }
-    for (const file of matched) {
-      files.add(file);
-    }
+  const matched = await Promise.all(
+    paths.map((path) => matchFiles(baseDir, path, ext)),
+  );
+  const missing = paths.find((_, index) => matched[index].length === 0);
+  if (missing !== undefined) {
+    throw notFound(missing, [baseDir]);
   }
-  return [...files].sort();
+  return [...new Set(matched.flat())].sort();
 };

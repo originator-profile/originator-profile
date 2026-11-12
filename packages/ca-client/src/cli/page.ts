@@ -24,13 +24,13 @@ const meta = (document: Document, key: string) =>
 
 const microdataText = (document: Document, prop: string) => {
   const element = document.querySelector(`[itemprop='${prop}']`);
+  if (element === null) {
+    return undefined;
+  }
   return (
-    element?.getAttribute("content")?.trim() ||
-    element?.textContent?.trim() ||
-    element
-      ?.querySelector("[aria-label]")
-      ?.getAttribute("aria-label")
-      ?.trim() ||
+    element.getAttribute("content")?.trim() ||
+    element.textContent?.trim() ||
+    element.querySelector("[aria-label]")?.getAttribute("aria-label")?.trim() ||
     undefined
   );
 };
@@ -158,22 +158,32 @@ export const metadataDiff = (
   ];
 };
 
-export const buildUnsignedCa = (input: {
+const withoutUndefined = <T extends object>(value: T): T =>
+  Object.fromEntries(
+    Object.entries(value).filter(([, item]) => item !== undefined),
+  ) as T;
+
+const selectorOf = (input: {
   config: CaConfig;
   document: Document;
   pathname: string;
   recorded: Recorded | undefined;
   selector?: string;
-  content: string;
-}): UnsignedContentAttestation => {
-  const { config, document, pathname, recorded, content } = input;
-  const selector = input.selector ?? selectorFor(config, pathname, recorded);
+}): string => {
+  const selector =
+    input.selector ?? selectorFor(input.config, input.pathname, input.recorded);
   if (selector === undefined) {
-    throw new UnissuableError(`${pathname} に合う selectors がありません`);
+    throw new UnissuableError(
+      `${input.pathname} に合う selectors がありません`,
+    );
   }
-  if (document.querySelector(selector) === null) {
+  if (input.document.querySelector(selector) === null) {
     throw new UnissuableError(`${selector} に一致する要素がありません`);
   }
+  return selector;
+};
+
+const headlineOf = (document: Document) => {
   const headline =
     microdataText(document, "headline") ??
     meta(document, "og:title") ??
@@ -185,20 +195,53 @@ export const buildUnsignedCa = (input: {
       "og:title か <title>、og:description か description が必要です",
     );
   }
-  const language = document.documentElement.lang || undefined;
-  const author = meta(document, "author");
-  const image = meta(document, "og:image");
-  const datePublished = dateTimeStampOf(
+  return { headline, description };
+};
+
+const datesOf = (document: Document) => ({
+  datePublished: dateTimeStampOf(
     "datePublished",
     microdataDate(document, "datePublished") ??
       meta(document, "article:published_time"),
-  );
-  const dateModified = dateTimeStampOf(
+  ),
+  dateModified: dateTimeStampOf(
     "dateModified",
     microdataDate(document, "dateModified") ??
       meta(document, "article:modified_time"),
-  );
+  ),
+});
+
+const articleOf = (
+  config: CaConfig,
+  document: Document,
+  recorded: Recorded | undefined,
+) => {
   const defaults = config.defaults ?? {};
+  const author = meta(document, "author");
+  const image = meta(document, "og:image");
+  return withoutUndefined({
+    id: recorded?.id || undefined,
+    type: "Article" as const,
+    ...headlineOf(document),
+    image: image && { id: image },
+    author: author ? [author] : defaults.author,
+    editor: defaults.editor,
+    ...datesOf(document),
+    genre: (meta(document, "article:section") ?? defaults.genre) || undefined,
+  });
+};
+
+export const buildUnsignedCa = (input: {
+  config: CaConfig;
+  document: Document;
+  pathname: string;
+  recorded: Recorded | undefined;
+  selector?: string;
+  content: string;
+}): UnsignedContentAttestation => {
+  const { config, document, pathname, recorded, content } = input;
+  const selector = selectorOf(input);
+  const language = document.documentElement.lang || undefined;
 
   return {
     "@context": [
@@ -209,24 +252,7 @@ export const buildUnsignedCa = (input: {
     ],
     type: ["VerifiableCredential", "ContentAttestation"],
     issuer: config.issuer,
-    credentialSubject: {
-      ...(recorded?.id ? { id: recorded.id } : {}),
-      type: "Article",
-      headline,
-      description,
-      ...(image ? { image: { id: image } } : {}),
-      ...(author
-        ? { author: [author] }
-        : defaults.author
-          ? { author: defaults.author }
-          : {}),
-      ...(defaults.editor ? { editor: defaults.editor } : {}),
-      ...(datePublished ? { datePublished } : {}),
-      ...(dateModified ? { dateModified } : {}),
-      ...((meta(document, "article:section") ?? defaults.genre)
-        ? { genre: meta(document, "article:section") ?? defaults.genre }
-        : {}),
-    },
+    credentialSubject: articleOf(config, document, recorded),
     allowedUrl: allowedUrlOf(config, document, pathname),
     target: [
       { type: "TextTargetIntegrity", cssSelector: selector, content },

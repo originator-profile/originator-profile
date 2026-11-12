@@ -21,24 +21,28 @@ const loadUnsignedCa = async (
   const uca = UnsignedContentAttestation.parse(
     JSON.parse(await readFile(resolve(input), "utf-8")),
   );
-  const htmls = new Set<string>();
-  for (const target of uca.target) {
-    const content = Array.isArray(target.content)
-      ? target.content
-      : [target.content];
-    if (
-      !DOM_TARGET_TYPES.has(target.type) ||
-      content.length !== 1 ||
-      typeof content[0] !== "string" ||
-      !isFilePath(content[0])
-    ) {
-      continue;
-    }
-    const html = await readFile(resolve(root, content[0]), "utf-8");
-    target.content = html;
-    htmls.add(html);
-  }
-  return { uca, htmls };
+  const htmls = await Promise.all(
+    uca.target.map(async (target) => {
+      const content = Array.isArray(target.content)
+        ? target.content
+        : [target.content];
+      if (
+        !DOM_TARGET_TYPES.has(target.type) ||
+        content.length !== 1 ||
+        typeof content[0] !== "string" ||
+        !isFilePath(content[0])
+      ) {
+        return undefined;
+      }
+      const html = await readFile(resolve(root, content[0]), "utf-8");
+      target.content = html;
+      return html;
+    }),
+  );
+  return {
+    uca,
+    htmls: new Set(htmls.filter((html) => html !== undefined)),
+  };
 };
 
 export const signCaFile = async (input: {

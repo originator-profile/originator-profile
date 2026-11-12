@@ -14,9 +14,10 @@ import { isInside, resolveFiles } from "./paths.ts";
 import {
   CAS_SCRIPT_TYPE,
   elementLocation,
+  forEachPage,
   localCasSourcesOf,
   localPathOf,
-  parseHtml,
+  type Page,
 } from "./source.ts";
 
 export type InjectReport = {
@@ -52,50 +53,81 @@ const sha256 = async (file: string) =>
     .update(await readFile(file))
     .digest("base64")}`;
 
+type StartTag = NonNullable<ReturnType<typeof elementLocation>>["startTag"];
+
+const localFileOf = (
+  config: CaConfig,
+  baseDir: string,
+  src: string | undefined,
+): string | undefined => {
+  const path = src && localPathOf(src, config.origins, baseDir);
+  const file = path && join(config.distDir, decodeURIComponent(path));
+  return file && isInside(config.distDir, file) ? file : undefined;
+};
+
+const integrityAttrEdit = (
+  startTag: NonNullable<StartTag>,
+  html: string,
+  integrity: string,
+): HtmlEdit => {
+  const text = `integrity="${integrity}"`;
+  const current = startTag.attrs?.integrity;
+  if (current) {
+    return { start: current.startOffset, end: current.endOffset, text };
+  }
+  const close = startTag.endOffset - 1;
+  const at = html[close - 1] === "/" ? close - 1 : close;
+  return { start: at, end: at, text: ` ${text}` };
+};
+
+const integrityEditOf = async (
+  config: CaConfig,
+  page: { dom: JSDOM; html: string; baseDir: string },
+  element: Element,
+): Promise<{ edit: HtmlEdit } | { problem: string } | undefined> => {
+  const src = element.getAttribute("src")?.trim();
+  const file = localFileOf(config, page.baseDir, src);
+  if (file === undefined) {
+    return { problem: `integrity を計算できない src: ${src ?? "（なし）"}` };
+  }
+  const integrity = await sha256(file).catch(() => undefined);
+  if (integrity === undefined) {
+    return { problem: `src のファイルがありません: ${src}` };
+  }
+  if (element.getAttribute("integrity") === integrity) {
+    return undefined;
+  }
+  const startTag = elementLocation(page.dom, element)?.startTag;
+  if (!startTag) {
+    return { problem: `要素の位置が分かりません: ${src}` };
+  }
+  return { edit: integrityAttrEdit(startTag, page.html, integrity) };
+};
+
 const integrityEdits = async (
   config: CaConfig,
   dom: JSDOM,
   html: string,
   htmlFile: string,
 ): Promise<{ edits: HtmlEdit[]; problems: string[] }> => {
-  const edits: HtmlEdit[] = [];
-  const problems: string[] = [];
   const pageDir = relative(config.distDir, dirname(htmlFile));
   const baseDir = `/${pageDir.split(sep).join("/")}`;
-  for (const element of dom.window.document.querySelectorAll(
-    config.externalSelector ?? DEFAULT_EXTERNAL_SELECTOR,
-  )) {
-    const src = element.getAttribute("src")?.trim();
-    const path = src && localPathOf(src, config.origins, baseDir);
-    const file = path && join(config.distDir, decodeURIComponent(path));
-    if (!file || !isInside(config.distDir, file)) {
-      problems.push(`integrity を計算できない src: ${src ?? "（なし）"}`);
-      continue;
-    }
-    const integrity = await sha256(file).catch(() => undefined);
-    if (integrity === undefined) {
-      problems.push(`src のファイルがありません: ${src}`);
-      continue;
-    }
-    if (element.getAttribute("integrity") === integrity) {
-      continue;
-    }
-    const startTag = elementLocation(dom, element)?.startTag;
-    if (!startTag) {
-      problems.push(`要素の位置が分かりません: ${src}`);
-      continue;
-    }
-    const text = `integrity="${integrity}"`;
-    const current = startTag.attrs?.integrity;
-    if (current) {
-      edits.push({ start: current.startOffset, end: current.endOffset, text });
-    } else {
-      const close = startTag.endOffset - 1;
-      const at = html[close - 1] === "/" ? close - 1 : close;
-      edits.push({ start: at, end: at, text: ` ${text}` });
-    }
-  }
-  return { edits, problems };
+  const results = await Promise.all(
+    Array.from(
+      dom.window.document.querySelectorAll(
+        config.externalSelector ?? DEFAULT_EXTERNAL_SELECTOR,
+      ),
+      (element) => integrityEditOf(config, { dom, html, baseDir }, element),
+    ),
+  );
+  return {
+    edits: results.flatMap((result) =>
+      result && "edit" in result ? [result.edit] : [],
+    ),
+    problems: results.flatMap((result) =>
+      result && "problem" in result ? [result.problem] : [],
+    ),
+  };
 };
 
 const applyEdits = (html: string, edits: HtmlEdit[]) =>
@@ -107,59 +139,58 @@ const applyEdits = (html: string, edits: HtmlEdit[]) =>
       html,
     );
 
+const injectPage = async (
+  config: CaConfig,
+  { file: htmlFile, html, dom }: Page,
+  check: boolean,
+  report: InjectReport,
+): Promise<void> => {
+  const pathname = pathnameOf(config.distDir, htmlFile);
+  const selector = selectorFor(config, pathname, undefined);
+  if (
+    selector === undefined ||
+    dom.window.document.querySelector(selector) === null
+  ) {
+    return;
+  }
+  const edits: HtmlEdit[] = [];
+  if (localCasSourcesOf(dom, config, htmlFile, html).length === 0) {
+    const offset = insertionOffset(dom);
+    if (offset === undefined) {
+      report.problems.push({ pathname, problem: "挿入位置がありません" });
+    } else {
+      edits.push({
+        start: offset,
+        end: offset,
+        text: casTagFor(config, pathname),
+      });
+      report.injected.push(pathname);
+    }
+  }
+  const external = await integrityEdits(config, dom, html, htmlFile);
+  report.problems.push(
+    ...external.problems.map((problem) => ({ pathname, problem })),
+  );
+  if (external.edits.length > 0) {
+    report.integrity.push(pathname);
+  }
+  edits.push(...external.edits);
+  if (edits.length > 0 && !check) {
+    await writeFile(htmlFile, applyEdits(html, edits));
+  }
+};
+
 export const inject = async (
   config: CaConfig,
   options: { check: boolean; paths?: string[]; log: Pick<Console, "log"> },
 ): Promise<InjectReport> => {
   const report: InjectReport = { injected: [], integrity: [], problems: [] };
-  for (const htmlFile of await resolveFiles(
-    config.distDir,
-    options.paths ?? [],
-    ".html",
-  )) {
-    const html = await readFile(htmlFile, "utf-8");
-    const dom = parseHtml(html);
-    try {
-      const pathname = pathnameOf(config.distDir, htmlFile);
-      if (isExcluded(config, pathname)) {
-        continue;
-      }
-      const selector = selectorFor(config, pathname, undefined);
-      if (
-        selector === undefined ||
-        dom.window.document.querySelector(selector) === null
-      ) {
-        continue;
-      }
-      const edits: HtmlEdit[] = [];
-      if (localCasSourcesOf(dom, config, htmlFile, html).length === 0) {
-        const offset = insertionOffset(dom);
-        if (offset === undefined) {
-          report.problems.push({ pathname, problem: "挿入位置がありません" });
-        } else {
-          edits.push({
-            start: offset,
-            end: offset,
-            text: casTagFor(config, pathname),
-          });
-          report.injected.push(pathname);
-        }
-      }
-      const external = await integrityEdits(config, dom, html, htmlFile);
-      report.problems.push(
-        ...external.problems.map((problem) => ({ pathname, problem })),
-      );
-      if (external.edits.length > 0) {
-        report.integrity.push(pathname);
-      }
-      edits.push(...external.edits);
-      if (edits.length > 0 && !options.check) {
-        await writeFile(htmlFile, applyEdits(html, edits));
-      }
-    } finally {
-      dom.window.close();
-    }
-  }
+  const files = (
+    await resolveFiles(config.distDir, options.paths ?? [], ".html")
+  ).filter((file) => !isExcluded(config, pathnameOf(config.distDir, file)));
+  await forEachPage(files, (page) =>
+    injectPage(config, page, options.check, report),
+  );
   const [tagVerb, integrityVerb] = options.check
     ? ["Missing tag", "Stale integrity"]
     : ["Injected", "Updated integrity"];

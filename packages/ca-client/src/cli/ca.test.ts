@@ -360,9 +360,14 @@ test("sync: パスで対象を絞れる（cwd 基準、distDir 基準、ディ�
     "/en/news/c",
     "/ja/news/a",
   ]);
-  for (const glob of ["dist/ja/**", "./dist/ja/**"]) {
-    expect(await pathnames([glob])).toStrictEqual(["/ja/news/a", "/ja/news/b"]);
-  }
+  expect(await pathnames(["dist/ja/**"])).toStrictEqual([
+    "/ja/news/a",
+    "/ja/news/b",
+  ]);
+  expect(await pathnames(["./dist/ja/**"])).toStrictEqual([
+    "/ja/news/a",
+    "/ja/news/b",
+  ]);
   expect(
     await pathnames(["ja/news/a/index.html", "dist/ja/news/a/index.html"]),
   ).toStrictEqual(["/ja/news/a"]);
