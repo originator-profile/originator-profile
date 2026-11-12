@@ -6,6 +6,10 @@ import {
   AdvertisementCA,
   AdvertorialCA,
   ArticleCA,
+  AudioCA,
+  DocumentCA,
+  ImageCA,
+  VideoCA,
   WebMediaProfile,
   WebsiteProfile,
 } from "@originator-profile/model";
@@ -287,6 +291,90 @@ describe("CA", () => {
       exp: getUnixTime(expiredAt),
       sub: ca.credentialSubject.id,
       ...ca,
+    });
+  });
+
+  describe("Media CA", () => {
+    const context: ImageCA["@context"] = [
+      "https://www.w3.org/ns/credentials/v2",
+      "https://originator-profile.org/ns/credentials/v1",
+      "https://originator-profile.org/ns/cip/v1",
+      { "@language": "ja" },
+    ];
+    const target: ImageCA["target"] = [
+      {
+        type: "ExternalResourceTargetIntegrity",
+        integrity: "sha256-+M3dMZXeSIwAP8BsIAwxn5ofFWUtaoSoDfB+/J8uXMo=",
+      },
+    ];
+    const base = {
+      "@context": context,
+      type: ["VerifiableCredential", "ContentAttestation"],
+      issuer: "dns:example.com",
+      allowedUrl: ["https://media.example.com/*"],
+      target,
+    };
+    const subject = {
+      id: "urn:uuid:78550fa7-f846-4e0f-ad5c-8d34461cb95b",
+      name: "<タイトル>",
+      image: {
+        id: "https://media.example.com/image.png",
+        digestSRI: "sha256-Upwn7gYMuRmJlD1ZivHk876vXHzokXrwXj50VgfnMnY=",
+      },
+      description: "<説明>",
+      dateCreated: "2023-07-04T19:14:00Z",
+      dateModified: "2023-07-04T19:14:00Z",
+      creator: ["山田花子"],
+      genre: "スポーツ",
+    };
+
+    test.each<ImageCA | VideoCA | AudioCA | DocumentCA>([
+      {
+        ...base,
+        credentialSubject: {
+          ...subject,
+          type: "Image",
+          encodingFormat: "image/png",
+        },
+      },
+      {
+        ...base,
+        credentialSubject: {
+          ...subject,
+          type: "Video",
+          encodingFormat: "video/mp4",
+        },
+      },
+      {
+        ...base,
+        credentialSubject: {
+          ...subject,
+          type: "Audio",
+          encodingFormat: "audio/mpeg",
+        },
+      },
+      {
+        ...base,
+        credentialSubject: {
+          ...subject,
+          type: "Document",
+          encodingFormat: "application/pdf",
+        },
+      },
+    ])("$credentialSubject.type CA", async (ca) => {
+      const issuedAt = new Date();
+      const expiredAt = addYears(new Date(), 10);
+      const { publicKey, privateKey } = await generateKey();
+      const jwt = await signJwtVc(ca, privateKey, { issuedAt, expiredAt });
+      expect(decodeProtectedHeader(jwt).kid).toBe(publicKey.kid);
+      const valid = decodeJwt(jwt);
+      expect(valid).toStrictEqual({
+        iss: ca.issuer,
+        iat: getUnixTime(issuedAt),
+        exp: getUnixTime(expiredAt),
+        sub: ca.credentialSubject.id,
+        ...ca,
+      });
     });
   });
 });
