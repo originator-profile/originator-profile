@@ -45,6 +45,7 @@
     "@originator-profile/model": "workspace:*",
     "@originator-profile/securing-mechanism": "workspace:*",
     "@originator-profile/sign": "workspace:*",
+    "globby": "^16.2.4",
     "jsdom": "^29.0.1"
   },
   "devDependencies": {
