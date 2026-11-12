@@ -12,22 +12,36 @@
     "access": "public"
   },
   "type": "module",
-  "exports": {
-    "types": "./dist/index.d.ts",
-    "default": "./dist/index.js"
-  },
   "files": [
+    "bin",
     "dist",
     "README.md",
     "LICENSE",
     "NOTICE"
   ],
+  "bin": {
+    "opca": "bin/run.js"
+  },
+  "exports": {
+    "types": "./dist/index.d.ts",
+    "default": "./dist/index.js"
+  },
+  "oclif": {
+    "bin": "opca",
+    "commands": "dist/commands",
+    "repositoryPrefix": "<%- repo %>/blob/v<%- version %>/packages/ca-client/<%- commandPath %>",
+    "plugins": [
+      "@oclif/plugin-help"
+    ]
+  },
   "scripts": {
-    "build": "pkgroll --clean-dist",
+    "build": "tsdown && oclif manifest && oclif readme",
     "test": "vitest run",
     "lint": "oxlint --fix ."
   },
   "dependencies": {
+    "@oclif/core": "^4.10.3",
+    "@oclif/plugin-help": "^6.2.41",
     "@originator-profile/model": "workspace:*",
     "@originator-profile/securing-mechanism": "workspace:*",
     "@originator-profile/sign": "workspace:*",
@@ -36,9 +50,10 @@
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",
     "@types/node": "25.6.0",
+    "oclif": "4.23.0",
     "oxlint": "^1.73.0",
     "oxlint-tsgolint": "^0.24.0",
-    "pkgroll": "2.27.0",
+    "tsdown": "0.21.7",
     "typescript": "6.0.2",
     "vitest": "4.1.11"
   }

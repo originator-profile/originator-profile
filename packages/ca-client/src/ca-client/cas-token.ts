@@ -2,7 +2,7 @@ import {
   UnsignedContentAttestation as UnsignedContentAttestationSchema,
   type UnsignedContentAttestation,
 } from "@originator-profile/model";
-import { CaClientError, CaClientErrorCode } from "../errors";
+import { CaClientError, CaClientErrorCode } from "../errors.ts";
 
 const JWT_PAYLOAD_CONTENT_ATTESTATION_KEYS = [
   "@context",

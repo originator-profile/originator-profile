@@ -1,11 +1,11 @@
 import { describe, expect, test, vi } from "vitest";
-import { CaClientError, CaClientErrorCode, isUnauthorized } from "../errors";
-import type { FetchOperations } from "../fetch-operations";
+import { CaClientError, CaClientErrorCode, isUnauthorized } from "../errors.ts";
+import type { FetchOperations } from "../fetch-operations.ts";
 import {
   getCcspAccessToken,
   parseCcspConfig,
   type CcspAuthConfig,
-} from "./ccsp-auth";
+} from "./ccsp-auth.ts";
 
 const createBase64Config = (
   config: Omit<Partial<CcspAuthConfig>, "authType"> & { authType?: string },

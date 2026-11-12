@@ -2,14 +2,14 @@ import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 import { expect, test } from "vitest";
-import { CaClientError, CaClientErrorCode } from "../errors";
+import { CaClientError, CaClientErrorCode } from "../errors.ts";
 import {
   deleteCasFiles,
   parseCasFileContent,
   readCasFile,
   resolveCasFilePath,
   writeCasFile,
-} from "./file";
+} from "./file.ts";
 
 const withTempDir = async (run: (dir: string) => Promise<void>) => {
   const dir = await mkdtemp(join(tmpdir(), "ca-client-cas-store-"));

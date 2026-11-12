@@ -7,10 +7,10 @@ import {
   fetchAndSetTargetIntegrity,
   type DocumentProvider,
 } from "@originator-profile/sign";
-import { CaClientError, CaClientErrorCode } from "../errors";
-import type { FetchOperations } from "../fetch-operations";
-import { parseDates, toUnixTime, type TimingOptions } from "./dates";
-import { documentProvider as defaultDocumentProvider } from "./document-provider";
+import { CaClientError, CaClientErrorCode } from "../errors.ts";
+import type { FetchOperations } from "../fetch-operations.ts";
+import { parseDates, toUnixTime, type TimingOptions } from "./dates.ts";
+import { documentProvider as defaultDocumentProvider } from "./document-provider.ts";
 
 export type SignByCaServerOptions = TimingOptions & {
   endpoint: string;

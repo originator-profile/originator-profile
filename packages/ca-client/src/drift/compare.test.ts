@@ -2,10 +2,10 @@ import { mkdir, mkdtemp, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { expect, test } from "vitest";
-import { resolveCasFilePath, writeCasFile } from "../cas-store/file";
-import { CaClientErrorCode } from "../errors";
-import { extractTargetsFromHtml } from "../targets/html";
-import { detectDrift } from "./compare";
+import { resolveCasFilePath, writeCasFile } from "../cas-store/file.ts";
+import { CaClientErrorCode } from "../errors.ts";
+import { extractTargetsFromHtml } from "../targets/html.ts";
+import { detectDrift } from "./compare.ts";
 
 const extractTextIntegrity = async (
   html: string,

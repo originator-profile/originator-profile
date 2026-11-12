@@ -1,7 +1,7 @@
 import type { RawTarget } from "@originator-profile/model";
 import { JSDOM } from "jsdom";
-import { CaClientError, CaClientErrorCode } from "../errors";
-import type { FetchOperations } from "../fetch-operations";
+import { CaClientError, CaClientErrorCode } from "../errors.ts";
+import type { FetchOperations } from "../fetch-operations.ts";
 
 async function fetchDocument(
   url: string,

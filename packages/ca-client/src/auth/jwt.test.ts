@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { decodeJwtPayload, getJwtExpiration } from "./jwt";
+import { decodeJwtPayload, getJwtExpiration } from "./jwt.ts";
 
 const createJwtToken = (payload: unknown, signature = "signature"): string => {
   const encodedHeader = Buffer.from(

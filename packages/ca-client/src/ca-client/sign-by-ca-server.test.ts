@@ -1,7 +1,7 @@
 import type { UnsignedContentAttestation } from "@originator-profile/model";
 import { expect, test, vi } from "vitest";
-import { CaClientError, CaClientErrorCode, isUnauthorized } from "../errors";
-import { signByCaServer } from "./sign-by-ca-server";
+import { CaClientError, CaClientErrorCode, isUnauthorized } from "../errors.ts";
+import { signByCaServer } from "./sign-by-ca-server.ts";
 
 const endpoint = "https://ca.example.com/attestations";
 

@@ -1,3 +1,3 @@
-export * from "./ccsp-auth";
-export * from "./jwt";
-export * from "./token-manager";
+export * from "./ccsp-auth.ts";
+export * from "./jwt.ts";
+export * from "./token-manager.ts";
