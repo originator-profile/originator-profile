@@ -162,7 +162,13 @@ try {
 	profile_bulk_assert( 'completed' === $job['status'] && 1 === $job['counts']['success'] && 2 === $job['counts']['skipped'], 'One issuance, two skips' );
 	profile_bulk_assert( 1 === count( $requests ), 'Only one CA request' );
 	$issued_payload = json_decode( $requests[0]['body'], true );
-	profile_bulk_assert( str_contains( $issued_payload['target'][0]['content'], 'context-post-' . $missing ), 'Shortcode uses the issued post context' );
+	// 本文は Base64 の data: URL で送られる.
+	$issued_content  = $issued_payload['target'][0]['content'];
+	$data_url_prefix = 'data:text/html;charset=utf-8;base64,';
+	profile_bulk_assert( str_starts_with( $issued_content, $data_url_prefix ), 'Target content is sent as a base64 data URL' );
+	// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
+	$issued_html = (string) base64_decode( substr( $issued_content, strlen( $data_url_prefix ) ), true );
+	profile_bulk_assert( str_contains( $issued_html, 'context-post-' . $missing ), 'Shortcode uses the issued post context' );
 	profile_bulk_assert( ! \Profile\Issue\has_post_cas( $new_post ), 'New posts outside cursor upper bound' );
 	profile_bulk_assert( get_post_meta( $existing, '_profile_post_cas', true ) === $old_cas, 'Existing CAS preserved' );
 	$after = get_post( $missing );

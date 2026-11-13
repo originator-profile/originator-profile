@@ -83,7 +83,7 @@ final class Uca {
 				array(
 					array(
 						'type'        => $this->target_type,
-						'content'     => $this->html,
+						'content'     => self::html_to_data_url( $this->html ),
 						'cssSelector' => $this->target_css_selector,
 					),
 				),
@@ -112,5 +112,22 @@ final class Uca {
 			debug( 'Failed to encode UCA to JSON' );
 		}
 		return $json;
+	}
+
+	/**
+	 * HTML を Base64 の data: URL に変換
+	 *
+	 * 本文に含まれる文字列 (SQL に似た語句など) が、CA サーバーの手前にある WAF の
+	 * SQL インジェクション検出に誤って一致し、リクエストが遮断されることがある。
+	 * 本文をそのまま送らず Base64 で符号化することで、これを避ける。
+	 * CA サーバーは target[].content が URL であればその内容を取得して検証対象とするため、
+	 * 署名される内容は変わらない。
+	 *
+	 * @param string $html HTML
+	 * @return string data: URL (data:text/html;charset=utf-8;base64,...)
+	 */
+	public static function html_to_data_url( string $html ): string {
+		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
+		return 'data:text/html;charset=utf-8;base64,' . \base64_encode( $html );
 	}
 }

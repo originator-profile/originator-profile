@@ -5,7 +5,7 @@ import {
 } from "@originator-profile/verify";
 import { expect } from "@wordpress/e2e-test-utils-playwright";
 import { JSDOM } from "jsdom";
-import { test } from "./local-ca";
+import { decodeTargetContent, test } from "./local-ca";
 
 const fixtures = [
   {
@@ -97,11 +97,11 @@ for (const fixture of fixtures) {
       if (!submission)
         throw new Error("ページに対応する CA 発行リクエストがありません");
       const target = submission.target[0];
-      if (!target || typeof target.content !== "string")
-        throw new Error("Expected HTML content in CA request");
+      if (!target) throw new Error("Expected target in CA request");
       const selector = target.cssSelector;
       if (!selector) throw new Error("Expected CSS selector in CA request");
-      const signedDocument = new JSDOM(target.content).window.document;
+      const signedDocument = new JSDOM(decodeTargetContent(target.content))
+        .window.document;
       const signedHTML = Array.from(
         signedDocument.querySelectorAll(selector),
         (element) => element.outerHTML,
