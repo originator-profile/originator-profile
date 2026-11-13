@@ -73,9 +73,9 @@ final class Oidc_Claims extends TestCase {
 		);
 	}
 
-	private static function verify( CasApiAuthClient $client, array $claims, ?string $access_token = self::ACCESS_TOKEN ): bool {
+	private static function verify( CasApiAuthClient $client, array $claims, ?string $access_token = self::ACCESS_TOKEN, string $alg = 'RS256' ): bool {
 		$header = array(
-			'alg' => 'RS256',
+			'alg' => $alg,
 			'typ' => 'JWT',
 		);
 		$client->setIdToken( self::base64url( self::json( $header ) ) . '.' . self::base64url( self::json( $claims ) ) . '.signature' );
@@ -103,6 +103,10 @@ final class Oidc_Claims extends TestCase {
 
 	public function test_FirebaseのIDトークンでもat_hashがアクセストークンと異なれば検証に失敗する() {
 		$this->assertFalse( self::verify( self::client( self::FIREBASE_ISSUER ), self::firebase_claims( array( 'at_hash' => self::at_hash( 'other-access-token' ) ) ) ) );
+	}
+
+	public function test_at_hashがあっても署名アルゴリズムがSHA2系でなければ検証に失敗する() {
+		$this->assertFalse( self::verify( self::client( self::FIREBASE_ISSUER ), self::firebase_claims(), self::ACCESS_TOKEN, 'EdDSA' ) );
 	}
 
 	public function test_nonceとat_hashが無いFirebaseのIDトークンは検証に通る() {
