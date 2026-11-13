@@ -58,7 +58,7 @@ describe.each([
     expect(result.success).toBe(true);
   });
 
-  test.each(["id", "name", "description"] as const)(
+  test.each(["id", "type", "name", "description"] as const)(
     "%s が無ければ拒否する",
     (key) => {
       const ca = createCa(type, encodingFormat);
