@@ -136,7 +136,10 @@ const jwt = await client.sign({
 import { readCasFile } from "@originator-profile/ca-client";
 
 const [own] = await readCasFile("dist/cas/ja-JP.page.cas.json");
-const renewed = await client.reSign(own.payload, "dist/cas/ja-JP.page.cas.json");
+const renewed = await client.reSign(
+  own.payload,
+  "dist/cas/ja-JP.page.cas.json",
+);
 ```
 
 `createCaClient` に渡した `issuer` が、payload の `issuer` より優先されます。
