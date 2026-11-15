@@ -2,9 +2,9 @@ import type { UnsignedContentAttestation } from "@originator-profile/model";
 import { globby } from "globby";
 import { readFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import type { CaClient } from "../ca-server/create-ca-client.ts";
 import type { DecodedCa } from "../ca/decode.ts";
 import { isExpiring } from "../ca/expiry.ts";
-import type { CaClient } from "../ca-server/create-ca-client.ts";
 import {
   distCopyOf,
   driftOf,
