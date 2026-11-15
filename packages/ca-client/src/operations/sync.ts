@@ -1,54 +1,85 @@
 import type { UnsignedContentAttestation } from "@originator-profile/model";
 import { globby } from "globby";
-import { mkdir, readFile, writeFile } from "node:fs/promises";
-import { dirname, relative } from "node:path";
-import type { CaClient } from "../ca-client/create-ca-client.ts";
-import type { CaConfig } from "./config.ts";
-import { isExpiring } from "./expiry.ts";
+import { readFile } from "node:fs/promises";
+import { dirname } from "node:path";
+import type { DecodedCa } from "../ca/decode.ts";
+import { isExpiring } from "../ca/expiry.ts";
+import type { CaClient } from "../ca-server/create-ca-client.ts";
 import {
-  buildUnsignedCa,
-  isExcluded,
-  metadataDiff,
-  pathnameOf,
-  UnissuableError,
-  type MetadataField,
-} from "./page.ts";
-import { coversAll, resolveFiles } from "./paths.ts";
-import {
-  DEPRECATED_CAS_SCRIPT_TYPE,
   distCopyOf,
   driftOf,
-  forEachPage,
-  labelOf,
   localCasSourcesOf,
+  locationOf,
   ownCaSourceOf,
   readCas,
   recordedOf,
   upsertOwnCa,
   usesDeprecatedType,
-  type Cas,
+  type CasLocation,
   type CasSource,
+} from "../cas/source.ts";
+import { CaClientError, CaClientErrorCode, withContext } from "../errors.ts";
+import { readText, writeText } from "../utils/file.ts";
+import { coversAll, resolveFiles } from "../utils/paths.ts";
+import type { CaConfig } from "./config.ts";
+import {
+  buildUnsignedCa,
+  forEachPage,
+  isExcluded,
+  metadataDiff,
+  pathnameOf,
+  UnissuableError,
+  type MetadataField,
   type Page,
-} from "./source.ts";
+} from "./page.ts";
 
 export type PageStatus = "ok" | "missing" | "drifted" | "expiring";
 
 export type PageReport = {
   pathname: string;
-  cas: string;
+  cas: CasLocation;
   status: PageStatus;
   expiresAt?: string;
   drift?: ("target" | MetadataField)[];
   deprecatedType?: true;
   problem?: string;
-  issued?: "create" | "update";
 };
 
-export type SyncReport = {
+export type ScanReport = {
   pages: PageReport[];
-  orphans: string[];
+  /** paths で範囲を絞ったときは判定しないので undefined。 */
+  orphans?: string[];
   staleCopies: { from: string; to: string }[];
 };
+
+export type IssuedPage = {
+  pathname: string;
+  cas: CasLocation;
+  action: "create" | "update";
+};
+
+export type SyncReport = ScanReport & {
+  issued: IssuedPage[];
+  /** staleCopies のうち、書き直した distDir 側のコピー。 */
+  copied: string[];
+};
+
+export type SyncOptions = {
+  paths?: string[];
+  /** ページを照合し終え、署名を始める前に呼ぶ。 */
+  onScanned?: (report: ScanReport) => void;
+} & (
+  | {
+      /** CAS を書かず、照合した結果だけを返す。 */
+      check: true;
+    }
+  | {
+      check: false;
+      signer: Pick<CaClient, "sign">;
+      /** ページの CA を署名して書くたびに呼ぶ。 */
+      onIssued?: (page: IssuedPage) => void;
+    }
+);
 
 type Pending = {
   report: PageReport;
@@ -58,13 +89,11 @@ type Pending = {
   existed: boolean;
 };
 
-type Log = Pick<Console, "log">;
-
 type ScanState = {
   pages: PageReport[];
   pending: Pending[];
   referenced: Set<string>;
-  staleCopies: SyncReport["staleCopies"];
+  staleCopies: ScanReport["staleCopies"];
 };
 
 type Drift = NonNullable<PageReport["drift"]>;
@@ -72,7 +101,7 @@ type Drift = NonNullable<PageReport["drift"]>;
 const staleCopyOf = async (
   source: CasSource,
   config: CaConfig,
-): Promise<SyncReport["staleCopies"][number] | undefined> => {
+): Promise<ScanReport["staleCopies"][number] | undefined> => {
   if (source.kind !== "file") {
     return undefined;
   }
@@ -82,7 +111,7 @@ const staleCopyOf = async (
   }
   const [deployed, published] = await Promise.all([
     readFile(copy, "utf-8").catch(() => undefined),
-    readFile(source.path, "utf-8"),
+    readText(source.path),
   ]);
   return deployed === published ? undefined : { from: source.path, to: copy };
 };
@@ -102,7 +131,7 @@ const unsignedCaOf = (
 
 const driftOfPage = async (
   page: { source: CasSource; html: string; issuer: string },
-  cas: Cas | undefined,
+  cas: DecodedCa | undefined,
   uca: UnsignedContentAttestation | undefined,
 ): Promise<Drift> => {
   if (cas === undefined) {
@@ -116,7 +145,7 @@ const driftOfPage = async (
 };
 
 const statusOf = (
-  cas: Cas | undefined,
+  cas: DecodedCa | undefined,
   drift: Drift,
   renewWithinDays: number,
 ): PageStatus => {
@@ -133,13 +162,13 @@ const pageReportOf = (input: {
   pathname: string;
   source: CasSource;
   status: PageStatus;
-  cas: Cas | undefined;
+  cas: DecodedCa | undefined;
   drift: Drift;
   deprecatedType: boolean;
   problem: string | undefined;
 }): PageReport => ({
   pathname: input.pathname,
-  cas: labelOf(input.source),
+  cas: locationOf(input.source),
   status: input.status,
   ...(input.cas?.expiresAt
     ? { expiresAt: input.cas.expiresAt.toISOString() }
@@ -217,7 +246,7 @@ const orphansOf = async (referenced: Set<string>): Promise<string[]> => {
 const scan = async (
   config: CaConfig,
   paths: string[],
-): Promise<{ report: SyncReport; pending: Pending[] }> => {
+): Promise<{ report: ScanReport; pending: Pending[] }> => {
   const state: ScanState = {
     pages: [],
     pending: [],
@@ -228,158 +257,109 @@ const scan = async (
     await resolveFiles(config.distDir, paths, ".html"),
     (page) => scanPage(config, page, state),
   );
-  const orphans = coversAll(config.distDir, paths)
-    ? await orphansOf(state.referenced)
-    : [];
   return {
-    report: { pages: state.pages, orphans, staleCopies: state.staleCopies },
+    report: {
+      pages: state.pages,
+      ...(coversAll(config.distDir, paths)
+        ? { orphans: await orphansOf(state.referenced) }
+        : {}),
+      staleCopies: state.staleCopies,
+    },
     pending: state.pending,
   };
 };
 
-const shown = (file: string) => relative(process.cwd(), file);
-
-const logReport = ({ pages, orphans, staleCopies }: SyncReport, log: Log) => {
-  const count = (status: PageStatus) =>
-    pages.filter((page) => page.status === status).length;
-  log.log(
-    `Scanned ${pages.length} page(s): ok=${count("ok")} missing=${count("missing")} drifted=${count("drifted")} expiring=${count("expiring")} orphan=${orphans.length} stale-copy=${staleCopies.length}`,
-  );
-  for (const page of pages.filter(
-    (page) => page.status !== "ok" || page.problem,
-  )) {
-    const detail =
-      page.status === "expiring"
-        ? ` (期限 ${page.expiresAt ?? "なし"})`
-        : page.drift
-          ? ` (${page.drift.join(", ")})`
-          : "";
-    log.log(
-      `  - ${page.status.toUpperCase()} ${page.pathname} → ${page.cas}${detail}${page.problem ? ` [${page.problem}]` : ""}`,
-    );
-  }
-  for (const orphan of orphans) {
-    log.log(`  - ORPHAN ${shown(orphan)} (報告のみ)`);
-  }
-  for (const { from, to } of staleCopies) {
-    log.log(`  - STALE-COPY ${shown(to)} (${shown(from)} と揃っていない)`);
-  }
-  const deprecated = pages.filter((page) => page.deprecatedType);
-  if (deprecated.length > 0) {
-    log.log(
-      `⚠ ${deprecated.length} page(s) が非推奨の ${DEPRECATED_CAS_SCRIPT_TYPE} を使っています。2027-11-01 以降はサポート外なので application/ca-set+json に替えてください`,
-    );
-  }
-};
-
-export class UnissuablePagesError extends Error {
+export class UnissuablePagesError extends CaClientError {
   readonly pages: PageReport[];
 
   constructor(pages: PageReport[]) {
     super(
       [
-        `${pages.length} page(s) から CA を作れません`,
+        `Cannot build a CA for ${pages.length} page(s)`,
         ...pages.map((page) => `  - ${page.pathname}: ${page.problem}`),
       ].join("\n"),
+      { code: CaClientErrorCode.Validation },
     );
     this.name = "UnissuablePagesError";
     this.pages = pages;
   }
 }
 
+type SignOptions = Extract<SyncOptions, { check: false }>;
+
 const signPage = async (
   config: CaConfig,
   { report: page, source, html, uca, existed }: Pending,
-  options: { signer: Pick<CaClient, "sign">; log: Log },
-): Promise<void> => {
+  options: SignOptions,
+): Promise<IssuedPage> => {
   let written: CasSource;
   try {
     written = await upsertOwnCa(source, await options.signer.sign(uca), config);
   } catch (error) {
-    throw new Error(`sign ${page.pathname}`, { cause: error });
+    throw withContext(`sign ${page.pathname}`, error);
   }
   const { status } = await driftOf(written, html, config.issuer);
   if (status !== "ok") {
-    throw new Error(
-      `Inline verification failed: ${page.pathname} の CAS がビルド済みページと一致しません (${status})`,
+    throw new CaClientError(
+      `Inline verification failed: the CAS for ${page.pathname} does not match the built page (${status})`,
+      { code: CaClientErrorCode.Verification },
     );
   }
-  page.issued = existed ? "update" : "create";
-  options.log.log(`✓ ${page.issued} ${page.cas}`);
+  const issued: IssuedPage = {
+    pathname: page.pathname,
+    cas: page.cas,
+    action: existed ? "update" : "create",
+  };
+  options.onIssued?.(issued);
+  return issued;
 };
 
 const signPending = async (
   config: CaConfig,
   pending: Pending[],
-  options: { signer?: Pick<CaClient, "sign">; log: Log },
-): Promise<number> => {
-  const { signer, log } = options;
-  if (signer === undefined) {
-    throw new Error("署名するには signer が必要です");
-  }
+  options: SignOptions,
+): Promise<IssuedPage[]> => {
+  const issued: IssuedPage[] = [];
   for (const item of pending) {
     // oxlint-disable-next-line no-await-in-loop -- 複数のページが同じ CAS ファイルを書き換えることがあるので、1 ページずつ署名して書く
-    await signPage(config, item, { signer, log });
+    issued.push(await signPage(config, item, options));
   }
-  return pending.length;
+  return issued;
 };
 
 const refreshCopies = async (
-  staleCopies: SyncReport["staleCopies"],
-  log: Log,
-): Promise<void> => {
+  staleCopies: ScanReport["staleCopies"],
+): Promise<string[]> => {
   const copies = new Map(staleCopies.map(({ from, to }) => [to, from]));
   const copied = await Promise.all(
     Array.from(copies, async ([to, from]) => {
-      const content = await readFile(from, "utf-8");
+      const content = await readText(from);
       if ((await readFile(to, "utf-8").catch(() => undefined)) === content) {
         return undefined;
       }
-      await mkdir(dirname(to), { recursive: true });
-      await writeFile(to, content);
+      await writeText(to, content);
       return to;
     }),
   );
-  for (const to of copied) {
-    if (to !== undefined) {
-      log.log(`✓ copy ${shown(to)}`);
-    }
-  }
+  return copied.filter((to) => to !== undefined);
 };
 
 export const sync = async (
   config: CaConfig,
-  options: {
-    check: boolean;
-    paths?: string[];
-    signer?: Pick<CaClient, "sign">;
-    log: Log;
-  },
+  options: SyncOptions,
 ): Promise<SyncReport> => {
-  const paths = options.paths ?? [];
-  const { report, pending } = await scan(config, paths);
-  logReport(report, options.log);
-  if (!coversAll(config.distDir, paths)) {
-    options.log.log("  (範囲を指定したので orphan は判定しない)");
-  }
-
-  const unissuable = report.pages.filter((page) => page.problem !== undefined);
+  const { report, pending } = await scan(config, options.paths ?? []);
+  options.onScanned?.(report);
   if (options.check) {
+    const unissuable = report.pages.filter(
+      (page) => page.problem !== undefined,
+    );
     if (unissuable.length > 0) {
       throw new UnissuablePagesError(unissuable);
     }
-    return report;
+    return { ...report, issued: [], copied: [] };
   }
-  if (unissuable.length > 0) {
-    options.log.log(
-      `⚠ ${unissuable.length} page(s) は CA を作れないため飛ばします`,
-    );
-  }
-  const signed =
-    pending.length > 0 ? await signPending(config, pending, options) : 0;
-  await refreshCopies(report.staleCopies, options.log);
-  if (signed === 0) {
-    options.log.log("✓ Nothing to sign.");
-  }
-  return report;
+  const issued = await signPending(config, pending, options);
+  const copied = await refreshCopies(report.staleCopies);
+  return { ...report, issued, copied };
 };

@@ -1,6 +1,7 @@
 import { globby, isDynamicPattern } from "globby";
 import { existsSync, statSync } from "node:fs";
 import { isAbsolute, relative, resolve } from "node:path";
+import { CaClientError, CaClientErrorCode } from "../errors.ts";
 
 export const isInside = (dir: string, file: string): boolean => {
   const rel = relative(dir, file);
@@ -48,15 +49,17 @@ export const matchFiles = async (
       : [];
 };
 
-export const notFound = (path: string, baseDirs: string[]): Error => {
+export const notFound = (path: string, baseDirs: string[]): CaClientError => {
   const where = baseDirs
     .map((dir) => relative(process.cwd(), dir))
-    .join(" か ");
-  return !isDynamicPattern(path) &&
+    .join(" or ");
+  const message =
+    !isDynamicPattern(path) &&
     existsSync(resolve(path)) &&
     !baseDirs.some((dir) => existingUnder(dir, path))
-    ? new Error(`${path} は ${where} の外です`)
-    : new Error(`${path} に一致するファイルが ${where} にありません`);
+      ? `${path} is outside ${where}`
+      : `No files in ${where} match ${path}`;
+  return new CaClientError(message, { code: CaClientErrorCode.Validation });
 };
 
 export const resolveFiles = async (

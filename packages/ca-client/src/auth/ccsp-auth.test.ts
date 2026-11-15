@@ -1,6 +1,6 @@
 import { describe, expect, test, vi } from "vitest";
 import { CaClientError, CaClientErrorCode, isUnauthorized } from "../errors.ts";
-import type { FetchOperations } from "../fetch-operations.ts";
+import type { FetchOperations } from "../utils/fetch.ts";
 import {
   getCcspAccessToken,
   parseCcspConfig,

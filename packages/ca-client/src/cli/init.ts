@@ -2,21 +2,22 @@ import { existsSync } from "node:fs";
 import { readFile, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 import {
-  parseConfig,
+  parseCaConfig,
   parseIssuer,
   parseOrigin,
   parsePattern,
   type CaConfig,
-} from "./config.ts";
+} from "../operations/config.ts";
 import {
   buildUnsignedCa,
+  forEachPage,
   isExcluded,
   pathnameOf,
   selectorFor,
   UnissuableError,
-} from "./page.ts";
-import { resolveFiles } from "./paths.ts";
-import { forEachPage, type Page } from "./source.ts";
+  type Page,
+} from "../operations/page.ts";
+import { resolveFiles } from "../utils/paths.ts";
 
 export type Persistence = "commit" | "rebuild";
 const PERSISTENCES: Persistence[] = ["commit", "rebuild"];
@@ -320,7 +321,7 @@ const previewWith = async (
   configDir: string,
   log: Log,
 ) => {
-  const config = parseConfig(
+  const config = parseCaConfig(
     proposeConfig(scan, answers, configDir).raw,
     configDir,
   );
@@ -558,7 +559,7 @@ export const init = async (options: InitOptions): Promise<CaConfig> => {
     ? await askAnswers(scan, options.answers, ask, configDir, log)
     : options.answers;
   const { raw, persistence } = proposeConfig(scan, answers, configDir);
-  parseConfig(raw, configDir);
+  parseCaConfig(raw, configDir);
   if (!answers.author?.length && scan.withoutAuthor > 0) {
     log.log(
       `⚠ <meta name="author"> が無いページ ${scan.withoutAuthor} / ${scan.pages} の CA には author が入りません（--author で既定を渡せます）`,

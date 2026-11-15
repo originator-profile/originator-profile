@@ -1,13 +1,13 @@
-import { JSDOM } from "jsdom";
+import type { JSDOM } from "jsdom";
 import { existsSync } from "node:fs";
-import { mkdir, mkdtemp, readFile, rm, writeFile } from "node:fs/promises";
-import { tmpdir } from "node:os";
-import { dirname, join, relative } from "node:path";
-import { readCasFile } from "../cas-store/file.ts";
-import { detectDrift, type DriftResult } from "../drift/compare.ts";
-import type { CaConfig } from "./config.ts";
-import { expiresAt, jwtPayload } from "./expiry.ts";
-import { isInside } from "./paths.ts";
+import { join, relative } from "node:path";
+import { decodeCa, type DecodedCa } from "../ca/decode.ts";
+import { jwtPayload } from "../ca/expiry.ts";
+import { CaClientError, CaClientErrorCode } from "../errors.ts";
+import { compareTargets, type TargetComparison } from "../targets/compare.ts";
+import { readText, writeText } from "../utils/file.ts";
+import { elementLocation } from "../utils/html.ts";
+import { isInside } from "../utils/paths.ts";
 
 export const CAS_SCRIPT_TYPE = "application/ca-set+json";
 export const DEPRECATED_CAS_SCRIPT_TYPE = "application/cas+json";
@@ -27,38 +27,17 @@ export type CasSource =
 
 type InlineSource = Extract<CasSource, { kind: "inline" }>;
 
-export type CasContext = Pick<
-  CaConfig,
-  "issuer" | "publicDir" | "distDir" | "origins"
->;
+export type CasContext = {
+  issuer: string;
+  publicDir: string;
+  distDir: string;
+  origins?: string[];
+};
 
 const contentOf = (source: InlineSource) =>
   source.html.slice(source.start, source.end);
 
 export type Recorded = { id?: string; selector?: string };
-
-export type Cas = {
-  jwt: string;
-  payload: Record<string, unknown>;
-  expiresAt?: Date;
-};
-
-// 先頭の BOM は parse5 に文字として扱われ <head> が暗黙になるので、同じ長さの空白に替えて位置を保つ。
-export const parseHtml = (html: string): JSDOM =>
-  new JSDOM(html.replace(/^\uFEFF/, " "), { includeNodeLocations: true });
-
-type Offsets = { startOffset: number; endOffset: number };
-type ElementLocation = {
-  startTag?: Offsets & { attrs?: Record<string, Offsets> };
-  endTag?: Offsets;
-};
-
-// @types/jsdom は要素にも Location を返す型だが、実体は parse5 の ElementLocation。
-export const elementLocation = (
-  dom: JSDOM,
-  element: Element,
-): ElementLocation | undefined =>
-  (dom.nodeLocation(element) as unknown as ElementLocation | null) ?? undefined;
 
 const RELATIVE_BASE = "https://relative.invalid";
 
@@ -117,10 +96,20 @@ export const usesDeprecatedType = (dom: JSDOM): boolean =>
     `script[type='${DEPRECATED_CAS_SCRIPT_TYPE}']`,
   ) !== null;
 
-export const labelOf = (source: CasSource): string =>
+/** CAS の置き場所。パスはどちらも絶対パス。 */
+export type CasLocation =
+  | { kind: "file"; path: string }
+  | { kind: "inline"; htmlFile: string };
+
+export const locationOf = (source: CasSource): CasLocation =>
   source.kind === "file"
-    ? relative(process.cwd(), source.path)
-    : `${relative(process.cwd(), source.htmlFile)} (埋め込み)`;
+    ? { kind: "file", path: source.path }
+    : { kind: "inline", htmlFile: source.htmlFile };
+
+export const whereOf = (location: CasLocation): string =>
+  location.kind === "file"
+    ? relative(process.cwd(), location.path)
+    : `inline CAS in ${relative(process.cwd(), location.htmlFile)}`;
 
 type CasItem = string | { attestation: string; [key: string]: unknown };
 
@@ -129,14 +118,24 @@ const itemsOf = async (source: CasSource): Promise<CasItem[]> => {
     source.kind === "inline"
       ? contentOf(source)
       : existsSync(source.path)
-        ? await readFile(source.path, "utf-8")
+        ? await readText(source.path)
         : "";
   if (content.trim() === "") {
     return [];
   }
-  const value: unknown = JSON.parse(content);
+  let value: unknown;
+  try {
+    value = JSON.parse(content);
+  } catch (error) {
+    throw new CaClientError(`${whereOf(source)} is not valid JSON`, {
+      code: CaClientErrorCode.Validation,
+      cause: error,
+    });
+  }
   if (!Array.isArray(value)) {
-    throw new Error(`${labelOf(source)} の CAS が配列ではありません`);
+    throw new CaClientError(`${whereOf(source)} is not a JSON array`, {
+      code: CaClientErrorCode.Validation,
+    });
   }
   return value as CasItem[];
 };
@@ -172,55 +171,12 @@ export const ownCaSourceOf = async (
   return sources[0];
 };
 
-export type Page = { file: string; html: string; dom: JSDOM };
-
-export const withPage = async <T>(
-  file: string,
-  visit: (page: Page) => Promise<T> | T,
-): Promise<T> => {
-  const html = await readFile(file, "utf-8");
-  const dom = parseHtml(html);
-  try {
-    return await visit({ file, html, dom });
-  } finally {
-    dom.window.close();
-  }
-};
-
-export const forEachPage = async (
-  files: string[],
-  visit: (page: Page) => Promise<void> | void,
-): Promise<void> => {
-  for (const file of files) {
-    // oxlint-disable-next-line no-await-in-loop -- jsdom はページごとにメモリを大きく使うので、1 ページずつ開いて閉じる
-    await withPage(file, visit);
-  }
-};
-// readCasFile は CAS の先頭の CA しか読まないので、自分の CA だけの CAS を一時ファイルにして渡す。
-const withOwnCasFile = async <T>(
-  jwt: string,
-  read: (filePath: string) => Promise<T>,
-): Promise<T> => {
-  const dir = await mkdtemp(join(tmpdir(), "ca-own-"));
-  try {
-    const filePath = join(dir, "own.cas.json");
-    await writeFile(filePath, JSON.stringify([jwt]));
-    return await read(filePath);
-  } finally {
-    await rm(dir, { recursive: true, force: true });
-  }
-};
-
 export const readCas = async (
   source: CasSource | undefined,
   issuer: string,
-): Promise<Cas | undefined> => {
+): Promise<DecodedCa | undefined> => {
   const jwt = source && (await ownJwt(source, issuer));
-  if (jwt === undefined) {
-    return undefined;
-  }
-  const { payload } = await withOwnCasFile(jwt, readCasFile);
-  return { jwt, payload, expiresAt: expiresAt(jwt) };
+  return jwt === undefined ? undefined : decodeCa(jwt);
 };
 
 export const recordedOf = (payload: Record<string, unknown>): Recorded => {
@@ -247,13 +203,13 @@ export const driftOf = async (
   source: CasSource,
   pageHtml: string,
   issuer: string,
-): Promise<DriftResult> => {
+): Promise<TargetComparison | { status: "cas_missing" }> => {
   const jwt = await ownJwt(source, issuer);
   if (jwt === undefined) {
-    return { status: "cas_missing", casFilePath: labelOf(source) };
+    return { status: "cas_missing" };
   }
   const html = source.kind === "inline" ? source.html : pageHtml;
-  return withOwnCasFile(jwt, (filePath) => detectDrift({ html, filePath }));
+  return compareTargets({ html, jwt });
 };
 
 // publicDir の CAS はビルドで distDir に写るまで配信されないので、ビルド済みの distDir にも同じものを書く。
@@ -288,15 +244,14 @@ export const upsertOwnCa = async (
   }
   if (source.kind === "file") {
     await Promise.all(
-      copiesOf(source.path, context).map(async (path) => {
-        await mkdir(dirname(path), { recursive: true });
-        await writeFile(path, `${JSON.stringify(items, null, 2)}\n`);
-      }),
+      copiesOf(source.path, context).map((path) =>
+        writeText(path, `${JSON.stringify(items, null, 2)}\n`),
+      ),
     );
     return source;
   }
   const content = JSON.stringify(items);
   const html = `${source.html.slice(0, source.start)}${content}${source.html.slice(source.end)}`;
-  await writeFile(source.htmlFile, html);
+  await writeText(source.htmlFile, html);
   return { ...source, html, end: source.start + content.length };
 };

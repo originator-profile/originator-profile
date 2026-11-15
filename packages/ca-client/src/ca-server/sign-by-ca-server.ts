@@ -8,7 +8,7 @@ import {
   type DocumentProvider,
 } from "@originator-profile/sign";
 import { CaClientError, CaClientErrorCode } from "../errors.ts";
-import type { FetchOperations } from "../fetch-operations.ts";
+import type { FetchOperations } from "../utils/fetch.ts";
 import { parseDates, toUnixTime, type TimingOptions } from "./dates.ts";
 import { documentProvider as defaultDocumentProvider } from "./document-provider.ts";
 

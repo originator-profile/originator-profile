@@ -1,32 +1,43 @@
-import type { CaClient } from "../ca-client/create-ca-client.ts";
-import type { CaConfig } from "./config.ts";
-import { isExpiring } from "./expiry.ts";
-import { matchFiles, notFound, resolveFiles } from "./paths.ts";
+import type { CaClient } from "../ca-server/create-ca-client.ts";
+import { isExpiring } from "../ca/expiry.ts";
 import {
-  forEachPage,
-  labelOf,
+  locationOf,
   ownCaSourceOf,
   readCas,
   upsertOwnCa,
-  type CasContext,
+  whereOf,
+  type CasLocation,
   type CasSource,
-} from "./source.ts";
+} from "../cas/source.ts";
+import { withContext } from "../errors.ts";
+import { matchFiles, notFound, resolveFiles } from "../utils/paths.ts";
+import type { CaConfig } from "./config.ts";
+import { forEachPage } from "./page.ts";
 
-type RenewConfig = CasContext & Pick<CaConfig, "distDir" | "renewWithinDays">;
-
-type RenewOptions = {
+export type RenewOptions = {
   signer: Pick<CaClient, "reSign">;
-  log: Pick<Console, "log">;
   paths?: string[];
+  /** 省略すると config.renewWithinDays。 */
   withinDays?: number;
+  /** true なら期限に関わらず再署名する。 */
   all?: boolean;
+  /** CAS を再署名して書くたびに呼ぶ。 */
+  onRenewed?: (cas: CasLocation) => void;
+};
+
+export type RenewReport = {
+  renewed: CasLocation[];
+  /** 対象にした CAS の数。 */
+  total: number;
+  withinDays: number;
+  all: boolean;
 };
 
 const fileSource = (path: string): CasSource => ({ kind: "file", path });
 
 const pageSources = async (
   htmlFiles: string[],
-  config: RenewConfig,
+  config: CaConfig,
 ): Promise<Map<string, CasSource>> => {
   const sources = new Map<string, CasSource>();
   await forEachPage(htmlFiles, async ({ file, html, dom }) => {
@@ -38,7 +49,7 @@ const pageSources = async (
   return sources;
 };
 
-const collectAll = async (config: RenewConfig): Promise<CasSource[]> => [
+const collectAll = async (config: CaConfig): Promise<CasSource[]> => [
   ...(await resolveFiles(config.publicDir, [], ".cas.json")).map(fileSource),
   ...[
     ...(
@@ -48,7 +59,7 @@ const collectAll = async (config: RenewConfig): Promise<CasSource[]> => [
 ];
 
 const collect = async (
-  config: RenewConfig,
+  config: CaConfig,
   paths: string[],
 ): Promise<CasSource[]> => {
   if (paths.length === 0) {
@@ -87,10 +98,10 @@ const collect = async (
 
 const renewSource = async (
   source: CasSource,
-  config: RenewConfig,
+  config: CaConfig,
   options: RenewOptions & { withinDays: number },
 ): Promise<boolean> => {
-  const label = labelOf(source);
+  const label = whereOf(source);
   try {
     const cas = await readCas(source, config.issuer);
     if (
@@ -106,26 +117,29 @@ const renewSource = async (
     );
     return true;
   } catch (error) {
-    throw new Error(`renew ${label}`, { cause: error });
+    throw withContext(`renew ${label}`, error);
   }
 };
 
 export const renew = async (
-  config: RenewConfig,
+  config: CaConfig,
   options: RenewOptions,
-): Promise<string[]> => {
+): Promise<RenewReport> => {
   const withinDays = options.withinDays ?? config.renewWithinDays;
   const sources = await collect(config, options.paths ?? []);
-  const renewed: string[] = [];
+  const renewed: CasLocation[] = [];
   for (const source of sources) {
     // oxlint-disable-next-line no-await-in-loop -- CA Server に再署名をまとめて送らず、1 件ずつ頼む
     if (await renewSource(source, config, { ...options, withinDays })) {
-      renewed.push(labelOf(source));
-      options.log.log(`✓ Renewed ${labelOf(source)}`);
+      const location = locationOf(source);
+      renewed.push(location);
+      options.onRenewed?.(location);
     }
   }
-  options.log.log(
-    `Renewed ${renewed.length} of ${sources.length} CAS (${options.all ? "all" : `expiring within ${withinDays} days`})`,
-  );
-  return renewed;
+  return {
+    renewed,
+    total: sources.length,
+    withinDays,
+    all: options.all ?? false,
+  };
 };

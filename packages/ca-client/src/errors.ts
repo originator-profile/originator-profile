@@ -4,6 +4,7 @@ export const CaClientErrorCode = {
   Http: "CA_HTTP",
   Response: "CA_RESPONSE",
   File: "CA_FILE",
+  Verification: "CA_VERIFICATION",
 } as const;
 
 export type CaClientErrorCode =
@@ -27,6 +28,15 @@ export class CaClientError extends Error {
     this.status = options.status;
   }
 }
+
+export const withContext = (context: string, error: unknown): unknown =>
+  error instanceof CaClientError
+    ? new CaClientError(`${context}: ${error.message}`, {
+        code: error.code,
+        status: error.status,
+        cause: error,
+      })
+    : error;
 
 /** True when the request failed with HTTP 401. */
 export const isUnauthorized = (error: unknown): boolean =>

@@ -12,7 +12,7 @@ import {
 } from "./file.ts";
 
 const withTempDir = async (run: (dir: string) => Promise<void>) => {
-  const dir = await mkdtemp(join(tmpdir(), "ca-client-cas-store-"));
+  const dir = await mkdtemp(join(tmpdir(), "ca-client-cas-"));
   try {
     await run(dir);
   } finally {
@@ -228,16 +228,23 @@ const encodeJwt = (
 ) =>
   `${Buffer.from(JSON.stringify(header)).toString("base64url")}.${Buffer.from(JSON.stringify(payload)).toString("base64url")}.sig`;
 
-test("parseCasFileContent: returns the leading JWT", () => {
-  const token = "header.payload.signature";
-  expect(parseCasFileContent(JSON.stringify([token]))).toBe(token);
+test("parseCasFileContent: returns every JWT in file order", () => {
+  expect(parseCasFileContent(JSON.stringify(["a.b.c", "d.e.f"]))).toEqual([
+    "a.b.c",
+    "d.e.f",
+  ]);
 });
 
 test("parseCasFileContent: accepts { main, attestation } items", () => {
-  const token = "header.payload.signature";
   expect(
-    parseCasFileContent(JSON.stringify([{ main: true, attestation: token }])),
-  ).toBe(token);
+    parseCasFileContent(
+      JSON.stringify(["a.b.c", { main: true, attestation: "d.e.f" }]),
+    ),
+  ).toEqual(["a.b.c", "d.e.f"]);
+});
+
+test("parseCasFileContent: rejects an empty array", () => {
+  expect(() => parseCasFileContent("[]")).toThrow(INVALID_CAS_FORMAT);
 });
 
 test("parseCasFileContent: rejects a non-array document", () => {
@@ -254,23 +261,21 @@ test("parseCasFileContent: surfaces JSON.parse errors as CA_VALIDATION", () => {
   expect(() => parseCasFileContent("{invalid")).toThrow(/JSON/i);
 });
 
-test("readCasFile: returns jwt and payload with JWT registered claims stripped", async () => {
+test("readCasFile: decodes every CA in the file, in file order", async () => {
   await withTempDir(async (dir) => {
-    const payload = {
-      target: [{ type: "TextTargetIntegrity" }],
-      iss: "dns:x",
-      credentialSubject: { id: "urn:uuid:1" },
-    };
-    const jwt = encodeJwt(payload);
+    const foreign = encodeJwt({ credentialSubject: { id: "urn:uuid:ads" } });
+    const own = encodeJwt({ credentialSubject: { id: "urn:uuid:own" } });
     const filePath = join(dir, "ja-JP.about.cas.json");
-    await writeFile(filePath, JSON.stringify([jwt]));
+    await writeFile(
+      filePath,
+      JSON.stringify([foreign, { main: true, attestation: own }]),
+    );
 
-    const result = await readCasFile(filePath);
-    expect(result.jwt).toBe(jwt);
-    expect(result.payload).toEqual({
-      target: payload.target,
-      credentialSubject: payload.credentialSubject,
-    });
+    const cas = await readCasFile(filePath);
+    expect(cas).toEqual([
+      { jwt: foreign, payload: { credentialSubject: { id: "urn:uuid:ads" } } },
+      { jwt: own, payload: { credentialSubject: { id: "urn:uuid:own" } } },
+    ]);
   });
 });
 
@@ -281,10 +286,8 @@ test("readCasFile: reads a file written by writeCasFile", async () => {
     const filePath = join(dir, "cas", "page.cas.json");
 
     await writeCasFile({ filePath, jwt });
-    const result = await readCasFile(filePath);
 
-    expect(result.jwt).toBe(jwt);
-    expect(result.payload).toEqual(payload);
+    await expect(readCasFile(filePath)).resolves.toEqual([{ jwt, payload }]);
   });
 });
 

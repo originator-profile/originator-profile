@@ -2,12 +2,39 @@ import {
   AllowedUrl,
   type UnsignedContentAttestation,
 } from "@originator-profile/model";
+import type { JSDOM } from "jsdom";
 import { dirname, relative, sep } from "node:path";
 import { isDeepStrictEqual } from "node:util";
+import type { Recorded } from "../cas/source.ts";
+import { DEFAULT_EXTERNAL_SELECTOR } from "../targets/html.ts";
+import { readText } from "../utils/file.ts";
+import { parseHtml } from "../utils/html.ts";
 import type { CaConfig } from "./config.ts";
-import type { Recorded } from "./source.ts";
 
-export const DEFAULT_EXTERNAL_SELECTOR = ".target-integrity";
+export type Page = { file: string; html: string; dom: JSDOM };
+
+const withPage = async <T>(
+  file: string,
+  visit: (page: Page) => Promise<T> | T,
+): Promise<T> => {
+  const html = await readText(file);
+  const dom = parseHtml(html);
+  try {
+    return await visit({ file, html, dom });
+  } finally {
+    dom.window.close();
+  }
+};
+
+export const forEachPage = async (
+  files: string[],
+  visit: (page: Page) => Promise<void> | void,
+): Promise<void> => {
+  for (const file of files) {
+    // oxlint-disable-next-line no-await-in-loop -- jsdom はページごとにメモリを大きく使うので、1 ページずつ開いて閉じる
+    await withPage(file, visit);
+  }
+};
 
 export class UnissuableError extends Error {
   constructor(message: string) {
@@ -55,7 +82,7 @@ const dateTimeStampOf = (name: string, value: string | undefined) => {
   const match = DATE.exec(value);
   if (match === null || (match[2] !== undefined && match[4] === undefined)) {
     throw new UnissuableError(
-      `${name} はタイムゾーン付きの日時か日付にしてください: ${value}`,
+      `${name} must be a date, or a date-time with a time zone: ${value}`,
     );
   }
   const [, date, time = "00:00", seconds = ":00", zone = "Z"] = match;
@@ -98,7 +125,7 @@ const allowedUrlOf = (
           meta(document, "og:url") ??
           (() => {
             throw new UnissuableError(
-              "origins の設定も canonical も og:url もありません",
+              "no origins in the config, and no canonical link or og:url in the page",
             );
           })(),
       ];
@@ -173,12 +200,10 @@ const selectorOf = (input: {
   const selector =
     input.selector ?? selectorFor(input.config, input.pathname, input.recorded);
   if (selector === undefined) {
-    throw new UnissuableError(
-      `${input.pathname} に合う selectors がありません`,
-    );
+    throw new UnissuableError(`no selectors rule matches ${input.pathname}`);
   }
   if (input.document.querySelector(selector) === null) {
-    throw new UnissuableError(`${selector} に一致する要素がありません`);
+    throw new UnissuableError(`no element matches ${selector}`);
   }
   return selector;
 };
@@ -192,7 +217,7 @@ const headlineOf = (document: Document) => {
     meta(document, "og:description") ?? meta(document, "description");
   if (!headline || !description) {
     throw new UnissuableError(
-      "og:title か <title>、og:description か description が必要です",
+      "og:title or <title>, and og:description or description are required",
     );
   }
   return { headline, description };

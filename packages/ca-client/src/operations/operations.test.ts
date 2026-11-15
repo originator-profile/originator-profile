@@ -11,18 +11,25 @@ import {
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, relative } from "node:path";
+import { dirname, join } from "node:path";
 import { expect, onTestFinished, test } from "vitest";
-import { parseConfig, type CaConfig } from "./config.ts";
-import { init } from "./init.ts";
+import type { CasLocation } from "../cas/source.ts";
+import { CaClientError, CaClientErrorCode, isUnauthorized } from "../errors.ts";
+import { parseCaConfig, type CaConfig } from "./config.ts";
 import { inject } from "./inject.ts";
 import { buildUnsignedCa } from "./page.ts";
 import { renew } from "./renew.ts";
 import { sync, UnissuablePagesError } from "./sync.ts";
-
-const SELECTOR = "[itemprop='headline'], [itemprop='articleBody']";
-const ISSUER = "dns:example.com";
-const silent = { log: () => {}, error: () => {} };
+import {
+  expIn,
+  honestSigner,
+  inRoot,
+  ISSUER,
+  jwt,
+  payloadOf,
+  SELECTOR,
+  textIntegrity,
+} from "./test-utils.ts";
 
 const page = (body: string, head = "") =>
   `<html lang="ja"><head><title>サイト名 | 記事</title><meta name="description" content="説明"><script type="application/ca-set+json" src="/cas/a.cas.json"></script>${head}</head><body>${body}</body></html>`;
@@ -30,57 +37,10 @@ const ARTICLE = page(
   `<article><h1 itemprop="headline">見出し</h1><time itemprop="datePublished" datetime="2026-01-01T00:00:00Z">1月1日</time><div itemprop="articleBody">本文</div></article>`,
 );
 
-const jwt = (payload: Record<string, unknown>) => {
-  const b64u = (value: unknown) =>
-    Buffer.from(JSON.stringify(value)).toString("base64url");
-  return `${b64u({ alg: "none" })}.${b64u(payload)}.sig`;
-};
-
-const textIntegrity = (html: string, selector: string) => {
-  const dom = new JSDOM(html);
-  const text = Array.from(
-    dom.window.document.querySelectorAll(selector),
-    (element) => element.textContent ?? "",
-  ).join("");
-  dom.window.close();
-  return `sha256-${createHash("sha256").update(text, "utf-8").digest("base64")}`;
-};
-
-const DAY_S = 24 * 60 * 60;
-const expIn = (days: number) => Math.floor(Date.now() / 1000) + days * DAY_S;
-const payloadOf = (token: string) =>
-  JSON.parse(Buffer.from(token.split(".")[1], "base64url").toString());
-
-const honestSigner = (signed: UnsignedContentAttestation[] = []) => ({
-  sign: async (uca: UnsignedContentAttestation) => {
-    signed.push(uca);
-    return jwt({
-      issuer: uca.issuer,
-      exp: expIn(365),
-      credentialSubject: { id: "urn:uuid:new", ...uca.credentialSubject },
-      allowedUrl: uca.allowedUrl,
-      target: uca.target.map((target) =>
-        target.type === "TextTargetIntegrity"
-          ? {
-              type: target.type,
-              cssSelector: target.cssSelector,
-              integrity: textIntegrity(
-                String(target.content),
-                String(target.cssSelector),
-              ),
-            }
-          : target,
-      ),
-    });
-  },
-  reSign: async (payload: Record<string, unknown>) =>
-    jwt({ ...payload, renewed: true, exp: expIn(365) }),
-});
-
 const site = (over: Record<string, unknown> = {}) => {
   const root = realpathSync(mkdtempSync(join(tmpdir(), "ca-test-")));
   onTestFinished(() => rmSync(root, { recursive: true, force: true }));
-  const config = parseConfig(
+  const config = parseCaConfig(
     {
       issuer: ISSUER,
       distDir: "dist",
@@ -135,13 +95,35 @@ const build = (config: CaConfig, html: string, pathname = "/news/a") => {
   }
 };
 
+const thrownBy = (run: () => unknown): unknown => {
+  try {
+    run();
+  } catch (error) {
+    return error;
+  }
+  throw new Error("expected to throw");
+};
+
+const caError = (code: CaClientErrorCode, message?: RegExp) => ({
+  name: expect.stringMatching(/Error$/),
+  code,
+  ...(message ? { message: expect.stringMatching(message) } : {}),
+});
+
+const configError = (field: RegExp) => caError(CaClientErrorCode.Config, field);
+
 test("config: issuer は dns: で始まり、selectors は必須", () => {
-  expect(() =>
-    parseConfig({ issuer: "example.com", selectors: [{ selector: "a" }] }, "/"),
-  ).toThrow(/dns:/);
-  expect(() => parseConfig({ issuer: "dns:example.com" }, "/")).toThrow(
-    /selectors/,
-  );
+  expect(
+    thrownBy(() =>
+      parseCaConfig(
+        { issuer: "example.com", selectors: [{ selector: "a" }] },
+        "/",
+      ),
+    ),
+  ).toMatchObject(configError(/issuer/));
+  expect(
+    thrownBy(() => parseCaConfig({ issuer: "dns:example.com" }, "/")),
+  ).toMatchObject(configError(/selectors/));
 });
 
 test("page: microdata を OGP と <title> より優先して読む", () => {
@@ -227,7 +209,7 @@ test("sync --check: 未発行を missing、HTML が変わったものを drifted
   s.upsertOwnCa({}, "p.cas.json");
   const orphan = s.upsertOwnCa({}, "gone.cas.json");
 
-  const report = await sync(s.config, { check: true, log: silent });
+  const report = await sync(s.config, { check: true });
 
   expect(report.pages.map((p) => [p.pathname, p.status])).toStrictEqual([
     ["/news/a", "drifted"],
@@ -240,9 +222,13 @@ test("sync --check: CA を作れないページがあれば失敗する", async 
   const s = site();
   s.writeHtml("news/a/index.html", page("<p>itemprop なし</p>"));
 
-  await expect(sync(s.config, { check: true, log: silent })).rejects.toThrow(
-    UnissuablePagesError,
-  );
+  const error = await sync(s.config, { check: true }).catch((e) => e);
+  expect(error).toBeInstanceOf(UnissuablePagesError);
+  expect(error).toBeInstanceOf(CaClientError);
+  expect(error).toMatchObject({
+    code: CaClientErrorCode.Validation,
+    pages: [expect.objectContaining({ pathname: "/news/a" })],
+  });
 });
 
 test("sync: missing と drifted だけを署名し、CA ID と記録済み selector を引き継いで照合する", async () => {
@@ -263,21 +249,60 @@ test("sync: missing と drifted だけを署名し、CA ID と記録済み selec
   const report = await sync(s.config, {
     check: false,
     signer: honestSigner(signed),
-    log: silent,
   });
 
   expect(signed.length).toBe(1);
   expect(signed[0].credentialSubject.id).toBe("urn:uuid:old");
   expect(signed[0].target[0].cssSelector).toBe("article");
-  expect(report.pages[0].issued).toBe("update");
+  expect(report.issued).toStrictEqual([
+    {
+      pathname: "/news/a",
+      cas: { kind: "file", path: s.casFile },
+      action: "update",
+    },
+  ]);
 
   const again = await sync(s.config, {
     check: false,
     signer: honestSigner(signed),
-    log: silent,
   });
   expect(signed.length).toBe(1);
   expect(again.pages[0].status).toBe("ok");
+  expect(again.issued).toStrictEqual([]);
+});
+
+test("sync: 照合し終えてから署名を始め、onScanned の結果は署名のあとも変わらない", async () => {
+  const s = site();
+  s.writeHtml("news/a/index.html", ARTICLE);
+  s.writeHtml(
+    "news/b/index.html",
+    ARTICLE.replace("/cas/a.cas.json", "/cas/b.cas.json"),
+  );
+  const events: string[] = [];
+  let scanned: unknown;
+  let snapshot: unknown;
+
+  const report = await sync(s.config, {
+    check: false,
+    signer: honestSigner(),
+    onScanned: (scan) => {
+      events.push(`scanned ${scan.pages.length}`);
+      scanned = scan;
+      snapshot = structuredClone(scan);
+    },
+    onIssued: (page) => events.push(`${page.action} ${page.pathname}`),
+  });
+
+  expect(events).toStrictEqual([
+    "scanned 2",
+    "create /news/a",
+    "create /news/b",
+  ]);
+  expect(scanned).toStrictEqual(snapshot);
+  expect(report.issued.map((page) => page.pathname)).toStrictEqual([
+    "/news/a",
+    "/news/b",
+  ]);
 });
 
 test("sync: CA を作れないページは飛ばし、他のページは署名する", async () => {
@@ -292,12 +317,11 @@ test("sync: CA を作れないページは飛ばし、他のページは署名�
   const report = await sync(s.config, {
     check: false,
     signer: honestSigner(signed),
-    log: silent,
   });
 
   expect(signed.length).toBe(1);
   expect(existsSync(s.casFile)).toBeTruthy();
-  expect(report.pages[1].problem ?? "").toMatch(/一致する要素がありません/);
+  expect(report.pages[1].problem).toBe(`no element matches ${SELECTOR}`);
 });
 
 test("sync: 署名結果が HTML と一致しなければ失敗する", async () => {
@@ -317,8 +341,35 @@ test("sync: 署名結果が HTML と一致しなければ失敗する", async ()
   };
 
   await expect(
-    sync(s.config, { check: false, signer: stale, log: silent }),
-  ).rejects.toThrow(/Inline verification failed/);
+    sync(s.config, { check: false, signer: stale }),
+  ).rejects.toMatchObject(caError(CaClientErrorCode.Verification, /\/news\/a/));
+});
+
+test("sync と renew: CA Server のエラーは code と status を保ったまま、どのページか分かる形で投げる", async () => {
+  const s = site();
+  inRoot(s.root);
+  s.writeHtml("news/a/index.html", ARTICLE);
+  s.upsertOwnCa({ exp: expIn(1) });
+  const unauthorized = () =>
+    Promise.reject(
+      new CaClientError("CA signing failed: HTTP 401", {
+        code: CaClientErrorCode.Http,
+        status: 401,
+      }),
+    );
+  const signer = { sign: unauthorized, reSign: unauthorized };
+
+  const signError = await sync(s.config, { check: false, signer }).catch(
+    (error) => error,
+  );
+  const renewError = await renew(s.config, { signer, all: true }).catch(
+    (error) => error,
+  );
+
+  expect(isUnauthorized(signError)).toBe(true);
+  expect(signError.message).toMatch(/^sign \/news\/a: /);
+  expect(isUnauthorized(renewError)).toBe(true);
+  expect(renewError.message).toMatch(/^renew public\/cas\/a\.cas\.json: /);
 });
 
 const scoped = () => {
@@ -337,9 +388,7 @@ const scoped = () => {
   process.chdir(s.root);
   onTestFinished(() => process.chdir(cwd));
   const pathnames = async (paths: string[]) =>
-    (await sync(s.config, { check: true, paths, log: silent })).pages.map(
-      (p) => p.pathname,
-    );
+    (await sync(s.config, { check: true, paths })).pages.map((p) => p.pathname);
   return { s, pathnames };
 };
 
@@ -379,10 +428,9 @@ test("sync: パスを指定したときは orphan を判定しない", async () 
   const report = await sync(s.config, {
     check: true,
     paths: ["ja/news/a/index.html"],
-    log: silent,
   });
 
-  expect(report.orphans).toStrictEqual([]);
+  expect(report.orphans).toBeUndefined();
 });
 
 test("sync: distDir そのものを指定したときは全体として扱い、orphan も判定する", async () => {
@@ -396,7 +444,6 @@ test("sync: distDir そのものを指定したときは全体として扱い、
   const report = await sync(s.config, {
     check: true,
     paths: ["dist"],
-    log: silent,
   });
   expect(report.orphans).toStrictEqual([
     join(s.config.publicDir, "cas", "gone.cas.json"),
@@ -407,16 +454,20 @@ test("sync: 一致しないパスと distDir の外のパスは失敗する", as
   const { s, pathnames } = scoped();
   writeFileSync(join(s.root, "outside.html"), ARTICLE);
 
-  await expect(pathnames(["ja/news/zzz"])).rejects.toThrow(/一致するファイル/);
-  await expect(pathnames(["ja/**/*.htm"])).rejects.toThrow(/一致するファイル/);
-  await expect(pathnames(["outside.html"])).rejects.toThrow(/の外です/);
+  const validation = caError(CaClientErrorCode.Validation);
+  await expect(pathnames(["ja/news/zzz"])).rejects.toMatchObject({
+    ...validation,
+    message: expect.stringMatching(/^No files/),
+  });
+  await expect(pathnames(["ja/**/*.htm"])).rejects.toMatchObject({
+    ...validation,
+    message: expect.stringMatching(/^No files/),
+  });
+  await expect(pathnames(["outside.html"])).rejects.toMatchObject({
+    ...validation,
+    message: expect.stringMatching(/is outside/),
+  });
 });
-
-const inRoot = (root: string) => {
-  const cwd = process.cwd();
-  process.chdir(root);
-  onTestFinished(() => process.chdir(cwd));
-};
 
 const readJwt = (file: string): string =>
   JSON.parse(readFileSync(file, "utf-8"))[0];
@@ -443,7 +494,7 @@ const matching = (
 };
 
 test("config: renewWithinDays と cas の既定値と検証", () => {
-  const config = parseConfig(
+  const config = parseCaConfig(
     { issuer: "dns:example.com", selectors: [{ selector: "a" }] },
     "/",
   );
@@ -452,16 +503,18 @@ test("config: renewWithinDays と cas の既定値と検証", () => {
     mode: "file",
     path: "/cas/{path}.cas.json",
   });
-  expect(() =>
-    parseConfig(
-      {
-        issuer: "dns:example.com",
-        selectors: [{ selector: "a" }],
-        cas: { mode: "embed" },
-      },
-      "/",
+  expect(
+    thrownBy(() =>
+      parseCaConfig(
+        {
+          issuer: "dns:example.com",
+          selectors: [{ selector: "a" }],
+          cas: { mode: "embed" },
+        },
+        "/",
+      ),
     ),
-  ).toThrow(/cas.mode/);
+  ).toMatchObject(configError(/cas\.mode/));
 });
 
 test("sync: HTML と一致していても期限が近い CAS は expiring として作り直す", async () => {
@@ -481,7 +534,7 @@ test("sync: HTML と一致していても期限が近い CAS は expiring とし
     "b.cas.json",
   );
 
-  const checked = await sync(s.config, { check: true, log: silent });
+  const checked = await sync(s.config, { check: true });
   expect(checked.pages.map((p) => [p.pathname, p.status])).toStrictEqual([
     ["/news/a", "expiring"],
     ["/news/b", "ok"],
@@ -492,7 +545,6 @@ test("sync: HTML と一致していても期限が近い CAS は expiring とし
   await sync(s.config, {
     check: false,
     signer: honestSigner(signed),
-    log: silent,
   });
   expect(signed.length).toBe(1);
   expect(signed[0].credentialSubject.id).toBe("urn:uuid:a");
@@ -505,34 +557,40 @@ test("renew: 期限が近い CAS と exp の無い CAS だけを再署名し、-
   s.upsertOwnCa({ exp: expIn(10) }, "a.cas.json");
   s.upsertOwnCa({ exp: expIn(100) }, "b.cas.json");
   s.upsertOwnCa({}, "c.cas.json");
-  const cas = (name: string) => join("public", "cas", name);
+  const casPath = (name: string) => join(s.config.publicDir, "cas", name);
+  const cas = (name: string) => ({ kind: "file", path: casPath(name) });
 
-  const renewed = await renew(s.config, {
+  const notified: CasLocation[] = [];
+  const report = await renew(s.config, {
     signer: honestSigner(),
-    log: silent,
+    onRenewed: (location) => notified.push(location),
   });
-  expect(renewed).toStrictEqual([cas("a.cas.json"), cas("c.cas.json")]);
-  expect(
-    payloadOf(readJwt(join(s.root, cas("a.cas.json")))).renewed,
-  ).toBeTruthy();
-  expect(
-    !payloadOf(readJwt(join(s.root, cas("b.cas.json")))).renewed,
-  ).toBeTruthy();
+  expect(report).toStrictEqual({
+    renewed: [cas("a.cas.json"), cas("c.cas.json")],
+    total: 3,
+    withinDays: 30,
+    all: false,
+  });
+  expect(notified).toStrictEqual(report.renewed);
+  expect(payloadOf(readJwt(casPath("a.cas.json"))).renewed).toBeTruthy();
+  expect(!payloadOf(readJwt(casPath("b.cas.json"))).renewed).toBeTruthy();
 
   expect(
-    await renew(s.config, {
-      signer: honestSigner(),
-      log: silent,
-      withinDays: 400,
-    }),
+    (
+      await renew(s.config, {
+        signer: honestSigner(),
+        withinDays: 400,
+      })
+    ).renewed,
   ).toStrictEqual([cas("a.cas.json"), cas("b.cas.json"), cas("c.cas.json")]);
   expect(
-    await renew(s.config, {
-      signer: honestSigner(),
-      log: silent,
-      all: true,
-      paths: ["cas/b.cas.json"],
-    }),
+    (
+      await renew(s.config, {
+        signer: honestSigner(),
+        all: true,
+        paths: ["cas/b.cas.json"],
+      })
+    ).renewed,
   ).toStrictEqual([cas("b.cas.json")]);
 });
 
@@ -544,15 +602,16 @@ test("renew: HTML のパスを渡すと、そのページが参照する CAS を
   s.upsertOwnCa({ exp: expIn(10) }, "other.cas.json");
 
   expect(
-    await renew(s.config, {
-      signer: honestSigner(),
-      log: silent,
-      paths: ["news/a/index.html"],
-    }),
-  ).toStrictEqual([join("public", "cas", "a.cas.json")]);
+    (
+      await renew(s.config, {
+        signer: honestSigner(),
+        paths: ["news/a/index.html"],
+      })
+    ).renewed,
+  ).toStrictEqual([{ kind: "file", path: s.casFile }]);
   await expect(
-    renew(s.config, { signer: honestSigner(), log: silent, paths: ["zzz"] }),
-  ).rejects.toThrow(/一致するファイル/);
+    renew(s.config, { signer: honestSigner(), paths: ["zzz"] }),
+  ).rejects.toMatchObject(caError(CaClientErrorCode.Validation));
 });
 
 const BARE = ARTICLE.replace(/<script[^>]*><\/script>/, "");
@@ -564,18 +623,18 @@ test("inject: CAS の script タグを </head> の前に足し、他のバイト
   const noSelector = BARE.replace(/<article>.*<\/article>/, "<p>本文なし</p>");
   const plain = s.writeHtml("plain/index.html", noSelector);
 
-  const checked = await inject(s.config, { check: true, log: silent });
+  const checked = await inject(s.config, { check: true });
   expect(checked.injected).toStrictEqual(["/news/a"]);
   expect(readFileSync(a, "utf-8")).toBe(BARE);
 
-  await inject(s.config, { check: false, log: silent });
+  await inject(s.config, { check: false });
   const tag =
     '<script type="application/ca-set+json" src="/cas/news.a.cas.json"></script>';
   const injected = readFileSync(a, "utf-8");
   expect(injected).toBe(BARE.replace("</head>", `${tag}</head>`));
   expect(readFileSync(plain, "utf-8")).toBe(noSelector);
 
-  const again = await inject(s.config, { check: false, log: silent });
+  const again = await inject(s.config, { check: false });
   expect(again.injected).toStrictEqual([]);
   expect(readFileSync(a, "utf-8")).toBe(injected);
 });
@@ -599,16 +658,16 @@ test("inject: 外部リソースの integrity 属性をファイルのハッシ�
   );
   const before = readFileSync(tagged, "utf-8");
 
-  const checked = await inject(s.config, { check: true, log: silent });
+  const checked = await inject(s.config, { check: true });
   expect(checked.injected).toStrictEqual([]);
   expect(checked.integrity).toStrictEqual(["/news/a"]);
   expect(readFileSync(tagged, "utf-8")).toBe(before);
 
-  const report = await inject(s.config, { check: false, log: silent });
+  const report = await inject(s.config, { check: false });
   expect(report.problems).toStrictEqual([
     {
       pathname: "/news/a",
-      problem: "src のファイルがありません: /img/none.svg",
+      problem: "file for src not found: /img/none.svg",
     },
   ]);
   const written = readFileSync(tagged, "utf-8");
@@ -621,7 +680,7 @@ test("inject: 外部リソースの integrity 属性をファイルのハッシ�
       .replace('integrity="sha256-old"', `integrity="${hash("photo")}"`),
   );
 
-  const again = await inject(s.config, { check: false, log: silent });
+  const again = await inject(s.config, { check: false });
   expect(again.integrity).toStrictEqual([]);
   expect(readFileSync(tagged, "utf-8")).toBe(written);
 });
@@ -652,7 +711,7 @@ test("inject: </head> を省いた HTML、BOM 付き、head も body も省い�
     s.writeHtml(`${name}/index.html`, html);
   }
 
-  const report = await inject(s.config, { check: false, log: silent });
+  const report = await inject(s.config, { check: false });
 
   expect(report.problems).toStrictEqual([]);
   for (const [name, { expected }] of Object.entries(pages)) {
@@ -661,7 +720,7 @@ test("inject: </head> を省いた HTML、BOM 付き、head も body も省い�
     ).toBe(expected(tag.replace("{name}", name)));
   }
   expect(
-    (await sync(s.config, { check: true, log: silent })).pages.map((p) => [
+    (await sync(s.config, { check: true })).pages.map((p) => [
       p.pathname,
       p.status,
     ]),
@@ -677,7 +736,7 @@ test("inline: inject から sync で埋め込み CAS を署名し、ずれたら
   inRoot(s.root);
   const a = s.writeHtml("news/a/index.html", BARE);
 
-  await inject(s.config, { check: false, log: silent });
+  await inject(s.config, { check: false });
   expect(readFileSync(a, "utf-8")).toMatch(
     /<script type="application\/ca-set\+json">\[\]<\/script><\/head>/,
   );
@@ -685,14 +744,13 @@ test("inline: inject から sync で埋め込み CAS を署名し、ずれたら
   const first = await sync(s.config, {
     check: false,
     signer: honestSigner(),
-    log: silent,
   });
-  expect(first.pages.map((p) => [p.status, p.issued, p.cas])).toStrictEqual([
-    [
-      "missing",
-      "create",
-      `${join("dist", "news", "a", "index.html")} (埋め込み)`,
-    ],
+  const inline = { kind: "inline", htmlFile: a };
+  expect(first.pages.map((p) => [p.status, p.cas])).toStrictEqual([
+    ["missing", inline],
+  ]);
+  expect(first.issued).toStrictEqual([
+    { pathname: "/news/a", cas: inline, action: "create" },
   ]);
   const signedHtml = readFileSync(a, "utf-8");
   const embedded =
@@ -707,32 +765,25 @@ test("inline: inject から sync で埋め込み CAS を署名し、ずれたら
     ),
   );
   expect(
-    (await sync(s.config, { check: true, log: silent })).pages.map(
-      (p) => p.status,
-    ),
+    (await sync(s.config, { check: true })).pages.map((p) => p.status),
   ).toStrictEqual(["ok"]);
 
   writeFileSync(a, signedHtml.replace("本文", "書き換えた本文"));
   const drifted = await sync(s.config, {
     check: false,
     signer: honestSigner(),
-    log: silent,
   });
-  expect(drifted.pages.map((p) => [p.status, p.issued])).toStrictEqual([
-    ["drifted", "update"],
-  ]);
+  expect(drifted.pages.map((p) => p.status)).toStrictEqual(["drifted"]);
+  expect(drifted.issued.map((p) => p.action)).toStrictEqual(["update"]);
   expect(
-    (await sync(s.config, { check: true, log: silent })).pages.map(
-      (p) => p.status,
-    ),
+    (await sync(s.config, { check: true })).pages.map((p) => p.status),
   ).toStrictEqual(["ok"]);
 
   const renewed = await renew(s.config, {
     signer: honestSigner(),
-    log: silent,
     all: true,
   });
-  expect(renewed.length).toBe(1);
+  expect(renewed.renewed).toStrictEqual([inline]);
   const after = /<script type="application\/ca-set\+json">(.*?)<\/script>/.exec(
     readFileSync(a, "utf-8"),
   )?.[1];
@@ -757,8 +808,8 @@ test("page: 日付を秒とタイムゾーン付きの日時にそろえ、タ�
   expect(published("2025-11-11T15:00:00.000Z")).toBe(
     "2025-11-11T15:00:00.000Z",
   );
-  expect(() => published("2026-01-01T09:00:00")).toThrow(/タイムゾーン/);
-  expect(() => published("1月1日")).toThrow(/タイムゾーン/);
+  expect(() => published("2026-01-01T09:00:00")).toThrow(/time zone/);
+  expect(() => published("1月1日")).toThrow(/time zone/);
 });
 
 test("sync: 本文が同じでも CA の項目が今のページとずれていれば drifted として作り直す", async () => {
@@ -777,16 +828,14 @@ test("sync: 本文が同じでも CA の項目が今のページとずれてい�
     ].flat(),
   });
 
-  const checked = await sync(s.config, { check: true, log: silent });
+  const checked = await sync(s.config, { check: true });
   expect(checked.pages.map((p) => [p.status, p.drift])).toStrictEqual([
     ["drifted", ["datePublished", "allowedUrl"]],
   ]);
 
-  await sync(s.config, { check: false, signer: honestSigner(), log: silent });
+  await sync(s.config, { check: false, signer: honestSigner() });
   expect(
-    (await sync(s.config, { check: true, log: silent })).pages.map(
-      (p) => p.status,
-    ),
+    (await sync(s.config, { check: true })).pages.map((p) => p.status),
   ).toStrictEqual(["ok"]);
 });
 
@@ -813,13 +862,13 @@ test("sync と renew: CAS に他の発行者の CA があれば残し、自分�
     JSON.stringify([foreign]),
   );
 
-  const checked = await sync(s.config, { check: true, log: silent });
+  const checked = await sync(s.config, { check: true });
   expect(checked.pages.map((p) => [p.pathname, p.status])).toStrictEqual([
     ["/news/a", "expiring"],
     ["/news/b", "missing"],
   ]);
 
-  await sync(s.config, { check: false, signer: honestSigner(), log: silent });
+  await sync(s.config, { check: false, signer: honestSigner() });
   const a = JSON.parse(readFileSync(s.casFile, "utf-8"));
   expect(a.length).toBe(2);
   expect(a[0]).toBe(foreign);
@@ -831,7 +880,7 @@ test("sync と renew: CAS に他の発行者の CA があれば残し、自分�
   expect(b[0]).toBe(foreign);
   expect(payloadOf(b[1]).issuer).toBe(ISSUER);
 
-  await renew(s.config, { signer: honestSigner(), log: silent, all: true });
+  await renew(s.config, { signer: honestSigner(), all: true });
   const renewed = JSON.parse(readFileSync(s.casFile, "utf-8"));
   expect(renewed[0]).toBe(foreign);
   expect(payloadOf(renewed[1].attestation).renewed).toBeTruthy();
@@ -850,17 +899,21 @@ test("sync と inject: 他オリジンの CAS の script は使わず、自分�
     BARE.replace("</head>", `${foreignTag}</head>`),
   );
 
-  const injected = await inject(s.config, { check: false, log: silent });
+  const injected = await inject(s.config, { check: false });
   expect(injected.injected).toStrictEqual(["/news/b"]);
   expect(readFileSync(onlyForeign, "utf-8")).toMatch(/news\.b\.cas\.json/);
 
-  const report = await sync(s.config, { check: true, log: silent });
-  expect(report.pages.map((p) => [p.pathname, p.cas])).toStrictEqual(
+  const report = await sync(s.config, { check: true });
+  expect(report.pages.map((p) => [p.pathname, p.cas])).toStrictEqual([
+    ["/news/a", { kind: "file", path: s.casFile }],
     [
-      ["/news/a", join(s.config.publicDir, "cas", "a.cas.json")],
-      ["/news/b", join(s.config.publicDir, "cas", "news.b.cas.json")],
-    ].map(([pathname, cas]) => [pathname, relative(process.cwd(), cas)]),
-  );
+      "/news/b",
+      {
+        kind: "file",
+        path: join(s.config.publicDir, "cas", "news.b.cas.json"),
+      },
+    ],
+  ]);
 });
 
 test("sync: 非推奨の application/cas+json を使うページを警告する", async () => {
@@ -869,22 +922,14 @@ test("sync: 非推奨の application/cas+json を使うページを警告する"
     "news/a/index.html",
     ARTICLE.replace("application/ca-set+json", "application/cas+json"),
   );
-  const lines: string[] = [];
-
-  const report = await sync(s.config, {
-    check: true,
-    log: { log: (line: string) => lines.push(line) },
-  });
+  const report = await sync(s.config, { check: true });
 
   expect(report.pages[0].deprecatedType).toBe(true);
-  expect(
-    lines.some((line) => /application\/cas\+json/.test(line)),
-  ).toBeTruthy();
 });
 
 test("config: origins は https のオリジンだけ。http は localhost だけ許す", () => {
   const origins = (values: string[]) =>
-    parseConfig(
+    parseCaConfig(
       { issuer: ISSUER, selectors: [{ selector: "a" }], origins: values },
       "/",
     ).origins;
@@ -900,9 +945,15 @@ test("config: origins は https のオリジンだけ。http は localhost だ�
     "http://localhost:4321",
     "http://127.0.0.1",
   ]);
-  expect(() => origins(["http://example.com"])).toThrow(/https/);
-  expect(() => origins(["https://example.com/news"])).toThrow(/パス/);
-  expect(() => origins(["example.com"])).toThrow(/URL/);
+  expect(thrownBy(() => origins(["http://example.com"]))).toMatchObject(
+    configError(/https/),
+  );
+  expect(thrownBy(() => origins(["https://example.com/news"]))).toMatchObject(
+    configError(/without a path/),
+  );
+  expect(thrownBy(() => origins(["example.com"]))).toMatchObject(
+    configError(/not a URL/),
+  );
 });
 
 test("sync と renew: 参照型の CAS は publicDir と、ビルド済みの distDir の両方に書く", async () => {
@@ -911,12 +962,12 @@ test("sync と renew: 参照型の CAS は publicDir と、ビルド済みの di
   s.writeHtml("news/a/index.html", ARTICLE);
   const deployed = join(s.config.distDir, "cas", "a.cas.json");
 
-  await sync(s.config, { check: false, signer: honestSigner(), log: silent });
+  await sync(s.config, { check: false, signer: honestSigner() });
   expect(readFileSync(deployed, "utf-8")).toBe(
     readFileSync(s.casFile, "utf-8"),
   );
 
-  await renew(s.config, { signer: honestSigner(), log: silent, all: true });
+  await renew(s.config, { signer: honestSigner(), all: true });
   expect(payloadOf(readJwt(deployed)).renewed).toBeTruthy();
   expect(readFileSync(deployed, "utf-8")).toBe(
     readFileSync(s.casFile, "utf-8"),
@@ -928,264 +979,27 @@ test("sync: distDir 側のコピーが publicDir と違うか無ければ、--ch
   inRoot(s.root);
   s.writeHtml("news/a/index.html", ARTICLE);
   const deployed = join(s.config.distDir, "cas", "a.cas.json");
-  await sync(s.config, { check: false, signer: honestSigner(), log: silent });
+  await sync(s.config, { check: false, signer: honestSigner() });
   const published = readFileSync(s.casFile, "utf-8");
   const expected = [{ from: s.casFile, to: deployed }];
 
   writeFileSync(deployed, "[]\n");
-  const checked = await sync(s.config, { check: true, log: silent });
+  const checked = await sync(s.config, { check: true });
   expect(checked.staleCopies).toStrictEqual(expected);
   expect(checked.pages.map((page) => page.status)).toStrictEqual(["ok"]);
   expect(readFileSync(deployed, "utf-8")).toBe("[]\n");
 
   rmSync(deployed);
-  expect(
-    (await sync(s.config, { check: true, log: silent })).staleCopies,
-  ).toStrictEqual(expected);
+  expect((await sync(s.config, { check: true })).staleCopies).toStrictEqual(
+    expected,
+  );
 
-  const lines: string[] = [];
-  await sync(s.config, {
+  const refreshed = await sync(s.config, {
     check: false,
-    log: { log: (line: string) => lines.push(line) },
+    signer: honestSigner(),
   });
   expect(readFileSync(deployed, "utf-8")).toBe(published);
-  expect(lines.includes("✓ copy dist/cas/a.cas.json")).toBeTruthy();
-  expect(
-    (await sync(s.config, { check: true, log: silent })).staleCopies,
-  ).toStrictEqual([]);
-});
-
-const fresh = () => {
-  const root = realpathSync(mkdtempSync(join(tmpdir(), "ca-init-")));
-  onTestFinished(() => rmSync(root, { recursive: true, force: true }));
-  inRoot(root);
-  const write = (path: string, html: string) => {
-    mkdirSync(dirname(join(root, path)), { recursive: true });
-    writeFileSync(join(root, path), html);
-  };
-  const article = (path: string, extra = "") =>
-    `<html lang="ja"><head><title>記事</title><meta name="description" content="説明"><link rel="canonical" href="https://example.com${path}">${extra}</head><body><article><h1 itemprop="headline">見出し</h1><div itemprop="articleBody">本文</div></article></body></html>`;
-  write("dist/news/a/index.html", article("/news/a"));
-  write("dist/news/b/index.html", article("/news/b"));
-  write(
-    "dist/about/index.html",
-    article("/about").replace(/<meta name="description"[^>]*>/, ""),
-  );
-  write("dist/index.html", "<html><body><p>トップ</p></body></html>");
-  mkdirSync(join(root, "public"));
-  return { root, configFile: join(root, "ca.config.json"), write, article };
-};
-
-test("init: ビルド済み HTML から設定を作り、inject と sync でリポジトリ側と配信側に CAS ができる", async () => {
-  const { root, configFile } = fresh();
-  const lines: string[] = [];
-  const log = { log: (line: string) => lines.push(line) };
-
-  const config = await init({
-    configFile,
-    answers: { issuer: ISSUER },
-    force: false,
-    log,
-  });
-
-  expect(JSON.parse(readFileSync(configFile, "utf-8"))).toStrictEqual({
-    issuer: ISSUER,
-    distDir: "dist",
-    publicDir: "public",
-    origins: ["https://example.com"],
-    selectors: [{ selector: SELECTOR }],
-    cas: { mode: "file" },
-  });
-  expect(
-    lines.includes(
-      "CA を作れるページ 2、作れないページ 1、selector に当たらないページ 1",
-    ),
-  ).toBeTruthy();
-  expect(
-    lines.some((line) => /description が必要です: \/about/.test(line)),
-  ).toBeTruthy();
-  expect(
-    lines.some((line) => /4 \/ 4 の CA には author が入りません/.test(line)),
-  ).toBeTruthy();
-
-  await inject(config, { check: false, log: silent });
-  await sync(config, { check: false, signer: honestSigner(), log: silent });
-  for (const dir of ["public", "dist"]) {
-    expect(existsSync(join(root, dir, "cas", "news.a.cas.json"))).toBeTruthy();
-  }
-});
-
-test("init: 何度実行しても同じ設定を書き、違う内容の上書きは --force が要る", async () => {
-  const { configFile } = fresh();
-  const options = {
-    configFile,
-    answers: { issuer: ISSUER },
-    force: false,
-    log: silent,
-  };
-  await init(options);
-  const first = readFileSync(configFile, "utf-8");
-
-  const lines: string[] = [];
-  await init({ ...options, log: { log: (line: string) => lines.push(line) } });
-  expect(readFileSync(configFile, "utf-8")).toBe(first);
-  expect(lines.includes("ca.config.json は変わりません")).toBeTruthy();
-  expect(!lines.some((line) => line.includes("を書きました"))).toBeTruthy();
-
-  const other = { ...options, answers: { issuer: ISSUER, selector: "main" } };
-  await expect(init(other)).rejects.toThrow(/--force/);
-  expect(readFileSync(configFile, "utf-8")).toBe(first);
-
-  await init({ ...other, force: true });
-  expect(readFileSync(configFile, "utf-8")).toMatch(/"selector": "main"/);
-});
-
-const scripted = (replies: [RegExp, string][]) => {
-  const asked: { question: string; fallback?: string }[] = [];
-  const ask = async (question: string, fallback?: string) => {
-    asked.push({ question, fallback });
-    const index = replies.findIndex(([pattern]) => pattern.test(question));
-    if (index < 0) {
-      return fallback ?? "";
-    }
-    const [[, reply]] = replies.splice(index, 1);
-    return reply || fallback || "";
-  };
-  return { ask, asked };
-};
-
-test("init: 端末では全項目を推定値を既定にして順に聞き、不正な答えは聞き直す", async () => {
-  const { configFile } = fresh();
-  const lines: string[] = [];
-  const { ask, asked } = scripted([
-    [/issuer/, "example.com"],
-    [/issuer/, ISSUER],
-    [/オリジン/, "http://example.com"],
-    [/オリジン/, "https://example.com, http://localhost:4321"],
-    [/著者/, "Example Inc., Jane Doe"],
-    [/ジャンル/, "technology"],
-    [/正規表現/, "^/about"],
-    [/置き場所/, "rebuild"],
-  ]);
-
-  await init({
-    configFile,
-    answers: {},
-    force: false,
-    ask,
-    log: { log: (line: string) => lines.push(line) },
-  });
-
-  expect(
-    asked.map(({ question, fallback }) => [
-      question.split(/[（。]/)[0],
-      fallback,
-    ]),
-  ).toStrictEqual([
-    ["ビルド済み HTML のディレクトリ", "dist"],
-    ["issuer", undefined],
-    ["issuer", undefined],
-    ["サイトのオリジン", "https://example.com"],
-    ["サイトのオリジン", "https://example.com"],
-    ["証明する要素の selector", SELECTOR],
-    ["author が無いページの著者", ""],
-    ["編集者", "Example Inc., Jane Doe"],
-    ["article:section が無いページのジャンル", ""],
-    ["対象にしないパスの正規表現", ""],
-    ["CAS の置き場所", "commit"],
-  ]);
-  expect(
-    lines.includes('  <meta name="author"> が無いページ: 4 / 4'),
-  ).toBeTruthy();
-  expect(lines.some((line) => /dns: で始まる/.test(line))).toBeTruthy();
-  expect(
-    lines.some((line) => /description が必要です: \/about/.test(line)),
-  ).toBeTruthy();
-  expect(JSON.parse(readFileSync(configFile, "utf-8"))).toStrictEqual({
-    issuer: ISSUER,
-    distDir: "dist",
-    origins: ["https://example.com", "http://localhost:4321"],
-    selectors: [{ selector: SELECTOR }],
-    exclude: ["^/about"],
-    defaults: {
-      author: ["Example Inc.", "Jane Doe"],
-      editor: ["Example Inc.", "Jane Doe"],
-      genre: "technology",
-    },
-    cas: { mode: "inline" },
-  });
-  expect(
-    lines.includes(
-      "CA を作れるページ 2、作れないページ 0、selector に当たらないページ 1",
-    ),
-  ).toBeTruthy();
-});
-
-test("init: フラグで渡した項目は聞かず、端末でなければ issuer が無いと失敗する", async () => {
-  const { configFile } = fresh();
-
-  await expect(
-    init({ configFile, answers: {}, force: false, log: silent }),
-  ).rejects.toThrow(/--issuer/);
-
-  const { ask, asked } = scripted([]);
-  await init({
-    configFile,
-    answers: {
-      issuer: ISSUER,
-      distDir: "dist",
-      origins: ["https://example.com"],
-      selector: "main",
-      author: ["Example Inc."],
-      editor: [],
-      genre: "",
-      exclude: [],
-      persistence: "commit",
-    },
-    force: false,
-    ask,
-    log: silent,
-  });
-  expect(
-    asked.map(({ question }) => question.split(/[（。]/)[0]),
-  ).toStrictEqual(["CAS を置く静的ファイルのディレクトリ"]);
-  const written = JSON.parse(readFileSync(configFile, "utf-8"));
-  expect(written.publicDir).toBe("public");
-  expect(written.defaults).toStrictEqual({ author: ["Example Inc."] });
-});
-
-test("init: HTML に author と article:section があれば、聞くのは HTML に無い編集者だけ", async () => {
-  const { configFile, write, article } = fresh();
-  const meta =
-    '<meta name="author" content="記者"><meta property="article:section" content="科学">';
-  write("dist/news/a/index.html", article("/news/a", meta));
-  write("dist/news/b/index.html", article("/news/b", meta));
-  write("dist/about/index.html", article("/about", meta));
-  write("dist/index.html", `<html><head>${meta}</head><body></body></html>`);
-  const { ask, asked } = scripted([]);
-
-  await init({
-    configFile,
-    answers: {
-      issuer: ISSUER,
-      distDir: "dist",
-      origins: [],
-      selector: SELECTOR,
-      exclude: [],
-    },
-    force: false,
-    ask,
-    log: silent,
-  });
-
-  expect(
-    asked.map(({ question }) => question.split(/[（。]/)[0]),
-  ).toStrictEqual([
-    "編集者",
-    "CAS の置き場所",
-    "CAS を置く静的ファイルのディレクトリ",
-  ]);
-  expect(JSON.parse(readFileSync(configFile, "utf-8")).defaults).toBe(
-    undefined,
-  );
+  expect(refreshed.copied).toStrictEqual([deployed]);
+  expect(refreshed.issued).toStrictEqual([]);
+  expect((await sync(s.config, { check: true })).staleCopies).toStrictEqual([]);
 });

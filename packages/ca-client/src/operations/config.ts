@@ -1,5 +1,7 @@
 import { readFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { CaClientError, CaClientErrorCode } from "../errors.ts";
+import { toFileError } from "../utils/file.ts";
 
 export type SelectorRule = { match?: string; selector: string };
 
@@ -22,7 +24,9 @@ const DEFAULT_RENEW_WITHIN_DAYS = 30;
 const DEFAULT_CAS_PATH = "/cas/{path}.cas.json";
 
 const fail = (message: string): never => {
-  throw new Error(`ca config: ${message}`);
+  throw new CaClientError(`ca config: ${message}`, {
+    code: CaClientErrorCode.Config,
+  });
 };
 
 const strings = (value: unknown, key: string): string[] | undefined => {
@@ -30,7 +34,7 @@ const strings = (value: unknown, key: string): string[] | undefined => {
     return undefined;
   }
   if (!Array.isArray(value) || value.some((item) => typeof item !== "string")) {
-    return fail(`${key} は文字列の配列`);
+    return fail(`${key} must be an array of strings`);
   }
   return value;
 };
@@ -42,16 +46,18 @@ export const parseOrigin = (value: string): string => {
   try {
     url = new URL(value);
   } catch {
-    return fail(`origins の ${value} は URL ではない`);
+    return fail(`origins: ${value} is not a URL`);
   }
   if (
     url.protocol !== "https:" &&
     !(url.protocol === "http:" && LOCALHOSTS.includes(url.hostname))
   ) {
-    fail(`origins の ${value} は https（http は localhost だけ）`);
+    fail(
+      `origins: ${value} must use https (http is allowed only for localhost)`,
+    );
   }
   if (`${url.origin}/` !== url.href.replace(/\/?$/, "/")) {
-    fail(`origins の ${value} はパスを含まないオリジン`);
+    fail(`origins: ${value} must be an origin without a path`);
   }
   return url.origin;
 };
@@ -59,13 +65,13 @@ export const parseOrigin = (value: string): string => {
 export const parseIssuer = (value: string): string =>
   value.startsWith("dns:")
     ? value
-    : fail(`issuer は dns: で始まる OP ID: ${value}`);
+    : fail(`issuer must be an OP ID starting with "dns:" (got ${value})`);
 
 export const parsePattern = (value: string): string => {
   try {
     new RegExp(value);
   } catch {
-    fail(`exclude の ${value} は正規表現ではない`);
+    fail(`exclude: ${value} is not a regular expression`);
   }
   return value;
 };
@@ -80,7 +86,7 @@ const parseSelectors = (value: unknown): SelectorRule[] => {
         (rule.match !== undefined && typeof rule.match !== "string"),
     )
   ) {
-    fail("selectors は { match?, selector } の配列");
+    fail("selectors must be a non-empty array of { match?, selector }");
   }
   return value as SelectorRule[];
 };
@@ -88,7 +94,7 @@ const parseSelectors = (value: unknown): SelectorRule[] => {
 const parseRenewWithinDays = (value: unknown): number => {
   const days = value ?? DEFAULT_RENEW_WITHIN_DAYS;
   if (typeof days !== "number" || !Number.isFinite(days) || days < 0) {
-    fail("renewWithinDays は 0 以上の数");
+    fail("renewWithinDays must be a number of 0 or more");
   }
   return days as number;
 };
@@ -97,28 +103,28 @@ const parseCas = (value: unknown): CaConfig["cas"] => {
   const cas = (value ?? {}) as Record<string, unknown>;
   const mode = cas.mode ?? "file";
   if (mode !== "file" && mode !== "inline") {
-    fail('cas.mode は "file" か "inline"');
+    fail('cas.mode must be "file" or "inline"');
   }
   const path = cas.path ?? DEFAULT_CAS_PATH;
   if (typeof path !== "string" || !path.includes("{path}")) {
-    fail("cas.path は {path} を含む文字列");
+    fail("cas.path must be a string containing {path}");
   }
   return { mode: mode as CasMode, path: path as string };
 };
 
-export const parseConfig = (raw: unknown, baseDir: string): CaConfig => {
+export const parseCaConfig = (raw: unknown, baseDir: string): CaConfig => {
   const value = (raw ?? {}) as Record<string, unknown>;
   const text = (key: string, fallback?: string): string => {
     const item = value[key] ?? fallback;
     return typeof item === "string" && item !== ""
       ? item
-      : fail(`${key} は必須の文字列`);
+      : fail(`${key} is required and must be a string`);
   };
   const issuer = parseIssuer(text("issuer"));
   const selectors = parseSelectors(value.selectors);
   const defaults = (value.defaults ?? {}) as Record<string, unknown>;
   if (defaults.genre !== undefined && typeof defaults.genre !== "string") {
-    fail("defaults.genre は文字列");
+    fail("defaults.genre must be a string");
   }
   const renewWithinDays = parseRenewWithinDays(value.renewWithinDays);
   const cas = parseCas(value.cas);
@@ -143,13 +149,22 @@ export const parseConfig = (raw: unknown, baseDir: string): CaConfig => {
   };
 };
 
-export const loadConfig = async (file: string): Promise<CaConfig> => {
+export const loadCaConfig = async (file: string): Promise<CaConfig> => {
   const path = resolve(file);
+  let content: string;
+  try {
+    content = await readFile(path, "utf-8");
+  } catch (error) {
+    throw toFileError(`Failed to read ca config ${path}`, error);
+  }
   let raw: unknown;
   try {
-    raw = JSON.parse(await readFile(path, "utf-8"));
+    raw = JSON.parse(content);
   } catch (error) {
-    throw new Error(`ca config: ${path} を読めません`, { cause: error });
+    throw new CaClientError(`ca config: ${path} is not valid JSON`, {
+      code: CaClientErrorCode.Config,
+      cause: error,
+    });
   }
-  return parseConfig(raw, dirname(path));
+  return parseCaConfig(raw, dirname(path));
 };

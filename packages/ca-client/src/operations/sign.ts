@@ -1,9 +1,10 @@
 import { UnsignedContentAttestation } from "@originator-profile/model";
-import { readFile } from "node:fs/promises";
 import { resolve } from "node:path";
-import type { CaClient } from "../ca-client/create-ca-client.ts";
-import { writeCasFile } from "../cas-store/file.ts";
-import { detectDrift } from "../drift/compare.ts";
+import type { CaClient } from "../ca-server/create-ca-client.ts";
+import { writeCasFile } from "../cas/file.ts";
+import { CaClientError, CaClientErrorCode } from "../errors.ts";
+import { compareTargets } from "../targets/compare.ts";
+import { readText } from "../utils/file.ts";
 
 const DOM_TARGET_TYPES = new Set([
   "TextTargetIntegrity",
@@ -18,9 +19,16 @@ const loadUnsignedCa = async (
   input: string,
   root: string,
 ): Promise<{ uca: UnsignedContentAttestation; htmls: Set<string> }> => {
-  const uca = UnsignedContentAttestation.parse(
-    JSON.parse(await readFile(resolve(input), "utf-8")),
-  );
+  const text = await readText(resolve(input));
+  let uca: UnsignedContentAttestation;
+  try {
+    uca = UnsignedContentAttestation.parse(JSON.parse(text));
+  } catch (error) {
+    throw new CaClientError(`${input} is not a valid unsigned CA`, {
+      code: CaClientErrorCode.Validation,
+      cause: error,
+    });
+  }
   const htmls = await Promise.all(
     uca.target.map(async (target) => {
       const content = Array.isArray(target.content)
@@ -34,7 +42,7 @@ const loadUnsignedCa = async (
       ) {
         return undefined;
       }
-      const html = await readFile(resolve(root, content[0]), "utf-8");
+      const html = await readText(resolve(root, content[0]));
       target.content = html;
       return html;
     }),
@@ -45,25 +53,30 @@ const loadUnsignedCa = async (
   };
 };
 
-export const signCaFile = async (input: {
+export type SignCaFileOptions = {
+  /** 未署名の CA の JSON ファイル。 */
   input: string;
-  out: string | undefined;
+  /** 署名した CA を書く CAS ファイル。省略すると書かない。 */
+  out?: string;
   signer: Pick<CaClient, "sign">;
+  /** target の content に書いた HTML ファイルのパスの基準。 */
   root: string;
-}): Promise<string> => {
+};
+
+export const signCaFile = async (input: SignCaFileOptions): Promise<string> => {
   const { uca, htmls } = await loadUnsignedCa(input.input, input.root);
   const jwt = await input.signer.sign(uca);
   if (input.out === undefined) {
     return jwt;
   }
-  const filePath = resolve(input.out);
-  await writeCasFile({ filePath, jwt });
+  await writeCasFile({ filePath: resolve(input.out), jwt });
   if (htmls.size === 1) {
     const [html] = htmls;
-    const { status } = await detectDrift({ html, filePath });
+    const { status } = await compareTargets({ html, jwt });
     if (status !== "ok") {
-      throw new Error(
-        `Inline verification failed: ${input.out} が入力の HTML と一致しません (${status})`,
+      throw new CaClientError(
+        `Inline verification failed: ${input.out} does not match the input HTML (${status})`,
+        { code: CaClientErrorCode.Verification },
       );
     }
   }

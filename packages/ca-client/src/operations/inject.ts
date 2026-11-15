@@ -1,24 +1,25 @@
 import type { JSDOM } from "jsdom";
 import { createHash } from "node:crypto";
-import { readFile, writeFile } from "node:fs/promises";
+import { readFile } from "node:fs/promises";
 import { dirname, join, relative, sep } from "node:path";
+import {
+  CAS_SCRIPT_TYPE,
+  localCasSourcesOf,
+  localPathOf,
+} from "../cas/source.ts";
+import { DEFAULT_EXTERNAL_SELECTOR } from "../targets/html.ts";
+import { writeText } from "../utils/file.ts";
+import { elementLocation } from "../utils/html.ts";
+import { isInside, resolveFiles } from "../utils/paths.ts";
 import type { CaConfig } from "./config.ts";
 import {
-  DEFAULT_EXTERNAL_SELECTOR,
+  forEachPage,
   isExcluded,
   pathnameOf,
   pathToCasName,
   selectorFor,
-} from "./page.ts";
-import { isInside, resolveFiles } from "./paths.ts";
-import {
-  CAS_SCRIPT_TYPE,
-  elementLocation,
-  forEachPage,
-  localCasSourcesOf,
-  localPathOf,
   type Page,
-} from "./source.ts";
+} from "./page.ts";
 
 export type InjectReport = {
   injected: string[];
@@ -88,18 +89,18 @@ const integrityEditOf = async (
   const src = element.getAttribute("src")?.trim();
   const file = localFileOf(config, page.baseDir, src);
   if (file === undefined) {
-    return { problem: `integrity を計算できない src: ${src ?? "（なし）"}` };
+    return { problem: `cannot compute integrity for src: ${src ?? "(none)"}` };
   }
   const integrity = await sha256(file).catch(() => undefined);
   if (integrity === undefined) {
-    return { problem: `src のファイルがありません: ${src}` };
+    return { problem: `file for src not found: ${src}` };
   }
   if (element.getAttribute("integrity") === integrity) {
     return undefined;
   }
   const startTag = elementLocation(page.dom, element)?.startTag;
   if (!startTag) {
-    return { problem: `要素の位置が分かりません: ${src}` };
+    return { problem: `cannot locate the element: ${src}` };
   }
   return { edit: integrityAttrEdit(startTag, page.html, integrity) };
 };
@@ -157,7 +158,10 @@ const injectPage = async (
   if (localCasSourcesOf(dom, config, htmlFile, html).length === 0) {
     const offset = insertionOffset(dom);
     if (offset === undefined) {
-      report.problems.push({ pathname, problem: "挿入位置がありません" });
+      report.problems.push({
+        pathname,
+        problem: "no place to insert the CAS tag",
+      });
     } else {
       edits.push({
         start: offset,
@@ -176,13 +180,19 @@ const injectPage = async (
   }
   edits.push(...external.edits);
   if (edits.length > 0 && !check) {
-    await writeFile(htmlFile, applyEdits(html, edits));
+    await writeText(htmlFile, applyEdits(html, edits));
   }
+};
+
+export type InjectOptions = {
+  /** true なら HTML を書かず、足りないタグと古い integrity を返す。 */
+  check: boolean;
+  paths?: string[];
 };
 
 export const inject = async (
   config: CaConfig,
-  options: { check: boolean; paths?: string[]; log: Pick<Console, "log"> },
+  options: InjectOptions,
 ): Promise<InjectReport> => {
   const report: InjectReport = { injected: [], integrity: [], problems: [] };
   const files = (
@@ -191,21 +201,5 @@ export const inject = async (
   await forEachPage(files, (page) =>
     injectPage(config, page, options.check, report),
   );
-  const [tagVerb, integrityVerb] = options.check
-    ? ["Missing tag", "Stale integrity"]
-    : ["Injected", "Updated integrity"];
-  options.log.log(
-    `${tagVerb}: ${report.injected.length} page(s) (${config.cas.mode})`,
-  );
-  for (const pathname of report.injected) {
-    options.log.log(`  - ${pathname}`);
-  }
-  options.log.log(`${integrityVerb}: ${report.integrity.length} page(s)`);
-  for (const pathname of report.integrity) {
-    options.log.log(`  - ${pathname}`);
-  }
-  for (const { pathname, problem } of report.problems) {
-    options.log.log(`  - SKIP ${pathname} [${problem}]`);
-  }
   return report;
 };
