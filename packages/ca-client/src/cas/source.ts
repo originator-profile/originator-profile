@@ -178,6 +178,7 @@ export const ownCaSourceOf = async (
       return source;
     }
   }
+  // まだ自分の CA が無いときは、書き込み先として先頭の CAS を使う
   return sources[0];
 };
 

@@ -667,7 +667,7 @@ test("inject: 外部リソースの integrity 属性をファイルのハッシ�
   expect(report.problems).toStrictEqual([
     {
       pathname: "/news/a",
-      problem: "file for src not found: /img/none.svg",
+      problem: "cannot compute integrity for src: /img/none.svg",
     },
   ]);
   const written = readFileSync(tagged, "utf-8");

@@ -75,6 +75,13 @@ export const parseCasFileContent = (fileContent: string): string[] => {
     });
   }
 
+  if (cas.data.length === 0) {
+    throw new CaClientError(
+      "CAS file is empty (expected at least one JWT; inject placeholders use [] until signed)",
+      { code: CaClientErrorCode.Validation },
+    );
+  }
+
   const jwts = cas.data
     .map(jwtFromCasItem)
     .filter((jwt): jwt is string => Boolean(jwt));

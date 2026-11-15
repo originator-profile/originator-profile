@@ -244,7 +244,8 @@ test("parseCasFileContent: accepts { main, attestation } items", () => {
 });
 
 test("parseCasFileContent: rejects an empty array", () => {
-  expect(() => parseCasFileContent("[]")).toThrow(INVALID_CAS_FORMAT);
+  expect(() => parseCasFileContent("[]")).toThrow(CaClientError);
+  expect(() => parseCasFileContent("[]")).toThrow(/empty/i);
 });
 
 test("parseCasFileContent: rejects a non-array document", () => {

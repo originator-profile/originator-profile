@@ -93,7 +93,7 @@ const integrityEditOf = async (
   }
   const integrity = await sha256(file).catch(() => undefined);
   if (integrity === undefined) {
-    return { problem: `file for src not found: ${src}` };
+    return { problem: `cannot compute integrity for src: ${src}` };
   }
   if (element.getAttribute("integrity") === integrity) {
     return undefined;

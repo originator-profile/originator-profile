@@ -146,7 +146,10 @@ export const suggestSelector = (scan: SiteScan): string | undefined => {
   )?.selector;
 };
 
-const requiredAnswers = (scan: SiteScan, answers: InitAnswers) => {
+const requiredAnswers = (
+  scan: SiteScan,
+  answers: InitAnswers,
+): { issuer: string; selector: string } => {
   const selector = answers.selector ?? suggestSelector(scan);
   const missing = [
     ...(answers.issuer ? [] : ["--issuer"]),
@@ -155,7 +158,8 @@ const requiredAnswers = (scan: SiteScan, answers: InitAnswers) => {
   if (missing.length > 0) {
     throw new Error(`${missing.join(" と ")} が必要です`);
   }
-  return { issuer: answers.issuer, selector };
+  // missing が空なら issuer / selector はどちらも入っている
+  return { issuer: answers.issuer as string, selector: selector as string };
 };
 
 const defaultsOf = (answers: InitAnswers) => ({
@@ -210,11 +214,13 @@ const askValid = async <T>(
   fallback: string | undefined,
   parse: (value: string) => T,
 ): Promise<T> => {
-  try {
-    return parse(await ask(question, fallback));
-  } catch (error) {
-    log.log(`  ${error instanceof Error ? error.message : String(error)}`);
-    return askValid(ask, log, question, fallback, parse);
+  for (;;) {
+    try {
+      // oxlint-disable-next-line no-await-in-loop -- 不正な答えのときだけ聞き直す
+      return parse(await ask(question, fallback));
+    } catch (error) {
+      log.log(`  ${error instanceof Error ? error.message : String(error)}`);
+    }
   }
 };
 
@@ -316,16 +322,7 @@ export const previewIssuance = async (
   };
 };
 
-const previewWith = async (
-  scan: SiteScan,
-  answers: InitAnswers,
-  configDir: string,
-  log: Log,
-) => {
-  const config = parseCaConfig(
-    proposeConfig(scan, answers, configDir).raw,
-    configDir,
-  );
+const previewWith = async (config: CaConfig, log: Log) => {
   const preview = await previewIssuance(config);
   log.log(
     `CA を作れるページ ${preview.issuable}、作れないページ ${preview.problems.reduce((sum, { pages }) => sum + pages.length, 0)}、selector に当たらないページ ${preview.unmatched}`,
@@ -335,7 +332,6 @@ const previewWith = async (
       `  - ${problem}: ${pages.slice(0, 3).join(", ")}${pages.length > 3 ? ` ほか ${pages.length - 3}` : ""}`,
     );
   }
-  return config;
 };
 
 const askSite = async (
@@ -426,7 +422,10 @@ const askPublishing = async (
   log: Log,
 ): Promise<void> => {
   if (answers.exclude === undefined) {
-    await previewWith(scan, answers, configDir, log);
+    await previewWith(
+      parseCaConfig(proposeConfig(scan, answers, configDir).raw, configDir),
+      log,
+    );
     answers.exclude = await askValid(
       ask,
       log,
@@ -565,7 +564,7 @@ export const init = async (options: InitOptions): Promise<CaConfig> => {
     ? await askAnswers(scan, options.answers, ask, configDir, log)
     : options.answers;
   const { raw, persistence } = proposeConfig(scan, answers, configDir);
-  parseCaConfig(raw, configDir);
+  const config = parseCaConfig(raw, configDir);
   if (!answers.author?.length && scan.withoutAuthor > 0) {
     log.log(
       `⚠ <meta name="author"> が無いページ ${scan.withoutAuthor} / ${scan.pages} の CA には author が入りません（--author で既定を渡せます）`,
@@ -577,7 +576,7 @@ export const init = async (options: InitOptions): Promise<CaConfig> => {
     options,
   );
 
-  const config = await previewWith(scan, answers, configDir, log);
+  await previewWith(config, log);
   for (const line of nextSteps(config, persistence)) {
     log.log(line);
   }
