@@ -5,7 +5,7 @@ import { decodeCa, type DecodedCa } from "../ca/decode.ts";
 import { jwtPayload } from "../ca/expiry.ts";
 import { CaClientError, CaClientErrorCode } from "../errors.ts";
 import { compareTargets, type TargetComparison } from "../targets/compare.ts";
-import { readText, writeText } from "../utils/file.ts";
+import { isEnoent, readText, writeText } from "../utils/file.ts";
 import { elementLocation } from "../utils/html.ts";
 import { isInside } from "../utils/paths.ts";
 
@@ -40,6 +40,7 @@ const contentOf = (source: InlineSource) =>
 export type Recorded = { id?: string; selector?: string };
 
 const RELATIVE_BASE = "https://relative.invalid";
+const RELATIVE_ORIGIN = new URL(RELATIVE_BASE).origin;
 
 export const localPathOf = (
   src: string,
@@ -49,7 +50,7 @@ export const localPathOf = (
   const dir = baseDir.endsWith("/") ? baseDir : `${baseDir}/`;
   const url = new URL(src, new URL(dir, RELATIVE_BASE));
   const local =
-    url.origin === new URL(RELATIVE_BASE).origin ||
+    url.origin === RELATIVE_ORIGIN ||
     origins.some((origin) => new URL(origin).origin === url.origin);
   return local ? url.pathname : undefined;
 };
@@ -113,13 +114,22 @@ export const whereOf = (location: CasLocation): string =>
 
 type CasItem = string | { attestation: string; [key: string]: unknown };
 
+const readFileCas = async (path: string): Promise<string> => {
+  try {
+    return await readText(path);
+  } catch (error) {
+    if (error instanceof CaClientError && isEnoent(error.cause)) {
+      return "";
+    }
+    throw error;
+  }
+};
+
 const itemsOf = async (source: CasSource): Promise<CasItem[]> => {
   const content =
     source.kind === "inline"
       ? contentOf(source)
-      : existsSync(source.path)
-        ? await readText(source.path)
-        : "";
+      : await readFileCas(source.path);
   if (content.trim() === "") {
     return [];
   }

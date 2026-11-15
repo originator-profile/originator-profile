@@ -20,17 +20,17 @@ const loadUnsignedCa = async (
   root: string,
 ): Promise<{ uca: UnsignedContentAttestation; htmls: Set<string> }> => {
   const text = await readText(resolve(input));
-  let uca: UnsignedContentAttestation;
+  let parsed: UnsignedContentAttestation;
   try {
-    uca = UnsignedContentAttestation.parse(JSON.parse(text));
+    parsed = UnsignedContentAttestation.parse(JSON.parse(text));
   } catch (error) {
     throw new CaClientError(`${input} is not a valid unsigned CA`, {
       code: CaClientErrorCode.Validation,
       cause: error,
     });
   }
-  const htmls = await Promise.all(
-    uca.target.map(async (target) => {
+  const loaded = await Promise.all(
+    parsed.target.map(async (target) => {
       const content = Array.isArray(target.content)
         ? target.content
         : [target.content];
@@ -40,16 +40,19 @@ const loadUnsignedCa = async (
         typeof content[0] !== "string" ||
         !isFilePath(content[0])
       ) {
-        return undefined;
+        return { target, html: undefined };
       }
       const html = await readText(resolve(root, content[0]));
-      target.content = html;
-      return html;
+      return { target: { ...target, content: html }, html };
     }),
   );
   return {
-    uca,
-    htmls: new Set(htmls.filter((html) => html !== undefined)),
+    uca: { ...parsed, target: loaded.map(({ target }) => target) },
+    htmls: new Set(
+      loaded
+        .map(({ html }) => html)
+        .filter((html): html is string => html !== undefined),
+    ),
   };
 };
 

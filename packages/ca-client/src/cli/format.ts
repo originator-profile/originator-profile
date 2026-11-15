@@ -28,6 +28,9 @@ const pageLine = (page: PageReport) => {
   return `  - ${page.status.toUpperCase()} ${page.pathname} → ${labelOf(page.cas)}${detail}${page.problem ? ` [${page.problem}]` : ""}`;
 };
 
+const actionLabel = (action: IssuedPage["action"]): string =>
+  action === "create" ? "作成" : "更新";
+
 export const scanLines = (
   { pages, orphans, staleCopies }: ScanReport,
   options: { check: boolean },
@@ -37,7 +40,7 @@ export const scanLines = (
   const deprecated = pages.filter((page) => page.deprecatedType);
   const unissuable = pages.filter((page) => page.problem !== undefined);
   return [
-    `Scanned ${pages.length} page(s): ok=${count("ok")} missing=${count("missing")} drifted=${count("drifted")} expiring=${count("expiring")} orphan=${orphans?.length ?? 0} stale-copy=${staleCopies.length}`,
+    `${pages.length} ページを調べました: ok=${count("ok")} missing=${count("missing")} drifted=${count("drifted")} expiring=${count("expiring")} orphan=${orphans?.length ?? 0} stale-copy=${staleCopies.length}`,
     ...pages
       .filter((page) => page.status !== "ok" || page.problem)
       .map(pageLine),
@@ -50,22 +53,22 @@ export const scanLines = (
     ),
     ...(deprecated.length > 0
       ? [
-          `⚠ ${deprecated.length} page(s) が非推奨の ${DEPRECATED_CAS_SCRIPT_TYPE} を使っています。2027-11-01 以降はサポート外なので application/ca-set+json に替えてください`,
+          `⚠ ${deprecated.length} ページが非推奨の ${DEPRECATED_CAS_SCRIPT_TYPE} を使っています。2027-11-01 以降はサポート外なので application/ca-set+json に替えてください`,
         ]
       : []),
     ...(orphans ? [] : ["  (範囲を指定したので orphan は判定しない)"]),
     ...(!options.check && unissuable.length > 0
-      ? [`⚠ ${unissuable.length} page(s) は CA を作れないため飛ばします`]
+      ? [`⚠ ${unissuable.length} ページは CA を作れないため飛ばします`]
       : []),
   ];
 };
 
 export const issuedLine = (page: IssuedPage): string =>
-  `✓ ${page.action} ${labelOf(page.cas)}`;
+  `✓ ${actionLabel(page.action)} ${labelOf(page.cas)}`;
 
 export const syncResultLines = (report: SyncReport): string[] => [
-  ...report.copied.map((to) => `✓ copy ${shown(to)}`),
-  ...(report.issued.length > 0 ? [] : ["✓ Nothing to sign."]),
+  ...report.copied.map((to) => `✓ コピー ${shown(to)}`),
+  ...(report.issued.length > 0 ? [] : ["✓ 署名するページはありません"]),
 ];
 
 export const injectReportLines = (
@@ -73,21 +76,21 @@ export const injectReportLines = (
   options: { check: boolean; mode: CasMode },
 ): string[] => {
   const [tagVerb, integrityVerb] = options.check
-    ? ["Missing tag", "Stale integrity"]
-    : ["Injected", "Updated integrity"];
+    ? ["タグなし", "古い integrity"]
+    : ["挿入した", "integrity を更新"];
   return [
-    `${tagVerb}: ${report.injected.length} page(s) (${options.mode})`,
+    `${tagVerb}: ${report.injected.length} ページ (${options.mode})`,
     ...report.injected.map((pathname) => `  - ${pathname}`),
-    `${integrityVerb}: ${report.integrity.length} page(s)`,
+    `${integrityVerb}: ${report.integrity.length} ページ`,
     ...report.integrity.map((pathname) => `  - ${pathname}`),
     ...report.problems.map(
-      ({ pathname, problem }) => `  - SKIP ${pathname} [${problem}]`,
+      ({ pathname, problem }) => `  - スキップ ${pathname} [${problem}]`,
     ),
   ];
 };
 
 export const renewedLine = (cas: CasLocation): string =>
-  `✓ Renewed ${labelOf(cas)}`;
+  `✓ 再署名 ${labelOf(cas)}`;
 
 export const renewReportLine = (report: RenewReport): string =>
-  `Renewed ${report.renewed.length} of ${report.total} CAS (${report.all ? "all" : `expiring within ${report.withinDays} days`})`;
+  `${report.total} 件中 ${report.renewed.length} 件の CAS を再署名しました（${report.all ? "すべて" : `${report.withinDays} 日以内に期限切れ`}）`;

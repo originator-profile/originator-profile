@@ -1,6 +1,6 @@
 import { existsSync } from "node:fs";
-import { readFile, writeFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
+import { CaClientError } from "../errors.ts";
 import {
   parseCaConfig,
   parseIssuer,
@@ -17,6 +17,7 @@ import {
   UnissuableError,
   type Page,
 } from "../operations/page.ts";
+import { isEnoent, readText, writeText } from "../utils/file.ts";
 import { resolveFiles } from "../utils/paths.ts";
 
 export type Persistence = "commit" | "rebuild";
@@ -431,7 +432,7 @@ const askPublishing = async (
       log,
       "対象にしないパスの正規表現（カンマ区切り。無ければ空のまま）",
       "",
-      (value) => list(value).map(parsePattern),
+      (value) => list(value).map((pattern) => parsePattern(pattern)),
     );
   }
   answers.persistence ??= await askValid(
@@ -523,9 +524,14 @@ const writeConfigFile = async (
   json: string,
   { force, log }: Pick<InitOptions, "force" | "log">,
 ): Promise<void> => {
-  const current = existsSync(configFile)
-    ? await readFile(configFile, "utf-8")
-    : undefined;
+  let current: string | undefined;
+  try {
+    current = await readText(configFile);
+  } catch (error) {
+    if (!(error instanceof CaClientError && isEnoent(error.cause))) {
+      throw error;
+    }
+  }
   if (current === json) {
     log.log(`${relative(process.cwd(), configFile)} は変わりません`);
     return;
@@ -541,7 +547,7 @@ const writeConfigFile = async (
       ].join("\n"),
     );
   }
-  await writeFile(configFile, json);
+  await writeText(configFile, json);
   log.log(`✓ ${relative(process.cwd(), configFile)} を書きました`);
 };
 

@@ -44,12 +44,12 @@ const scan: ScanReport = {
 
 test("scanLines: 集計、ok 以外のページ、orphan、stale copy、非推奨の type を表示する", () => {
   expect(scanLines(scan, { check: true })).toStrictEqual([
-    "Scanned 3 page(s): ok=1 missing=1 drifted=1 expiring=0 orphan=1 stale-copy=1",
+    "3 ページを調べました: ok=1 missing=1 drifted=1 expiring=0 orphan=1 stale-copy=1",
     `  - DRIFTED /b → ${join("dist", "b", "index.html")} (埋め込み) (target, headline)`,
     `  - MISSING /c → ${join("public", "cas", "c.cas.json")} [main に一致する要素がありません]`,
     `  - ORPHAN ${join("public", "cas", "gone.cas.json")} (報告のみ)`,
     `  - STALE-COPY ${join("dist", "cas", "a.cas.json")} (${join("public", "cas", "a.cas.json")} と揃っていない)`,
-    "⚠ 1 page(s) が非推奨の application/cas+json を使っています。2027-11-01 以降はサポート外なので application/ca-set+json に替えてください",
+    "⚠ 1 ページが非推奨の application/cas+json を使っています。2027-11-01 以降はサポート外なので application/ca-set+json に替えてください",
   ]);
 });
 
@@ -59,7 +59,7 @@ test("scanLines: orphan を判定していなければ注記し、署名する�
   expect(lines[0]).toMatch(/orphan=0/);
   expect(lines.slice(-2)).toStrictEqual([
     "  (範囲を指定したので orphan は判定しない)",
-    "⚠ 1 page(s) は CA を作れないため飛ばします",
+    "⚠ 1 ページは CA を作れないため飛ばします",
   ]);
 });
 
@@ -76,11 +76,11 @@ test("issuedLine と syncResultLines: 署名とコピーを表示し、署名が
   };
 
   expect(issuedLine(issued)).toBe(
-    `✓ create ${join("public", "cas", "c.cas.json")}`,
+    `✓ 作成 ${join("public", "cas", "c.cas.json")}`,
   );
   expect(syncResultLines(report)).toStrictEqual([
-    `✓ copy ${join("dist", "cas", "a.cas.json")}`,
-    "✓ Nothing to sign.",
+    `✓ コピー ${join("dist", "cas", "a.cas.json")}`,
+    "✓ 署名するページはありません",
   ]);
   expect(
     syncResultLines({ ...report, issued: [issued], copied: [] }),
@@ -97,13 +97,13 @@ test("injectReportLines: check の有無で見出しを変える", () => {
   expect(
     injectReportLines(report, { check: true, mode: "file" }),
   ).toStrictEqual([
-    "Missing tag: 1 page(s) (file)",
+    "タグなし: 1 ページ (file)",
     "  - /a",
-    "Stale integrity: 0 page(s)",
-    "  - SKIP /b [挿入位置がありません]",
+    "古い integrity: 0 ページ",
+    "  - スキップ /b [挿入位置がありません]",
   ]);
   expect(injectReportLines(report, { check: false, mode: "inline" })[0]).toBe(
-    "Injected: 1 page(s) (inline)",
+    "挿入した: 1 ページ (inline)",
   );
 });
 
@@ -114,12 +114,12 @@ test("renewedLine と renewReportLine: 再署名した CAS と件数を表示す
   } as const;
 
   expect(renewedLine(cas)).toBe(
-    `✓ Renewed ${join("dist", "a", "index.html")} (埋め込み)`,
+    `✓ 再署名 ${join("dist", "a", "index.html")} (埋め込み)`,
   );
   expect(
     renewReportLine({ renewed: [cas], total: 3, withinDays: 30, all: false }),
-  ).toBe("Renewed 1 of 3 CAS (expiring within 30 days)");
+  ).toBe("3 件中 1 件の CAS を再署名しました（30 日以内に期限切れ）");
   expect(
     renewReportLine({ renewed: [cas], total: 3, withinDays: 30, all: true }),
-  ).toBe("Renewed 1 of 3 CAS (all)");
+  ).toBe("3 件中 1 件の CAS を再署名しました（すべて）");
 });

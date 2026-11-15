@@ -3,7 +3,12 @@ import { dirname, resolve } from "node:path";
 import { CaClientError, CaClientErrorCode } from "../errors.ts";
 import { toFileError } from "../utils/file.ts";
 
-export type SelectorRule = { match?: string; selector: string };
+export type SelectorRule = {
+  match?: string;
+  selector: string;
+  /** `parseCaConfig` が `match` から作る。 */
+  matchRe?: RegExp;
+};
 
 export type CasMode = "file" | "inline";
 
@@ -14,8 +19,10 @@ export type CaConfig = {
   origins?: string[];
   selectors: SelectorRule[];
   exclude?: string[];
+  /** `parseCaConfig` が `exclude` から作る。 */
+  excludeRe: RegExp[];
   externalSelector?: string;
-  defaults?: { author?: string[]; editor?: string[]; genre?: string };
+  defaults: { author?: string[]; editor?: string[]; genre?: string };
   renewWithinDays: number;
   cas: { mode: CasMode; path: string };
 };
@@ -67,11 +74,11 @@ export const parseIssuer = (value: string): string =>
     ? value
     : fail(`issuer must be an OP ID starting with "dns:" (got ${value})`);
 
-export const parsePattern = (value: string): string => {
+export const parsePattern = (value: string, key = "exclude"): string => {
   try {
     new RegExp(value);
   } catch {
-    fail(`exclude: ${value} is not a regular expression`);
+    fail(`${key}: ${value} is not a regular expression`);
   }
   return value;
 };
@@ -88,7 +95,15 @@ const parseSelectors = (value: unknown): SelectorRule[] => {
   ) {
     fail("selectors must be a non-empty array of { match?, selector }");
   }
-  return value as SelectorRule[];
+  return (value as { match?: string; selector: string }[]).map((rule) => ({
+    selector: rule.selector,
+    ...(rule.match !== undefined
+      ? {
+          match: parsePattern(rule.match, "selectors.match"),
+          matchRe: new RegExp(rule.match),
+        }
+      : {}),
+  }));
 };
 
 const parseRenewWithinDays = (value: unknown): number => {
@@ -128,13 +143,17 @@ export const parseCaConfig = (raw: unknown, baseDir: string): CaConfig => {
   }
   const renewWithinDays = parseRenewWithinDays(value.renewWithinDays);
   const cas = parseCas(value.cas);
+  const exclude = strings(value.exclude, "exclude")?.map((pattern) =>
+    parsePattern(pattern),
+  );
   return {
     issuer,
     distDir: resolve(baseDir, text("distDir", "dist")),
     publicDir: resolve(baseDir, text("publicDir", "public")),
     origins: strings(value.origins, "origins")?.map(parseOrigin),
     selectors,
-    exclude: strings(value.exclude, "exclude")?.map(parsePattern),
+    exclude,
+    excludeRe: (exclude ?? []).map((pattern) => new RegExp(pattern)),
     externalSelector:
       typeof value.externalSelector === "string"
         ? value.externalSelector

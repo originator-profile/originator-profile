@@ -99,7 +99,7 @@ export const pathToCasName = (pathname: string): string =>
   pathname.replace(/\/$/, "").replace(/^\//, "").replaceAll("/", ".");
 
 export const isExcluded = (config: CaConfig, pathname: string): boolean =>
-  (config.exclude ?? []).some((pattern) => new RegExp(pattern).test(pathname));
+  config.excludeRe.some((pattern) => pattern.test(pathname));
 
 export const selectorFor = (
   config: CaConfig,
@@ -108,7 +108,7 @@ export const selectorFor = (
 ): string | undefined =>
   recorded?.selector ??
   config.selectors.find(
-    (rule) => rule.match === undefined || new RegExp(rule.match).test(pathname),
+    (rule) => rule.matchRe === undefined || rule.matchRe.test(pathname),
   )?.selector;
 
 const escapePattern = (value: string) => value.replace(/[:*?+(){}\\]/g, "\\$&");
@@ -241,7 +241,7 @@ const articleOf = (
   document: Document,
   recorded: Recorded | undefined,
 ) => {
-  const defaults = config.defaults ?? {};
+  const { defaults } = config;
   const author = meta(document, "author");
   const image = meta(document, "og:image");
   return withoutUndefined({
