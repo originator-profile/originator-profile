@@ -201,6 +201,7 @@ export const proposeConfig = (
     },
   };
 };
+
 export const parsePersistence = (value: string): Persistence => {
   if (!PERSISTENCES.includes(value as Persistence)) {
     throw new Error(`--persistence は ${PERSISTENCES.join(" か ")}: ${value}`);

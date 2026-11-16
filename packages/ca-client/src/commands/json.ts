@@ -4,6 +4,7 @@ import { config as configFlag } from "../cli/flags.ts";
 import { labelOf } from "../cli/format.ts";
 import { loadCaConfig } from "../operations/config.ts";
 import { unsignedCaFromPage } from "../operations/unsigned-page.ts";
+
 export default class Json extends Command {
   static summary = "ページから未署名 CA の JSON を作る";
   static description = `\

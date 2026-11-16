@@ -1,8 +1,10 @@
 import { Command, Flags } from "@oclif/core";
 import { caClientFromEnv } from "../cli/client.ts";
 import { config as configFlag, issuer } from "../cli/flags.ts";
+import { CaClientError } from "../errors.ts";
 import { loadCaConfig } from "../operations/config.ts";
 import { signCaFile } from "../operations/sign.ts";
+import { isEnoent } from "../utils/file.ts";
 
 export default class Sign extends Command {
   static summary = "未署名 CA の JSON を署名する";
@@ -30,7 +32,12 @@ export default class Sign extends Command {
 
   async run(): Promise<void> {
     const { flags } = await this.parse(Sign);
-    const loaded = await loadCaConfig(flags.config).catch(() => undefined);
+    const loaded = await loadCaConfig(flags.config).catch((error) => {
+      if (error instanceof CaClientError && isEnoent(error.cause)) {
+        return undefined;
+      }
+      throw error;
+    });
     const jwt = await signCaFile({
       input: flags.input,
       out: flags.out,
