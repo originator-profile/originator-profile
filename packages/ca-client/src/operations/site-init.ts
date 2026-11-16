@@ -217,7 +217,7 @@ export type IssuancePreview = {
 
 const previewPage = (
   config: CaConfig,
-  { file, html, dom }: Page,
+  { file, dom }: Page,
 ): "issuable" | "unmatched" | { problem: string } => {
   const pathname = pathnameOf(config.distDir, file);
   const document = dom.window.document;
@@ -231,7 +231,7 @@ const previewPage = (
       document,
       pathname,
       recorded: undefined,
-      content: html,
+      contentPath: relative(process.cwd(), file),
     });
     return "issuable";
   } catch (error) {

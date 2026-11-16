@@ -88,7 +88,7 @@ const build = (config: CaConfig, html: string, pathname = "/news/a") => {
       document: dom.window.document,
       pathname,
       recorded: undefined,
-      content: "dist/news/a/index.html",
+      contentPath: "dist/news/a/index.html",
     });
   } finally {
     dom.window.close();

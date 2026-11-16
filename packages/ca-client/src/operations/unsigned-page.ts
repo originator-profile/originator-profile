@@ -33,7 +33,7 @@ export const unsignedCaFromPage = async (
       pathname: pathnameOf(config.distDir, htmlFile),
       recorded: await readRecorded(source, config.issuer),
       selector: options.selector,
-      content: relative(process.cwd(), htmlFile),
+      contentPath: relative(process.cwd(), htmlFile),
     });
     return { uca, cas: source && locationOf(source) };
   } finally {

@@ -1,7 +1,7 @@
 import type { UnsignedContentAttestation } from "@originator-profile/model";
 import { globby } from "globby";
 import { readFile } from "node:fs/promises";
-import { dirname } from "node:path";
+import { dirname, relative } from "node:path";
 import type { CaClient } from "../ca-server/create-ca-client.ts";
 import type { DecodedCa } from "../ca/decode.ts";
 import { isExpiring } from "../ca/expiry.ts";
@@ -32,6 +32,7 @@ import {
   type MetadataField,
   type Page,
 } from "./page.ts";
+import { resolveTargetContent } from "./sign.ts";
 
 export type PageStatus = "ok" | "missing" | "drifted" | "expiring";
 
@@ -203,7 +204,7 @@ const scanPage = async (
     document: dom.window.document,
     pathname,
     recorded: cas && recordedOf(cas.payload),
-    content: html,
+    contentPath: relative(process.cwd(), htmlFile),
   });
   const drift = await driftOfPage(
     { source, html, issuer: config.issuer },
@@ -294,7 +295,12 @@ const signPage = async (
 ): Promise<IssuedPage> => {
   let written: CasSource;
   try {
-    written = await upsertOwnCa(source, await options.signer.sign(uca), config);
+    const { uca: resolved } = await resolveTargetContent(uca, process.cwd());
+    written = await upsertOwnCa(
+      source,
+      await options.signer.sign(resolved),
+      config,
+    );
   } catch (error) {
     throw withContext(`sign ${page.pathname}`, error);
   }

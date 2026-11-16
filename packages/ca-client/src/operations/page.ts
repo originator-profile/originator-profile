@@ -256,15 +256,21 @@ const articleOf = (
   });
 };
 
+/**
+ * 未署名 CA を組み立てる。
+ * `contentPath` は target.content にそのまま書き、署名前に
+ * `resolveTargetContent` で HTML へ展開する。
+ */
 export const buildUnsignedCa = (input: {
   config: CaConfig;
   document: Document;
   pathname: string;
   recorded: Recorded | undefined;
   selector?: string;
-  content: string;
+  /** HTML ファイルの相対パス（cwd 基準）。署名前に HTML へ展開する。 */
+  contentPath: string;
 }): UnsignedContentAttestation => {
-  const { config, document, pathname, recorded, content } = input;
+  const { config, document, pathname, recorded, contentPath } = input;
   const selector = selectorOf(input);
   const language = document.documentElement.lang || undefined;
 
@@ -280,7 +286,11 @@ export const buildUnsignedCa = (input: {
     credentialSubject: articleOf(config, document, recorded),
     allowedUrl: allowedUrlOf(config, document, pathname),
     target: [
-      { type: "TextTargetIntegrity", cssSelector: selector, content },
+      {
+        type: "TextTargetIntegrity",
+        cssSelector: selector,
+        content: contentPath,
+      },
       ...externalTargets(config, document),
     ],
   };
