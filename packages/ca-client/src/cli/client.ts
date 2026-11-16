@@ -8,8 +8,13 @@ export const caClientFromEnv = (issuer: string | undefined): CaClient => {
   const endpoint = process.env.CA_SERVER_URL;
   const ccspConfig = process.env.CCSP_CONFIG;
   if (!endpoint || !ccspConfig || !issuer) {
+    const missing = [
+      ...(!endpoint ? ["CA_SERVER_URL"] : []),
+      ...(!ccspConfig ? ["CCSP_CONFIG"] : []),
+      ...(!issuer ? ["issuer (--issuer or ca.config.json)"] : []),
+    ];
     throw new CaClientError(
-      "CA_SERVER_URL, CCSP_CONFIG, and issuer are required",
+      `${missing.join(", ")} ${missing.length === 1 ? "is" : "are"} required`,
       { code: CaClientErrorCode.Config },
     );
   }

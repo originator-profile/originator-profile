@@ -22,7 +22,6 @@ import {
 } from "../operations/site-init.ts";
 import { isEnoent, readText, writeText } from "../utils/file.ts";
 
-export { parsePersistence } from "../operations/site-init.ts";
 export type {
   InitAnswers,
   Persistence,
