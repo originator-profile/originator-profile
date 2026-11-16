@@ -11,18 +11,24 @@ import {
   OpsVerifier,
   OpsVerifyFailed,
 } from "../originator-profile-set";
-import type { Registry } from "../registry";
+import type { OriginatorsOutcome, Registry } from "../registry";
 import { collectProblems } from "../result/collect-problems";
 import {
   convertCas,
   convertOps,
+  coreProfilesOf,
   createCollector,
   type CasPayload,
   type OriginatorPayload,
 } from "../result/convert";
+import {
+  timeBoundaryOf,
+  type InputSource,
+  type VerificationMetadata,
+} from "../result/metadata";
 import { pointer } from "../result/pointer";
 import { toProblemDetails } from "../result/to-problem-details";
-import type { SecuringResult, VerificationResult } from "../result/types";
+import type { VerificationResult } from "../result/types";
 
 /** 文書が置かれているフレームの種類 */
 export type FrameType = "outermost_frame" | "sub_frame" | "fenced_frame";
@@ -82,53 +88,58 @@ const documentScope: VerificationCategory[] = [
   "originator-ops",
 ];
 
-/** 検証に用いた入力の出所 */
-export type InputSource =
-  | { kind: "registry" }
-  | { kind: "site-profile" }
-  | { kind: "document"; url: string };
-
 /** 文書の検証結果が併せて持つ情報 */
-export type DocumentVerificationMetadata = {
-  /** 検証時刻 (ISO 8601) */
-  verifiedAt: string;
-  /** 結果が有効である時刻の境界 (ISO 8601)。用いた VC の有効期限の最小値 */
-  validUntil?: string;
-  /** 適用した検証のカテゴリー */
-  scope: VerificationCategory[];
-  /** 検証に用いた入力の出所 */
-  inputRange: InputSource[];
-};
+export type DocumentVerificationMetadata =
+  VerificationMetadata<VerificationCategory>;
 
 /** 文書の検証結果 */
 export type DocumentVerificationResult<Target extends VerificationTarget> =
   VerificationResult<DocumentOutcome<Target>> & DocumentVerificationMetadata;
 
-/** 用いた VC の有効期限のうち最も早いもの */
-function earliestExpiration(securingResults: SecuringResult[]) {
-  const expirations = securingResults.flatMap(({ expiredAt }) =>
-    expiredAt ? [expiredAt] : [],
-  );
-  if (expirations.length === 0) return undefined;
-  return new Date(
-    Math.min(...expirations.map((value) => new Date(value).getTime())),
-  ).toISOString();
-}
+/** 検証に用いた入力の出所 */
+const inputRangeOf = (
+  shared: SharedOriginators,
+  url: string,
+): InputSource[] => [
+  { kind: "registry" },
+  ...(shared.site ? [{ kind: "site-profile" } as const] : []),
+  { kind: "document", url },
+];
+
+/**
+ * 検証済みの共有の発信者
+ *
+ * 文書をまたいで用いてよい発信者の検証結果。
+ */
+export type SharedOriginators = {
+  /** レジストリの検証結果 ({@link verifyRegistry}) */
+  registry: VerificationResult<OriginatorsOutcome>;
+  /**
+   * トップレベル文書のオリジンの Web サイトの検証結果 ({@link verifyWebsite})。
+   * トップレベル文書の検証にだけ用いる
+   */
+  site?: VerificationResult<OriginatorsOutcome>;
+};
 
 /**
  * 文書の検証
  *
- * レジストリとその文書に設置された Originator Profile Set を検証し、その結果を
- * 用いて文書の Content Attestation Set を検証する。他の文書に設置された OPS は
- * 用いない。
+ * 検証済みの共有の発信者と、その文書に設置された Originator Profile Set を用いて
+ * 文書の Content Attestation Set を検証する。共有の発信者は検証し直さず、文書の
+ * OPS だけを検証する。他の文書に設置された OPS は用いない。
+ *
+ * 結果はその文書の OPS と CAS の分だけを含み、共有の発信者は含まない。どの共有の
+ * 発信者を用いたかは `inputRange` が示す。
  *
  * @param target 検証対象の文書
- * @param options レジストリ・Site Profile の発信者・バリデーター・ロガー
+ * @param options レジストリ・共有の発信者・バリデーター・ロガー
  * @returns 検証結果。復号できたペイロードは status によらず outcome に含まれる
+ * @throws {TypeError} トップレベル文書でない文書に Web サイトの発信者を渡した
  *
  * @example
  * ```ts
- * const result = await verifyDocument(target, { registry });
+ * const shared = { registry: await verifyRegistry(registry) };
+ * const result = await verifyDocument(target, { registry, shared });
  * result.outcome?.cas; // Content Attestation の復号ペイロード
  * if (!result.status) result.errors; // 検証失敗の理由
  * ```
@@ -138,46 +149,67 @@ export async function verifyDocument<
 >(
   target: Target,
   options: {
-    /** Core Profile 発行者のレジストリ */
+    /** Core Profile 発行者のレジストリ。文書の OPS の Core Profile の検証に用いる */
     registry: Registry;
-    /**
-     * トップレベル文書のオリジンの Site Profile が提示する発信者。
-     * 文書がトップレベル文書のときに限り、文書の OPS と併せて検証し検証鍵に加える
-     */
-    siteOriginators?: OriginatorProfileSet;
+    /** 検証済みの共有の発信者 */
+    shared: SharedOriginators;
     /** バリデーター */
     validator?: VcValidatorFactory;
     /** ロガー (デフォルト: `console`) */
     logger?: Logger;
   },
 ): Promise<DocumentVerificationResult<Target>> {
-  const { registry, siteOriginators, validator, logger } = options;
+  const { registry, shared, validator, logger } = options;
+  // NOTE: サブフレーム中のコンテンツの検証にトップレベル文書の SP を用いてはならない
+  // see https://docs.originator-profile.org/ja/opb/verifier-processing-model/site-profile/
+  if (shared.site && target.frameType !== "outermost_frame") {
+    throw new TypeError(
+      "Site Profile originators must not be used for documents in sub frames",
+    );
+  }
+
   const verifiedAt = new Date().toISOString();
   const { logger: collecting, warnings, info } = collectProblems(logger);
   const collect = createCollector();
+  const results = [shared.registry, ...(shared.site ? [shared.site] : [])];
+  const trusted = results.flatMap(({ outcome }) => outcome?.originators ?? []);
+  const failed = results.find(({ status }) => !status);
 
-  // NOTE: サブフレーム中のコンテンツの検証にトップレベル文書の SP を用いてはならない
-  // see https://docs.originator-profile.org/ja/opb/verifier-processing-model/site-profile/
-  const siteOps =
-    target.frameType === "outermost_frame" ? (siteOriginators ?? []) : [];
-  const inputRange: InputSource[] = [
-    { kind: "registry" },
-    ...(siteOps.length > 0 ? [{ kind: "site-profile" } as const] : []),
-    { kind: "document", url: target.url },
-  ];
+  const inputRange = inputRangeOf(shared, target.url);
   const metadata = () => ({
     verifiedAt,
-    validUntil: earliestExpiration(collect.securingResults),
+    // NOTE: 結果は共有の発信者の VC にも依存するため、その有効期間も境界に含める
+    validUntil: timeBoundaryOf(
+      [
+        ...results.flatMap(({ securingResults }) => securingResults),
+        ...collect.securingResults,
+      ],
+      verifiedAt,
+    ),
     scope: documentScope,
     inputRange,
   });
-  const opsVerifier = OpsVerifier(
-    [...registry.ops, ...siteOps, ...target.ops],
+
+  if (failed) {
+    return {
+      status: false,
+      outcome: { target, originators: [], cas: [] },
+      securingResults: [],
+      warnings,
+      info,
+      // 共有の発信者の中を指す問題は、この結果の outcome を指さないため除く
+      errors: (failed.errors ?? []).filter(({ pointer: at }) => !at),
+      ...metadata(),
+    };
+  }
+
+  const verifiedOps = await OpsVerifier(
+    target.ops,
     registry.keys,
     registry.issuer,
-    { validator, logger: collecting },
-  );
-  const verifiedOps = await opsVerifier();
+    { validator, logger: collecting, trusted },
+  )();
+  const originators = convertOps(verifiedOps, collect);
 
   if (
     verifiedOps instanceof OpsInvalid ||
@@ -185,11 +217,7 @@ export async function verifyDocument<
   ) {
     return {
       status: false,
-      outcome: {
-        target,
-        originators: convertOps(verifiedOps, collect),
-        cas: [],
-      },
+      outcome: { target, originators, cas: [] },
       securingResults: collect.securingResults,
       warnings,
       info,
@@ -200,7 +228,7 @@ export async function verifyDocument<
 
   const cas = await verifyCas(
     target.cas,
-    verifiedOps,
+    [...coreProfilesOf(trusted), ...verifiedOps],
     target.url,
     target.verifyIntegrity,
     validator,
@@ -210,7 +238,7 @@ export async function verifyDocument<
 
   const outcome: DocumentOutcome<Target> = {
     target,
-    originators: convertOps(verifiedOps, collect),
+    originators,
     cas: convertCas(
       cas instanceof CasVerifyFailed ? cas.result : cas,
       pointer(),

@@ -6,6 +6,7 @@ import {
 } from "@originator-profile/model";
 import { VerifiedJwtVc } from "@originator-profile/securing-mechanism";
 import type { Logger } from "../logger";
+import type { OriginatorPayload } from "../result/convert";
 import { pointer } from "../result/pointer";
 import { ProblemType } from "../result/problem-types";
 import type { Certificate, VerifiedOps } from "./types";
@@ -65,14 +66,13 @@ export function isProfileAnnotationIssuerRegistration(
  * (PA Issuer Accreditation Issuer が発行した認定証 PA のみを採用)
  */
 function buildProfileAnnotationPolicy(
-  /** 検証済みの OP の集合 */
-  verifiedOps: VerifiedOps,
+  /** 検証済みの PA */
+  annotations: Certificate[],
   /** PA Issuer Accreditation Issuer の OP ID の集合 */
   paIssuerAccreditationIssuers: ReadonlySet<string>,
 ): ProfileAnnotationPolicyMap {
   const policy: ProfileAnnotationPolicyMap = new Map();
-  const annotations = verifiedOps.flatMap((op) => op.annotations ?? []);
-  for (const { doc } of annotations) {
+  for (const doc of annotations) {
     if (!isIssuerAccreditation(doc)) continue;
     if (!paIssuerAccreditationIssuers.has(doc.issuer)) continue;
     const { id: accreditedIssuer, annotationScheme } = doc.credentialSubject;
@@ -143,6 +143,7 @@ function reportUnauthorizedAnnotation({
  * @param verifiedOps 検証済み Originator Profile Set
  * @param paIssuerAccreditationIssuer 基底となる Profile Annotation Issuer 認定証 PA Issuer の OP ID
  * @param logger ロガー (デフォルト: `console`)
+ * @param trusted 検証済みの共有の OP。認定証 PA の引き先に加える
  *
  * @see https://docs.originator-profile.org/opb/pa-model/issuer-accreditation/
  */
@@ -150,12 +151,20 @@ export function verifyAnnotationIssuerAccreditation(
   verifiedOps: VerifiedOps,
   paIssuerAccreditationIssuer: string | string[],
   logger: Logger = console,
+  trusted: OriginatorPayload[] = [],
 ): VerifiedOps {
   const paIssuerAccreditationIssuers = new Set(
     [paIssuerAccreditationIssuer].flat(),
   );
   const policy = buildProfileAnnotationPolicy(
-    verifiedOps,
+    [
+      ...trusted
+        .flatMap((op) => op.annotations ?? [])
+        .flatMap((doc) => (doc ? [doc] : [])),
+      ...verifiedOps
+        .flatMap((op) => op.annotations ?? [])
+        .map(({ doc }) => doc),
+    ],
     paIssuerAccreditationIssuers,
   );
   for (const [opIndex, op] of verifiedOps.entries()) {

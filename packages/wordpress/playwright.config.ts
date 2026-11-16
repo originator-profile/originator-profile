@@ -8,6 +8,8 @@ export default defineConfig({
   workers: 1,
   reporter: [["html"], process.env.CI ? ["dot"] : ["line"]],
   retries: process.env.CI ? 2 : 0,
+  // CI ではジョブの timeout-minutes (15 分) より先に打ち切り、失敗したテストの結果とレポートを残す.
+  globalTimeout: process.env.CI ? 10 * 60 * 1000 : 0,
   webServer: {
     command: "docker compose --env-file .env.development up",
     url: "http://localhost:9000",
