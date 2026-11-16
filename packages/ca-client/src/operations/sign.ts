@@ -73,6 +73,7 @@ export const signCaFile = async (input: SignCaFileOptions): Promise<string> => {
     return jwt;
   }
   await writeCasFile({ filePath: resolve(input.out), jwt });
+  // compareTargets は HTML 1 本前提。複数 target が別ファイルを指す場合は検証を省略する
   if (htmls.size === 1) {
     const [html] = htmls;
     const { status } = await compareTargets({ html, jwt });

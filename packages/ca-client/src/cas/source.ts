@@ -11,6 +11,8 @@ import { isInside } from "../utils/paths.ts";
 
 export const CAS_SCRIPT_TYPE = "application/ca-set+json";
 export const DEPRECATED_CAS_SCRIPT_TYPE = "application/cas+json";
+/** `DEPRECATED_CAS_SCRIPT_TYPE` のサポート終了日（この日以降は対象外）。 */
+export const DEPRECATED_CAS_SCRIPT_TYPE_UNTIL = "2027-11-01";
 const CAS_SCRIPT_SELECTOR = [CAS_SCRIPT_TYPE, DEPRECATED_CAS_SCRIPT_TYPE]
   .map((type) => `script[type='${type}']`)
   .join(", ");
@@ -112,8 +114,6 @@ export const whereOf = (location: CasLocation): string =>
     ? relative(process.cwd(), location.path)
     : `inline CAS in ${relative(process.cwd(), location.htmlFile)}`;
 
-type CasItem = string | { attestation: string; [key: string]: unknown };
-
 const readFileCas = async (path: string): Promise<string> => {
   try {
     return await readText(path);
@@ -125,7 +125,7 @@ const readFileCas = async (path: string): Promise<string> => {
   }
 };
 
-const itemsOf = async (source: CasSource): Promise<CasItem[]> => {
+const itemsOf = async (source: CasSource): Promise<unknown[]> => {
   const content =
     source.kind === "inline"
       ? contentOf(source)
@@ -147,13 +147,26 @@ const itemsOf = async (source: CasSource): Promise<CasItem[]> => {
       code: CaClientErrorCode.Validation,
     });
   }
-  return value as CasItem[];
+  // 要素の形（JWT 文字列 / { attestation }）は jwtOf で見る
+  return value;
 };
 
-const jwtOf = (item: CasItem) =>
-  typeof item === "string" ? item : item?.attestation;
+const jwtOf = (item: unknown): string | undefined => {
+  if (typeof item === "string") {
+    return item;
+  }
+  if (
+    typeof item === "object" &&
+    item !== null &&
+    "attestation" in item &&
+    typeof item.attestation === "string"
+  ) {
+    return item.attestation;
+  }
+  return undefined;
+};
 
-const indexIn = (items: CasItem[], issuer: string) =>
+const indexIn = (items: unknown[], issuer: string) =>
   items.findIndex((item) => jwtPayload(jwtOf(item))?.issuer === issuer);
 
 const ownIndex = async (source: CasSource, issuer: string) =>
@@ -251,7 +264,9 @@ export const upsertOwnCa = async (
   } else {
     const item = items[index];
     items[index] =
-      typeof item === "string" ? jwt : { ...item, attestation: jwt };
+      typeof item === "string" || item === null || typeof item !== "object"
+        ? jwt
+        : { ...item, attestation: jwt };
   }
   if (source.kind === "file") {
     await Promise.all(

@@ -1,5 +1,10 @@
 import { join } from "node:path";
 import { expect, test } from "vitest";
+import {
+  CAS_SCRIPT_TYPE,
+  DEPRECATED_CAS_SCRIPT_TYPE,
+  DEPRECATED_CAS_SCRIPT_TYPE_UNTIL,
+} from "../cas/source.ts";
 import type { ScanReport, SyncReport } from "../operations/sync.ts";
 import {
   injectReportLines,
@@ -49,7 +54,7 @@ test("scanLines: 集計、ok 以外のページ、orphan、stale copy、非推�
     `  - MISSING /c → ${join("public", "cas", "c.cas.json")} [main に一致する要素がありません]`,
     `  - ORPHAN ${join("public", "cas", "gone.cas.json")} (報告のみ)`,
     `  - STALE-COPY ${join("dist", "cas", "a.cas.json")} (${join("public", "cas", "a.cas.json")} と揃っていない)`,
-    "⚠ 1 ページが非推奨の application/cas+json を使っています。2027-11-01 以降はサポート外なので application/ca-set+json に替えてください",
+    `⚠ 1 ページが非推奨の ${DEPRECATED_CAS_SCRIPT_TYPE} を使っています。${DEPRECATED_CAS_SCRIPT_TYPE_UNTIL} 以降はサポート外なので ${CAS_SCRIPT_TYPE} に替えてください`,
   ]);
 });
 

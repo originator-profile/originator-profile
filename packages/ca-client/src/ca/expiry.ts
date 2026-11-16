@@ -20,6 +20,7 @@ export const expiresAt = (jwt: string): Date | undefined => {
   return typeof exp === "number" ? new Date(exp * 1000) : undefined;
 };
 
+/** `exp` が無い CA も期限切れ扱いにし、renew で拾えるようにする（明示の `--all` と同趣旨）。 */
 export const isExpiring = (
   exp: Date | undefined,
   withinDays: number,

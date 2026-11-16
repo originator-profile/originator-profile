@@ -1,5 +1,10 @@
 import { relative } from "node:path";
-import { DEPRECATED_CAS_SCRIPT_TYPE, type CasLocation } from "../cas/source.ts";
+import {
+  CAS_SCRIPT_TYPE,
+  DEPRECATED_CAS_SCRIPT_TYPE,
+  DEPRECATED_CAS_SCRIPT_TYPE_UNTIL,
+  type CasLocation,
+} from "../cas/source.ts";
 import type { CasMode } from "../operations/config.ts";
 import type { InjectReport } from "../operations/inject.ts";
 import type { RenewReport } from "../operations/renew.ts";
@@ -53,7 +58,7 @@ export const scanLines = (
     ),
     ...(deprecated.length > 0
       ? [
-          `⚠ ${deprecated.length} ページが非推奨の ${DEPRECATED_CAS_SCRIPT_TYPE} を使っています。2027-11-01 以降はサポート外なので application/ca-set+json に替えてください`,
+          `⚠ ${deprecated.length} ページが非推奨の ${DEPRECATED_CAS_SCRIPT_TYPE} を使っています。${DEPRECATED_CAS_SCRIPT_TYPE_UNTIL} 以降はサポート外なので ${CAS_SCRIPT_TYPE} に替えてください`,
         ]
       : []),
     ...(orphans ? [] : ["  (範囲を指定したので orphan は判定しない)"]),
