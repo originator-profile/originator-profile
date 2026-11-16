@@ -277,6 +277,12 @@ npx -p @originator-profile/ca-client opca help
 <!-- prettier-ignore-start -->
 <!-- commands -->
 * [`opca help [COMMAND]`](#opca-help-command)
+* [`opca init`](#opca-init)
+* [`opca inject [PATHS]`](#opca-inject-paths)
+* [`opca json PAGE`](#opca-json-page)
+* [`opca renew [PATHS]`](#opca-renew-paths)
+* [`opca sign`](#opca-sign)
+* [`opca sync [PATHS]`](#opca-sync-paths)
 
 ## `opca help [COMMAND]`
 
@@ -297,6 +303,248 @@ DESCRIPTION
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/6.3.0/src/commands/help.ts)_
+
+## `opca init`
+
+ca.config.json を作る
+
+```
+USAGE
+  $ opca init [--config <value>] [--issuer <value>] [--dist <value>] [--public <value>] [--origin
+     <value>...] [--selector <value>] [--author <value>...] [--editor <value>...] [--genre <value>] [--exclude
+    <value>...] [--persistence commit|rebuild] [--force]
+
+FLAGS
+  --author=<value>...     author が無いページの既定の著者
+  --config=<value>        [default: ca.config.json] 設定ファイルのパス
+  --dist=<value>          ビルド済み HTML のディレクトリ
+  --editor=<value>...     既定の編集者
+  --exclude=<value>...    対象にしないパスの正規表現
+  --force                 既存の設定ファイルを上書きする
+  --genre=<value>         article:section が無いページの既定ジャンル
+  --issuer=<value>        発行者 ID
+  --origin=<value>...     サイトのオリジン
+  --persistence=<option>  CAS の置き方
+                          <options: commit|rebuild>
+  --public=<value>        CAS を置く静的ファイルのディレクトリ
+  --selector=<value>      証明する要素の CSS セレクタ
+
+DESCRIPTION
+  ca.config.json を作る
+
+  ビルド済み HTML を調べ、ca.config.json の草案を書く。
+  端末では渡していない項目を、推定した値を既定にして聞く。
+
+EXAMPLES
+  $ opca init
+
+  $ opca init --issuer dns:example.com --dist dist
+
+FLAG DESCRIPTIONS
+  --config=<value>  設定ファイルのパス
+
+    既定は ca.config.json。
+
+  --issuer=<value>  発行者 ID
+
+    例: dns:example.com。sign で設定ファイルが無いときに必要。
+
+  --persistence=commit|rebuild  CAS の置き方
+
+    commit はリポジトリに置く。rebuild はデプロイのたびに作り直す。
+```
+
+_See code: [src/commands/init.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/init.ts)_
+
+## `opca inject [PATHS]`
+
+HTML に CAS のタグを入れる
+
+```
+USAGE
+  $ opca inject [PATHS] [--config <value>] [--check]
+
+ARGUMENTS
+  [PATHS]  distDir 配下の HTML、ディレクトリ、glob。省略時は全体。
+
+FLAGS
+  --check           書き込まずに結果だけを出す
+  --config=<value>  [default: ca.config.json] 設定ファイルのパス
+
+DESCRIPTION
+  HTML に CAS のタグを入れる
+
+  ビルド済み HTML に CAS の <script> を足し、外部リソースの integrity を揃える。
+  --check を付けると書き込まず、足りないタグと古い integrity だけを出す。
+
+EXAMPLES
+  $ opca inject
+
+  $ opca inject docs --check
+
+FLAG DESCRIPTIONS
+  --config=<value>  設定ファイルのパス
+
+    既定は ca.config.json。
+```
+
+_See code: [src/commands/inject.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/inject.ts)_
+
+## `opca json PAGE`
+
+ページから未署名 CA の JSON を作る
+
+```
+USAGE
+  $ opca json PAGE [--config <value>] [--selector <value>] [--out <value>]
+
+ARGUMENTS
+  PAGE  対象の HTML ファイル
+
+FLAGS
+  --config=<value>    [default: ca.config.json] 設定ファイルのパス
+  --out=<value>       JSON を書くパス
+  --selector=<value>  証明する要素の CSS セレクタ
+
+DESCRIPTION
+  ページから未署名 CA の JSON を作る
+
+  HTML ページから未署名の Content Attestation を組み立て、JSON として出す。
+  --out を省略すると標準出力に書く。
+
+EXAMPLES
+  $ opca json dist/news/a/index.html
+
+  $ opca json dist/news/a/index.html --out unsigned.json
+
+FLAG DESCRIPTIONS
+  --config=<value>  設定ファイルのパス
+
+    既定は ca.config.json。
+
+  --selector=<value>  証明する要素の CSS セレクタ
+
+    省略時は設定の selectors を使う。
+```
+
+_See code: [src/commands/json.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/json.ts)_
+
+## `opca renew [PATHS]`
+
+期限が近い CA を再署名する
+
+```
+USAGE
+  $ opca renew [PATHS] [--config <value>] [--within <value>] [--all]
+
+ARGUMENTS
+  [PATHS]  distDir 配下の HTML、または publicDir 配下の CAS。省略時は全体。
+
+FLAGS
+  --all             期限に関わらず再署名する
+  --config=<value>  [default: ca.config.json] 設定ファイルのパス
+  --within=<value>  再署名する期限までの日数
+
+DESCRIPTION
+  期限が近い CA を再署名する
+
+  既存の CAS を再署名する。
+  既定では設定の renewWithinDays 以内に切れるものだけを対象にする。
+  --all で期限に関わらず再署名する。
+
+EXAMPLES
+  $ opca renew
+
+  $ opca renew --within 7
+
+  $ opca renew --all
+
+FLAG DESCRIPTIONS
+  --config=<value>  設定ファイルのパス
+
+    既定は ca.config.json。
+
+  --within=<value>  再署名する期限までの日数
+
+    省略時は設定の renewWithinDays（既定 30）。0 以上。
+```
+
+_See code: [src/commands/renew.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/renew.ts)_
+
+## `opca sign`
+
+未署名 CA の JSON を署名する
+
+```
+USAGE
+  $ opca sign --input <value> [--config <value>] [--issuer <value>] [--out <value>]
+
+FLAGS
+  --config=<value>  [default: ca.config.json] 設定ファイルのパス
+  --input=<value>   (required) 未署名 CA の JSON ファイル
+  --issuer=<value>  発行者 ID
+  --out=<value>     署名した CAS を書くパス
+
+DESCRIPTION
+  未署名 CA の JSON を署名する
+
+  未署名の Content Attestation JSON を CA サーバーで署名する。
+  --out を付けると CAS ファイルに書き、省略すると JWT を標準出力に出す。
+  設定ファイルが無いときは --issuer が必要。
+
+EXAMPLES
+  $ opca sign --input unsigned.json --out dist/cas/page.cas.json
+
+  $ opca sign --input unsigned.json --issuer dns:example.com
+
+FLAG DESCRIPTIONS
+  --config=<value>  設定ファイルのパス
+
+    既定は ca.config.json。
+
+  --issuer=<value>  発行者 ID
+
+    例: dns:example.com。sign で設定ファイルが無いときに必要。
+```
+
+_See code: [src/commands/sign.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/sign.ts)_
+
+## `opca sync [PATHS]`
+
+ページの CA を照合・発行する
+
+```
+USAGE
+  $ opca sync [PATHS] [--config <value>] [--check] [--report <value>]
+
+ARGUMENTS
+  [PATHS]  distDir 配下の HTML、ディレクトリ、glob。省略時は全体。
+
+FLAGS
+  --check           書き込まずに結果だけを出す
+  --config=<value>  [default: ca.config.json] 設定ファイルのパス
+  --report=<value>  照合結果を書く JSON ファイル
+
+DESCRIPTION
+  ページの CA を照合・発行する
+
+  ビルド済み HTML を走査し、欠けている・ずれた・期限が近い CA を署名する。
+  --check を付けると書き込まず、照合結果だけを出す。
+
+EXAMPLES
+  $ opca sync
+
+  $ opca sync docs --check
+
+  $ opca sync docs/news --report report.json
+
+FLAG DESCRIPTIONS
+  --config=<value>  設定ファイルのパス
+
+    既定は ca.config.json。
+```
+
+_See code: [src/commands/sync.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/sync.ts)_
 <!-- commandsstop -->
 <!-- prettier-ignore-end -->
 

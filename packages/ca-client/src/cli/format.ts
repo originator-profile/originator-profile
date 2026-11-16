@@ -18,7 +18,7 @@ import type {
 
 const shown = (file: string) => relative(process.cwd(), file);
 
-const labelOf = (location: CasLocation): string =>
+export const labelOf = (location: CasLocation): string =>
   location.kind === "file"
     ? shown(location.path)
     : `${shown(location.htmlFile)} (埋め込み)`;

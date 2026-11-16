@@ -29,6 +29,7 @@
   "oclif": {
     "bin": "opca",
     "commands": "dist/commands",
+    "helpClass": "./dist/cli/help",
     "repositoryPrefix": "<%- repo %>/blob/v<%- version %>/packages/ca-client/<%- commandPath %>",
     "plugins": [
       "@oclif/plugin-help"
@@ -46,7 +47,8 @@
     "@originator-profile/securing-mechanism": "workspace:*",
     "@originator-profile/sign": "workspace:*",
     "globby": "^16.2.4",
-    "jsdom": "^29.0.1"
+    "jsdom": "^29.0.1",
+    "wrap-ansi": "^9.0.2"
   },
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",
