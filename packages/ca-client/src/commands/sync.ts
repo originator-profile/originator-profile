@@ -7,10 +7,12 @@ import { loadCaConfig } from "../operations/config.ts";
 import { sync } from "../operations/sync.ts";
 
 export default class Sync extends Command {
-  static summary = "ページの CA を照合・発行する";
+  static summary = "ページの CA を照合し、必要なら署名する";
   static description = `\
-ビルド済み HTML を走査し、欠けている・ずれた・期限が近い CA を署名する。
---check を付けると書き込まず、照合結果だけを出す。`;
+ビルド済み HTML を調べ、欠けている・内容がずれた・期限が近い CA を署名する。
+状態は ok / missing / drifted / expiring。orphan は参照の無い CAS、stale-copy はコピーが揃っていないもの。
+--check では書き込まず照合だけする。欠けやずれがあっても終了コードは 0。CA を作れないページがあると失敗する。
+署名には環境変数 CA_SERVER_URL と CCSP_CONFIG が必要。`;
 
   static flags = {
     config: configFlag,
@@ -22,7 +24,8 @@ export default class Sync extends Command {
 
   static args = {
     paths: Args.string({
-      description: "distDir 配下の HTML、ディレクトリ、glob。省略時は全体。",
+      description:
+        "ビルド済み HTML 配下のファイル、ディレクトリ、glob。省略時は全体。",
       required: false,
       multiple: true,
     }),

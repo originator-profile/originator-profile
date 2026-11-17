@@ -8,7 +8,7 @@ export default class Inject extends Command {
   static summary = "HTML に CAS のタグを入れる";
   static description = `\
 ビルド済み HTML に CAS の <script> を足し、外部リソースの integrity を揃える。
---check を付けると書き込まず、足りないタグと古い integrity だけを出す。`;
+--check では書き込まず、足りないタグと古い integrity だけを出す。`;
 
   static flags = {
     config: configFlag,
@@ -17,7 +17,8 @@ export default class Inject extends Command {
 
   static args = {
     paths: Args.string({
-      description: "distDir 配下の HTML、ディレクトリ、glob。省略時は全体。",
+      description:
+        "ビルド済み HTML 配下のファイル、ディレクトリ、glob。省略時は全体。",
       required: false,
       multiple: true,
     }),

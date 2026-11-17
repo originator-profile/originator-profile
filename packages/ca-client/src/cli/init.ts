@@ -7,26 +7,22 @@ import {
   parseOrigin,
   parsePattern,
   type CaConfig,
+  type CasMode,
 } from "../operations/config.ts";
 import {
   DIST_CANDIDATES,
   distCandidates,
-  parsePersistence,
+  parseCasMode,
   previewIssuance,
   proposeConfig,
   scanSite,
   suggestSelector,
   type InitAnswers,
-  type Persistence,
   type SiteScan,
 } from "../operations/site-init.ts";
 import { isEnoent, readText, writeText } from "../utils/file.ts";
 
-export type {
-  InitAnswers,
-  Persistence,
-  SiteScan,
-} from "../operations/site-init.ts";
+export type { InitAnswers, SiteScan } from "../operations/site-init.ts";
 
 export type Ask = (question: string, fallback?: string) => Promise<string>;
 
@@ -81,7 +77,7 @@ const askDistDir = async (root: string, ask: Ask, log: Log) => {
 const previewWith = async (config: CaConfig, log: Log) => {
   const preview = await previewIssuance(config);
   log.log(
-    `CA を作れるページ ${preview.issuable}、作れないページ ${preview.problems.reduce((sum, { pages }) => sum + pages.length, 0)}、selector に当たらないページ ${preview.unmatched}`,
+    `CA を作れるページ ${preview.issuable}、作れないページ ${preview.problems.reduce((sum, { pages }) => sum + pages.length, 0)}、セレクタに当たらないページ ${preview.unmatched}`,
   );
   for (const { problem, pages } of preview.problems) {
     log.log(
@@ -99,7 +95,7 @@ const askSite = async (
   answers.issuer ??= await askValid(
     ask,
     log,
-    "issuer（OP レジストリに登録した OP ID、dns: で始まる）",
+    "発行者 ID（OP レジストリの dns: で始まる ID）",
     undefined,
     parseIssuer,
   );
@@ -122,11 +118,11 @@ const askSite = async (
     answers.selector = await askValid(
       ask,
       log,
-      "証明する要素の selector",
+      "証明する要素の CSS セレクタ",
       suggestSelector(scan),
       (value) => {
         if (!value) {
-          throw new Error("selector が必要です");
+          throw new Error("CSS セレクタが必要です");
         }
         return value;
       },
@@ -190,14 +186,14 @@ const askPublishing = async (
       (value) => list(value).map((pattern) => parsePattern(pattern)),
     );
   }
-  answers.persistence ??= await askValid(
+  answers.mode ??= await askValid(
     ask,
     log,
-    "CAS の置き場所。commit はリポジトリに置いてビルドに含める、rebuild はデプロイのたびに作り直す",
-    "commit",
-    parsePersistence,
+    "CAS の mode。file は別ファイル、inline は HTML に埋め込む",
+    "file",
+    parseCasMode,
   );
-  if (answers.persistence === "commit" && answers.publicDir === undefined) {
+  if (answers.mode === "file" && answers.publicDir === undefined) {
     answers.publicDir = resolve(
       await askValid(
         ask,
@@ -229,14 +225,14 @@ const askAnswers = async (
   return answers;
 };
 
-const nextSteps = (config: CaConfig, persistence: Persistence) => {
+const nextSteps = (config: CaConfig, mode: CasMode) => {
   const dist = relative(process.cwd(), config.distDir) || ".";
   const steps = [
     "次の手順:",
     "  環境変数 CA_SERVER_URL と CCSP_CONFIG を設定する",
     `  ビルドしてから opca inject ${dist} && opca sync ${dist}`,
   ];
-  return persistence === "commit"
+  return mode === "file"
     ? [
         ...steps,
         `  ${relative(process.cwd(), config.publicDir)} に書かれた CAS をコミットする（${dist} にも写すので、そのままデプロイしてよい）`,
@@ -319,7 +315,7 @@ export const init = async (options: InitOptions): Promise<CaConfig> => {
   const answers = ask
     ? await askAnswers(scan, options.answers, ask, configDir, log)
     : options.answers;
-  const { raw, persistence } = proposeConfig(scan, answers, configDir);
+  const { raw, mode } = proposeConfig(scan, answers, configDir);
   const config = parseCaConfig(raw, configDir);
   if (!answers.author?.length && scan.withoutAuthor > 0) {
     log.log(
@@ -333,7 +329,7 @@ export const init = async (options: InitOptions): Promise<CaConfig> => {
   );
 
   await previewWith(config, log);
-  for (const line of nextSteps(config, persistence)) {
+  for (const line of nextSteps(config, mode)) {
     log.log(line);
   }
   return config;

@@ -11,12 +11,11 @@ export const caClientFromEnv = (issuer: string | undefined): CaClient => {
     const missing = [
       ...(!endpoint ? ["CA_SERVER_URL"] : []),
       ...(!ccspConfig ? ["CCSP_CONFIG"] : []),
-      ...(!issuer ? ["issuer (--issuer or ca.config.json)"] : []),
+      ...(!issuer ? ["issuer（--issuer または ca.config.json）"] : []),
     ];
-    throw new CaClientError(
-      `${missing.join(", ")} ${missing.length === 1 ? "is" : "are"} required`,
-      { code: CaClientErrorCode.Config },
-    );
+    throw new CaClientError(`${missing.join(" と ")} が必要です`, {
+      code: CaClientErrorCode.Config,
+    });
   }
   return createCaClient({ endpoint, issuer, ccspConfig });
 };

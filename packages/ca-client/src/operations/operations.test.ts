@@ -457,15 +457,15 @@ test("sync: 一致しないパスと distDir の外のパスは失敗する", as
   const validation = caError(CaClientErrorCode.Validation);
   await expect(pathnames(["ja/news/zzz"])).rejects.toMatchObject({
     ...validation,
-    message: expect.stringMatching(/^No files/),
+    message: expect.stringMatching(/一致するファイルがありません/),
   });
   await expect(pathnames(["ja/**/*.htm"])).rejects.toMatchObject({
     ...validation,
-    message: expect.stringMatching(/^No files/),
+    message: expect.stringMatching(/一致するファイルがありません/),
   });
   await expect(pathnames(["outside.html"])).rejects.toMatchObject({
     ...validation,
-    message: expect.stringMatching(/is outside/),
+    message: expect.stringMatching(/の外です/),
   });
 });
 

@@ -9,8 +9,9 @@ export default class Renew extends Command {
   static summary = "期限が近い CA を再署名する";
   static description = `\
 既存の CAS を再署名する。
-既定では設定の renewWithinDays 以内に切れるものだけを対象にする。
---all で期限に関わらず再署名する。`;
+既定では設定の再署名期限（既定 30 日）以内に切れるものだけを対象にする。
+--all で期限に関わらず再署名する。
+環境変数 CA_SERVER_URL と CCSP_CONFIG が必要。`;
 
   static flags = {
     config: configFlag,
@@ -21,7 +22,7 @@ export default class Renew extends Command {
   static args = {
     paths: Args.string({
       description:
-        "distDir 配下の HTML、または publicDir 配下の CAS。省略時は全体。",
+        "ビルド済み HTML、または CAS ディレクトリ配下のパス。省略時は全体。",
       required: false,
       multiple: true,
     }),

@@ -28,6 +28,7 @@
   },
   "oclif": {
     "bin": "opca",
+    "description": "ビルド済み HTML の CA を署名し、CAS として配信する。",
     "commands": "dist/commands",
     "helpClass": "./dist/cli/help",
     "repositoryPrefix": "<%- repo %>/blob/v<%- version %>/packages/ca-client/<%- commandPath %>",

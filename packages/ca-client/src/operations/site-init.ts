@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { relative, resolve } from "node:path";
 import { resolveFiles } from "../utils/paths.ts";
-import type { CaConfig } from "./config.ts";
+import { type CaConfig, type CasMode } from "./config.ts";
 import {
   buildUnsignedCa,
   forEachPage,
@@ -12,8 +12,7 @@ import {
   type Page,
 } from "./page.ts";
 
-export type Persistence = "commit" | "rebuild";
-export const PERSISTENCES: Persistence[] = ["commit", "rebuild"];
+export const CAS_MODES: CasMode[] = ["file", "inline"];
 
 export const DIST_CANDIDATES = [
   "dist",
@@ -49,13 +48,13 @@ export type InitAnswers = {
   editor?: string[];
   genre?: string;
   exclude?: string[];
-  persistence?: Persistence;
+  mode?: CasMode;
   publicDir?: string;
 };
 
 export type Proposal = {
   raw: Record<string, unknown>;
-  persistence: Persistence;
+  mode: CasMode;
 };
 
 const countBy = (values: string[]) =>
@@ -180,33 +179,33 @@ export const proposeConfig = (
   configDir: string,
 ): Proposal => {
   const { issuer, selector } = requiredAnswers(scan, answers);
-  const persistence = answers.persistence ?? "commit";
+  const mode = answers.mode ?? "file";
   const at = (dir: string) => relative(configDir, dir) || ".";
   const origins =
     answers.origins ?? scan.origins.slice(0, 1).map(({ origin }) => origin);
   const defaults = defaultsOf(answers);
   return {
-    persistence,
+    mode,
     raw: {
       issuer,
       distDir: at(scan.distDir),
-      ...(persistence === "commit"
+      ...(mode === "file"
         ? { publicDir: at(publicDirOf(scan, answers, configDir)) }
         : {}),
       ...(origins.length > 0 ? { origins } : {}),
       selectors: [{ selector }],
       ...(answers.exclude?.length ? { exclude: answers.exclude } : {}),
       ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
-      cas: { mode: persistence === "commit" ? "file" : "inline" },
+      cas: { mode },
     },
   };
 };
 
-export const parsePersistence = (value: string): Persistence => {
-  if (!PERSISTENCES.includes(value as Persistence)) {
-    throw new Error(`--persistence は ${PERSISTENCES.join(" か ")}: ${value}`);
+export const parseCasMode = (value: string): CasMode => {
+  if (!CAS_MODES.includes(value as CasMode)) {
+    throw new Error(`--mode は ${CAS_MODES.join(" か ")}: ${value}`);
   }
-  return value as Persistence;
+  return value as CasMode;
 };
 
 export type IssuancePreview = {

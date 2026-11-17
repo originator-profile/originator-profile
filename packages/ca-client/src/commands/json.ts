@@ -8,17 +8,17 @@ import { unsignedCaFromPage } from "../operations/unsigned-page.ts";
 export default class Json extends Command {
   static summary = "ページから未署名 CA の JSON を作る";
   static description = `\
-HTML ページから未署名の Content Attestation を組み立て、JSON として出す。
+HTML ページから未署名 CA を組み立て、JSON として書く。
 --out を省略すると標準出力に書く。`;
 
   static flags = {
     config: configFlag,
-    selector: Flags.string({
-      summary: "証明する要素の CSS セレクタ",
-      description: "省略時は設定の selectors を使う。",
-    }),
     out: Flags.string({
       summary: "JSON を書くパス",
+    }),
+    selector: Flags.string({
+      summary: "証明する要素の CSS セレクタ",
+      description: "省略時は設定のセレクタを使う。",
     }),
   };
 

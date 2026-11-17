@@ -57,8 +57,8 @@ export const notFound = (path: string, baseDirs: string[]): CaClientError => {
     !isDynamicPattern(path) &&
     existsSync(resolve(path)) &&
     !baseDirs.some((dir) => existingUnder(dir, path))
-      ? `${path} is outside ${where}`
-      : `No files in ${where} match ${path}`;
+      ? `${path} は ${where} の外です`
+      : `${where} に ${path} に一致するファイルがありません`;
   return new CaClientError(message, { code: CaClientErrorCode.Validation });
 };
 

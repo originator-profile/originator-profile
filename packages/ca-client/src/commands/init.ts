@@ -5,7 +5,7 @@ import {
   config as configFlag,
   force,
   issuer,
-  persistence,
+  mode,
 } from "../cli/flags.ts";
 import { init, type Ask, type InitAnswers } from "../cli/init.ts";
 
@@ -24,9 +24,9 @@ const withTerminalAsk = async <T>(run: (ask: Ask) => Promise<T>) => {
 };
 
 export default class Init extends Command {
-  static summary = "ca.config.json を作る";
+  static summary = "初期設定を作る";
   static description = `\
-ビルド済み HTML を調べ、ca.config.json の草案を書く。
+ビルド済み HTML を調べ、設定ファイル（ca.config.json）の草案を書く。
 端末では渡していない項目を、推定した値を既定にして聞く。`;
 
   static flags = {
@@ -38,12 +38,17 @@ export default class Init extends Command {
     public: Flags.string({
       summary: "CAS を置く静的ファイルのディレクトリ",
     }),
+    mode,
     origin: Flags.string({
       summary: "サイトのオリジン",
       multiple: true,
     }),
     selector: Flags.string({
       summary: "証明する要素の CSS セレクタ",
+    }),
+    exclude: Flags.string({
+      summary: "対象にしないパスの正規表現",
+      multiple: true,
     }),
     author: Flags.string({
       summary: "author が無いページの既定の著者",
@@ -56,11 +61,6 @@ export default class Init extends Command {
     genre: Flags.string({
       summary: "article:section が無いページの既定ジャンル",
     }),
-    exclude: Flags.string({
-      summary: "対象にしないパスの正規表現",
-      multiple: true,
-    }),
-    persistence,
     force,
   };
 
@@ -81,7 +81,7 @@ export default class Init extends Command {
       editor: flags.editor,
       genre: flags.genre,
       exclude: flags.exclude,
-      persistence: flags.persistence,
+      mode: flags.mode,
     };
     const options = {
       configFile: flags.config,

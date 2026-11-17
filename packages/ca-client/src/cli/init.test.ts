@@ -65,7 +65,7 @@ test("init: ビルド済み HTML から設定を作り、inject と sync でリ�
   });
   expect(
     lines.includes(
-      "CA を作れるページ 2、作れないページ 1、selector に当たらないページ 1",
+      "CA を作れるページ 2、作れないページ 1、セレクタに当たらないページ 1",
     ),
   ).toBeTruthy();
   expect(
@@ -125,14 +125,14 @@ test("init: 端末では全項目を推定値を既定にして順に聞き、�
   const { configFile } = fresh();
   const lines: string[] = [];
   const { ask, asked } = scripted([
-    [/issuer/, "example.com"],
-    [/issuer/, ISSUER],
+    [/発行者/, "example.com"],
+    [/発行者/, ISSUER],
     [/オリジン/, "http://example.com"],
     [/オリジン/, "https://example.com, http://localhost:4321"],
     [/著者/, "Example Inc., Jane Doe"],
     [/ジャンル/, "technology"],
     [/正規表現/, "^/about"],
-    [/置き場所/, "rebuild"],
+    [/mode/, "inline"],
   ]);
 
   await init({
@@ -150,16 +150,16 @@ test("init: 端末では全項目を推定値を既定にして順に聞き、�
     ]),
   ).toStrictEqual([
     ["ビルド済み HTML のディレクトリ", "dist"],
-    ["issuer", undefined],
-    ["issuer", undefined],
+    ["発行者 ID", undefined],
+    ["発行者 ID", undefined],
     ["サイトのオリジン", "https://example.com"],
     ["サイトのオリジン", "https://example.com"],
-    ["証明する要素の selector", SELECTOR],
+    ["証明する要素の CSS セレクタ", SELECTOR],
     ["author が無いページの著者", ""],
     ["編集者", "Example Inc., Jane Doe"],
     ["article:section が無いページのジャンル", ""],
     ["対象にしないパスの正規表現", ""],
-    ["CAS の置き場所", "commit"],
+    ["CAS の mode", "file"],
   ]);
   expect(
     lines.includes('  <meta name="author"> が無いページ: 4 / 4'),
@@ -183,7 +183,7 @@ test("init: 端末では全項目を推定値を既定にして順に聞き、�
   });
   expect(
     lines.includes(
-      "CA を作れるページ 2、作れないページ 0、selector に当たらないページ 1",
+      "CA を作れるページ 2、作れないページ 0、セレクタに当たらないページ 1",
     ),
   ).toBeTruthy();
 });
@@ -207,7 +207,7 @@ test("init: フラグで渡した項目は聞かず、端末でなければ issu
       editor: [],
       genre: "",
       exclude: [],
-      persistence: "commit",
+      mode: "file",
     },
     force: false,
     ask,
@@ -249,7 +249,7 @@ test("init: HTML に author と article:section があれば、聞くのは HTML
     asked.map(({ question }) => question.split(/[（。]/)[0]),
   ).toStrictEqual([
     "編集者",
-    "CAS の置き場所",
+    "CAS の mode",
     "CAS を置く静的ファイルのディレクトリ",
   ]);
   expect(JSON.parse(readFileSync(configFile, "utf-8")).defaults).toBe(

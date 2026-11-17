@@ -9,13 +9,12 @@ import { isEnoent } from "../utils/file.ts";
 export default class Sign extends Command {
   static summary = "未署名 CA の JSON を署名する";
   static description = `\
-未署名の Content Attestation JSON を CA サーバーで署名する。
---out を付けると CAS ファイルに書き、省略すると JWT を標準出力に出す。
-設定ファイルが無いときは --issuer が必要。`;
+未署名 CA の JSON を CA サーバーで署名する。
+--out を付けると CAS ファイルに書き、省略すると署名済み JWT を標準出力に書く。
+環境変数 CA_SERVER_URL と CCSP_CONFIG が必要。設定ファイルが無いときは --issuer も必要。`;
 
   static flags = {
     config: configFlag,
-    issuer,
     input: Flags.string({
       summary: "未署名 CA の JSON ファイル",
       required: true,
@@ -23,6 +22,7 @@ export default class Sign extends Command {
     out: Flags.string({
       summary: "署名した CAS を書くパス",
     }),
+    issuer,
   };
 
   static examples = [
