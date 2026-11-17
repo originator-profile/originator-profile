@@ -5,7 +5,7 @@ require_once __DIR__ . '/../includes/class-uca.php';
 use Profile\Uca\Uca;
 
 final class Uca_Data_Url extends TestCase {
-	private const PREFIX = 'data:text/html;charset=utf-8;base64,';
+	private const PREFIX = Uca::DATA_URL_PREFIX;
 
 	public function test_html_to_data_urlメソッドはHTMLをBase64のdata_URLに変換する() {
 		$html = '<!DOCTYPE html><html><body><p>本文 & "引用" \'一重引用符\'</p></body></html>';

@@ -164,7 +164,7 @@ try {
 	$issued_payload = json_decode( $requests[0]['body'], true );
 	// 本文は Base64 の data: URL で送られる.
 	$issued_content  = $issued_payload['target'][0]['content'];
-	$data_url_prefix = 'data:text/html;charset=utf-8;base64,';
+	$data_url_prefix = \Profile\Uca\Uca::DATA_URL_PREFIX;
 	profile_bulk_assert( str_starts_with( $issued_content, $data_url_prefix ), 'Target content is sent as a base64 data URL' );
 	// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_decode
 	$issued_html = (string) base64_decode( substr( $issued_content, strlen( $data_url_prefix ) ), true );

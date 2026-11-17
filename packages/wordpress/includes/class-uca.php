@@ -16,6 +16,11 @@ use function Profile\Debug\debug;
  */
 final class Uca {
 	/**
+	 * HTML を target[].content に入れるときの data: URL の接頭辞
+	 */
+	public const DATA_URL_PREFIX = 'data:text/html;charset=utf-8;base64,';
+
+	/**
 	 * 未署名 Content Attestation
 	 *
 	 * @param string  $issuer CA 発行者
@@ -128,6 +133,6 @@ final class Uca {
 	 */
 	public static function html_to_data_url( string $html ): string {
 		// phpcs:ignore WordPress.PHP.DiscouragedPHPFunctions.obfuscation_base64_encode
-		return 'data:text/html;charset=utf-8;base64,' . \base64_encode( $html );
+		return self::DATA_URL_PREFIX . \base64_encode( $html );
 	}
 }
