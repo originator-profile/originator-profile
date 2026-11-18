@@ -61,9 +61,7 @@ test("scanLines: 集計、ok 以外のページ、orphan、stale copy、非推�
 test("scanLines: 署名するときは CA を作れないページを飛ばすと表示する", () => {
   const lines = scanLines(scan, { check: false });
 
-  expect(lines.at(-1)).toBe(
-    "⚠ 1 ページは CA を作れないため飛ばします",
-  );
+  expect(lines.at(-1)).toBe("⚠ 1 ページは CA を作れないため飛ばします");
 });
 
 test("issuedLine と syncResultLines: 署名とコピーを表示し、署名が無ければそう表示する", () => {
@@ -113,7 +111,9 @@ test("renewedLine と renewReportLine: 再署名した CAS と件数を表示す
     path: here("public", "cas", "a.cas.json"),
   } as const;
 
-  expect(renewedLine(cas)).toBe(`✓ 再署名 ${join("public", "cas", "a.cas.json")}`);
+  expect(renewedLine(cas)).toBe(
+    `✓ 再署名 ${join("public", "cas", "a.cas.json")}`,
+  );
   expect(renewReportLine({ renewed: [cas], total: 3, all: false })).toBe(
     "3 件中 1 件の CAS を再署名しました（期限切れ）",
   );

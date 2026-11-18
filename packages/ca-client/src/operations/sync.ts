@@ -139,10 +139,7 @@ const driftOfPage = async (
   ];
 };
 
-const statusOf = (
-  cas: DecodedCa | undefined,
-  drift: Drift,
-): PageStatus => {
+const statusOf = (cas: DecodedCa | undefined, drift: Drift): PageStatus => {
   if (cas === undefined) {
     return "missing";
   }

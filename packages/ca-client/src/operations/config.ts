@@ -106,7 +106,7 @@ const parseCas = (value: unknown): CaConfig["cas"] => {
   const cas = (value ?? {}) as Record<string, unknown>;
   if (cas.mode !== undefined && cas.mode !== "file") {
     fail(
-      'cas.mode is not supported; CAS files are always written under publicDir',
+      "cas.mode is not supported; CAS files are always written under publicDir",
     );
   }
   const path = cas.path ?? DEFAULT_CAS_PATH;

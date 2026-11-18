@@ -1,7 +1,7 @@
 import { Command } from "@oclif/core";
 import { caClientFromEnv } from "../cli/client.ts";
 import { all, CONFIG_FILE } from "../cli/flags.ts";
-import { renewReportLine, renewedLine } from "../cli/format.ts";
+import { renewedLine, renewReportLine } from "../cli/format.ts";
 import { loadCaConfig } from "../operations/config.ts";
 import { renew } from "../operations/renew.ts";
 

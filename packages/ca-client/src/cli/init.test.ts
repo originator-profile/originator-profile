@@ -185,9 +185,9 @@ test("init: 端末では全項目を推定値を既定にして順に聞き、�
 test("init: フラグで渡した項目は聞かず、端末でなければ issuer が無いと失敗する", async () => {
   const { configFile } = fresh();
 
-  await expect(
-    init({ configFile, answers: {}, log: silent }),
-  ).rejects.toThrow(/--issuer/);
+  await expect(init({ configFile, answers: {}, log: silent })).rejects.toThrow(
+    /--issuer/,
+  );
 
   const { ask, asked } = scripted([]);
   await init({
