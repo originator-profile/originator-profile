@@ -1,7 +1,6 @@
 import type { UnsignedContentAttestation } from "@originator-profile/model";
-import { globby } from "globby";
-import { readFile } from "node:fs/promises";
-import { dirname, relative } from "node:path";
+import { glob, readFile } from "node:fs/promises";
+import { dirname, relative, resolve } from "node:path";
 import type { CaClient } from "../ca-server/create-ca-client.ts";
 import type { DecodedCa } from "../ca/decode.ts";
 import {
@@ -221,7 +220,11 @@ const scanPage = async (
 const orphansOf = async (referenced: Set<string>): Promise<string[]> => {
   const dirs = [...new Set([...referenced].map((file) => dirname(file)))];
   const files = await Promise.all(
-    dirs.map((cwd) => globby("*.cas.json", { cwd, absolute: true })),
+    dirs.map((cwd) =>
+      Array.fromAsync(glob("*.cas.json", { cwd }), (file) =>
+        resolve(cwd, file),
+      ),
+    ),
   );
   return files
     .flat()

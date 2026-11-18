@@ -47,7 +47,7 @@
     "@originator-profile/model": "workspace:*",
     "@originator-profile/securing-mechanism": "workspace:*",
     "@originator-profile/sign": "workspace:*",
-    "globby": "^16.2.4",
+    "jose": "^6.2.2",
     "jsdom": "^29.0.1",
     "wrap-ansi": "^9.0.2"
   },

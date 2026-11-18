@@ -38,7 +38,6 @@ test("public API: does not export low-level APIs from index", () => {
   expect(api.extractTextTargetIntegrity).toBeUndefined();
   expect(api.htmlMatchesCasTargets).toBeUndefined();
   expect(api.normalizeTargets).toBeUndefined();
-  expect(api.decodeJwtPayload).toBeUndefined();
   expect(api.detectDrift).toBeUndefined();
   expect(api.init).toBeUndefined();
 });

@@ -1,6 +1,6 @@
-import { globby } from "globby";
 import { existsSync } from "node:fs";
-import { isAbsolute, relative } from "node:path";
+import { glob } from "node:fs/promises";
+import { isAbsolute, relative, resolve } from "node:path";
 
 export const isInside = (dir: string, file: string): boolean => {
   const rel = relative(dir, file);
@@ -13,5 +13,9 @@ export const listFiles = async (
   ext: string,
 ): Promise<string[]> =>
   existsSync(baseDir)
-    ? (await globby(`**/*${ext}`, { cwd: baseDir, absolute: true })).sort()
+    ? (
+        await Array.fromAsync(glob(`**/*${ext}`, { cwd: baseDir }), (file) =>
+          resolve(baseDir, file),
+        )
+      ).sort()
     : [];
