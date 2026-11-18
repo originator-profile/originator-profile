@@ -14,6 +14,17 @@ const issuer = "dns:localhost";
 const secret = "e2e:local-only";
 const cwd = path.resolve(import.meta.dirname, "..");
 
+const dataUrlPrefix = "data:text/html;charset=utf-8;base64,";
+
+/** CA 発行リクエストの target[].content (Base64 の data: URL) から HTML を取り出す */
+export function decodeTargetContent(content: unknown): string {
+  if (typeof content !== "string" || !content.startsWith(dataUrlPrefix))
+    throw new Error("Expected base64 data URL of HTML content in CA request");
+  return Buffer.from(content.slice(dataUrlPrefix.length), "base64").toString(
+    "utf8",
+  );
+}
+
 async function wp(...args: string[]) {
   const { stdout } = await exec(
     "docker",
@@ -88,9 +99,8 @@ export const test = base.extend<Record<never, never>, { localCa: LocalCa }>({
           const jwt = await signCa(uca, privateKey, {
             expiredAt: new Date(Date.now() + 86400000),
             documentProvider: async (target) => {
-              if (typeof target.content !== "string")
-                throw new Error("Expected HTML content in CA request");
-              return new JSDOM(target.content).window.document;
+              return new JSDOM(decodeTargetContent(target.content)).window
+                .document;
             },
           });
           response
