@@ -55,10 +55,7 @@ export default class Sync extends Command {
     for (const line of syncResultLines(report)) {
       this.log(line);
     }
-    if (
-      flags.check &&
-      report.pages.some((page) => page.status === "expired")
-    ) {
+    if (flags.check && report.pages.some((page) => page.status === "expired")) {
       this.exit(3);
     }
   }

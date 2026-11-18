@@ -210,10 +210,7 @@ const scanPage = async (
     problem,
   });
   state.pages.push(report);
-  if (
-    (status === "missing" || status === "drifted") &&
-    uca !== undefined
-  ) {
+  if ((status === "missing" || status === "drifted") && uca !== undefined) {
     state.pending.push({
       report,
       source,
