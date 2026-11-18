@@ -336,7 +336,7 @@ EXAMPLES
 FLAG DESCRIPTIONS
   --issuer=<value>  発行者 ID（dns: で始まる）
 
-    例: dns:example.com。設定の issuer を上書きする。
+    例: dns:example.com。対話でないときは必須。
 ```
 
 _See code: [src/commands/init.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/init.ts)_

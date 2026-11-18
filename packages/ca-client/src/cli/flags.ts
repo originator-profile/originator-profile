@@ -10,7 +10,7 @@ export const check = Flags.boolean({
 
 export const issuer = Flags.string({
   summary: "発行者 ID（dns: で始まる）",
-  description: "例: dns:example.com。設定の issuer を上書きする。",
+  description: "例: dns:example.com。対話でないときは必須。",
 });
 
 export const all = Flags.boolean({
