@@ -1,7 +1,7 @@
 import { expect, test, vi } from "vitest";
-import { CaClientError, CaClientErrorCode } from "../errors";
-import type { FetchOperations } from "../fetch-operations";
-import { documentProvider } from "./document-provider";
+import { CaClientError, CaClientErrorCode } from "../errors.ts";
+import type { FetchOperations } from "../fetch-operations.ts";
+import { documentProvider } from "./document-provider.ts";
 
 test("documentProvider: parses inline HTML", async () => {
   const document = await documentProvider({

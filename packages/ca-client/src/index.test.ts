@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import * as publicApi from "./index";
+import * as publicApi from "./index.ts";
 
 test("public API: exports createCaClient, writeCasFile, readCasFile, detectDrift, and error types", () => {
   expect(typeof publicApi.createCaClient).toBe("function");

@@ -1,6 +1,6 @@
 import { expect, test } from "vitest";
-import { CaClientError, CaClientErrorCode } from "./errors";
-import { isEnoent, toFileError } from "./file-utils";
+import { CaClientError, CaClientErrorCode } from "./errors.ts";
+import { isEnoent, toFileError } from "./file-utils.ts";
 
 test("isEnoent: is true only for objects with code ENOENT", () => {
   expect(isEnoent({ code: "ENOENT" })).toBe(true);

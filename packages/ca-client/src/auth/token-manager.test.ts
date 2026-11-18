@@ -1,6 +1,6 @@
 import { expect, test, vi } from "vitest";
-import type { CcspAuthConfig, CcspTokenResponse } from "./ccsp-auth";
-import { TokenManager } from "./token-manager";
+import type { CcspAuthConfig, CcspTokenResponse } from "./ccsp-auth.ts";
+import { TokenManager } from "./token-manager.ts";
 
 const createJwtToken = (payload: Record<string, unknown>): string => {
   const encodedHeader = Buffer.from(

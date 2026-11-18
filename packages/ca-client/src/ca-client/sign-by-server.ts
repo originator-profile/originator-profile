@@ -1,9 +1,9 @@
 import type { UnsignedContentAttestation } from "@originator-profile/model";
-import { isUnauthorized } from "../errors";
+import { isUnauthorized } from "../errors.ts";
 import {
   signByCaServer,
   type SignByCaServerOptions,
-} from "./sign-by-ca-server";
+} from "./sign-by-ca-server.ts";
 
 /** Same signature as {@link signByCaServer}. */
 export type CaServerSign = typeof signByCaServer;

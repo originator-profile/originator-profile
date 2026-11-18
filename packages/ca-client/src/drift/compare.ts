@@ -1,13 +1,13 @@
 import { readFile } from "node:fs/promises";
-import { decodeJwtPayload } from "../auth/jwt";
-import { parseCasFileContent, resolveCasFilePath } from "../cas-store/file";
-import { isEnoent, toFileError } from "../file-utils";
-import { isRecord } from "../is-record";
+import { decodeJwtPayload } from "../auth/jwt.ts";
+import { parseCasFileContent, resolveCasFilePath } from "../cas-store/file.ts";
+import { isEnoent, toFileError } from "../file-utils.ts";
+import { isRecord } from "../is-record.ts";
 import {
   DEFAULT_EXTERNAL_SELECTOR,
   extractTargetsFromHtml,
   type ExtractTargetsOptions,
-} from "../targets/html";
+} from "../targets/html.ts";
 
 export type NormalizedTarget = {
   type: string;

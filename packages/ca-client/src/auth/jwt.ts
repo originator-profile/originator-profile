@@ -1,5 +1,5 @@
-import { CaClientError, CaClientErrorCode } from "../errors";
-import { isRecord } from "../is-record";
+import { CaClientError, CaClientErrorCode } from "../errors.ts";
+import { isRecord } from "../is-record.ts";
 
 export const decodeJwtPayload = (token: string): Record<string, unknown> => {
   const parts = token.split(".");

@@ -1,5 +1,5 @@
-import { jwtPayloadToUnsignedCa } from "./cas-token";
-import { signByServer, type SignByServerOptions } from "./sign-by-server";
+import { jwtPayloadToUnsignedCa } from "./cas-token.ts";
+import { signByServer, type SignByServerOptions } from "./sign-by-server.ts";
 
 export type ReSignOptions = SignByServerOptions & {
   source: string;

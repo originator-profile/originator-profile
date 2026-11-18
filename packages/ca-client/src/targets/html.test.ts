@@ -5,7 +5,7 @@ import {
   DEFAULT_EXTERNAL_SELECTOR,
   extractExternalTargetIntegrities,
   extractTargetsFromHtml,
-} from "./html";
+} from "./html.ts";
 
 test("extractTargetsFromHtml: uses the given selector, not CIP itemprop defaults", async () => {
   const html = `

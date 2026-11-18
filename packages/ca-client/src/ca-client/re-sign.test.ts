@@ -1,7 +1,7 @@
 import type { UnsignedContentAttestation } from "@originator-profile/model";
 import { expect, test } from "vitest";
-import { reSign } from "./re-sign";
-import type { CaServerSign } from "./sign-by-server";
+import { reSign } from "./re-sign.ts";
+import type { CaServerSign } from "./sign-by-server.ts";
 
 const basePayload = (): Record<string, unknown> => ({
   "@context": [

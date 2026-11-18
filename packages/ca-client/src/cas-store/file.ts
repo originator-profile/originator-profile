@@ -5,9 +5,9 @@ import {
 } from "@originator-profile/securing-mechanism";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
-import { CaClientError, CaClientErrorCode } from "../errors";
-import { isEnoent, toFileError } from "../file-utils";
-import { isRecord } from "../is-record";
+import { CaClientError, CaClientErrorCode } from "../errors.ts";
+import { isEnoent, toFileError } from "../file-utils.ts";
+import { isRecord } from "../is-record.ts";
 
 export type WriteCasFileOptions = {
   /**

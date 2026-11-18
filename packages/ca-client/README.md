@@ -266,6 +266,43 @@ try {
 | `CA_RESPONSE`   | 2xx だが `access_token` や JWT を含まない                                                                                                                                   | サーバー応答の形式を確認する                       |
 | `CA_FILE`       | CAS ファイルの読み取り・書き込み・削除に失敗した                                                                                                                            | パス・権限・ディスク空き容量を直してから再実行する |
 
+## CLIコマンド
+
+`opca` コマンドで、ビルド済み HTML の CA を発行し、CAS を配信できます。
+
+```bash
+npm install -D @originator-profile/ca-client
+npx opca help
+# or
+npx -p @originator-profile/ca-client opca help
+```
+
+<!-- prettier-ignore-start -->
+<!-- commands -->
+* [`opca help [COMMAND]`](#opca-help-command)
+
+## `opca help [COMMAND]`
+
+Display help for opca.
+
+```
+USAGE
+  $ opca help [COMMAND...] [-n]
+
+ARGUMENTS
+  [COMMAND...]  Command to show help for.
+
+FLAGS
+  -n, --nested-commands  Include all nested commands in the output.
+
+DESCRIPTION
+  Display help for opca.
+```
+
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/6.3.0/src/commands/help.ts)_
+<!-- commandsstop -->
+<!-- prettier-ignore-end -->
+
 ## ライセンス
 
 Apache-2.0

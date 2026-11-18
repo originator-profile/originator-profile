@@ -1,4 +1,4 @@
-import { CaClientError, CaClientErrorCode } from "../errors";
+import { CaClientError, CaClientErrorCode } from "../errors.ts";
 
 export type TimingOptions = {
   issuedAt?: Date | string;
