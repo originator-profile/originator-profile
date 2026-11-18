@@ -6,8 +6,6 @@ import { toFileError } from "../utils/file.ts";
 export type SelectorRule = {
   match?: string;
   selector: string;
-  /** `parseCaConfig` が `match` から作る。 */
-  matchRe?: RegExp;
 };
 
 export type CaConfig = {
@@ -94,10 +92,7 @@ const parseSelectors = (value: unknown): SelectorRule[] => {
   return (value as { match?: string; selector: string }[]).map((rule) => ({
     selector: rule.selector,
     ...(rule.match !== undefined
-      ? {
-          match: parsePattern(rule.match, "selectors.match"),
-          matchRe: new RegExp(rule.match),
-        }
+      ? { match: parsePattern(rule.match, "selectors.match") }
       : {}),
   }));
 };

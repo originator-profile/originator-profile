@@ -13,11 +13,6 @@ export const jwtPayload = (
   }
 };
 
-export const expiresAt = (jwt: string): Date | undefined => {
-  const exp = jwtPayload(jwt)?.exp;
-  return typeof exp === "number" ? new Date(exp * 1000) : undefined;
-};
-
 /** `exp` が無い CA も期限切れ扱いにし、renew で拾えるようにする。 */
 export const isExpired = (
   exp: Date | undefined,
