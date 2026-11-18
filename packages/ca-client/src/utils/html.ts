@@ -14,5 +14,4 @@ type ElementLocation = NodeLocation & {
 export const elementLocation = (
   dom: JSDOM,
   element: Element,
-): ElementLocation | undefined =>
-  dom.nodeLocation(element) ?? undefined;
+): ElementLocation | undefined => dom.nodeLocation(element) ?? undefined;
