@@ -380,9 +380,8 @@ FLAGS
 DESCRIPTION
   期限切れの CA を再署名する
 
-  既存の CAS を再署名する。
-  既定では期限切れ（または exp の無いもの）だけを対象にする。
-  期限前にまとめて更新したいときは --all を定期実行する。
+  期限切れ（または exp の無いもの）の CAS を再署名する。
+  --all で全件更新する。
 
 EXAMPLES
   $ opca renew
@@ -411,9 +410,10 @@ DESCRIPTION
   - ok: 問題なし
   - missing: CA が存在しない
   - drifted: CA があるが、本文・メタ情報などが HTML と一致しない
+  - expired: 内容は一致するが、期限が切れている（exp が無いものを含む）
   - orphan: どのページからも参照されていない
   - stale-copy: publicDir と distDir のコピーが揃っていない
-  --check では書き込まずに結果だけを出す。
+  --check では書き込まずに結果だけを出す。期限切れがあれば失敗する。
 
 EXAMPLES
   $ opca sync

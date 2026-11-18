@@ -431,12 +431,16 @@ test("config: cas の既定値と未対応項目の検証", () => {
   ).toMatchObject(configError(/renewWithinDays/));
 });
 
-test("sync: 期限が近くても内容が一致していれば ok のままにする", async () => {
+test("sync: 期限が残っていれば内容一致は ok、期限切れと exp 無しは expired（書かない）", async () => {
   const s = site();
   s.writeHtml("news/a/index.html", ARTICLE);
   s.writeHtml(
     "news/b/index.html",
     ARTICLE.replace("/cas/a.cas.json", "/cas/b.cas.json"),
+  );
+  s.writeHtml(
+    "news/c/index.html",
+    ARTICLE.replace("/cas/a.cas.json", "/cas/c.cas.json"),
   );
   const a = matching(s.config, ARTICLE, expIn(10));
   s.upsertOwnCa({
@@ -444,22 +448,42 @@ test("sync: 期限が近くても内容が一致していれば ok のままに�
     credentialSubject: { id: "urn:uuid:a", ...a.credentialSubject },
   });
   s.upsertOwnCa(
-    matching(s.config, ARTICLE, expIn(100), "/news/b"),
+    matching(s.config, ARTICLE, expIn(-1), "/news/b"),
     "b.cas.json",
+  );
+  const { exp: _exp, ...withoutExp } = matching(
+    s.config,
+    ARTICLE,
+    expIn(100),
+    "/news/c",
+  );
+  writeFileSync(
+    join(s.config.publicDir, "cas", "c.cas.json"),
+    JSON.stringify([jwt({ issuer: ISSUER, ...withoutExp })]),
   );
 
   const checked = await sync(s.config, { check: true });
   expect(checked.pages.map((p) => [p.pathname, p.status])).toStrictEqual([
     ["/news/a", "ok"],
-    ["/news/b", "ok"],
+    ["/news/b", "expired"],
+    ["/news/c", "expired"],
   ]);
+  expect(checked.pages[1].expiresAt).toBeTruthy();
+  expect(checked.pages[2].expiresAt).toBeUndefined();
 
+  const beforeB = readFileSync(
+    join(s.config.publicDir, "cas", "b.cas.json"),
+    "utf-8",
+  );
   const signed: UnsignedContentAttestation[] = [];
   await sync(s.config, {
     check: false,
     signer: honestSigner(signed),
   });
   expect(signed).toStrictEqual([]);
+  expect(
+    readFileSync(join(s.config.publicDir, "cas", "b.cas.json"), "utf-8"),
+  ).toBe(beforeB);
 });
 
 test("renew: 期限切れと exp の無い CAS だけを再署名し、--all では全件", async () => {

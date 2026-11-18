@@ -14,9 +14,10 @@ export default class Sync extends Command {
 - ok: 問題なし
 - missing: CA が存在しない
 - drifted: CA があるが、本文・メタ情報などが HTML と一致しない
+- expired: 内容は一致するが、期限が切れている（exp が無いものを含む）
 - orphan: どのページからも参照されていない
 - stale-copy: publicDir と distDir のコピーが揃っていない
---check では書き込まずに結果だけを出す。`;
+--check では書き込まずに結果だけを出す。期限切れがあれば失敗する。`;
 
   static flags = {
     check,
@@ -53,6 +54,12 @@ export default class Sync extends Command {
         });
     for (const line of syncResultLines(report)) {
       this.log(line);
+    }
+    if (
+      flags.check &&
+      report.pages.some((page) => page.status === "expired")
+    ) {
+      this.exit(3);
     }
   }
 }

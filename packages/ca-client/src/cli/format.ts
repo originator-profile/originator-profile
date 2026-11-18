@@ -20,7 +20,12 @@ const shown = (file: string) => relative(process.cwd(), file);
 export const labelOf = (location: CasLocation): string => shown(location.path);
 
 const pageLine = (page: PageReport) => {
-  const detail = page.drift ? ` (${page.drift.join(", ")})` : "";
+  const detail =
+    page.status === "expired"
+      ? ` (${page.expiresAt ?? "exp なし"})`
+      : page.drift
+        ? ` (${page.drift.join(", ")})`
+        : "";
   return `  - ${page.status.toUpperCase()} ${page.pathname} → ${labelOf(page.cas)}${detail}${page.problem ? ` [${page.problem}]` : ""}`;
 };
 
@@ -33,10 +38,11 @@ export const scanLines = (
 ): string[] => {
   const count = (status: PageStatus) =>
     pages.filter((page) => page.status === status).length;
+  const expired = count("expired");
   const deprecated = pages.filter((page) => page.deprecatedType);
   const unissuable = pages.filter((page) => page.problem !== undefined);
   return [
-    `${pages.length} ページを調べました: ok=${count("ok")} missing=${count("missing")} drifted=${count("drifted")} orphan=${orphans.length} stale-copy=${staleCopies.length}`,
+    `${pages.length} ページを調べました: ok=${count("ok")} missing=${count("missing")} drifted=${count("drifted")} expired=${expired} orphan=${orphans.length} stale-copy=${staleCopies.length}`,
     ...pages
       .filter((page) => page.status !== "ok" || page.problem)
       .map(pageLine),
@@ -49,6 +55,9 @@ export const scanLines = (
       ? [
           `⚠ ${deprecated.length} ページが非推奨の ${DEPRECATED_CAS_SCRIPT_TYPE} を使っています。${DEPRECATED_CAS_SCRIPT_TYPE_UNTIL} 以降はサポート外なので ${CAS_SCRIPT_TYPE} に替えてください`,
         ]
+      : []),
+    ...(expired > 0
+      ? [`⚠ ${expired} 件の CA が期限切れです。opca renew で再署名してください`]
       : []),
     ...(!options.check && unissuable.length > 0
       ? [`⚠ ${unissuable.length} ページは CA を作れないため飛ばします`]

@@ -3,6 +3,7 @@ import { glob, readFile } from "node:fs/promises";
 import { dirname, relative, resolve } from "node:path";
 import type { CaClient } from "../ca-server/create-ca-client.ts";
 import type { DecodedCa } from "../ca/decode.ts";
+import { isExpired } from "../ca/expiry.ts";
 import {
   distCopyOf,
   driftOf,
@@ -32,7 +33,7 @@ import {
 } from "./page.ts";
 import { resolveTargetContent } from "./sign.ts";
 
-export type PageStatus = "ok" | "missing" | "drifted";
+export type PageStatus = "ok" | "missing" | "drifted" | "expired";
 
 export type PageReport = {
   pathname: string;
@@ -142,7 +143,10 @@ const statusOf = (cas: DecodedCa | undefined, drift: Drift): PageStatus => {
   if (cas === undefined) {
     return "missing";
   }
-  return drift.length > 0 ? "drifted" : "ok";
+  if (drift.length > 0) {
+    return "drifted";
+  }
+  return isExpired(cas.expiresAt) ? "expired" : "ok";
 };
 
 const pageReportOf = (input: {
@@ -206,7 +210,10 @@ const scanPage = async (
     problem,
   });
   state.pages.push(report);
-  if (status !== "ok" && uca !== undefined) {
+  if (
+    (status === "missing" || status === "drifted") &&
+    uca !== undefined
+  ) {
     state.pending.push({
       report,
       source,

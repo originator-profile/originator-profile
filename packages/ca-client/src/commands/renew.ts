@@ -8,9 +8,8 @@ import { renew } from "../operations/renew.ts";
 export default class Renew extends Command {
   static summary = "期限切れの CA を再署名する";
   static description = `\
-既存の CAS を再署名する。
-既定では期限切れ（または exp の無いもの）だけを対象にする。
-期限前にまとめて更新したいときは --all を定期実行する。`;
+期限切れ（または exp の無いもの）の CAS を再署名する。
+--all で全件更新する。`;
 
   static flags = {
     all,

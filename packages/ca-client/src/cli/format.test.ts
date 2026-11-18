@@ -37,6 +37,12 @@ const scan: ScanReport = {
       status: "missing",
       problem: "main に一致する要素がありません",
     },
+    {
+      pathname: "/d",
+      cas: { path: here("public", "cas", "d.cas.json") },
+      status: "expired",
+      expiresAt: "2026-11-01T00:00:00.000Z",
+    },
   ],
   orphans: [here("public", "cas", "gone.cas.json")],
   staleCopies: [
@@ -49,12 +55,14 @@ const scan: ScanReport = {
 
 test("scanLines: 集計、ok 以外のページ、orphan、stale copy、非推奨の type を表示する", () => {
   expect(scanLines(scan, { check: true })).toStrictEqual([
-    "3 ページを調べました: ok=1 missing=1 drifted=1 orphan=1 stale-copy=1",
+    "4 ページを調べました: ok=1 missing=1 drifted=1 expired=1 orphan=1 stale-copy=1",
     `  - DRIFTED /b → ${join("public", "cas", "b.cas.json")} (target, headline)`,
     `  - MISSING /c → ${join("public", "cas", "c.cas.json")} [main に一致する要素がありません]`,
+    `  - EXPIRED /d → ${join("public", "cas", "d.cas.json")} (2026-11-01T00:00:00.000Z)`,
     `  - ORPHAN ${join("public", "cas", "gone.cas.json")} (報告のみ)`,
     `  - STALE-COPY ${join("dist", "cas", "a.cas.json")} (${join("public", "cas", "a.cas.json")} と揃っていない)`,
     `⚠ 1 ページが非推奨の ${DEPRECATED_CAS_SCRIPT_TYPE} を使っています。${DEPRECATED_CAS_SCRIPT_TYPE_UNTIL} 以降はサポート外なので ${CAS_SCRIPT_TYPE} に替えてください`,
+    "⚠ 1 件の CA が期限切れです。opca renew で再署名してください",
   ]);
 });
 
