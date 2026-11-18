@@ -1,5 +1,5 @@
-import { globby, isDynamicPattern } from "globby";
 import { existsSync, statSync } from "node:fs";
+import { glob } from "node:fs/promises";
 import { isAbsolute, relative, resolve } from "node:path";
 import { CaClientError, CaClientErrorCode } from "../errors.ts";
 
@@ -7,6 +7,12 @@ export const isInside = (dir: string, file: string): boolean => {
   const rel = relative(dir, file);
   return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
 };
+
+/** True when `path` contains glob metacharacters (not a literal path). */
+const isDynamicPattern = (path: string): boolean => /[*?[\]{}]/.test(path);
+
+const globAbsolute = async (pattern: string, cwd: string): Promise<string[]> =>
+  Array.fromAsync(glob(pattern, { cwd }), (file) => resolve(cwd, file));
 
 const existingUnder = (baseDir: string, path: string) =>
   [resolve(path), resolve(baseDir, path)].find(
@@ -30,9 +36,9 @@ export const matchFiles = async (
   if (isDynamicPattern(path)) {
     const prefix = `${relative(process.cwd(), baseDir)}/`;
     const pattern = path.replace(/^\.\//, "");
-    const matched = await globby(
+    const matched = await globAbsolute(
       pattern.startsWith(prefix) ? pattern.slice(prefix.length) : pattern,
-      { cwd: baseDir, absolute: true },
+      baseDir,
     );
     return matched.filter(
       (file) => file.endsWith(ext) && isInside(baseDir, file),
@@ -43,7 +49,7 @@ export const matchFiles = async (
     return [];
   }
   return statSync(file).isDirectory()
-    ? globby(`**/*${ext}`, { cwd: file, absolute: true })
+    ? globAbsolute(`**/*${ext}`, file)
     : file.endsWith(ext)
       ? [file]
       : [];
@@ -69,7 +75,7 @@ export const resolveFiles = async (
 ): Promise<string[]> => {
   if (coversAll(baseDir, paths)) {
     return existsSync(baseDir)
-      ? (await globby(`**/*${ext}`, { cwd: baseDir, absolute: true })).sort()
+      ? (await globAbsolute(`**/*${ext}`, baseDir)).sort()
       : [];
   }
   const matched = await Promise.all(

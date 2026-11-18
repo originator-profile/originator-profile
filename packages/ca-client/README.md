@@ -167,7 +167,7 @@ await writeCasFile({
 
 `readCasFile` は、[CAS](https://docs.originator-profile.org/ja/opb/content-attestation-set/) ファイルを読み、含まれる CA をファイル順の `DecodedCa[]` で返します。相対パスは cwd 基準です。
 
-各要素の `payload` は署名検証をしない VC 文書です。JWT の `iss` / `iat` / `exp` は `payload` に含まれません。JWT に `exp` があるときだけ `expiresAt` が付きます。`payload` は `reSign` にそのまま渡せます。
+各要素の `payload` は署名検証をしない VC 文書です。JWT の登録クレーム（`iss` / `sub` / `aud` / `iat` / `exp` / `nbf` / `jti` など）は `payload` に含まれません。JWT に `exp` があるときだけ `expiresAt` が付きます。`payload` は `reSign` にそのまま渡せます。
 
 ```ts
 import { readCasFile } from "@originator-profile/ca-client";

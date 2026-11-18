@@ -31,11 +31,12 @@ import {
   textIntegrity,
 } from "./test-utils.ts";
 
-const page = (body: string, head = "") =>
-  `<html lang="ja"><head><title>サイト名 | 記事</title><meta name="description" content="説明"><script type="application/ca-set+json" src="/cas/a.cas.json"></script>${head}</head><body>${body}</body></html>`;
-const ARTICLE = page(
-  `<article><h1 itemprop="headline">見出し</h1><time itemprop="datePublished" datetime="2026-01-01T00:00:00Z">1月1日</time><div itemprop="articleBody">本文</div></article>`,
-);
+const page = (body: string, head = "", casScript = true) =>
+  `<html lang="ja"><head><title>サイト名 | 記事</title><meta name="description" content="説明">${casScript ? `<script type="application/ca-set+json" src="/cas/a.cas.json"></script>` : ""}${head}</head><body>${body}</body></html>`;
+const ARTICLE_BODY = `<article><h1 itemprop="headline">見出し</h1><time itemprop="datePublished" datetime="2026-01-01T00:00:00Z">1月1日</time><div itemprop="articleBody">本文</div></article>`;
+const ARTICLE = page(ARTICLE_BODY);
+/** CAS script なしの HTML。inject テストの初期状態用。 */
+const BARE = page(ARTICLE_BODY, "", false);
 
 const site = (over: Record<string, unknown> = {}) => {
   const root = realpathSync(mkdtempSync(join(tmpdir(), "ca-test-")));
@@ -613,8 +614,6 @@ test("renew: HTML のパスを渡すと、そのページが参照する CAS を
     renew(s.config, { signer: honestSigner(), paths: ["zzz"] }),
   ).rejects.toMatchObject(caError(CaClientErrorCode.Validation));
 });
-
-const BARE = ARTICLE.replace(/<script[^>]*><\/script>/, "");
 
 test("inject: CAS の script タグを </head> の前に足し、他のバイト列は変えない", async () => {
   const s = site();

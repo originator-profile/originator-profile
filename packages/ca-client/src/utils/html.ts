@@ -4,15 +4,15 @@ import { JSDOM } from "jsdom";
 export const parseHtml = (html: string): JSDOM =>
   new JSDOM(html.replace(/^\uFEFF/, " "), { includeNodeLocations: true });
 
-type Offsets = { startOffset: number; endOffset: number };
-type ElementLocation = {
-  startTag?: Offsets & { attrs?: Record<string, Offsets> };
-  endTag?: Offsets;
+type NodeLocation = NonNullable<ReturnType<JSDOM["nodeLocation"]>>;
+// parse5 の ElementLocation 相当。要素以外の位置情報との差分は省略可能なプロパティだけなので、注釈だけで代入できる。
+type ElementLocation = NodeLocation & {
+  startTag?: NodeLocation & { attrs?: Record<string, NodeLocation> };
+  endTag?: NodeLocation;
 };
 
-// @types/jsdom は要素にも Location を返す型だが、実体は parse5 の ElementLocation。
 export const elementLocation = (
   dom: JSDOM,
   element: Element,
 ): ElementLocation | undefined =>
-  (dom.nodeLocation(element) as unknown as ElementLocation | null) ?? undefined;
+  dom.nodeLocation(element) ?? undefined;

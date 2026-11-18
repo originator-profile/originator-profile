@@ -3,7 +3,6 @@ import {
   VcDecodeFailed,
 } from "@originator-profile/securing-mechanism";
 import { CaClientError, CaClientErrorCode } from "../errors.ts";
-import { expiresAt } from "./expiry.ts";
 
 const jwtVcDecoder = JwtVcDecoder();
 
@@ -22,8 +21,7 @@ export const decodeCa = (jwt: string): DecodedCa => {
       cause: decoded,
     });
   }
-  const expiry = expiresAt(jwt);
-  return expiry === undefined
+  return decoded.expiredAt === undefined
     ? { jwt, payload: decoded.doc }
-    : { jwt, payload: decoded.doc, expiresAt: expiry };
+    : { jwt, payload: decoded.doc, expiresAt: decoded.expiredAt };
 };
