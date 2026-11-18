@@ -7,12 +7,10 @@ import {
   parseOrigin,
   parsePattern,
   type CaConfig,
-  type CasMode,
 } from "../operations/config.ts";
 import {
   DIST_CANDIDATES,
   distCandidates,
-  parseCasMode,
   previewIssuance,
   proposeConfig,
   scanSite,
@@ -106,7 +104,7 @@ const askSite = async (
     answers.origins = await askValid(
       ask,
       log,
-      "サイトのオリジン（カンマ区切り。http は localhost だけ）",
+      "サイトの URL（カンマ区切り。例: https://example.com。http は localhost だけ）",
       scan.origins[0]?.origin,
       (value) => list(value).map(parseOrigin),
     );
@@ -186,14 +184,7 @@ const askPublishing = async (
       (value) => list(value).map((pattern) => parsePattern(pattern)),
     );
   }
-  answers.mode ??= await askValid(
-    ask,
-    log,
-    "CAS の mode。file は別ファイル、inline は HTML に埋め込む",
-    "file",
-    parseCasMode,
-  );
-  if (answers.mode === "file" && answers.publicDir === undefined) {
+  if (answers.publicDir === undefined) {
     answers.publicDir = resolve(
       await askValid(
         ask,
@@ -225,30 +216,20 @@ const askAnswers = async (
   return answers;
 };
 
-const nextSteps = (config: CaConfig, mode: CasMode) => {
+const nextSteps = (config: CaConfig) => {
   const dist = relative(process.cwd(), config.distDir) || ".";
-  const steps = [
+  return [
     "次の手順:",
     "  環境変数 CA_SERVER_URL と CCSP_CONFIG を設定する",
-    `  ビルドしてから opca inject ${dist} && opca sync ${dist}`,
+    "  ビルドしてから opca inject && opca sync",
+    `  ${relative(process.cwd(), config.publicDir)} に書かれた CAS をコミットする（${dist} にも写すので、そのままデプロイしてよい）`,
+    "  以後はビルドのたびに同じ 2 コマンドを流す。変わったページだけ署名し直す",
   ];
-  return mode === "file"
-    ? [
-        ...steps,
-        `  ${relative(process.cwd(), config.publicDir)} に書かれた CAS をコミットする（${dist} にも写すので、そのままデプロイしてよい）`,
-        "  以後はビルドのたびに同じ 2 コマンドを流す。変わったページだけ署名し直す",
-      ]
-    : [
-        ...steps,
-        `  ${dist} をデプロイする`,
-        "  ⚠ CAS はビルドのたびに消えるので、デプロイごとに全ページを署名し直し、CA ID も変わる",
-      ];
 };
 
 export type InitOptions = {
   configFile: string;
   answers: InitAnswers;
-  force: boolean;
   ask?: Ask;
   log: Pick<Console, "log">;
 };
@@ -273,7 +254,7 @@ const distDirOf = async (
 const writeConfigFile = async (
   configFile: string,
   json: string,
-  { force, log }: Pick<InitOptions, "force" | "log">,
+  { log }: Pick<InitOptions, "log">,
 ): Promise<void> => {
   let current: string | undefined;
   try {
@@ -286,17 +267,6 @@ const writeConfigFile = async (
   if (current === json) {
     log.log(`${relative(process.cwd(), configFile)} は変わりません`);
     return;
-  }
-  if (current !== undefined && !force) {
-    throw new Error(
-      [
-        `${relative(process.cwd(), configFile)} がすでにあります。上書きするには --force を付けてください`,
-        "--- 今の内容",
-        current.trimEnd(),
-        "+++ 作る内容",
-        json.trimEnd(),
-      ].join("\n"),
-    );
   }
   await writeText(configFile, json);
   log.log(`✓ ${relative(process.cwd(), configFile)} を書きました`);
@@ -315,7 +285,7 @@ export const init = async (options: InitOptions): Promise<CaConfig> => {
   const answers = ask
     ? await askAnswers(scan, options.answers, ask, configDir, log)
     : options.answers;
-  const { raw, mode } = proposeConfig(scan, answers, configDir);
+  const { raw } = proposeConfig(scan, answers, configDir);
   const config = parseCaConfig(raw, configDir);
   if (!answers.author?.length && scan.withoutAuthor > 0) {
     log.log(
@@ -329,7 +299,7 @@ export const init = async (options: InitOptions): Promise<CaConfig> => {
   );
 
   await previewWith(config, log);
-  for (const line of nextSteps(config, mode)) {
+  for (const line of nextSteps(config)) {
     log.log(line);
   }
   return config;

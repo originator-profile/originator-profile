@@ -1,83 +1,17 @@
-import { globby, isDynamicPattern } from "globby";
-import { existsSync, statSync } from "node:fs";
-import { isAbsolute, relative, resolve } from "node:path";
-import { CaClientError, CaClientErrorCode } from "../errors.ts";
+import { globby } from "globby";
+import { existsSync } from "node:fs";
+import { isAbsolute, relative } from "node:path";
 
 export const isInside = (dir: string, file: string): boolean => {
   const rel = relative(dir, file);
   return rel !== "" && !rel.startsWith("..") && !isAbsolute(rel);
 };
 
-const existingUnder = (baseDir: string, path: string) =>
-  [resolve(path), resolve(baseDir, path)].find(
-    (candidate) =>
-      existsSync(candidate) &&
-      (candidate === baseDir || isInside(baseDir, candidate)),
-  );
-
-export const coversAll = (baseDir: string, paths: string[]): boolean =>
-  paths.length === 0 ||
-  paths.some(
-    (path) =>
-      !isDynamicPattern(path) && existingUnder(baseDir, path) === baseDir,
-  );
-
-export const matchFiles = async (
+/** `baseDir` 配下の `ext` ファイルを絶対パスで返す。無いときは空配列。 */
+export const listFiles = async (
   baseDir: string,
-  path: string,
   ext: string,
-): Promise<string[]> => {
-  if (isDynamicPattern(path)) {
-    const prefix = `${relative(process.cwd(), baseDir)}/`;
-    const pattern = path.replace(/^\.\//, "");
-    const matched = await globby(
-      pattern.startsWith(prefix) ? pattern.slice(prefix.length) : pattern,
-      { cwd: baseDir, absolute: true },
-    );
-    return matched.filter(
-      (file) => file.endsWith(ext) && isInside(baseDir, file),
-    );
-  }
-  const file = existingUnder(baseDir, path);
-  if (file === undefined) {
-    return [];
-  }
-  return statSync(file).isDirectory()
-    ? globby(`**/*${ext}`, { cwd: file, absolute: true })
-    : file.endsWith(ext)
-      ? [file]
-      : [];
-};
-
-export const notFound = (path: string, baseDirs: string[]): CaClientError => {
-  const where = baseDirs
-    .map((dir) => relative(process.cwd(), dir))
-    .join(" or ");
-  const message =
-    !isDynamicPattern(path) &&
-    existsSync(resolve(path)) &&
-    !baseDirs.some((dir) => existingUnder(dir, path))
-      ? `${path} は ${where} の外です`
-      : `${where} に ${path} に一致するファイルがありません`;
-  return new CaClientError(message, { code: CaClientErrorCode.Validation });
-};
-
-export const resolveFiles = async (
-  baseDir: string,
-  paths: string[],
-  ext: string,
-): Promise<string[]> => {
-  if (coversAll(baseDir, paths)) {
-    return existsSync(baseDir)
-      ? (await globby(`**/*${ext}`, { cwd: baseDir, absolute: true })).sort()
-      : [];
-  }
-  const matched = await Promise.all(
-    paths.map((path) => matchFiles(baseDir, path, ext)),
-  );
-  const missing = paths.find((_, index) => matched[index].length === 0);
-  if (missing !== undefined) {
-    throw notFound(missing, [baseDir]);
-  }
-  return [...new Set(matched.flat())].sort();
-};
+): Promise<string[]> =>
+  existsSync(baseDir)
+    ? (await globby(`**/*${ext}`, { cwd: baseDir, absolute: true })).sort()
+    : [];

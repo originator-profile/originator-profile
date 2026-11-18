@@ -11,7 +11,7 @@ export const caClientFromEnv = (issuer: string | undefined): CaClient => {
     const missing = [
       ...(!endpoint ? ["CA_SERVER_URL"] : []),
       ...(!ccspConfig ? ["CCSP_CONFIG"] : []),
-      ...(!issuer ? ["issuer（--issuer または ca.config.json）"] : []),
+      ...(!issuer ? ["issuer（ca.config.json）"] : []),
     ];
     throw new CaClientError(`${missing.join(" と ")} が必要です`, {
       code: CaClientErrorCode.Config,

@@ -10,8 +10,6 @@ export type SelectorRule = {
   matchRe?: RegExp;
 };
 
-export type CasMode = "file" | "inline";
-
 export type CaConfig = {
   issuer: string;
   distDir: string;
@@ -23,11 +21,9 @@ export type CaConfig = {
   excludeRe: RegExp[];
   externalSelector?: string;
   defaults: { author?: string[]; editor?: string[]; genre?: string };
-  renewWithinDays: number;
-  cas: { mode: CasMode; path: string };
+  cas: { path: string };
 };
 
-const DEFAULT_RENEW_WITHIN_DAYS = 30;
 const DEFAULT_CAS_PATH = "/cas/{path}.cas.json";
 
 const fail = (message: string): never => {
@@ -106,25 +102,18 @@ const parseSelectors = (value: unknown): SelectorRule[] => {
   }));
 };
 
-const parseRenewWithinDays = (value: unknown): number => {
-  const days = value ?? DEFAULT_RENEW_WITHIN_DAYS;
-  if (typeof days !== "number" || !Number.isFinite(days) || days < 0) {
-    fail("renewWithinDays must be a number of 0 or more");
-  }
-  return days as number;
-};
-
 const parseCas = (value: unknown): CaConfig["cas"] => {
   const cas = (value ?? {}) as Record<string, unknown>;
-  const mode = cas.mode ?? "file";
-  if (mode !== "file" && mode !== "inline") {
-    fail('cas.mode must be "file" or "inline"');
+  if (cas.mode !== undefined && cas.mode !== "file") {
+    fail(
+      'cas.mode is not supported; CAS files are always written under publicDir',
+    );
   }
   const path = cas.path ?? DEFAULT_CAS_PATH;
   if (typeof path !== "string" || !path.includes("{path}")) {
     fail("cas.path must be a string containing {path}");
   }
-  return { mode: mode as CasMode, path: path as string };
+  return { path: path as string };
 };
 
 export const parseCaConfig = (raw: unknown, baseDir: string): CaConfig => {
@@ -141,7 +130,11 @@ export const parseCaConfig = (raw: unknown, baseDir: string): CaConfig => {
   if (defaults.genre !== undefined && typeof defaults.genre !== "string") {
     fail("defaults.genre must be a string");
   }
-  const renewWithinDays = parseRenewWithinDays(value.renewWithinDays);
+  if (value.renewWithinDays !== undefined) {
+    fail(
+      "renewWithinDays is not supported; run `opca renew --all` on a schedule instead",
+    );
+  }
   const cas = parseCas(value.cas);
   const exclude = strings(value.exclude, "exclude")?.map((pattern) =>
     parsePattern(pattern),
@@ -163,7 +156,6 @@ export const parseCaConfig = (raw: unknown, baseDir: string): CaConfig => {
       editor: strings(defaults.editor, "defaults.editor"),
       genre: defaults.genre as string | undefined,
     },
-    renewWithinDays,
     cas,
   };
 };

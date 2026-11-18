@@ -16,15 +16,7 @@ class IndentPreservingCommandHelp extends CommandHelp {
   }
 }
 
-const ROOT_ORDER = [
-  "init",
-  "inject",
-  "sync",
-  "renew",
-  "json",
-  "sign",
-  "help",
-];
+const ROOT_ORDER = ["init", "inject", "sync", "renew", "help"];
 
 export default class Help extends OclifHelp {
   CommandHelpClass = IndentPreservingCommandHelp;

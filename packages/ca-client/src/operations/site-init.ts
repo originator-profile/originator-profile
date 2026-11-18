@@ -1,7 +1,7 @@
 import { existsSync } from "node:fs";
 import { relative, resolve } from "node:path";
-import { resolveFiles } from "../utils/paths.ts";
-import { type CaConfig, type CasMode } from "./config.ts";
+import { listFiles } from "../utils/paths.ts";
+import { type CaConfig } from "./config.ts";
 import {
   buildUnsignedCa,
   forEachPage,
@@ -11,8 +11,6 @@ import {
   UnissuableError,
   type Page,
 } from "./page.ts";
-
-export const CAS_MODES: CasMode[] = ["file", "inline"];
 
 export const DIST_CANDIDATES = [
   "dist",
@@ -48,13 +46,11 @@ export type InitAnswers = {
   editor?: string[];
   genre?: string;
   exclude?: string[];
-  mode?: CasMode;
   publicDir?: string;
 };
 
 export type Proposal = {
   raw: Record<string, unknown>;
-  mode: CasMode;
 };
 
 const countBy = (values: string[]) =>
@@ -74,7 +70,7 @@ export const distCandidates = async (
     await Promise.all(
       DIST_CANDIDATES.map(async (name) => ({
         dir: resolve(root, name),
-        pages: (await resolveFiles(resolve(root, name), [], ".html")).length,
+        pages: (await listFiles(resolve(root, name), ".html")).length,
       })),
     )
   )
@@ -112,7 +108,7 @@ export const scanSite = async (
   root: string,
   distDir: string,
 ): Promise<SiteScan> => {
-  const files = await resolveFiles(distDir, [], ".html");
+  const files = await listFiles(distDir, ".html");
   const traits: PageTraits[] = [];
   await forEachPage(files, ({ dom }) => {
     traits.push(traitsOf(dom.window.document));
@@ -179,33 +175,21 @@ export const proposeConfig = (
   configDir: string,
 ): Proposal => {
   const { issuer, selector } = requiredAnswers(scan, answers);
-  const mode = answers.mode ?? "file";
   const at = (dir: string) => relative(configDir, dir) || ".";
   const origins =
     answers.origins ?? scan.origins.slice(0, 1).map(({ origin }) => origin);
   const defaults = defaultsOf(answers);
   return {
-    mode,
     raw: {
       issuer,
       distDir: at(scan.distDir),
-      ...(mode === "file"
-        ? { publicDir: at(publicDirOf(scan, answers, configDir)) }
-        : {}),
+      publicDir: at(publicDirOf(scan, answers, configDir)),
       ...(origins.length > 0 ? { origins } : {}),
       selectors: [{ selector }],
       ...(answers.exclude?.length ? { exclude: answers.exclude } : {}),
       ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
-      cas: { mode },
     },
   };
-};
-
-export const parseCasMode = (value: string): CasMode => {
-  if (!CAS_MODES.includes(value as CasMode)) {
-    throw new Error(`--mode は ${CAS_MODES.join(" か ")}: ${value}`);
-  }
-  return value as CasMode;
 };
 
 export type IssuancePreview = {
@@ -244,7 +228,7 @@ const previewPage = (
 export const previewIssuance = async (
   config: CaConfig,
 ): Promise<IssuancePreview> => {
-  const files = (await resolveFiles(config.distDir, [], ".html")).filter(
+  const files = (await listFiles(config.distDir, ".html")).filter(
     (file) => !isExcluded(config, pathnameOf(config.distDir, file)),
   );
   let issuable = 0;

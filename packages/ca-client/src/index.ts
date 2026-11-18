@@ -15,7 +15,6 @@ export {
   loadCaConfig,
   parseCaConfig,
   type CaConfig,
-  type CasMode,
   type SelectorRule,
 } from "./operations/config.ts";
 export {

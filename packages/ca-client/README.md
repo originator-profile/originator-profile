@@ -278,11 +278,9 @@ npx -p @originator-profile/ca-client opca help
 <!-- commands -->
 * [`opca help [COMMAND]`](#opca-help-command)
 * [`opca init`](#opca-init)
-* [`opca inject [PATHS]`](#opca-inject-paths)
-* [`opca json PAGE`](#opca-json-page)
-* [`opca renew [PATHS]`](#opca-renew-paths)
-* [`opca sign`](#opca-sign)
-* [`opca sync [PATHS]`](#opca-sync-paths)
+* [`opca inject`](#opca-inject)
+* [`opca renew`](#opca-renew)
+* [`opca sync`](#opca-sync)
 
 ## `opca help [COMMAND]`
 
@@ -310,30 +308,25 @@ _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/6.3.0/
 
 ```
 USAGE
-  $ opca init [--config <value>] [--issuer <value>] [--dist <value>] [--public <value>] [--mode
-     file|inline] [--origin <value>...] [--selector <value>] [--exclude <value>...] [--author <value>...] [--editor
-    <value>...] [--genre <value>] [--force]
+  $ opca init [--issuer <value>] [--origin <value>...] [--selector <value>] [--author <value>...]
+     [--editor <value>...] [--genre <value>] [--dist <value>] [--public <value>] [--exclude <value>...]
 
 FLAGS
-  --config=<value>      [default: ca.config.json] 設定ファイルのパス
   --issuer=<value>      発行者 ID（dns: で始まる）
-  --dist=<value>        ビルド済み HTML のディレクトリ
-  --public=<value>      CAS を置く静的ファイルのディレクトリ
-  --mode=<option>       CAS の mode
-                        <options: file|inline>
-  --origin=<value>...   サイトのオリジン
+  --origin=<value>...   サイトの URL（例: https://example.com）
   --selector=<value>    証明する要素の CSS セレクタ
-  --exclude=<value>...  対象にしないパスの正規表現
   --author=<value>...   author が無いページの既定の著者
   --editor=<value>...   既定の編集者
   --genre=<value>       article:section が無いページの既定ジャンル
-  --force               既存の設定ファイルを上書きする
+  --dist=<value>        ビルド済み HTML のディレクトリ
+  --public=<value>      CAS を置く静的ファイルのディレクトリ
+  --exclude=<value>...  対象にしないパスの正規表現
 
 DESCRIPTION
   初期設定を作る
 
-  ビルド済み HTML を調べ、設定ファイル（ca.config.json）の草案を書く。
-  端末では渡していない項目を、推定した値を既定にして聞く。
+  CA / CAS を管理する CLI の初期設定（ca.config.json）を作る。
+  ビルド済み HTML から候補を出し、未指定の項目は対話で確認する。
 
 EXAMPLES
   $ opca init
@@ -344,181 +337,88 @@ FLAG DESCRIPTIONS
   --issuer=<value>  発行者 ID（dns: で始まる）
 
     例: dns:example.com。設定の issuer を上書きする。
-
-  --mode=file|inline  CAS の mode
-
-    file は別ファイルとして置く。inline は HTML に埋め込む。
 ```
 
 _See code: [src/commands/init.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/init.ts)_
 
-## `opca inject [PATHS]`
+## `opca inject`
 
 HTML に CAS のタグを入れる
 
 ```
 USAGE
-  $ opca inject [PATHS] [--config <value>] [--check]
-
-ARGUMENTS
-  [PATHS]  ビルド済み HTML 配下のファイル、ディレクトリ、glob。省略時は全体。
+  $ opca inject [--check]
 
 FLAGS
-  --config=<value>  [default: ca.config.json] 設定ファイルのパス
-  --check           書き込まずに結果だけを出す
+  --check  書き込まずに結果だけを出す
 
 DESCRIPTION
   HTML に CAS のタグを入れる
 
-  ビルド済み HTML に CAS の <script> を足し、外部リソースの integrity を揃える。
-  --check では書き込まず、足りないタグと古い integrity だけを出す。
+  ビルド済み HTML に CAS の <script> を挿入し、画像などの外部リソースの integrity を追加・更新する。
+  --check では書き込まずに結果だけを出す。
 
 EXAMPLES
   $ opca inject
 
-  $ opca inject docs --check
+  $ opca inject --check
 ```
 
 _See code: [src/commands/inject.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/inject.ts)_
 
-## `opca json PAGE`
+## `opca renew`
 
-ページから未署名 CA の JSON を作る
-
-```
-USAGE
-  $ opca json PAGE [--config <value>] [--out <value>] [--selector <value>]
-
-ARGUMENTS
-  PAGE  対象の HTML ファイル
-
-FLAGS
-  --config=<value>    [default: ca.config.json] 設定ファイルのパス
-  --out=<value>       JSON を書くパス
-  --selector=<value>  証明する要素の CSS セレクタ
-
-DESCRIPTION
-  ページから未署名 CA の JSON を作る
-
-  HTML ページから未署名 CA を組み立て、JSON として書く。
-  --out を省略すると標準出力に書く。
-
-EXAMPLES
-  $ opca json dist/news/a/index.html
-
-  $ opca json dist/news/a/index.html --out unsigned.json
-
-FLAG DESCRIPTIONS
-  --selector=<value>  証明する要素の CSS セレクタ
-
-    省略時は設定のセレクタを使う。
-```
-
-_See code: [src/commands/json.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/json.ts)_
-
-## `opca renew [PATHS]`
-
-期限が近い CA を再署名する
+期限切れの CA を再署名する
 
 ```
 USAGE
-  $ opca renew [PATHS] [--config <value>] [--within <value>] [--all]
-
-ARGUMENTS
-  [PATHS]  ビルド済み HTML、または CAS ディレクトリ配下のパス。省略時は全体。
+  $ opca renew [--all]
 
 FLAGS
-  --config=<value>  [default: ca.config.json] 設定ファイルのパス
-  --within=<value>  再署名する期限までの日数
-  --all             期限に関わらず再署名する
+  --all  期限に関わらず再署名する
 
 DESCRIPTION
-  期限が近い CA を再署名する
+  期限切れの CA を再署名する
 
   既存の CAS を再署名する。
-  既定では設定の再署名期限（既定 30 日）以内に切れるものだけを対象にする。
-  --all で期限に関わらず再署名する。
-  環境変数 CA_SERVER_URL と CCSP_CONFIG が必要。
+  既定では期限切れ（または exp の無いもの）だけを対象にする。
+  期限前にまとめて更新したいときは --all を定期実行する。
 
 EXAMPLES
   $ opca renew
 
-  $ opca renew --within 7
-
   $ opca renew --all
-
-FLAG DESCRIPTIONS
-  --within=<value>  再署名する期限までの日数
-
-    省略時は設定の再署名期限（既定 30 日）。0 以上。
 ```
 
 _See code: [src/commands/renew.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/renew.ts)_
 
-## `opca sign`
+## `opca sync`
 
-未署名 CA の JSON を署名する
-
-```
-USAGE
-  $ opca sign --input <value> [--config <value>] [--out <value>] [--issuer <value>]
-
-FLAGS
-  --config=<value>  [default: ca.config.json] 設定ファイルのパス
-  --input=<value>   (required) 未署名 CA の JSON ファイル
-  --out=<value>     署名した CAS を書くパス
-  --issuer=<value>  発行者 ID（dns: で始まる）
-
-DESCRIPTION
-  未署名 CA の JSON を署名する
-
-  未署名 CA の JSON を CA サーバーで署名する。
-  --out を付けると CAS ファイルに書き、省略すると署名済み JWT を標準出力に書く。
-  環境変数 CA_SERVER_URL と CCSP_CONFIG が必要。設定ファイルが無いときは --issuer も必要。
-
-EXAMPLES
-  $ opca sign --input unsigned.json --out dist/cas/page.cas.json
-
-  $ opca sign --input unsigned.json --issuer dns:example.com
-
-FLAG DESCRIPTIONS
-  --issuer=<value>  発行者 ID（dns: で始まる）
-
-    例: dns:example.com。設定の issuer を上書きする。
-```
-
-_See code: [src/commands/sign.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/sign.ts)_
-
-## `opca sync [PATHS]`
-
-ページの CA を照合し、必要なら署名する
+ページの HTML と既存の CA を調べて、ずれているものを署名する
 
 ```
 USAGE
-  $ opca sync [PATHS] [--config <value>] [--check] [--report <value>]
-
-ARGUMENTS
-  [PATHS]  ビルド済み HTML 配下のファイル、ディレクトリ、glob。省略時は全体。
+  $ opca sync [--check]
 
 FLAGS
-  --config=<value>  [default: ca.config.json] 設定ファイルのパス
-  --check           書き込まずに結果だけを出す
-  --report=<value>  照合結果を書く JSON ファイル
+  --check  書き込まずに結果だけを出す
 
 DESCRIPTION
-  ページの CA を照合し、必要なら署名する
+  ページの HTML と既存の CA を調べて、ずれているものを署名する
 
-  ビルド済み HTML を調べ、欠けている・内容がずれた・期限が近い CA を署名する。
-  状態は ok / missing / drifted / expiring。orphan は参照の無い CAS、stale-copy はコピーが揃っていないもの。
-  --check では書き込まず照合だけする。欠けやずれがあっても終了コードは 0。CA を作れないページがあると失敗する。
-  署名には環境変数 CA_SERVER_URL と CCSP_CONFIG が必要。
+  ビルド済み HTML と CA を調べて、ずれているものを署名する。
+  状態は次のとおり。
+  - ok: 問題なし
+  - missing: CA が存在しない
+  - drifted: CA があるが、本文・メタ情報などが HTML と一致しない
+  - orphan: どのページからも参照されていない
+  - stale-copy: publicDir と distDir のコピーが揃っていない
+  --check では書き込まずに結果だけを出す。
 
 EXAMPLES
   $ opca sync
 
-  $ opca sync docs --check
-
-  $ opca sync docs/news --report report.json
+  $ opca sync --check
 ```
 
 _See code: [src/commands/sync.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/sync.ts)_
