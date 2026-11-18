@@ -15,7 +15,11 @@ import { dirname, join } from "node:path";
 import { expect, onTestFinished, test } from "vitest";
 import type { CasLocation } from "../cas/source.ts";
 import { CaClientError, CaClientErrorCode, isUnauthorized } from "../errors.ts";
-import { parseCaConfig, type CaConfig } from "./config.ts";
+import {
+  parseCaConfig,
+  pathPatternToRegExp,
+  type CaConfig,
+} from "./config.ts";
 import { inject } from "./inject.ts";
 import { buildUnsignedCa } from "./page.ts";
 import { renew } from "./renew.ts";
@@ -51,7 +55,7 @@ const site = (over: Record<string, unknown> = {}) => {
         { match: "^/list$", selector: "main" },
         { selector: SELECTOR },
       ],
-      exclude: ["/preview-"],
+      exclude: ["/preview-*"],
       defaults: { author: ["発行者"], genre: "technology" },
       ...over,
     },
@@ -125,6 +129,59 @@ test("config: issuer は dns: で始まり、selectors は必須", () => {
   expect(
     thrownBy(() => parseCaConfig({ issuer: "dns:example.com" }, "/")),
   ).toMatchObject(configError(/selectors/));
+});
+
+test("config: selectors.match は parse 時に matchRe へコンパイルする", () => {
+  const config = parseCaConfig(
+    {
+      issuer: "dns:example.com",
+      selectors: [
+        { match: "^/list$", selector: "main" },
+        { selector: "article" },
+      ],
+    },
+    "/",
+  );
+  expect(config.selectors[0].matchRe?.test("/list")).toBeTruthy();
+  expect(config.selectors[0].matchRe?.test("/news")).toBeFalsy();
+  expect(config.selectors[1].matchRe).toBeUndefined();
+});
+
+test("config: exclude はパス glob で pathname に照合する", () => {
+  const matches = (pattern: string, pathname: string) =>
+    pathPatternToRegExp(pattern).test(pathname);
+
+  expect(matches("/about", "/about")).toBeTruthy();
+  expect(matches("/about", "/about/team")).toBeFalsy();
+  expect(matches("/preview-*", "/preview-news")).toBeTruthy();
+  expect(matches("/preview-*", "/news/preview-x")).toBeFalsy();
+  expect(matches("/drafts/**", "/drafts")).toBeFalsy();
+  expect(matches("/drafts/**", "/drafts/a/b")).toBeTruthy();
+  expect(matches("preview-*", "/preview-news")).toBeTruthy();
+  expect(matches("/a?b", "/a?b")).toBeTruthy();
+  expect(matches("/a?b", "/axb")).toBeFalsy();
+  expect(
+    parseCaConfig(
+      {
+        issuer: "dns:example.com",
+        selectors: [{ selector: "a" }],
+        exclude: ["/preview-*"],
+      },
+      "/",
+    ).excludeRe[0].test("/preview-news"),
+  ).toBeTruthy();
+  expect(
+    thrownBy(() =>
+      parseCaConfig(
+        {
+          issuer: "dns:example.com",
+          selectors: [{ selector: "a" }],
+          exclude: [""],
+        },
+        "/",
+      ),
+    ),
+  ).toMatchObject(configError(/exclude/));
 });
 
 test("page: microdata を OGP と <title> より優先して読む", () => {

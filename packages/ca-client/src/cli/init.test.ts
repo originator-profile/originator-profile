@@ -60,6 +60,7 @@ test("init: ビルド済み HTML から設定を作り、inject と sync でリ�
     publicDir: "public",
     origins: ["https://example.com"],
     selectors: [{ selector: SELECTOR }],
+    exclude: [],
   });
   expect(
     lines.includes(
@@ -127,7 +128,6 @@ test("init: 端末では全項目を推定値を既定にして順に聞き、�
     [/サイトの URL/, "https://example.com, http://localhost:4321"],
     [/著者/, "Example Inc., Jane Doe"],
     [/ジャンル/, "technology"],
-    [/正規表現/, "^/about"],
   ]);
 
   await init({
@@ -152,7 +152,6 @@ test("init: 端末では全項目を推定値を既定にして順に聞き、�
     ["author が無いページの著者", ""],
     ["編集者", "Example Inc., Jane Doe"],
     ["article:section が無いページのジャンル", ""],
-    ["対象にしないパスの正規表現", ""],
     ["CAS を置く静的ファイルのディレクトリ", "public"],
   ]);
   expect(
@@ -168,7 +167,7 @@ test("init: 端末では全項目を推定値を既定にして順に聞き、�
     publicDir: "public",
     origins: ["https://example.com", "http://localhost:4321"],
     selectors: [{ selector: SELECTOR }],
-    exclude: ["^/about"],
+    exclude: [],
     defaults: {
       author: ["Example Inc.", "Jane Doe"],
       editor: ["Example Inc.", "Jane Doe"],
@@ -177,7 +176,7 @@ test("init: 端末では全項目を推定値を既定にして順に聞き、�
   });
   expect(
     lines.includes(
-      "CA を作れるページ 2、作れないページ 0、セレクタに当たらないページ 1",
+      "CA を作れるページ 2、作れないページ 1、セレクタに当たらないページ 1",
     ),
   ).toBeTruthy();
 });

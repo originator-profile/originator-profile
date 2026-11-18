@@ -5,6 +5,8 @@ import { toFileError } from "../utils/file.ts";
 
 export type SelectorRule = {
   match?: string;
+  /** `parseCaConfig` が `match` から作る。 */
+  matchRe?: RegExp;
   selector: string;
 };
 
@@ -15,7 +17,7 @@ export type CaConfig = {
   origins?: string[];
   selectors: SelectorRule[];
   exclude?: string[];
-  /** `parseCaConfig` が `exclude` から作る。 */
+  /** `parseCaConfig` が `exclude` のパス glob から作る。 */
   excludeRe: RegExp[];
   externalSelector?: string;
   defaults: { author?: string[]; editor?: string[]; genre?: string };
@@ -68,11 +70,58 @@ export const parseIssuer = (value: string): string =>
     ? value
     : fail(`issuer must be an OP ID starting with "dns:" (got ${value})`);
 
-export const parsePattern = (value: string, key = "exclude"): string => {
+export const parsePattern = (value: string, key: string): string => {
   try {
     new RegExp(value);
   } catch {
     fail(`${key}: ${value} is not a regular expression`);
+  }
+  return value;
+};
+
+const escapeRegexChar = (char: string): string =>
+  /[.+^${}()|[\]\\?]/.test(char) ? `\\${char}` : char;
+
+/** `*` / 連続する `*` を1トークンとして読み、RegExp 断片と次の index を返す。 */
+const takeGlobToken = (
+  pattern: string,
+  index: number,
+): { source: string; next: number } => {
+  if (pattern[index] !== "*") {
+    return { source: escapeRegexChar(pattern[index]), next: index + 1 };
+  }
+  let end = index + 1;
+  while (pattern[end] === "*") {
+    end += 1;
+  }
+  return {
+    source: end - index > 1 ? ".*" : "[^/]*",
+    next: end,
+  };
+};
+
+/**
+ * パス glob（`*` / `**`）を pathname 照合用 RegExp にする。
+ * WordPress の除外ルールと同じく、`*` は `/` 以外、`**` は `/` 含む任意文字。
+ * `?` などそれ以外はリテラル。`/drafts/**` は `/drafts` 本体には一致しない。
+ */
+export const pathPatternToRegExp = (pattern: string): RegExp => {
+  const normalized =
+    pattern.startsWith("/") || pattern.startsWith("**")
+      ? pattern
+      : `/${pattern}`;
+  let source = "^";
+  for (let i = 0; i < normalized.length; ) {
+    const token = takeGlobToken(normalized, i);
+    source += token.source;
+    i = token.next;
+  }
+  return new RegExp(`${source}$`);
+};
+
+export const parsePathPattern = (value: string, key = "exclude"): string => {
+  if (value === "") {
+    fail(`${key} must not be empty`);
   }
   return value;
 };
@@ -89,12 +138,16 @@ const parseSelectors = (value: unknown): SelectorRule[] => {
   ) {
     fail("selectors must be a non-empty array of { match?, selector }");
   }
-  return (value as { match?: string; selector: string }[]).map((rule) => ({
-    selector: rule.selector,
-    ...(rule.match !== undefined
-      ? { match: parsePattern(rule.match, "selectors.match") }
-      : {}),
-  }));
+  return (value as { match?: string; selector: string }[]).map((rule) => {
+    const match =
+      rule.match !== undefined
+        ? parsePattern(rule.match, "selectors.match")
+        : undefined;
+    return {
+      selector: rule.selector,
+      ...(match !== undefined ? { match, matchRe: new RegExp(match) } : {}),
+    };
+  });
 };
 
 const parseCas = (value: unknown): CaConfig["cas"] => {
@@ -132,7 +185,7 @@ export const parseCaConfig = (raw: unknown, baseDir: string): CaConfig => {
   }
   const cas = parseCas(value.cas);
   const exclude = strings(value.exclude, "exclude")?.map((pattern) =>
-    parsePattern(pattern),
+    parsePathPattern(pattern),
   );
   return {
     issuer,
@@ -141,7 +194,7 @@ export const parseCaConfig = (raw: unknown, baseDir: string): CaConfig => {
     origins: strings(value.origins, "origins")?.map(parseOrigin),
     selectors,
     exclude,
-    excludeRe: (exclude ?? []).map((pattern) => new RegExp(pattern)),
+    excludeRe: (exclude ?? []).map(pathPatternToRegExp),
     externalSelector:
       typeof value.externalSelector === "string"
         ? value.externalSelector

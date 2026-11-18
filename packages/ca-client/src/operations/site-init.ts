@@ -133,11 +133,11 @@ export const scanSite = async (
 };
 
 export const suggestSelector = (scan: SiteScan): string | undefined => {
-  const hit = scan.selectors.filter(({ pages }) => pages > 0);
-  return (
-    hit.find(({ pages }) => pages * 2 >= scan.pages) ??
-    [...hit].sort((a, b) => b.pages - a.pages)[0]
-  )?.selector;
+  // 過半数ヒットがあればそれを、なければ最多ヒットを返す
+  const hit = scan.selectors
+    .filter(({ pages }) => pages > 0)
+    .sort((a, b) => b.pages - a.pages);
+  return (hit.find(({ pages }) => pages * 2 >= scan.pages) ?? hit[0])?.selector;
 };
 
 const requiredAnswers = (
@@ -186,7 +186,7 @@ export const proposeConfig = (
       publicDir: at(publicDirOf(scan, answers, configDir)),
       ...(origins.length > 0 ? { origins } : {}),
       selectors: [{ selector }],
-      ...(answers.exclude?.length ? { exclude: answers.exclude } : {}),
+      exclude: answers.exclude ?? [],
       ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
     },
   };

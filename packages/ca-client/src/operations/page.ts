@@ -108,7 +108,7 @@ export const selectorFor = (
 ): string | undefined =>
   recorded?.selector ??
   config.selectors.find(
-    (rule) => rule.match === undefined || new RegExp(rule.match).test(pathname),
+    (rule) => rule.matchRe === undefined || rule.matchRe.test(pathname),
   )?.selector;
 
 const escapePattern = (value: string) => value.replace(/[:*?+(){}\\]/g, "\\$&");

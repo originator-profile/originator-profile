@@ -51,7 +51,7 @@ CA / CAS を管理する CLI の初期設定（${CONFIG_FILE}）を作る。
       summary: "CAS を置く静的ファイルのディレクトリ",
     }),
     exclude: Flags.string({
-      summary: "対象にしないパスの正規表現",
+      summary: "対象にしないパス（glob。例: /preview-*、/drafts/**）",
       multiple: true,
     }),
   };

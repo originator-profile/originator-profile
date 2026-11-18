@@ -17,7 +17,7 @@ export default class Sync extends Command {
 - expired: 内容は一致するが、期限が切れている（exp が無いものを含む）
 - orphan: どのページからも参照されていない
 - stale-copy: publicDir と distDir のコピーが揃っていない
---check では書き込まずに結果だけを出す。期限切れがあれば失敗する。`;
+--check では書き込まずに結果だけを出す。期限切れがあれば exit code 3 で終了する。`;
 
   static flags = {
     check,

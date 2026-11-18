@@ -5,7 +5,6 @@ import {
   parseCaConfig,
   parseIssuer,
   parseOrigin,
-  parsePattern,
   type CaConfig,
 } from "../operations/config.ts";
 import {
@@ -171,19 +170,8 @@ const askPublishing = async (
   configDir: string,
   log: Log,
 ): Promise<void> => {
-  if (answers.exclude === undefined) {
-    await previewWith(
-      parseCaConfig(proposeConfig(scan, answers, configDir).raw, configDir),
-      log,
-    );
-    answers.exclude = await askValid(
-      ask,
-      log,
-      "対象にしないパスの正規表現（カンマ区切り。無ければ空のまま）",
-      "",
-      (value) => list(value).map((pattern) => parsePattern(pattern)),
-    );
-  }
+  // exclude は対話では聞かず、空配列のまま書いて後から編集してもらう
+  answers.exclude ??= [];
   if (answers.publicDir === undefined) {
     answers.publicDir = resolve(
       await askValid(

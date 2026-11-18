@@ -320,7 +320,7 @@ FLAGS
   --genre=<value>       article:section が無いページの既定ジャンル
   --dist=<value>        ビルド済み HTML のディレクトリ
   --public=<value>      CAS を置く静的ファイルのディレクトリ
-  --exclude=<value>...  対象にしないパスの正規表現
+  --exclude=<value>...  対象にしないパス（glob。例: /preview-*、/drafts/**）
 
 DESCRIPTION
   初期設定を作る
@@ -413,7 +413,7 @@ DESCRIPTION
   - expired: 内容は一致するが、期限が切れている（exp が無いものを含む）
   - orphan: どのページからも参照されていない
   - stale-copy: publicDir と distDir のコピーが揃っていない
-  --check では書き込まずに結果だけを出す。期限切れがあれば失敗する。
+  --check では書き込まずに結果だけを出す。期限切れがあれば exit code 3 で終了する。
 
 EXAMPLES
   $ opca sync
