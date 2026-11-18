@@ -358,6 +358,9 @@ importers:
       '@originator-profile/sign':
         specifier: workspace:*
         version: link:../sign
+      jose:
+        specifier: ^6.2.2
+        version: 6.2.2
       jsdom:
         specifier: ^29.0.1
         version: 29.0.2

@@ -1,13 +1,10 @@
 import { ContentAttestationSet } from "@originator-profile/model";
-import {
-  JwtVcDecoder,
-  VcDecodeFailed,
-} from "@originator-profile/securing-mechanism";
 import { mkdir, readFile, unlink, writeFile } from "node:fs/promises";
 import { dirname, resolve } from "node:path";
+import { decodeCa, type DecodedCa } from "../ca/decode.ts";
 import { CaClientError, CaClientErrorCode } from "../errors.ts";
-import { isEnoent, toFileError } from "../file-utils.ts";
-import { isRecord } from "../is-record.ts";
+import { isEnoent, toFileError } from "../utils/file.ts";
+import { isRecord } from "../utils/is-record.ts";
 
 export type WriteCasFileOptions = {
   /**
@@ -45,8 +42,6 @@ export const resolveCasFilePath = (filePath: string): string => {
 const INVALID_CAS_FORMAT =
   "Invalid CAS file format (expected JSON array with JWT string)";
 
-const jwtVcDecoder = JwtVcDecoder();
-
 const jwtFromCasItem = (item: unknown): string | undefined => {
   if (typeof item === "string") {
     return item;
@@ -58,10 +53,10 @@ const jwtFromCasItem = (item: unknown): string | undefined => {
 };
 
 /**
- * Take the leading JWT from CAS file JSON (`["<JWT>"]` or
- * `[{ main: true, attestation: "<JWT>" }]`).
+ * Take every JWT from CAS file JSON (`["<JWT>"]` or
+ * `[{ main: true, attestation: "<JWT>" }]`), in file order.
  */
-export const parseCasFileContent = (fileContent: string): string => {
+export const parseCasFileContent = (fileContent: string): string[] => {
   let parsed: unknown;
   try {
     parsed = JSON.parse(fileContent);
@@ -80,39 +75,30 @@ export const parseCasFileContent = (fileContent: string): string => {
     });
   }
 
-  const jwt = jwtFromCasItem(cas.data[0]);
-  if (!jwt) {
+  if (cas.data.length === 0) {
+    throw new CaClientError(
+      "CAS file is empty (expected at least one JWT; inject placeholders use [] until signed)",
+      { code: CaClientErrorCode.Validation },
+    );
+  }
+
+  const jwts = cas.data
+    .map(jwtFromCasItem)
+    .filter((jwt): jwt is string => Boolean(jwt));
+  if (jwts.length === 0 || jwts.length !== cas.data.length) {
     throw new CaClientError(INVALID_CAS_FORMAT, {
       code: CaClientErrorCode.Validation,
     });
   }
 
-  return jwt;
-};
-
-const decodeCasJwt = (token: string): Record<string, unknown> => {
-  const decoded = jwtVcDecoder(token);
-  if (decoded instanceof VcDecodeFailed) {
-    throw new CaClientError(`Failed to decode CAS JWT: ${decoded.message}`, {
-      code: CaClientErrorCode.Validation,
-      cause: decoded,
-    });
-  }
-  return decoded.doc;
-};
-
-export type ReadCasFileResult = {
-  jwt: string;
-  payload: Record<string, unknown>;
+  return jwts;
 };
 
 /**
- * Read a CAS file and return its JWT and decoded payload.
+ * Read a CAS file and decode every CA in it, in file order.
  * Read counterpart of `writeCasFile`. Relative paths resolve against cwd.
  */
-export const readCasFile = async (
-  filePath: string,
-): Promise<ReadCasFileResult> => {
+export const readCasFile = async (filePath: string): Promise<DecodedCa[]> => {
   const dest = resolveCasFilePath(filePath);
   let fileContent: string;
   try {
@@ -121,8 +107,7 @@ export const readCasFile = async (
     throw toFileError(`Failed to read CAS file ${dest}`, error);
   }
 
-  const jwt = parseCasFileContent(fileContent);
-  return { jwt, payload: decodeCasJwt(jwt) };
+  return parseCasFileContent(fileContent).map(decodeCa);
 };
 
 export const writeCasFile = async ({

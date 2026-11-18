@@ -1,5 +1,5 @@
 import { expect, test } from "vitest";
-import { jwtPayloadToUnsignedCa } from "./cas-token.ts";
+import { jwtPayloadToUnsignedCa } from "./unsigned.ts";
 
 test("jwtPayloadToUnsignedCa: builds an unsigned CA from the payload", () => {
   const payload = {
