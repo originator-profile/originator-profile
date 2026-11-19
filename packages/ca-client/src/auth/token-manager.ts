@@ -1,10 +1,10 @@
+import { decodeJwt } from "jose";
 import {
   getCcspAccessToken,
   parseCcspConfig,
   type CcspAuthConfig,
   type CcspTokenResponse,
-} from "./ccsp-auth";
-import { getJwtExpiration } from "./jwt";
+} from "./ccsp-auth.ts";
 
 interface CachedToken {
   accessToken: string;
@@ -19,17 +19,20 @@ export interface TokenOperations {
 
 const DEFAULT_TTL_SECONDS = 3600;
 
+const jwtExpOf = (token: string): number | undefined => {
+  try {
+    const exp = decodeJwt(token).exp;
+    return typeof exp === "number" && exp > 0 ? exp : undefined;
+  } catch {
+    return undefined;
+  }
+};
+
 const resolveExpiresAt = (response: CcspTokenResponse, now: number): number => {
   if (typeof response.expires_in === "number" && response.expires_in > 0) {
     return now + response.expires_in;
   }
-
-  const jwtExp = getJwtExpiration(response.access_token);
-  if (jwtExp && jwtExp > 0) {
-    return jwtExp;
-  }
-
-  return now + DEFAULT_TTL_SECONDS;
+  return jwtExpOf(response.access_token) ?? now + DEFAULT_TTL_SECONDS;
 };
 
 const resolveBufferSeconds = (

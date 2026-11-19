@@ -13,8 +13,10 @@
       "@test:integration:bulk",
       "@test:integration:exclusion",
       "@test:integration:storage",
-      "@test:integration:update"
+      "@test:integration:update",
+      "@test:integration:diagnostics"
     ],
+    "test:integration:diagnostics": "wp --path=/var/www/html eval-file /var/www/html/wp-content/plugins/ca-manager/tests/integration/diagnostics.php",
     "lint": "phpcs .",
     "format": "phpcbf -v ."
   },

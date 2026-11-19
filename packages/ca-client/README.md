@@ -135,8 +135,11 @@ const jwt = await client.sign({
 ```ts
 import { readCasFile } from "@originator-profile/ca-client";
 
-const { payload } = await readCasFile("dist/cas/ja-JP.page.cas.json");
-const renewed = await client.reSign(payload, "dist/cas/ja-JP.page.cas.json");
+const [own] = await readCasFile("dist/cas/ja-JP.page.cas.json");
+const renewed = await client.reSign(
+  own.payload,
+  "dist/cas/ja-JP.page.cas.json",
+);
 ```
 
 `createCaClient` に渡した `issuer` が、payload の `issuer` より優先されます。
@@ -162,42 +165,36 @@ await writeCasFile({
 
 ### readCasFile
 
-`readCasFile` は、[CAS](https://docs.originator-profile.org/ja/opb/content-attestation-set/) ファイルを読み、先頭 JWT とデコード済み payload を返します。相対パスは cwd 基準です。
+`readCasFile` は、[CAS](https://docs.originator-profile.org/ja/opb/content-attestation-set/) ファイルを読み、含まれる CA をファイル順の `DecodedCa[]` で返します。相対パスは cwd 基準です。
 
-payload は署名検証をしない VC 文書です。JWT の `iss` / `iat` / `exp` は含まれません。`reSign` にそのまま渡せます。複数要素の CAS は先頭 1 件のみ読みます。
+各要素の `payload` は署名検証をしない VC 文書です。JWT の登録クレーム（`iss` / `sub` / `aud` / `iat` / `exp` / `nbf` / `jti` など）は `payload` に含まれません。JWT に `exp` があるときだけ `expiresAt` が付きます。`payload` は `reSign` にそのまま渡せます。
 
 ```ts
 import { readCasFile } from "@originator-profile/ca-client";
 
-const { jwt, payload } = await readCasFile("dist/cas/ja-JP.page.cas.json");
+const cas = await readCasFile("dist/cas/ja-JP.page.cas.json");
+const { jwt, payload, expiresAt } = cas[0];
 ```
 
-### detectDrift
+### compareTargets
 
-`detectDrift` は、ビルド後 HTML から target integrity を再計算し、CAS に記録された target とのずれを判定します。`html`・`filePath` は必須です。
+`compareTargets` は、ビルド後 HTML から target integrity を再計算し、CA の JWT に記録された target とのずれを判定します。`html`・`jwt` は必須です。
 
-`html` には CAS が対象とするページの **HTML 文字列** を渡します。
+`html` には CA が対象とするページの **HTML 文字列** を渡します。
 静的サイトならビルド成果物（例: `dist/ja-JP/page/index.html`）を、SSR ならそのページのレスポンス HTML を渡します。
+CAS ファイルから読む場合は、先に `readCasFile` で JWT を取り出してください。
 
 ```ts
 import { readFile } from "node:fs/promises";
-import { detectDrift } from "@originator-profile/ca-client";
+import { compareTargets, readCasFile } from "@originator-profile/ca-client";
 
 const html = await readFile("dist/ja-JP/page/index.html", "utf8");
+const [{ jwt }] = await readCasFile("dist/cas/ja-JP.page.cas.json");
 
-const result = await detectDrift({
-  html,
-  filePath: "dist/cas/ja-JP.page.cas.json",
-});
+const result = await compareTargets({ html, jwt });
 
 switch (result.status) {
   case "ok":
-    break;
-  case "cas_missing":
-    // CAS ファイルが無い → 新規署名
-    break;
-  case "cas_invalid":
-    console.warn(result.reason);
     break;
   case "html_no_targets":
     // セレクタに一致する要素が HTML に無い
@@ -210,18 +207,18 @@ switch (result.status) {
 
 | `status`          | 意味                                               |
 | ----------------- | -------------------------------------------------- |
-| `ok`              | HTML から再計算した target が CAS と一致する       |
-| `cas_missing`     | CAS ファイルが存在しない                           |
-| `cas_invalid`     | CAS の JSON / JWT が不正                           |
+| `ok`              | HTML から再計算した target が CA と一致する        |
 | `html_no_targets` | HTML から target を抽出できない                    |
 | `drifted`         | target がずれている（`current` / `expected` 付き） |
 
-TextTargetIntegrity などの `cssSelector` は CAS に記録された値を使い、同じセレクタで HTML を再評価します。CAS にセレクタが無いときだけ、オプションで渡せます。
+JWT のデコードに失敗したときは `CaClientError`（`CA_VALIDATION`）を throw します。
+
+TextTargetIntegrity などの `cssSelector` は CA に記録された値を使い、同じセレクタで HTML を再評価します。CA にセレクタが無いときだけ、オプションで渡せます。
 
 ```ts
-await detectDrift({
+await compareTargets({
   html,
-  filePath: "dist/cas/ja-JP.page.cas.json",
+  jwt,
   textSelector: "main",
   externalSelector: ".op-resource",
 });
@@ -265,6 +262,43 @@ try {
 | `CA_HTTP`       | CA サーバーアクセス失敗。400 / 401 / 403 / 404 の原因は [CA Server のエラーリスト](https://docs.originator-profile.org/ja/error-reference/#ca-server-のエラーリスト) を参照 | `status` が 401 の場合: OAuth 認証情報を再確認     |
 | `CA_RESPONSE`   | 2xx だが `access_token` や JWT を含まない                                                                                                                                   | サーバー応答の形式を確認する                       |
 | `CA_FILE`       | CAS ファイルの読み取り・書き込み・削除に失敗した                                                                                                                            | パス・権限・ディスク空き容量を直してから再実行する |
+
+## CLIコマンド
+
+`opca` コマンドで、ビルド済み HTML の CA を発行し、CAS を配信できます。
+
+```bash
+npm install -D @originator-profile/ca-client
+npx opca help
+# or
+npx -p @originator-profile/ca-client opca help
+```
+
+<!-- prettier-ignore-start -->
+<!-- commands -->
+* [`opca help [COMMAND]`](#opca-help-command)
+
+## `opca help [COMMAND]`
+
+Display help for opca.
+
+```
+USAGE
+  $ opca help [COMMAND...] [-n]
+
+ARGUMENTS
+  [COMMAND...]  Command to show help for.
+
+FLAGS
+  -n, --nested-commands  Include all nested commands in the output.
+
+DESCRIPTION
+  Display help for opca.
+```
+
+_See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/6.3.0/src/commands/help.ts)_
+<!-- commandsstop -->
+<!-- prettier-ignore-end -->
 
 ## ライセンス
 

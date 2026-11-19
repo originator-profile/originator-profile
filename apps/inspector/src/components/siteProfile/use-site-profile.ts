@@ -1,5 +1,6 @@
 import {
   isTopFrameUnreachable,
+  VerificationInvalidated,
   type SubscribedTabVerification,
 } from "@originator-profile/extension-common";
 import { toProblemDetails, type VerifiedSp } from "@originator-profile/verify";
@@ -38,7 +39,13 @@ function toSiteProfileView(
   }
 
   const entry = subscribed.verification?.siteProfile;
-  if (!entry) return { isLoading: true };
+  if (!entry || entry.state === "verifying") return { isLoading: true };
+  if (entry.state === "invalidated") {
+    return {
+      isLoading: false,
+      error: new VerificationInvalidated(entry.reason.title, entry.reason),
+    };
+  }
 
   const legacy = toLegacyWebsite(entry.result);
   if (legacy instanceof Error) return { isLoading: false, error: legacy };

@@ -2,17 +2,47 @@ export {
   createCaClient,
   type CaClient,
   type CaClientConfig,
-} from "./ca-client/create-ca-client";
+} from "./ca-server/create-ca-client.ts";
+export { decodeCa, type DecodedCa } from "./ca/decode.ts";
 export {
   readCasFile,
   writeCasFile,
-  type ReadCasFileResult,
   type WriteCasFileOptions,
-} from "./cas-store/file";
+} from "./cas/file.ts";
+export type { CasLocation } from "./cas/source.ts";
+export { CaClientError, CaClientErrorCode, isUnauthorized } from "./errors.ts";
 export {
-  detectDrift,
-  type DetectDriftOptions,
-  type DriftResult,
+  loadCaConfig,
+  parseCaConfig,
+  type CaConfig,
+  type CasMode,
+  type SelectorRule,
+} from "./operations/config.ts";
+export {
+  inject,
+  type InjectOptions,
+  type InjectReport,
+} from "./operations/inject.ts";
+export type { MetadataField } from "./operations/page.ts";
+export {
+  renew,
+  type RenewOptions,
+  type RenewReport,
+} from "./operations/renew.ts";
+export { signCaFile, type SignCaFileOptions } from "./operations/sign.ts";
+export {
+  UnissuablePagesError,
+  sync,
+  type IssuedPage,
+  type PageReport,
+  type PageStatus,
+  type ScanReport,
+  type SyncOptions,
+  type SyncReport,
+} from "./operations/sync.ts";
+export {
+  compareTargets,
+  type CompareTargetsOptions,
   type NormalizedTarget,
-} from "./drift/compare";
-export { CaClientError, CaClientErrorCode, isUnauthorized } from "./errors";
+  type TargetComparison,
+} from "./targets/compare.ts";

@@ -16,7 +16,7 @@ export type ExtractTargetsOptions = {
 };
 
 /**
- * Default selector for ExternalResourceTargetIntegrity when CAS has no
+ * Default selector for ExternalResourceTargetIntegrity when the CA has no
  * cssSelector and the caller omitted `externalSelector`.
  */
 export const DEFAULT_EXTERNAL_SELECTOR = ".target-integrity";
@@ -81,7 +81,7 @@ const extractDomTargets = async (
 
 /**
  * Extract target integrity from HTML. Selectors come from the caller
- * (CAS-recorded values or `DetectDriftOptions`); there is no site-specific default.
+ * (CA-recorded values or `CompareTargetsOptions`); there is no site-specific default.
  */
 export const extractTargetsFromHtml = async (
   htmlContent: string,

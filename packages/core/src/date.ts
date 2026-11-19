@@ -54,14 +54,15 @@ export function expirationDateTimeLocaleFrom(
 /**
  * 現在時刻において期限切れかどうかを判定する
  * @param expiredAt 期限切れ日時
+ * @param now 現在時刻 (デフォルト: 実行時の時刻)
  * @example
  * isExpired("2023-07-31T24:00:00.000+09:00") // 現在時刻が 2023-07-31T24:00:00.000+09:00 の場合 true, それより後の場合も true, それより前の場合は false
  * @return 期限切れの場合 true, そうでない場合 false
  */
-export function isExpired(expiredAt: Date | string) {
+export function isExpired(expiredAt: Date | string, now: Date = new Date()) {
   const expirationDate =
     typeof expiredAt === "string" ? parseExpirationDate(expiredAt) : expiredAt;
-  return !isBefore(expirationDate, new Date());
+  return !isBefore(expirationDate, now);
 }
 
 /**
