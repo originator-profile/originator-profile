@@ -27,8 +27,8 @@ final class Oidc_Claims extends TestCase {
 		return rtrim( strtr( base64_encode( $value ), '+/', '-_' ), '=' );
 	}
 
-	private static function at_hash( string $access_token ): string {
-		return self::base64url( substr( hash( 'sha256', $access_token, true ), 0, 16 ) );
+	private static function at_hash( string $access_token, int $bit = 256 ): string {
+		return self::base64url( substr( hash( 'sha' . $bit, $access_token, true ), 0, $bit / 16 ) );
 	}
 
 	private static function client( string $provider, array $extra = array() ): CasApiAuthClient {
@@ -91,6 +91,18 @@ final class Oidc_Claims extends TestCase {
 		$this->assertFalse( self::verify( self::client( self::FIREBASE_ISSUER ), self::firebase_claims( array( 'aud' => 'other-project' ) ) ) );
 	}
 
+	public function test_Firebaseの設定ではaudがクライアントIDでも検証に失敗する() {
+		$this->assertFalse( self::verify( self::client( self::FIREBASE_ISSUER ), self::firebase_claims( array( 'aud' => self::CLIENT_ID ) ) ) );
+	}
+
+	public function test_audが配列でプロジェクトIDを含めば検証に通る() {
+		$this->assertTrue( self::verify( self::client( self::FIREBASE_ISSUER ), self::firebase_claims( array( 'aud' => array( 'another-audience', 'test-project' ) ) ) ) );
+	}
+
+	public function test_audが配列でプロジェクトIDを含まなければ検証に失敗する() {
+		$this->assertFalse( self::verify( self::client( self::FIREBASE_ISSUER ), self::firebase_claims( array( 'aud' => array( 'another-audience', self::CLIENT_ID ) ) ) ) );
+	}
+
 	public function test_FirebaseのIDトークンでもaudが無ければ検証に失敗する() {
 		$claims = self::firebase_claims();
 		unset( $claims['aud'] );
@@ -109,6 +121,17 @@ final class Oidc_Claims extends TestCase {
 		$this->assertFalse( self::verify( self::client( self::FIREBASE_ISSUER ), self::firebase_claims(), self::ACCESS_TOKEN, 'EdDSA' ) );
 	}
 
+	public function test_at_hashがあっても署名アルゴリズムがHMACなら検証に失敗する() {
+		$this->assertFalse( self::verify( self::client( self::FIREBASE_ISSUER ), self::firebase_claims(), self::ACCESS_TOKEN, 'HS256' ) );
+	}
+
+	public function test_at_hashは署名アルゴリズムのハッシュ関数で検証する() {
+		$client = self::client( self::FIREBASE_ISSUER );
+		$this->assertTrue( self::verify( $client, self::firebase_claims( array( 'at_hash' => self::at_hash( self::ACCESS_TOKEN, 384 ) ) ), self::ACCESS_TOKEN, 'ES384' ) );
+		$this->assertTrue( self::verify( $client, self::firebase_claims( array( 'at_hash' => self::at_hash( self::ACCESS_TOKEN, 512 ) ) ), self::ACCESS_TOKEN, 'PS512' ) );
+		$this->assertFalse( self::verify( $client, self::firebase_claims(), self::ACCESS_TOKEN, 'ES384' ) );
+	}
+
 	public function test_nonceとat_hashが無いFirebaseのIDトークンは検証に通る() {
 		$claims = self::firebase_claims();
 		unset( $claims['nonce'], $claims['at_hash'] );
@@ -117,6 +140,29 @@ final class Oidc_Claims extends TestCase {
 
 	public function test_有効期限が切れたIDトークンは検証に失敗する() {
 		$this->assertFalse( self::verify( self::client( self::FIREBASE_ISSUER ), self::firebase_claims( array( 'exp' => time() - 3600 ) ) ) );
+	}
+
+	public function test_expが無いIDトークンは検証に失敗する() {
+		$claims = self::firebase_claims();
+		unset( $claims['exp'] );
+		$this->assertFalse( self::verify( self::client( self::FIREBASE_ISSUER ), $claims ) );
+	}
+
+	public function test_expが整数でないIDトークンは検証に失敗する() {
+		$this->assertFalse( self::verify( self::client( self::FIREBASE_ISSUER ), self::firebase_claims( array( 'exp' => (string) ( time() + 3600 ) ) ) ) );
+	}
+
+	public function test_subが無いIDトークンは検証に失敗する() {
+		$claims = self::firebase_claims();
+		unset( $claims['sub'] );
+		$this->assertFalse( self::verify( self::client( self::FIREBASE_ISSUER ), $claims ) );
+	}
+
+	public function test_issがプロバイダーと異なるIDトークンは検証に失敗する() {
+		$client = self::client( self::FIREBASE_ISSUER );
+		// 既定の issuer の検証は well-known 設定を取得して通信するため、認証設定の provider とだけ照合する.
+		$client->setIssuerValidator( static fn ( string $iss ): bool => self::FIREBASE_ISSUER === $iss );
+		$this->assertFalse( self::verify( $client, self::firebase_claims( array( 'iss' => 'https://securetoken.google.com/other-project' ) ) ) );
 	}
 
 	public function test_subがIDトークンと異なれば検証に失敗する() {
@@ -162,17 +208,16 @@ final class Oidc_Claims extends TestCase {
 		$this->assertTrue( self::verify( self::client( $issuer, array( 'firebaseProjectId' => 'configured-project' ) ), $claims ) );
 	}
 
-	public function test_well_known設定で検証されたFirebaseのissuerのプロジェクトIDをaudとして許可する() {
+	public function test_audの期待値はissではなく認証設定から求める() {
 		// 認証設定の provider と異なる iss が、プロバイダーの well-known 設定の issuer として検証される場合.
 		$client = self::client( 'https://provider.example' );
 		$client->setIssuerValidator( static fn ( string $iss ): bool => self::FIREBASE_ISSUER === $iss );
-		$this->assertTrue( self::verify( $client, self::firebase_claims() ) );
-		$this->assertFalse( self::verify( $client, self::firebase_claims( array( 'aud' => 'other-project' ) ) ) );
+		$this->assertFalse( self::verify( $client, self::firebase_claims() ) );
+		$this->assertTrue( self::verify( $client, self::firebase_claims( array( 'aud' => self::CLIENT_ID ) ) ) );
 	}
 
 	public function test_resolve_firebase_project_idメソッドはFirebaseのissuerからプロジェクトIDを求める() {
 		$this->assertSame( 'test-project', CasApiAuthClient::resolve_firebase_project_id( array( 'provider' => 'https://securetoken.google.com/test-project' ) ) );
-		$this->assertSame( 'test-project', CasApiAuthClient::resolve_firebase_project_id( array( 'provider' => 'https://securetoken.google.com/test-project/' ) ) );
 		$this->assertSame(
 			'explicit',
 			CasApiAuthClient::resolve_firebase_project_id(
@@ -189,6 +234,9 @@ final class Oidc_Claims extends TestCase {
 		$this->assertNull( CasApiAuthClient::resolve_firebase_project_id( array( 'provider' => 'https://securetoken.google.com.evil.example/test-project' ) ) );
 		$this->assertNull( CasApiAuthClient::resolve_firebase_project_id( array( 'provider' => 'https://evil.example/securetoken.google.com/test-project' ) ) );
 		$this->assertNull( CasApiAuthClient::resolve_firebase_project_id( array( 'provider' => 'https://securetoken.google.com/' ) ) );
+		$this->assertNull( CasApiAuthClient::resolve_firebase_project_id( array( 'provider' => 'https://securetoken.google.com/test-project/' ) ) );
+		$this->assertNull( CasApiAuthClient::resolve_firebase_project_id( array( 'provider' => 'HTTPS://SECURETOKEN.GOOGLE.COM/test-project' ) ) );
+		$this->assertNull( CasApiAuthClient::resolve_firebase_project_id( array( 'provider' => 'http://securetoken.google.com/test-project' ) ) );
 		$this->assertNull( CasApiAuthClient::resolve_firebase_project_id( array() ) );
 	}
 }

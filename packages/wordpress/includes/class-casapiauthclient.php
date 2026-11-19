@@ -38,9 +38,10 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	 * Firebase Secure Token の ID トークンで aud に入るプロジェクト ID を求める
 	 *
 	 * 認証設定に firebaseProjectId があればそれを使う。無ければ provider が Firebase Secure Token の issuer
-	 * (https://securetoken.google.com/<projectId>) の形式の場合に限り、パス末尾をプロジェクト ID とする。
-	 * Firebase 以外のプロバイダーで余計な audience を許可しないよう、ホストは厳密に判定する
-	 * (cas-generator の parseOidcConfigToken() と同じ規則)。
+	 * (https://securetoken.google.com/<projectId>) と完全に同じ形式の場合に限り、パス末尾をプロジェクト ID とする。
+	 * Firebase 以外のプロバイダーで余計な audience を許可しないよう、大文字小文字や末尾の / も含めて厳密に判定する。
+	 *
+	 * @see https://firebase.google.com/docs/auth/admin/verify-id-tokens
 	 *
 	 * @param array $config 認証設定
 	 * @return ?string プロジェクト ID。Firebase 以外のプロバイダーの場合は null
@@ -51,7 +52,7 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 		}
 
 		if ( isset( $config['provider'] ) && \is_string( $config['provider'] )
-			&& \preg_match( '#^https://securetoken\.google\.com/([^/?\#]+)/?$#i', $config['provider'], $matches ) ) {
+			&& \preg_match( '#^https://securetoken\.google\.com/([^/?\#]+)$#', $config['provider'], $matches ) ) {
 			return $matches[1];
 		}
 
@@ -183,9 +184,12 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	/**
 	 * Verify JWT claims
 	 *
-	 * Firebase Secure Token の ID トークンも含め、すべてのトークンで aud・nonce・at_hash を検証する。
+	 * Firebase Secure Token の ID トークンも含め、すべてのトークンで aud・exp・nonce・at_hash を検証する。
 	 * Firebase の ID トークンは aud がクライアント ID ではなくプロジェクト ID になるため、
-	 * aud はクライアント ID か Firebase のプロジェクト ID のどちらかを含めばよいものとする。
+	 * 認証設定から Firebase のプロジェクト ID が求まる場合はプロジェクト ID を、それ以外はクライアント ID を aud の期待値とする。
+	 *
+	 * @see https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation
+	 * @see https://firebase.google.com/docs/auth/admin/verify-id-tokens
 	 *
 	 * @param object      $claims The JWT claims to verify.
 	 * @param string|null $access_token The access token (optional).
@@ -207,8 +211,8 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 			return false;
 		}
 
-		if ( ! $this->verify_audience( $claims->aud ?? null, $claims->iss ) ) {
-			debug( 'JWT claims verification failed: aud claim does not contain the client ID or the Firebase project ID(OIDC)' );
+		if ( ! $this->verify_audience( $claims->aud ?? null ) ) {
+			debug( 'JWT claims verification failed: aud claim does not contain the expected audience(OIDC)' );
 			return false;
 		}
 
@@ -223,7 +227,13 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 			return false;
 		}
 
-		if ( isset( $claims->exp ) && ( ! \is_int( $claims->exp ) || $claims->exp < \time() - $this->leeway ) ) {
+		if ( ! isset( $claims->exp ) || ! \is_int( $claims->exp ) ) {
+			debug( 'JWT claims verification failed: exp claim is missing or invalid(OIDC)' );
+			return false;
+		}
+
+		// 時計のずれを考慮して leeway 秒の猶予を設ける
+		if ( $claims->exp <= \time() - $this->leeway ) {
 			debug( 'JWT claims verification failed: token has expired(OIDC)' );
 			return false;
 		}
@@ -247,35 +257,22 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	/**
 	 * Audience (aud クレーム) の検証
 	 *
-	 * 次のいずれかを含む場合に有効とする。
-	 * - クライアント ID
-	 * - 認証設定から求めた Firebase のプロジェクト ID
-	 * - 検証済みの iss が Firebase Secure Token の issuer の場合、そのプロジェクト ID
-	 *   (Firebase の ID トークンの検証規則。iss はプロバイダーの well-known 設定の issuer とも照合されるため、認証設定の provider と異なる場合がある)
+	 * 文字列または配列の aud が期待値を含む場合に有効とする。期待値は次のとおり。
+	 * - 認証設定から Firebase のプロジェクト ID が求まる場合: そのプロジェクト ID (Firebase の ID トークンの検証規則)
+	 * - それ以外: クライアント ID (OpenID Connect Core 1.0 の ID トークンの検証規則)
 	 *
-	 * @param mixed  $aud aud クレーム
-	 * @param string $iss 検証済みの iss クレーム
+	 * @param mixed $aud aud クレーム
 	 * @return bool 有効な場合は true
 	 */
-	private function verify_audience( mixed $aud, string $iss ): bool {
-		$auds = \is_array( $aud ) ? $aud : array( $aud );
-
-		$expected = array_filter(
-			array(
-				$this->getClientID(),
-				$this->firebase_project_id,
-				self::resolve_firebase_project_id( array( 'provider' => $iss ) ),
-			),
-			static fn ( $value ) => \is_string( $value ) && '' !== $value
-		);
-
-		foreach ( $expected as $value ) {
-			if ( \in_array( $value, $auds, true ) ) {
-				return true;
-			}
+	private function verify_audience( mixed $aud ): bool {
+		$expected = $this->firebase_project_id ?? $this->getClientID();
+		if ( ! \is_string( $expected ) || '' === $expected ) {
+			return false;
 		}
 
-		return false;
+		$auds = \is_array( $aud ) ? $aud : array( $aud );
+
+		return \in_array( $expected, $auds, true );
 	}
 
 	/**
@@ -289,7 +286,7 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	private function expected_at_hash( string $access_token ): ?string {
 		$header = $this->getIdTokenHeader();
 		$alg    = isset( $header->alg ) && \is_string( $header->alg ) ? $header->alg : '';
-		if ( ! \preg_match( '/^[A-Z]{2}(256|384|512)$/', $alg, $matches ) ) {
+		if ( ! \preg_match( '/^(?:RS|ES|PS)(256|384|512)$/', $alg, $matches ) ) {
 			debug( "Unsupported id_token alg for at_hash verification: {$alg}(OIDC)" );
 			return null;
 		}
