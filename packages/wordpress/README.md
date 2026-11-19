@@ -416,8 +416,8 @@ WordPress-->>利用者: CAS
 [Hooks](https://developer.wordpress.org/plugins/hooks/) に応じた処理を実行します。
 
 - `transition_post_status` : 投稿・更新のタイミングでトリガーされ、そのコンテンツの内容を変換し、CAサーバーの登録・更新エンドポイントに送信します  
-  また、公開から非公開や下書きなど公開以外の状態になったタイミングでトリガーされ、対象コンテンツのCA IDを利用してCAサーバーの削除エンドポイントに送信します
-- `before_delete_post` : 投稿が削除されるタイミングでトリガーされ、対象コンテンツのCA IDを利用してCAサーバーの削除エンドポイントに送信します
+  また、公開から非公開や下書きなど公開以外の状態になったタイミングでトリガーされ、対象コンテンツのCA ID（分割記事は全ページ分）を利用してCAサーバーの削除エンドポイントに送信します
+- `before_delete_post` : 投稿が削除されるタイミングでトリガーされ、対象コンテンツのCA ID（分割記事は全ページ分）を利用してCAサーバーの削除エンドポイントに送信します
 - `wp_head` : 投稿の閲覧のタイミングでトリガーされ、埋め込まれた `<script>` 要素を介して利用者はCASを取得します
 
 以上の処理により、投稿したコンテンツは自動的に管理され、利用者はその真正性を確認できます。
@@ -542,25 +542,32 @@ Pro版では、画像がCDN経由で変換され、URLが変化する場合が�
 
 ### CA サーバー側でのデータ削除
 
-メタデータ `_profile_post_cas` に CAS が保存されている状態で、 CA サーバー側のデータが手動で削除された場合、記事更新時に UUID を指定した新規登録が試みられます。これはサーバー側でエラーとなる可能性があります。
+記事の更新時は、メタデータ `_profile_post_cas` に保存済みの CA ID をページごとに指定して CA を更新します。CA サーバー側のデータが削除された場合や CA サーバーを切り替えた場合など、指定した CA ID が CA サーバーに存在せず `404 Not Found` が返ったときは、CA ID を指定せずに新規登録し直します。新しい CA ID の CA は、全ページの発行に成功した場合だけ保存します。
 
-**回避策**： 一度記事を非公開にすることで、メタデータがクリアされます。その後再度公開することで UUID を指定しない新規登録となり、正常に登録されます。
+404 以外のエラー（認証エラー、サーバーエラー、通信エラーなど）では新規登録し直さず、既存の CA を保持したまま失敗として扱います。
 
-### 他の投稿に添付済みの画像を再利用した場合、Integrityが正しく付与されないことがある
+非公開・削除時の CA 削除で `404 Not Found` が返った場合も、CA サーバー側で削除済みとして扱います。
 
-WordPressの `get_attached_media()` は、`post_parent`（画像がどの投稿にアップロードされたか）が対象の投稿と一致する添付ファイルのみを返します。
+### 画像に Integrity が付与されない場合
 
-そのため、画像ブロックの「メディアライブラリ」タブから、既に他の投稿にアップロード済みの画像を選択して挿入した場合、その画像は `get_attached_media()` で取得されず、Integrityメタデータ（`_profile_attachment_integrity`）が生成されないことがあります。この場合、該当する画像は CA の署名対象（External Resource）に含まれません。
+CA 発行時には、投稿に添付された画像（`get_attached_media()`）に加えて、本文の画像ブロックが参照する画像（他の投稿にアップロード済みの画像を再利用した場合を含む）の Integrity メタデータ（`_profile_attachment_integrity`）を計算し直します。
+画像ファイルの場所は、WordPress のアップロード先の設定（`UPLOADS` 定数、`upload_path` オプション、マルチサイト）に従って求めます。
 
-また、画像をアップロードした時点でIntegrityメタデータの計算自体には成功していても、何らかの理由で値が壊れた状態（例: `integrity="sha256-"` のようにハッシュ部分が空）で保存されている場合、`get_attached_media()` で再取得・再検証されない限りその状態が残り続け、CA検証エラー（`ERR_CONTENT_ATTESTATION_SET_VERIFY_FAILED`）の原因になることがあります。
+画像ファイルを読み込めずハッシュ値を計算できなかったサイズは保存せず、ログに記録します。
+以前のバージョンで保存された、ハッシュ部分が空の値（例: `integrity="sha256-"`）は `integrity` 属性に出力しません。記事を更新すると、CA 発行時に計算し直されます。
 
-**確認方法**: ログ出力を有効にすると、Integrityが欠落または不正な状態の画像のURLが記録されます。
+次の場合は Integrity が付与されず、その画像は CA の署名対象（External Resource）に含まれません。
+
+- 画像ブロックに添付ファイル ID が無い（外部 URL の画像など）
+- 画像ファイルをサーバー上で読み込めない（外部ストレージのみに置いている場合など）
+- 再利用ブロック（同期パターン）内の画像で、Integrity メタデータが計算されていない
+
+**確認方法**: ログ出力を有効にすると、Integrity が欠落または不正な状態の画像の URL と、ハッシュ値を計算できなかったファイルが記録されます。
 
 ```
-Post ID <投稿ID>, page <ページ番号>: image(s) with missing or invalid integrity (possibly not returned by get_attached_media(), or hash could not be computed): <画像URL>, ...
+Post ID <投稿ID>, page <ページ番号>: image(s) with missing or invalid integrity (the image block has no attachment ID, or the image file could not be read): <画像URL>, ...
+Attachment ID <添付ID>: failed to compute integrity for size '<サイズ>' (<ファイルパス>)
 ```
-
-**回避策**: 該当する画像をメディアライブラリから直接アップロードし直すことで、その投稿に添付され、Integrityメタデータが生成されます。
 
 ### もっと古い PHP (7.4 など) でも動かせますか?
 
@@ -674,6 +681,9 @@ test:integration:exclusion
 
 test:integration:storage
 : CA保存のトランザクションに関する結合テスト
+
+test:integration:update
+: CA更新時に CA サーバー側の CA が見つからない場合の再登録と、ページごとの CA の更新・削除に関する結合テスト
 
 test:integration:diagnostics
 : CAサーバーへの接続確認に関する結合テスト

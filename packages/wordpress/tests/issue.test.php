@@ -12,6 +12,9 @@ use function Profile\Issue\content_to_html;
 use function Profile\Issue\external_resources_from_html;
 use const Profile\Issue\WP_BLOCK_IMAGE_XPATH;
 use function Profile\Issue\find_images_without_integrity;
+use function Profile\Issue\create_integrity;
+use function Profile\Issue\image_block_attachment_ids;
+use function Profile\Issue\valid_integrity_values;
 
 final class Issue extends TestCase {
 	public function test_content_to_html_関数はHTMLを返す() {
@@ -141,5 +144,75 @@ EOD;
 			array( array( 'integrity' => 'sha256-xxx' ) ),
 			external_resources_from_html( $html, WP_BLOCK_IMAGE_XPATH . '[@integrity]' )
 		);
+	}
+
+	public function test_create_integrity関数はファイルのSHA256ハッシュを返す() {
+		$file = tempnam( sys_get_temp_dir(), 'integrity' );
+		file_put_contents( $file, 'hello' ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_file_put_contents
+		try {
+			$this->assertSame( 'sha256-LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ=', create_integrity( $file ) );
+		} finally {
+			unlink( $file ); // phpcs:ignore WordPress.WP.AlternativeFunctions.unlink_unlink
+		}
+	}
+
+	public function test_create_integrity関数は存在しないファイルに対してnullを返す() {
+		$this->assertNull( create_integrity( sys_get_temp_dir() . '/profile-integrity-not-found-' . uniqid() . '.png' ) );
+	}
+
+	public function test_create_integrity関数はディレクトリに対してnullを返す() {
+		$this->assertNull( create_integrity( sys_get_temp_dir() ) );
+	}
+
+	public function test_valid_integrity_values関数はハッシュ部分が空の値を除外する() {
+		$this->assertSame(
+			array( 'sha256-LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ=' ),
+			valid_integrity_values(
+				array(
+					'full'      => 'sha256-',
+					'thumbnail' => 'sha256-LPJNul+wow4m6DsqxbninhsWHlwfp0JecwQzYpOLmCQ=',
+					'medium'    => '',
+					'large'     => null,
+				)
+			)
+		);
+	}
+
+	public function test_valid_integrity_values関数は配列以外に対して空配列を返す() {
+		$this->assertSame( array(), valid_integrity_values( '' ) );
+		$this->assertSame( array(), valid_integrity_values( 'sha256-xxx' ) );
+	}
+
+	public function test_image_block_attachment_ids関数は入れ子の画像ブロックのIDを返す() {
+		$blocks = array(
+			array(
+				'blockName'   => 'core/image',
+				'attrs'       => array( 'id' => 10 ),
+				'innerBlocks' => array(),
+			),
+			array(
+				'blockName'   => 'core/paragraph',
+				'attrs'       => array(),
+				'innerBlocks' => array(),
+			),
+			array(
+				'blockName'   => 'core/group',
+				'attrs'       => array(),
+				'innerBlocks' => array(
+					array(
+						'blockName'   => 'core/image',
+						'attrs'       => array( 'id' => '20' ),
+						'innerBlocks' => array(),
+					),
+					array(
+						'blockName'   => 'core/image',
+						'attrs'       => array(),
+						'innerBlocks' => array(),
+					),
+				),
+			),
+		);
+
+		$this->assertSame( array( 10, 20 ), image_block_attachment_ids( $blocks ) );
 	}
 }

@@ -28,6 +28,38 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	private $leeway = 300;
 
 	/**
+	 * Firebase Secure Token の ID トークンで aud に入るプロジェクト ID
+	 *
+	 * @var string|null
+	 */
+	private $firebase_project_id = null;
+
+	/**
+	 * Firebase Secure Token の ID トークンで aud に入るプロジェクト ID を求める
+	 *
+	 * 認証設定に firebaseProjectId があればそれを使う。無ければ provider が Firebase Secure Token の issuer
+	 * (https://securetoken.google.com/<projectId>) と完全に同じ形式の場合に限り、パス末尾をプロジェクト ID とする。
+	 * Firebase 以外のプロバイダーで余計な audience を許可しないよう、大文字小文字や末尾の / も含めて厳密に判定する。
+	 *
+	 * @see https://firebase.google.com/docs/auth/admin/verify-id-tokens
+	 *
+	 * @param array $config 認証設定
+	 * @return ?string プロジェクト ID。Firebase 以外のプロバイダーの場合は null
+	 */
+	public static function resolve_firebase_project_id( array $config ): ?string {
+		if ( isset( $config['firebaseProjectId'] ) && \is_string( $config['firebaseProjectId'] ) && '' !== $config['firebaseProjectId'] ) {
+			return $config['firebaseProjectId'];
+		}
+
+		if ( isset( $config['provider'] ) && \is_string( $config['provider'] )
+			&& \preg_match( '#^https://securetoken\.google\.com/([^/?\#]+)$#', $config['provider'], $matches ) ) {
+			return $matches[1];
+		}
+
+		return null;
+	}
+
+	/**
 	 * Initialize the OIDC client with the provided secret
 	 *
 	 * @param string $secret The secret containing OIDC configuration
@@ -72,6 +104,7 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 		$this->setProviderURL( $s_ar['providerUrl'] );
 		$this->setIssuer( $s_ar['provider'] );    // id_token issuer
 		$this->setClientID( $s_ar['clientId'] );
+		$this->firebase_project_id = self::resolve_firebase_project_id( $s_ar );
 		$this->setClientSecret( $s_ar['clientSec'] );
 		$this->providerConfigParam(
 			array(
@@ -151,51 +184,116 @@ final class CasApiAuthClient extends OpenIDConnectClient {
 	/**
 	 * Verify JWT claims
 	 *
+	 * Firebase Secure Token の ID トークンも含め、すべてのトークンで aud・exp・nonce・at_hash を検証する。
+	 * Firebase の ID トークンは aud がクライアント ID ではなくプロジェクト ID になるため、
+	 * 認証設定から Firebase のプロジェクト ID が求まる場合はプロジェクト ID を、それ以外はクライアント ID を aud の期待値とする。
+	 *
+	 * @see https://openid.net/specs/openid-connect-core-1_0.html#IDTokenValidation
+	 * @see https://firebase.google.com/docs/auth/admin/verify-id-tokens
+	 *
 	 * @param object      $claims The JWT claims to verify.
 	 * @param string|null $access_token The access token (optional).
 	 * @return bool True if the claims are valid, false otherwise
 	 */
 	protected function verifyJWTClaims( $claims, ?string $access_token = null ): bool {
-		// Verify that sub is set
+		if ( ! \is_object( $claims ) ) {
+			debug( 'JWT claims verification failed: claims are not an object(OIDC)' );
+			return false;
+		}
+
 		if ( ! isset( $claims->sub ) ) {
 			debug( 'JWT claims verification failed: sub claim is missing(OIDC)' );
 			return false;
 		}
 
-		if ( isset( $claims->at_hash, $access_token ) ) {
-			if ( isset( $this->getIdTokenHeader()->alg ) && $this->getIdTokenHeader()->alg !== 'none' ) {
-				$bit = substr( $this->getIdTokenHeader()->alg, 2, 3 );
-			} else {
-				// TODO: Error case. throw exception???
-				$bit = '256';
-			}
-			$len              = ( (int) $bit ) / 16;
-			$expected_at_hash = $this->urlEncode( substr( hash( 'sha' . $bit, $access_token, true ), 0, $len ) );
+		if ( ! isset( $claims->iss ) || ! \is_string( $claims->iss ) || ! $this->validateIssuer( $claims->iss ) ) {
+			debug( 'JWT claims verification failed: iss claim does not match the provider(OIDC)' );
+			return false;
 		}
-		$auds = $claims->aud;
-		$auds = is_array( $auds ) ? $auds : array( $auds );
 
-		if ( isset( $claims->firebase ) ) {
-			// Override the JWT claims verification for firebase authentication.
-			debug( 'Firebase authentication detected, using custom claims verification(OIDC)' );
-			return ( ( $this->validateIssuer( $claims->iss ) )
-				&& ( $claims->sub === $this->getIdTokenPayload()->sub )
-				&& ( ! isset( $claims->exp ) || ( ( is_int( $claims->exp ) ) && ( $claims->exp >= time() - $this->leeway ) ) )
-				&& ( ! isset( $claims->nbf ) || ( ( is_int( $claims->nbf ) ) && ( $claims->nbf <= time() + $this->leeway ) ) )
-			);
-		} else {
-			debug( 'Standard OIDC authentication detected, using original claims verification' );
-			$client_id = $this->getClientID();
-			// Original the JWT claims verification
-			return ( ( $this->validateIssuer( $claims->iss ) )
-				&& ( in_array( $client_id, $auds, true ) )
-				&& ( $claims->sub === $this->getIdTokenPayload()->sub )
-				&& ( ! isset( $claims->nonce ) || $claims->nonce === $this->getNonce() )
-				&& ( ! isset( $claims->exp ) || ( ( is_int( $claims->exp ) ) && ( $claims->exp >= time() - $this->leeway ) ) )
-				&& ( ! isset( $claims->nbf ) || ( ( is_int( $claims->nbf ) ) && ( $claims->nbf <= time() + $this->leeway ) ) )
-				&& ( ! isset( $claims->at_hash ) || ! isset( $access_token ) || $claims->at_hash === $expected_at_hash )
-			);
+		if ( ! $this->verify_audience( $claims->aud ?? null ) ) {
+			debug( 'JWT claims verification failed: aud claim does not contain the expected audience(OIDC)' );
+			return false;
 		}
+
+		$payload = $this->getIdTokenPayload();
+		if ( ! isset( $payload->sub ) || $claims->sub !== $payload->sub ) {
+			debug( 'JWT claims verification failed: sub claim does not match the id_token(OIDC)' );
+			return false;
+		}
+
+		if ( isset( $claims->nonce ) && $claims->nonce !== $this->getNonce() ) {
+			debug( 'JWT claims verification failed: nonce claim does not match the authorization request(OIDC)' );
+			return false;
+		}
+
+		if ( ! isset( $claims->exp ) || ! \is_int( $claims->exp ) ) {
+			debug( 'JWT claims verification failed: exp claim is missing or invalid(OIDC)' );
+			return false;
+		}
+
+		// 時計のずれを考慮して leeway 秒の猶予を設ける
+		if ( $claims->exp <= \time() - $this->leeway ) {
+			debug( 'JWT claims verification failed: token has expired(OIDC)' );
+			return false;
+		}
+
+		if ( isset( $claims->nbf ) && ( ! \is_int( $claims->nbf ) || $claims->nbf > \time() + $this->leeway ) ) {
+			debug( 'JWT claims verification failed: token is not valid yet(OIDC)' );
+			return false;
+		}
+
+		if ( isset( $claims->at_hash, $access_token ) ) {
+			$expected_at_hash = $this->expected_at_hash( $access_token );
+			if ( null === $expected_at_hash || ! \is_string( $claims->at_hash ) || ! \hash_equals( $expected_at_hash, $claims->at_hash ) ) {
+				debug( 'JWT claims verification failed: at_hash claim does not match the access token(OIDC)' );
+				return false;
+			}
+		}
+
+		return true;
+	}
+
+	/**
+	 * Audience (aud クレーム) の検証
+	 *
+	 * 文字列または配列の aud が期待値を含む場合に有効とする。期待値は次のとおり。
+	 * - 認証設定から Firebase のプロジェクト ID が求まる場合: そのプロジェクト ID (Firebase の ID トークンの検証規則)
+	 * - それ以外: クライアント ID (OpenID Connect Core 1.0 の ID トークンの検証規則)
+	 *
+	 * @param mixed $aud aud クレーム
+	 * @return bool 有効な場合は true
+	 */
+	private function verify_audience( mixed $aud ): bool {
+		$expected = $this->firebase_project_id ?? $this->getClientID();
+		if ( ! \is_string( $expected ) || '' === $expected ) {
+			return false;
+		}
+
+		$auds = \is_array( $aud ) ? $aud : array( $aud );
+
+		return \in_array( $expected, $auds, true );
+	}
+
+	/**
+	 * ID トークンの at_hash クレームの期待値
+	 *
+	 * ID トークンの署名アルゴリズムのハッシュ関数でアクセストークンをハッシュし、左半分を base64url エンコードする。
+	 *
+	 * @param string $access_token The access token.
+	 * @return ?string at_hash。対応していない署名アルゴリズムの場合は null
+	 */
+	private function expected_at_hash( string $access_token ): ?string {
+		$header = $this->getIdTokenHeader();
+		$alg    = isset( $header->alg ) && \is_string( $header->alg ) ? $header->alg : '';
+		if ( ! \preg_match( '/^(?:RS|ES|PS)(256|384|512)$/', $alg, $matches ) ) {
+			debug( "Unsupported id_token alg for at_hash verification: {$alg}(OIDC)" );
+			return null;
+		}
+		$bit = $matches[1];
+		$len = ( (int) $bit ) / 16;
+
+		return $this->urlEncode( substr( hash( 'sha' . $bit, $access_token, true ), 0, $len ) );
 	}
 
 	/**

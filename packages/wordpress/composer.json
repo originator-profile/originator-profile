@@ -2,16 +2,20 @@
   "scripts": {
     "help": "cat README.md",
     "test": "phpunit",
+    "test:integration:attachment-integrity": "wp --path=/var/www/html eval-file /var/www/html/wp-content/plugins/ca-manager/tests/integration/attachment-integrity.php",
     "test:integration:bulk": "wp --path=/var/www/html eval-file /var/www/html/wp-content/plugins/ca-manager/tests/integration/bulk.php",
     "test:integration:exclusion": [
       "wp --path=/var/www/html eval-file /var/www/html/wp-content/plugins/ca-manager/tests/integration/exclusion.php",
       "wp --path=/var/www/html eval-file /var/www/html/wp-content/plugins/ca-manager/tests/delivery-integration.php"
     ],
     "test:integration:storage": "wp --path=/var/www/html eval-file /var/www/html/wp-content/plugins/ca-manager/tests/integration/issue-storage.php",
+    "test:integration:update": "wp --path=/var/www/html eval-file /var/www/html/wp-content/plugins/ca-manager/tests/integration/issue-update.php",
     "test:integration": [
+      "@test:integration:attachment-integrity",
       "@test:integration:bulk",
       "@test:integration:exclusion",
       "@test:integration:storage",
+      "@test:integration:update",
       "@test:integration:diagnostics",
       "@test:integration:issue-status"
     ],
