@@ -826,17 +826,20 @@ function build_ca_endpoint( string $endpoint_path ): string {
  * @return mixed 成功した場合は Content Attestation Set、失敗した場合は false
  */
 function issue_ca( Uca $uca, string $admin_secret ): mixed {
-	$endpoint    = build_ca_endpoint( '/ca' );
-	$status_code = null;
-	$cas         = request_ca( $endpoint, $admin_secret, 'POST', $uca->to_json(), $status_code );
-	if ( false !== $cas || null === $uca->subject || 404 !== $status_code ) {
+	$endpoint = build_ca_endpoint( '/ca' );
+	$cas      = request_ca( $endpoint, $admin_secret, 'POST', $uca->to_json() );
+	if ( ! \is_wp_error( $cas ) ) {
 		return $cas;
+	}
+	if ( null === $uca->subject || ! is_ca_not_found( $cas ) ) {
+		return false;
 	}
 
 	debug( "CA {$uca->subject} was not found on the CA server. Registering it as a new CA." );
 	$new_uca          = clone $uca;
 	$new_uca->subject = null;
-	return request_ca( $endpoint, $admin_secret, 'POST', $new_uca->to_json() );
+	$cas              = request_ca( $endpoint, $admin_secret, 'POST', $new_uca->to_json() );
+	return \is_wp_error( $cas ) ? false : $cas;
 }
 
 /**
@@ -858,11 +861,10 @@ function delete_ca( string $admin_secret, \WP_Post $post ): bool {
 
 	$deleted = true;
 	foreach ( $uuids as $uuid ) {
-		$endpoint    = build_ca_endpoint( "/ca/{$uuid}" );
-		$status_code = null;
-		if ( false === request_ca( $endpoint, $admin_secret, 'DELETE', null, $status_code ) ) {
+		$result = request_ca( build_ca_endpoint( "/ca/{$uuid}" ), $admin_secret, 'DELETE' );
+		if ( \is_wp_error( $result ) ) {
 			// CA サーバー側で削除済みの CA は、削除できたものとして扱う.
-			if ( 404 === $status_code ) {
+			if ( is_ca_not_found( $result ) ) {
 				debug( "CA {$uuid} for post ID {$post->ID} was already absent on the CA server." );
 				continue;
 			}
@@ -877,18 +879,28 @@ function delete_ca( string $admin_secret, \WP_Post $post ): bool {
 }
 
 /**
+ * CA サーバーに該当する CA が無かった (HTTP 404) ことを表すエラーかどうか
+ *
+ * @param \WP_Error $error request_ca() が返したエラー
+ * @return bool HTTP 404 の場合は true
+ */
+function is_ca_not_found( \WP_Error $error ): bool {
+	$data = $error->get_error_data();
+	return is_array( $data ) && 404 === ( $data['status'] ?? null );
+}
+
+/**
  * Content Attestation サーバーへのリクエスト
  *
  * @param string  $endpoint Content Attestation サーバー CA 登録・更新・削除エンドポイント
  * @param string  $admin_secret Content Attestation サーバー認証情報
  * @param string  $method Content Attestation サーバーへのリクエストメソッド
  * @param ?string $body (optional) Content Attestation サーバーへのリクエストボディ
- * @param ?int    $status_code (optional) HTTP ステータスコードの格納先。応答を得られなかった場合は null
- * @return mixed 成功した場合はレスポンスボディをデコードした結果または true 、失敗した場合は false
+ * @return mixed 成功した場合はレスポンスボディをデコードした結果または true 、失敗した場合は \WP_Error 。
+ *               HTTP エラーの場合は、エラーデータの status に HTTP ステータスコードを持つ
  */
-function request_ca( string $endpoint, string $admin_secret, string $method = 'POST', ?string $body = null, ?int &$status_code = null ): mixed {
-	$status_code = null;
-	$args        = array(
+function request_ca( string $endpoint, string $admin_secret, string $method = 'POST', ?string $body = null ): mixed {
+	$args = array(
 		'method'  => $method,
 		'timeout' => PROFILE_DEFAULT_CA_SERVER_REQUEST_TIMEOUT,
 		'headers' => array(),
@@ -906,7 +918,7 @@ function request_ca( string $endpoint, string $admin_secret, string $method = 'P
 			$api_auth = new CasApiAuthClient();
 			if ( ! $api_auth->init_oidc( $admin_secret ) ) {
 				debug( 'Failed to initialize OIDC client.' );
-				return false;
+				return new \WP_Error( 'ca_auth_failed', 'Failed to initialize OIDC client.' );
 			}
 			$args['headers']['authorization'] = 'Bearer ' . $api_auth->get_api_token();
 			break;
@@ -914,7 +926,7 @@ function request_ca( string $endpoint, string $admin_secret, string $method = 'P
 			$api_auth = new CasApiAuthCCSP();
 			if ( ! $api_auth->init_ccsp( $admin_secret ) ) {
 				debug( 'Failed to initialize CCSP client.' );
-				return false;
+				return new \WP_Error( 'ca_auth_failed', 'Failed to initialize CCSP client.' );
 			}
 			$args['headers']['authorization'] = 'Bearer ' . $api_auth->get_api_token();
 			break;
@@ -925,18 +937,17 @@ function request_ca( string $endpoint, string $admin_secret, string $method = 'P
 	debug( "Requesting CA server endpoint: {$endpoint} with method: {$method}" );
 	$res = \wp_remote_request( $endpoint, $args );
 	if ( \is_wp_error( $res ) ) {
-		$error_message = $res->get_error_message();
-		debug( 'Failed to request: ' . $error_message );
-		return false;
+		debug( 'Failed to request: ' . $res->get_error_message() );
+		return $res;
 	}
 
 	$status_code = (int) $res['response']['code'];
-	if ( 200 !== $res['response']['code'] && 204 !== $res['response']['code'] ) {
-		debug( "HTTP {$res['response']['code']}: {$res['body']}" );
-		return false;
+	if ( 200 !== $status_code && 204 !== $status_code ) {
+		debug( "HTTP {$status_code}: {$res['body']}" );
+		return new \WP_Error( 'ca_http_error', (string) $res['body'], array( 'status' => $status_code ) );
 	}
 
-	if ( 204 === $res['response']['code'] ) {
+	if ( 204 === $status_code ) {
 		return true;
 	}
 
