@@ -27,6 +27,8 @@ final class Settings_Check extends TestCase {
 		$this->assertSame( array(), check_settings( $this->settings( array( 'profile_ca_server_hostname' => 'ca.example.com:8443' ) ) ) );
 		$this->assertSame( array(), check_settings( $this->settings( array( 'profile_ca_server_hostname' => 'ca.example.com:65535' ) ) ) );
 		$this->assertSame( array(), check_settings( $this->settings( array( 'profile_ca_server_hostname' => 'localhost' ) ) ) );
+		// Only the first colon separates the user name, so the password may contain colons.
+		$this->assertSame( array(), check_settings( $this->settings( array( 'profile_ca_server_admin_secret' => 'user:pass:word:' ) ) ) );
 		$this->assertSame( array(), check_settings( $this->settings( array( 'profile_ca_server_admin_secret' => $this->auth_config( 'CCSP', CCSP_KEYS ) ) ) ) );
 		$this->assertSame(
 			array(),
@@ -64,6 +66,9 @@ final class Settings_Check extends TestCase {
 			$this->assertStringContainsString( 'ポート番号は1〜65535', check_settings( $this->settings( array( 'profile_ca_server_hostname' => $hostname ) ) )[0], $hostname );
 		}
 		$this->assertStringContainsString( 'ユーザー名:パスワード', check_settings( $this->settings( array( 'profile_ca_server_admin_secret' => 'password-only' ) ) )[0] );
+		foreach ( array( ':password', 'user:', ':' ) as $admin_secret ) {
+			$this->assertStringContainsString( 'どちらも空にせず', check_settings( $this->settings( array( 'profile_ca_server_admin_secret' => $admin_secret ) ) )[0], $admin_secret );
+		}
 	}
 
 	public function test_OIDC_CCSPの認証情報の誤りを指摘する() {

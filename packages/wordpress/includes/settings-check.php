@@ -76,8 +76,14 @@ function check_settings( array $value ): array {
 		} elseif ( $missing ) {
 			$problems[] = "{$prefix}の認証情報に必要な項目がありません：" . implode( '、', $missing );
 		}
-	} elseif ( ! str_contains( $admin_secret, ':' ) ) {
-		$problems[] = '認証情報は「ユーザー名:パスワード」の形式で入力してください。';
+	} else {
+		// パスワードには「:」を含められるため、最初の「:」で分ける。
+		$credentials = explode( ':', $admin_secret, 2 );
+		if ( ! isset( $credentials[1] ) ) {
+			$problems[] = '認証情報は「ユーザー名:パスワード」の形式で入力してください。';
+		} elseif ( '' === $credentials[0] || '' === $credentials[1] ) {
+			$problems[] = '認証情報のユーザー名とパスワードは、どちらも空にせずに入力してください。';
+		}
 	}
 
 	return $problems;
