@@ -113,6 +113,11 @@ const buildOptions = {
       src: "public",
       dest: outdir,
     }),
+    // 国旗は国コードのファイル名で置き、表示するときに読み込む
+    copy({
+      src: "node_modules/flag-icons/flags/4x3",
+      dest: path.join(outdir, "flags"),
+    }),
     postcss,
     manifest({
       target: args.values.target,

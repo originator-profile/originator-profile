@@ -137,3 +137,20 @@ test("作成者のアコーディオンは同時に 1 つしか開かない", as
   await creator.locator("summary").click();
   await expect(ext.locator("details[open]")).toHaveCount(0);
 });
+
+test("作成者の国を国旗と国名で示す", async ({ context, page }) => {
+  await page.goto("http://localhost:8080/examples/iframe");
+  const ext = await sidepanel(context);
+
+  await ext.getByTestId("content-card").first().locator("summary").click();
+  const country = ext.locator("details[open] p", { hasText: "日本" });
+  await expect(country).toBeVisible();
+  // NOTE: 国旗は拡張機能に同梱したファイルを読み込む
+  await expect
+    .poll(() =>
+      country
+        .locator("img")
+        .evaluate((img: HTMLImageElement) => img.naturalWidth),
+    )
+    .toBeGreaterThan(0);
+});

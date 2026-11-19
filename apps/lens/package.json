@@ -37,6 +37,7 @@
     "dotenv": "17.4.2",
     "esbuild": "0.28.1",
     "esbuild-copy-static-files": "0.1.0",
+    "flag-icons": "7.6.0",
     "happy-dom": "21.0.4",
     "npm-run-all2": "8.0.4",
     "oxlint": "^1.73.0",
