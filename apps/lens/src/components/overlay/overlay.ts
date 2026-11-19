@@ -20,6 +20,7 @@ export class Overlay {
       <!doctype html>
       <html lang='${uiLocale()}'>
         <head>
+          <base href='${chrome.runtime.getURL("")}'>
           <link rel='stylesheet' href='${chrome.runtime.getURL("main.css")}'>
         </head>
         <body>

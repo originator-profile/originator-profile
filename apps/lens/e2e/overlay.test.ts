@@ -100,6 +100,15 @@ test("サブフレームのコンテンツも強調する", async ({ context, pa
       clientHeight,
     }));
   expect(scrollHeight).toBe(clientHeight);
+  // NOTE: タグの国旗も、拡張機能に同梱したファイルを読み込む
+  await expect
+    .poll(() =>
+      overlay
+        .locator("img[src='flags/jp.svg']")
+        .first()
+        .evaluate((img: HTMLImageElement) => img.naturalWidth),
+    )
+    .toBeGreaterThan(0);
   // NOTE: 国名は文言 (_locales) と同じ言語で出す
   await expect(ext.locator("details[open]").getByText("日本")).toBeVisible();
 });
