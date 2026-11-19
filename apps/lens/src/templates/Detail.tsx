@@ -66,8 +66,9 @@ function Detail({ detail }: { detail: OrganizationDetail }) {
         )}
         {links.length > 0 && (
           <ul className="flex flex-col gap-1.5 border-t border-gray-200 pt-8 pb-8">
-            {links.map(({ id, name }) => (
-              <li key={id} className="flex">
+            {/* NOTE: 方針が同じページに載っていると URL が重なるため、添字で区別する */}
+            {links.map(({ id, name }, index) => (
+              <li key={index} className="flex">
                 <ExternalLink href={id}>{name}</ExternalLink>
               </li>
             ))}
