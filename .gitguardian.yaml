@@ -1,0 +1,16 @@
+version: 2
+secret:
+  # 開発環境専用のダミー値による誤検知を抑止する (#394)
+  # ここに列挙するのはローカル開発でのみ使用する公開前提のダミー値そのもののみ。
+  # 値単体の SHA-256 は ggshield の ignore SHA と異なるため使用しません。
+  # 本物の認証情報をここに追加してはいけません。
+  ignored_matches:
+    # packages/wordpress/.env.development の WORDPRESS_DB_PASSWORD (開発用ダミー)
+    - name: wordpress dev dummy db password
+      match: "41d33d80a657a8778b5a50e4e9e58148"
+    # packages/wordpress/.env.development の WORDPRESS_DB_ROOT_PASSWORD (開発用ダミー)
+    - name: wordpress dev dummy db root password
+      match: "a5beaa9989b5c1f00aa299cfc41e40b1"
+    # packages/demo-page/.env.development の SIGNING_KEY_* に共通の開発用ダミー秘密鍵 ("d" の値)
+    - name: demo-page dev dummy signing key (JWK d)
+      match: "ePrXj2mHN7TTftLiW3Jl0JsHyurMHnBx7qRHnCv9Zlc"
