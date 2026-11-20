@@ -51,7 +51,6 @@ test("init: ビルド済み HTML から設定を作り、inject と sync でリ�
   const config = await init({
     configFile,
     answers: { issuer: ISSUER },
-    force: false,
     log,
   });
 
@@ -61,11 +60,11 @@ test("init: ビルド済み HTML から設定を作り、inject と sync でリ�
     publicDir: "public",
     origins: ["https://example.com"],
     selectors: [{ selector: SELECTOR }],
-    cas: { mode: "file" },
+    exclude: [],
   });
   expect(
     lines.includes(
-      "CA を作れるページ 2、作れないページ 1、selector に当たらないページ 1",
+      "CA を作れるページ 2、作れないページ 1、セレクタに当たらないページ 1",
     ),
   ).toBeTruthy();
   expect(
@@ -82,12 +81,11 @@ test("init: ビルド済み HTML から設定を作り、inject と sync でリ�
   }
 });
 
-test("init: 何度実行しても同じ設定を書き、違う内容の上書きは --force が要る", async () => {
+test("init: 同じ内容なら書き直さず、違う内容なら上書きする", async () => {
   const { configFile } = fresh();
   const options = {
     configFile,
     answers: { issuer: ISSUER },
-    force: false,
     log: silent,
   };
   await init(options);
@@ -99,11 +97,10 @@ test("init: 何度実行しても同じ設定を書き、違う内容の上書�
   expect(lines.includes("ca.config.json は変わりません")).toBeTruthy();
   expect(!lines.some((line) => line.includes("を書きました"))).toBeTruthy();
 
-  const other = { ...options, answers: { issuer: ISSUER, selector: "main" } };
-  await expect(init(other)).rejects.toThrow(/--force/);
-  expect(readFileSync(configFile, "utf-8")).toBe(first);
-
-  await init({ ...other, force: true });
+  await init({
+    ...options,
+    answers: { issuer: ISSUER, selector: "main" },
+  });
   expect(readFileSync(configFile, "utf-8")).toMatch(/"selector": "main"/);
 });
 
@@ -125,20 +122,17 @@ test("init: 端末では全項目を推定値を既定にして順に聞き、�
   const { configFile } = fresh();
   const lines: string[] = [];
   const { ask, asked } = scripted([
-    [/issuer/, "example.com"],
-    [/issuer/, ISSUER],
-    [/オリジン/, "http://example.com"],
-    [/オリジン/, "https://example.com, http://localhost:4321"],
+    [/発行者/, "example.com"],
+    [/発行者/, ISSUER],
+    [/サイトの URL/, "http://example.com"],
+    [/サイトの URL/, "https://example.com, http://localhost:4321"],
     [/著者/, "Example Inc., Jane Doe"],
     [/ジャンル/, "technology"],
-    [/正規表現/, "^/about"],
-    [/置き場所/, "rebuild"],
   ]);
 
   await init({
     configFile,
     answers: {},
-    force: false,
     ask,
     log: { log: (line: string) => lines.push(line) },
   });
@@ -150,16 +144,15 @@ test("init: 端末では全項目を推定値を既定にして順に聞き、�
     ]),
   ).toStrictEqual([
     ["ビルド済み HTML のディレクトリ", "dist"],
-    ["issuer", undefined],
-    ["issuer", undefined],
-    ["サイトのオリジン", "https://example.com"],
-    ["サイトのオリジン", "https://example.com"],
-    ["証明する要素の selector", SELECTOR],
+    ["発行者 ID", undefined],
+    ["発行者 ID", undefined],
+    ["サイトの URL", "https://example.com"],
+    ["サイトの URL", "https://example.com"],
+    ["証明する要素の CSS セレクタ", SELECTOR],
     ["author が無いページの著者", ""],
     ["編集者", "Example Inc., Jane Doe"],
     ["article:section が無いページのジャンル", ""],
-    ["対象にしないパスの正規表現", ""],
-    ["CAS の置き場所", "commit"],
+    ["CAS を置く静的ファイルのディレクトリ", "public"],
   ]);
   expect(
     lines.includes('  <meta name="author"> が無いページ: 4 / 4'),
@@ -171,19 +164,19 @@ test("init: 端末では全項目を推定値を既定にして順に聞き、�
   expect(JSON.parse(readFileSync(configFile, "utf-8"))).toStrictEqual({
     issuer: ISSUER,
     distDir: "dist",
+    publicDir: "public",
     origins: ["https://example.com", "http://localhost:4321"],
     selectors: [{ selector: SELECTOR }],
-    exclude: ["^/about"],
+    exclude: [],
     defaults: {
       author: ["Example Inc.", "Jane Doe"],
       editor: ["Example Inc.", "Jane Doe"],
       genre: "technology",
     },
-    cas: { mode: "inline" },
   });
   expect(
     lines.includes(
-      "CA を作れるページ 2、作れないページ 0、selector に当たらないページ 1",
+      "CA を作れるページ 2、作れないページ 1、セレクタに当たらないページ 1",
     ),
   ).toBeTruthy();
 });
@@ -191,9 +184,9 @@ test("init: 端末では全項目を推定値を既定にして順に聞き、�
 test("init: フラグで渡した項目は聞かず、端末でなければ issuer が無いと失敗する", async () => {
   const { configFile } = fresh();
 
-  await expect(
-    init({ configFile, answers: {}, force: false, log: silent }),
-  ).rejects.toThrow(/--issuer/);
+  await expect(init({ configFile, answers: {}, log: silent })).rejects.toThrow(
+    /--issuer/,
+  );
 
   const { ask, asked } = scripted([]);
   await init({
@@ -207,9 +200,7 @@ test("init: フラグで渡した項目は聞かず、端末でなければ issu
       editor: [],
       genre: "",
       exclude: [],
-      persistence: "commit",
     },
-    force: false,
     ask,
     log: silent,
   });
@@ -240,18 +231,13 @@ test("init: HTML に author と article:section があれば、聞くのは HTML
       selector: SELECTOR,
       exclude: [],
     },
-    force: false,
     ask,
     log: silent,
   });
 
   expect(
     asked.map(({ question }) => question.split(/[（。]/)[0]),
-  ).toStrictEqual([
-    "編集者",
-    "CAS の置き場所",
-    "CAS を置く静的ファイルのディレクトリ",
-  ]);
+  ).toStrictEqual(["編集者", "CAS を置く静的ファイルのディレクトリ"]);
   expect(JSON.parse(readFileSync(configFile, "utf-8")).defaults).toBe(
     undefined,
   );

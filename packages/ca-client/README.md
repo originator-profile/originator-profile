@@ -265,7 +265,7 @@ try {
 
 ## CLIコマンド
 
-`opca` コマンドで、ビルド済み HTML の CA を発行し、CAS を配信できます。
+`opca` はビルド済み HTML の CA を署名し、CAS として配信する CLI です。
 
 ```bash
 npm install -D @originator-profile/ca-client
@@ -277,6 +277,10 @@ npx -p @originator-profile/ca-client opca help
 <!-- prettier-ignore-start -->
 <!-- commands -->
 * [`opca help [COMMAND]`](#opca-help-command)
+* [`opca init`](#opca-init)
+* [`opca inject`](#opca-inject)
+* [`opca renew`](#opca-renew)
+* [`opca sync`](#opca-sync)
 
 ## `opca help [COMMAND]`
 
@@ -297,6 +301,127 @@ DESCRIPTION
 ```
 
 _See code: [@oclif/plugin-help](https://github.com/oclif/plugin-help/blob/6.3.0/src/commands/help.ts)_
+
+## `opca init`
+
+初期設定を作る
+
+```
+USAGE
+  $ opca init [--issuer <value>] [--origin <value>...] [--selector <value>] [--author <value>...]
+     [--editor <value>...] [--genre <value>] [--dist <value>] [--public <value>] [--exclude <value>...]
+
+FLAGS
+  --issuer=<value>      発行者 ID（dns: で始まる）
+  --origin=<value>...   サイトの URL（例: https://example.com）
+  --selector=<value>    証明する要素の CSS セレクタ
+  --author=<value>...   author が無いページの既定の著者
+  --editor=<value>...   既定の編集者
+  --genre=<value>       article:section が無いページの既定ジャンル
+  --dist=<value>        ビルド済み HTML のディレクトリ
+  --public=<value>      CAS を置く静的ファイルのディレクトリ
+  --exclude=<value>...  対象にしないパス（glob。例: /preview-*、/drafts/**）
+
+DESCRIPTION
+  初期設定を作る
+
+  CA / CAS を管理する CLI の初期設定（ca.config.json）を作る。
+  ビルド済み HTML から候補を出し、未指定の項目は対話で確認する。
+
+EXAMPLES
+  $ opca init
+
+  $ opca init --issuer dns:example.com --dist dist
+
+FLAG DESCRIPTIONS
+  --issuer=<value>  発行者 ID（dns: で始まる）
+
+    例: dns:example.com。対話でないときは必須。
+```
+
+_See code: [src/commands/init.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/init.ts)_
+
+## `opca inject`
+
+HTML に CAS のタグを入れる
+
+```
+USAGE
+  $ opca inject [--check]
+
+FLAGS
+  --check  書き込まずに結果だけを出す
+
+DESCRIPTION
+  HTML に CAS のタグを入れる
+
+  ビルド済み HTML に CAS の <script> を挿入し、画像などの外部リソースの integrity を追加・更新する。
+  --check では書き込まずに結果だけを出す。
+
+EXAMPLES
+  $ opca inject
+
+  $ opca inject --check
+```
+
+_See code: [src/commands/inject.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/inject.ts)_
+
+## `opca renew`
+
+期限切れの CA を再署名する
+
+```
+USAGE
+  $ opca renew [--all]
+
+FLAGS
+  --all  期限に関わらず再署名する
+
+DESCRIPTION
+  期限切れの CA を再署名する
+
+  期限切れ（または exp の無いもの）の CAS を再署名する。
+  --all で全件更新する。
+
+EXAMPLES
+  $ opca renew
+
+  $ opca renew --all
+```
+
+_See code: [src/commands/renew.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/renew.ts)_
+
+## `opca sync`
+
+ページの HTML と既存の CA を調べて、ずれているものを署名する
+
+```
+USAGE
+  $ opca sync [--check]
+
+FLAGS
+  --check  書き込まずに結果だけを出す
+
+DESCRIPTION
+  ページの HTML と既存の CA を調べて、ずれているものを署名する
+
+  ビルド済み HTML と CA を調べて、ずれているものを署名する。
+  状態は次のとおり。
+  - ok: 問題なし
+  - missing: CA が存在しない
+  - drifted: CA があるが、本文・メタ情報などが HTML と一致しない
+  - expired: 内容は一致するが、期限が切れている（exp が無いものを含む）
+  - orphan: どのページからも参照されていない
+  - stale-copy: publicDir と distDir のコピーが揃っていない
+  --check では書き込まずに結果だけを出す。期限切れがあれば exit code 3 で終了する。
+
+EXAMPLES
+  $ opca sync
+
+  $ opca sync --check
+```
+
+_See code: [src/commands/sync.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/sync.ts)_
 <!-- commandsstop -->
 <!-- prettier-ignore-end -->
 

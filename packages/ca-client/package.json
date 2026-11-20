@@ -28,7 +28,9 @@
   },
   "oclif": {
     "bin": "opca",
+    "description": "ビルド済み HTML の CA を署名し、CAS として配信する。",
     "commands": "dist/commands",
+    "helpClass": "./dist/cli/help",
     "repositoryPrefix": "<%- repo %>/blob/v<%- version %>/packages/ca-client/<%- commandPath %>",
     "plugins": [
       "@oclif/plugin-help"
@@ -46,7 +48,8 @@
     "@originator-profile/securing-mechanism": "workspace:*",
     "@originator-profile/sign": "workspace:*",
     "jose": "^6.2.2",
-    "jsdom": "^29.0.1"
+    "jsdom": "^29.0.1",
+    "wrap-ansi": "^9.0.2"
   },
   "devDependencies": {
     "@originator-profile/tsconfig": "workspace:*",

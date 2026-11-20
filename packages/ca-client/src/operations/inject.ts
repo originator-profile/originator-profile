@@ -10,7 +10,7 @@ import {
 import { DEFAULT_EXTERNAL_SELECTOR } from "../targets/html.ts";
 import { writeText } from "../utils/file.ts";
 import { elementLocation } from "../utils/html.ts";
-import { isInside, resolveFiles } from "../utils/paths.ts";
+import { isInside, listFiles } from "../utils/paths.ts";
 import type { CaConfig } from "./config.ts";
 import {
   forEachPage,
@@ -33,11 +33,9 @@ const escapeAttr = (value: string) =>
   value.replaceAll("&", "&amp;").replaceAll('"', "&quot;");
 
 export const casTagFor = (config: CaConfig, pathname: string): string =>
-  config.cas.mode === "inline"
-    ? `<script type="${CAS_SCRIPT_TYPE}">[]</script>`
-    : `<script type="${CAS_SCRIPT_TYPE}" src="${escapeAttr(
-        config.cas.path.replaceAll("{path}", pathToCasName(pathname)),
-      )}"></script>`;
+  `<script type="${CAS_SCRIPT_TYPE}" src="${escapeAttr(
+    config.cas.path.replaceAll("{path}", pathToCasName(pathname)),
+  )}"></script>`;
 
 const insertionOffset = (dom: JSDOM): number | undefined => {
   const { head, body } = dom.window.document;
@@ -187,7 +185,6 @@ const injectPage = async (
 export type InjectOptions = {
   /** true なら HTML を書かず、足りないタグと古い integrity を返す。 */
   check: boolean;
-  paths?: string[];
 };
 
 export const inject = async (
@@ -195,9 +192,9 @@ export const inject = async (
   options: InjectOptions,
 ): Promise<InjectReport> => {
   const report: InjectReport = { injected: [], integrity: [], problems: [] };
-  const files = (
-    await resolveFiles(config.distDir, options.paths ?? [], ".html")
-  ).filter((file) => !isExcluded(config, pathnameOf(config.distDir, file)));
+  const files = (await listFiles(config.distDir, ".html")).filter(
+    (file) => !isExcluded(config, pathnameOf(config.distDir, file)),
+  );
   await forEachPage(files, (page) =>
     injectPage(config, page, options.check, report),
   );

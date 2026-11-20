@@ -1,9 +1,9 @@
 import type { UnsignedContentAttestation } from "@originator-profile/model";
 import { glob, readFile } from "node:fs/promises";
-import { dirname, resolve } from "node:path";
+import { dirname, relative, resolve } from "node:path";
 import type { CaClient } from "../ca-server/create-ca-client.ts";
 import type { DecodedCa } from "../ca/decode.ts";
-import { isExpiring } from "../ca/expiry.ts";
+import { isExpired } from "../ca/expiry.ts";
 import {
   distCopyOf,
   driftOf,
@@ -19,7 +19,7 @@ import {
 } from "../cas/source.ts";
 import { CaClientError, CaClientErrorCode, withContext } from "../errors.ts";
 import { readText, writeText } from "../utils/file.ts";
-import { coversAll, resolveFiles } from "../utils/paths.ts";
+import { listFiles } from "../utils/paths.ts";
 import type { CaConfig } from "./config.ts";
 import {
   buildUnsignedCa,
@@ -31,8 +31,9 @@ import {
   type MetadataField,
   type Page,
 } from "./page.ts";
+import { resolveTargetContent } from "./sign.ts";
 
-export type PageStatus = "ok" | "missing" | "drifted" | "expiring";
+export type PageStatus = "ok" | "missing" | "drifted" | "expired";
 
 export type PageReport = {
   pathname: string;
@@ -46,8 +47,7 @@ export type PageReport = {
 
 export type ScanReport = {
   pages: PageReport[];
-  /** paths で範囲を絞ったときは判定しないので undefined。 */
-  orphans?: string[];
+  orphans: string[];
   staleCopies: { from: string; to: string }[];
 };
 
@@ -64,7 +64,6 @@ export type SyncReport = ScanReport & {
 };
 
 export type SyncOptions = {
-  paths?: string[];
   /** ページを照合し終え、署名を始める前に呼ぶ。 */
   onScanned?: (report: ScanReport) => void;
 } & (
@@ -101,9 +100,6 @@ const staleCopyOf = async (
   source: CasSource,
   config: CaConfig,
 ): Promise<ScanReport["staleCopies"][number] | undefined> => {
-  if (source.kind !== "file") {
-    return undefined;
-  }
   const copy = distCopyOf(source.path, config);
   if (copy === undefined) {
     return undefined;
@@ -143,18 +139,14 @@ const driftOfPage = async (
   ];
 };
 
-const statusOf = (
-  cas: DecodedCa | undefined,
-  drift: Drift,
-  renewWithinDays: number,
-): PageStatus => {
+const statusOf = (cas: DecodedCa | undefined, drift: Drift): PageStatus => {
   if (cas === undefined) {
     return "missing";
   }
   if (drift.length > 0) {
     return "drifted";
   }
-  return isExpiring(cas.expiresAt, renewWithinDays) ? "expiring" : "ok";
+  return isExpired(cas.expiresAt) ? "expired" : "ok";
 };
 
 const pageReportOf = (input: {
@@ -183,9 +175,7 @@ const scanPage = async (
   state: ScanState,
 ): Promise<void> => {
   for (const source of localCasSourcesOf(dom, config, htmlFile, html)) {
-    if (source.kind === "file") {
-      state.referenced.add(source.path);
-    }
+    state.referenced.add(source.path);
   }
   const source = await ownCaSourceOf(dom, config, htmlFile, html);
   const pathname = pathnameOf(config.distDir, htmlFile);
@@ -202,14 +192,14 @@ const scanPage = async (
     document: dom.window.document,
     pathname,
     recorded: cas && recordedOf(cas.payload),
-    content: html,
+    contentPath: relative(process.cwd(), htmlFile),
   });
   const drift = await driftOfPage(
     { source, html, issuer: config.issuer },
     cas,
     uca,
   );
-  const status = statusOf(cas, drift, config.renewWithinDays);
+  const status = statusOf(cas, drift);
   const report = pageReportOf({
     pathname,
     source,
@@ -220,7 +210,7 @@ const scanPage = async (
     problem,
   });
   state.pages.push(report);
-  if (status !== "ok" && uca !== undefined) {
+  if ((status === "missing" || status === "drifted") && uca !== undefined) {
     state.pending.push({
       report,
       source,
@@ -248,7 +238,6 @@ const orphansOf = async (referenced: Set<string>): Promise<string[]> => {
 
 const scan = async (
   config: CaConfig,
-  paths: string[],
 ): Promise<{ report: ScanReport; pending: Pending[] }> => {
   const state: ScanState = {
     pages: [],
@@ -256,16 +245,13 @@ const scan = async (
     referenced: new Set(),
     staleCopies: [],
   };
-  await forEachPage(
-    await resolveFiles(config.distDir, paths, ".html"),
-    (page) => scanPage(config, page, state),
+  await forEachPage(await listFiles(config.distDir, ".html"), (page) =>
+    scanPage(config, page, state),
   );
   return {
     report: {
       pages: state.pages,
-      ...(coversAll(config.distDir, paths)
-        ? { orphans: await orphansOf(state.referenced) }
-        : {}),
+      orphans: await orphansOf(state.referenced),
       staleCopies: state.staleCopies,
     },
     pending: state.pending,
@@ -297,14 +283,19 @@ const signPage = async (
 ): Promise<IssuedPage> => {
   let written: CasSource;
   try {
-    written = await upsertOwnCa(source, await options.signer.sign(uca), config);
+    const { uca: resolved } = await resolveTargetContent(uca, process.cwd());
+    written = await upsertOwnCa(
+      source,
+      await options.signer.sign(resolved),
+      config,
+    );
   } catch (error) {
     throw withContext(`sign ${page.pathname}`, error);
   }
   const { status } = await driftOf(written, html, config.issuer);
   if (status !== "ok") {
     throw new CaClientError(
-      `Inline verification failed: the CAS for ${page.pathname} does not match the built page (${status})`,
+      `Verification failed: the CAS for ${page.pathname} does not match the built page (${status})`,
       { code: CaClientErrorCode.Verification },
     );
   }
@@ -351,7 +342,7 @@ export const sync = async (
   config: CaConfig,
   options: SyncOptions,
 ): Promise<SyncReport> => {
-  const { report, pending } = await scan(config, options.paths ?? []);
+  const { report, pending } = await scan(config);
   options.onScanned?.(report);
   if (options.check) {
     const unissuable = report.pages.filter(
