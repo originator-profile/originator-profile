@@ -1,7 +1,7 @@
 import { _ } from "@originator-profile/extension-common/ui";
-import GlobalHeader from "../components/GlobalHeader";
-import { linkVerificationTitle } from "../components/credentials/link-verification-title";
-import { useLinkVerification } from "../components/credentials/use-link-verification";
+import { linkVerificationTitle } from "../components/linkVerification/link-verification-title";
+import { useLinkVerification } from "../components/linkVerification/use-link-verification";
+import { AppBar } from "../components/sidepanel/AppBar";
 
 function Prohibition() {
   const verificationResult = useLinkVerification();
@@ -14,7 +14,7 @@ function Prohibition() {
 
   return (
     <>
-      <GlobalHeader className="sticky top-0 z-10" />
+      <AppBar />
       <main className="min-h-screen bg-gray-100 overflow-y-auto px-4 py-6">
         <div className="flex flex-col items-center justify-center gap-2 mb-4">
           <h1

@@ -1,18 +1,17 @@
 import { _ } from "@originator-profile/extension-common/ui";
-import GlobalHeader from "./GlobalHeader";
-import { linkVerificationTitle } from "./credentials/link-verification-title";
-import { useLinkVerification } from "./credentials/use-link-verification";
+import { linkVerificationTitle } from "./linkVerification/link-verification-title";
+import { useLinkVerification } from "./linkVerification/use-link-verification";
+import { AppBar } from "./sidepanel/AppBar";
 
 // NOTE: getMessage は未定義のキーに空文字を返す。訳はエラーコードとは別々に
 // 増えるため、訳の引けないコードとコードのないエラーは区別せず同じ文言にする。
-function messageOf(error: Error): string {
-  const code = "code" in error ? (error.code as string) : undefined;
+function messageOf(code?: string): string {
   return (code && _(`Unsupported_${code}`)) || _("Unsupported_UnknownError");
 }
 
-function Messages({ errors }: { errors: Error[] }) {
+function Messages({ codes }: { codes: (string | undefined)[] }) {
   // 別のコードでも同じ文言になることがあるため、重複を落とす
-  const messages = [...new Set(errors.map(messageOf))];
+  const messages = [...new Set(codes.map(messageOf))];
 
   return (
     <ul className="list-disc list-inside text-sm max-w-xs mx-auto">
@@ -24,10 +23,11 @@ function Messages({ errors }: { errors: Error[] }) {
 }
 
 type Props = {
-  errors: Error[];
+  /** 未対応の理由のエラーコード。不明なら undefined */
+  codes: (string | undefined)[];
 };
 
-function Unsupported({ errors }: Props) {
+function Unsupported({ codes }: Props) {
   const verificationResult = useLinkVerification();
   const hasLinkVerification =
     verificationResult &&
@@ -38,9 +38,9 @@ function Unsupported({ errors }: Props) {
 
   return (
     <>
-      <GlobalHeader className="sticky top-0 z-10" />
+      <AppBar />
       <main className="min-h-screen bg-gray-100 overflow-y-auto px-4 py-6">
-        <article className="mb-12 max-w-sm mx-auto">
+        <div className="mb-12 max-w-sm mx-auto">
           <div className="flex flex-col items-center justify-center gap-2 mb-4">
             <h1 className="whitespace-pre-line text-lg text-center font-bold">
               {_("Unsupported_OpNotSupported")}
@@ -57,7 +57,7 @@ function Unsupported({ errors }: Props) {
             className="whitespace-pre-line text-sm text-gray-700 text-center mb-2"
             data-testid="p-elm-unsupported-message"
           >
-            <Messages errors={errors} />
+            <Messages codes={codes} />
           </div>
           <p className="text-sm text-center underline">
             <a
@@ -68,7 +68,7 @@ function Unsupported({ errors }: Props) {
               {_("Link_OriginatorProfile")}
             </a>
           </p>
-        </article>
+        </div>
       </main>
     </>
   );

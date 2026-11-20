@@ -1,20 +1,20 @@
 import { Spinner, _ } from "@originator-profile/extension-common/ui";
-import { useCredentials } from "../components/credentials/use-credentials";
 
-function Loading() {
-  const { origin } = useCredentials();
+function Loading({ origin }: { origin?: string }) {
   return (
-    <div className="w-full h-screen flex justify-center items-center">
+    <main className="w-full h-screen flex justify-center items-center">
       <div className="p-2 flex flex-col items-center gap-4">
-        <Spinner />
-        <p className="whitespace-pre-line">
+        <div aria-hidden>
+          <Spinner />
+        </div>
+        <p className="whitespace-pre-line" role="status">
           {_(
             "Loading_RetrievingAndValidatingProfile",
             origin && _("Loading_OfOrigin", origin),
           )}
         </p>
       </div>
-    </div>
+    </main>
   );
 }
 
