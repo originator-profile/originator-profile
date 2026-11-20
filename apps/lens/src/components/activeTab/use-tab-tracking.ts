@@ -1,5 +1,5 @@
 import { useEffect, useEffectEvent } from "react";
-import { useLocation, useNavigate } from "react-router";
+import { matchPath, useLocation, useNavigate } from "react-router";
 import { paths, routes } from "../../utils/routes";
 
 /**
@@ -15,8 +15,9 @@ export function useTabTracking() {
     const base = routes.base.build({ tabId: String(tabId) });
     // 既に同じタブを表示中なら何もしない
     if (pathname.startsWith(base)) return;
-    // タブに紐付かないページ（warning 等）表示中はスキップ
+    // タブに紐付かないページ（warning、組織の詳細）表示中はスキップ
     if (pathname.startsWith(`/${paths.warning}`)) return;
+    if (matchPath(`/${paths.detail}`, pathname)) return;
     void navigate(base, { replace: true });
   });
 

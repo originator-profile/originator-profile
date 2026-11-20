@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router";
 import { useDocumentNavigation, useTabTracking } from "./components/activeTab";
 import { EnvironmentBanner } from "./components/environment";
 import Base from "./pages/Base";
+import Detail from "./pages/Detail";
 import Warning from "./pages/Warning";
 import { paths } from "./utils/routes";
 
@@ -17,6 +18,7 @@ function App() {
           <Route index element={<Navigate to="/tab" replace />} />
           <Route path={paths.base} element={<Base />} />
           <Route path={paths.warning} element={<Warning />} />
+          <Route path={paths.detail} element={<Detail />} />
         </Route>
       </Routes>
     </div>

@@ -1,9 +1,11 @@
 import { overlayExtensionMessenger } from "@originator-profile/extension-common";
 import { _ } from "@originator-profile/extension-common/ui";
 import { useEffect, useEffectEvent, useId, useState } from "react";
+import { openDetail } from "../../detail/snapshot";
 import { highlightOf } from "../../overlay/highlight";
 import { lensOverlayMessenger } from "../../overlay/protocol";
 import {
+  detailOf,
   sectionsOf,
   type ContentCategory,
   type Organization,
@@ -29,7 +31,7 @@ type Props = Extract<TabView, { state: "ready" }>;
  * NOTE: アコーディオンは同時に 1 つしか開かない
  */
 export function ContentList(props: Props) {
-  const { tabId, site, contents, issuers } = props;
+  const { tabId, site, contents, issuers, originators } = props;
   // NOTE: 開いているアコーディオン。Web サイトの運営者は "site"、コンテンツは key
   const [openKey, setOpenKey] = useState<string>();
   const highlight = highlightOf(props, openKey);
@@ -72,6 +74,7 @@ export function ContentList(props: Props) {
       name={name}
       open={openKey === key}
       onToggle={toggle(key)}
+      onShowDetail={() => openDetail(detailOf(organization, originators))}
     />
   );
 
