@@ -31,6 +31,7 @@
     "@types/esbuild-copy-static-files": "0.1.4",
     "@types/react": "19.2.14",
     "@types/react-dom": "19.2.3",
+    "@webext-core/messaging": "2.3.0",
     "astro": "7.3.3",
     "chokidar": "5.0.0",
     "date-fns": "4.1.0",

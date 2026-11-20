@@ -10,6 +10,6 @@ export function useTabView() {
   const params = useParams<{ tabId: string }>();
   const tabId = Number(params.tabId);
   const subscribed = useSubscribedTabVerification(tabId);
-  const view = useMemo(() => tabViewOf(subscribed), [subscribed]);
-  return { tabId, view };
+  const view = useMemo(() => tabViewOf(tabId, subscribed), [tabId, subscribed]);
+  return view;
 }

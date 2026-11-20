@@ -65,6 +65,7 @@ export const ca = (
 ) => ({
   type: ["VerifiableCredential", "ContentAttestation"],
   issuer,
+  target: [{ type: "TextTargetIntegrity", cssSelector: `[data-ca="${id}"]` }],
   credentialSubject: {
     id,
     type,
@@ -78,6 +79,8 @@ type Frame = {
   parentFrameId: number;
   documentId: string;
   frameType: chrome.extensionTypes.FrameType;
+  origin: string;
+  url: string;
 };
 
 export const topFrame: Frame = {
@@ -85,6 +88,8 @@ export const topFrame: Frame = {
   parentFrameId: -1,
   documentId: "top",
   frameType: "outermost_frame",
+  origin,
+  url: `${origin}/`,
 };
 
 export const subFrame: Frame = {
@@ -92,6 +97,8 @@ export const subFrame: Frame = {
   parentFrameId: 0,
   documentId: "sub",
   frameType: "sub_frame",
+  origin: "https://ad.example",
+  url: "https://ad.example/",
 };
 
 const metadata = {
@@ -126,7 +133,7 @@ export const settled = (
 ) =>
   ({
     state: "settled",
-    subject: { ...frame, tabId: 1, origin, url: `${origin}/` },
+    subject: { ...frame, tabId: 1 },
     credentials: { ops: [], cas: [] },
     result: {
       inputRange: [

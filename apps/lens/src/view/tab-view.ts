@@ -47,6 +47,7 @@ export type TabView =
   | { state: "unsupported"; codes: (string | undefined)[] }
   | {
       state: "ready";
+      tabId: number;
       site: SiteView;
       contents: Content[];
       /** CA 発行者ごとの組織。発行者を確認できないものは含まない */
@@ -245,9 +246,13 @@ const issuersOf = (contents: Content[], originators: OriginatorPayload[]) =>
  * - Site Profile、OPS、CAS のいずれかの検証に失敗していれば閲覧禁止
  * - Site Profile か CA のいずれかを提示できれば表示する
  * - いずれも提示できなければ未対応とし、その理由を示す
+ * @param tabId タブID
  * @param subscribed タブの検証の状態
  */
-export function tabViewOf(subscribed: SubscribedTabVerification): TabView {
+export function tabViewOf(
+  tabId: number,
+  subscribed: SubscribedTabVerification,
+): TabView {
   const siteFailure = siteFailureOf(subscribed);
   const documents = documentsOf(subscribed);
   if (isLoading(subscribed, siteFailure, documents)) {
@@ -272,6 +277,7 @@ export function tabViewOf(subscribed: SubscribedTabVerification): TabView {
   }
   return {
     state: "ready",
+    tabId,
     site: siteOf(subscribed, originators, contents),
     contents,
     issuers: issuersOf(contents, originators),

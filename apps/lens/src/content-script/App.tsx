@@ -1,110 +1,36 @@
-import {
-  type CaFilterType,
-  FramesVerifiedCas,
-  SupportedVerifiedCa,
-  overlayWindowMessenger,
-} from "@originator-profile/extension-common";
-import { WebMediaProfile } from "@originator-profile/model";
-import { useEffect, useRef, useState } from "react";
-import { useMount } from "react-use";
-import { CasMap, ContentsArea } from "../components/overlay";
-
-function Panel(props: { children?: React.ReactNode }) {
-  const handleClick = (e: React.MouseEvent) => {
-    if (e.target !== e.currentTarget) e.stopPropagation();
-  };
-  return (
-    <div role="presentation" onClick={handleClick}>
-      {props.children}
-    </div>
-  );
-}
+import { useEffect, useState } from "react";
+import { HighlightView } from "../components/overlay";
+import type { Highlight } from "../overlay/protocol";
+import { lensOverlayWindowMessenger } from "../overlay/window-protocol";
 
 function App() {
-  const [framesCas, setFramesCas] = useState<FramesVerifiedCas>([]);
-  const [activeCa, setActiveCa] = useState<SupportedVerifiedCa | null>(null);
-  const [wmps, setWmps] = useState<WebMediaProfile[]>([]);
-  const [filterType, setFilterType] = useState<CaFilterType>("All");
-  const dialog = useRef<HTMLDialogElement>(null);
-
-  const handleClose = () => dialog.current?.close();
-  const handleOpen = () => dialog.current?.show();
-  const handleKeyDown = (e: React.KeyboardEvent) =>
-    e.key === "Escape" && handleClose();
-
-  function handleTransitionEnd() {
-    if (dialog.current?.open) return;
-    overlayWindowMessenger.sendMessage("leave", null, window.parent);
-  }
-
-  useMount(() => {
-    overlayWindowMessenger.sendMessage(
-      "enter",
-      { framesCas, activeCa, wmps },
-      window.parent,
-    );
-  });
+  const [highlight, setHighlight] = useState<Highlight>();
 
   useEffect(() => {
-    const cleanupEnter = overlayWindowMessenger.onMessage(
-      "enter",
-      ({ data }) => {
-        setFramesCas(data.framesCas);
-        setActiveCa(data.activeCa);
-        setWmps(data.wmps);
-        setFilterType(data.filterType ?? "All");
-        handleOpen();
-      },
+    const cleanupShow = lensOverlayWindowMessenger.onMessage(
+      "showHighlight",
+      ({ data }) => setHighlight(data),
     );
-
-    const cleanupLeave = overlayWindowMessenger.onMessage("leave", () => {
-      handleClose();
-    });
-
-    return () => {
-      cleanupEnter();
-      cleanupLeave();
-    };
-  });
-
-  async function handleClickCa(ca: SupportedVerifiedCa) {
-    setActiveCa(ca);
-    overlayWindowMessenger.sendMessage(
-      "select",
-      { activeCa: ca },
+    lensOverlayWindowMessenger.sendMessage(
+      "requestHighlight",
+      null,
       window.parent,
     );
-  }
+    return () => {
+      cleanupShow();
+    };
+  }, []);
 
-  const pageCas =
-    framesCas?.find((frameCas) => frameCas.frameType === "outermost_frame")
-      ?.cas ?? [];
-
-  // NOTE: dialog ロールが非対話的要素とみなされる
-  // see https://github.com/jsx-eslint/eslint-plugin-jsx-a11y/issues/932
+  if (!highlight) return null;
   return (
-    /* oxlint-disable-next-line jsx-a11y/no-noninteractive-element-interactions */
-    <dialog
-      className="block w-screen h-screen bg-transparent transition-opacity duration-300 ease-in-out opacity-0 open:opacity-100 z-[calc(infinity)] overflow-hidden"
-      onClick={handleClose}
-      onKeyDown={handleKeyDown}
-      onTransitionEnd={handleTransitionEnd}
-      ref={dialog}
-    >
-      <ContentsArea
-        className="absolute top-0 left-0"
-        contents={pageCas.flatMap((ca) => ca.attestation.doc.target)}
+    // NOTE: 範囲は画面の外にもはみ出す。はみ出しで overlay の文書がスクロール
+    // できるようにならないよう、画面に固定した箱で切り取る
+    <div className="fixed inset-0 overflow-hidden" data-testid="overlay">
+      <HighlightView
+        key={highlight.kind === "content" ? highlight.key : "page"}
+        highlight={highlight}
       />
-      <Panel>
-        <CasMap
-          framesCas={framesCas}
-          activeCa={activeCa}
-          onClickCa={handleClickCa}
-          wmps={wmps}
-          filterType={filterType}
-        />
-      </Panel>
-    </dialog>
+    </div>
   );
 }
 

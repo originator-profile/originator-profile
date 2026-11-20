@@ -43,6 +43,7 @@ const base = {
       resources: [
         "content-script/iframe.js",
         "main.css",
+        "flags/*",
         "index.html",
         "*.map",
       ],
