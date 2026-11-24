@@ -15,11 +15,7 @@ import { dirname, join } from "node:path";
 import { expect, onTestFinished, test } from "vitest";
 import type { CasLocation } from "../cas/source.ts";
 import { CaClientError, CaClientErrorCode, isUnauthorized } from "../errors.ts";
-import {
-  parseCaConfig,
-  pathPatternToRegExp,
-  type CaConfig,
-} from "./config.ts";
+import { parseCaConfig, pathPatternToRegExp, type CaConfig } from "./config.ts";
 import { inject } from "./inject.ts";
 import { buildUnsignedCa } from "./page.ts";
 import { renew } from "./renew.ts";

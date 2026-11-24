@@ -8,7 +8,6 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { expect, onTestFinished, test } from "vitest";
-import { ISSUER, SELECTOR } from "./test-utils.ts";
 import {
   distCandidates,
   proposeConfig,
@@ -17,6 +16,7 @@ import {
   suggestSelector,
   type SiteScan,
 } from "./site-init.ts";
+import { ISSUER, SELECTOR } from "./test-utils.ts";
 
 const scanOf = (over: Partial<SiteScan> = {}): SiteScan => ({
   distDir: "/tmp/dist",
