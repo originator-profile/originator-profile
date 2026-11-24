@@ -12,8 +12,8 @@ OP Inspectorはインターネット上の情報（コンテンツ等）の発�
 ### Verified
 
 - OS: Ubuntu 24.04
-- Google Chrome (Chromium): 114+ (Manifest V3, Side Panel API)
-- Mozilla Firefox (desktop): 140+ (Manifest V3, Sidebar Action API)
+- Google Chrome (Chromium): 122+ (Manifest V3, Side Panel API)
+- Mozilla Firefox (desktop): 153+ (Manifest V3, Sidebar Action API)
 
 ### Development
 

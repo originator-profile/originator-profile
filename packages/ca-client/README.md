@@ -339,7 +339,7 @@ FLAG DESCRIPTIONS
     例: dns:example.com。対話でないときは必須。
 ```
 
-_See code: [src/commands/init.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/init.ts)_
+_See code: [src/commands/init.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.1/packages/ca-client/src/commands/init.ts)_
 
 ## `opca inject`
 
@@ -364,7 +364,7 @@ EXAMPLES
   $ opca inject --check
 ```
 
-_See code: [src/commands/inject.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/inject.ts)_
+_See code: [src/commands/inject.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.1/packages/ca-client/src/commands/inject.ts)_
 
 ## `opca renew`
 
@@ -389,7 +389,7 @@ EXAMPLES
   $ opca renew --all
 ```
 
-_See code: [src/commands/renew.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/renew.ts)_
+_See code: [src/commands/renew.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.1/packages/ca-client/src/commands/renew.ts)_
 
 ## `opca sync`
 
@@ -421,7 +421,7 @@ EXAMPLES
   $ opca sync --check
 ```
 
-_See code: [src/commands/sync.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.0/packages/ca-client/src/commands/sync.ts)_
+_See code: [src/commands/sync.ts](https://github.com/originator-profile/originator-profile/blob/v0.8.0-beta.1/packages/ca-client/src/commands/sync.ts)_
 <!-- commandsstop -->
 <!-- prettier-ignore-end -->
 
