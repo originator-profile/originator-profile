@@ -15,22 +15,16 @@ const DOM_TARGET_TYPES = new Set([
 const isFilePath = (content: string): boolean =>
   !URL.canParse(content) && !content.trimStart().startsWith("<");
 
-const loadUnsignedCa = async (
-  input: string,
+/**
+ * 未署名 CA の DOM target の content がファイルパスなら HTML を読み込んで差し替える。
+ * `buildUnsignedCa` が書いたパス、または手書き JSON のパスの両方を署名前に通す。
+ */
+export const resolveTargetContent = async (
+  uca: UnsignedContentAttestation,
   root: string,
 ): Promise<{ uca: UnsignedContentAttestation; htmls: Set<string> }> => {
-  const text = await readText(resolve(input));
-  let parsed: UnsignedContentAttestation;
-  try {
-    parsed = UnsignedContentAttestation.parse(JSON.parse(text));
-  } catch (error) {
-    throw new CaClientError(`${input} is not a valid unsigned CA`, {
-      code: CaClientErrorCode.Validation,
-      cause: error,
-    });
-  }
   const loaded = await Promise.all(
-    parsed.target.map(async (target) => {
+    uca.target.map(async (target) => {
       const content = Array.isArray(target.content)
         ? target.content
         : [target.content];
@@ -47,13 +41,30 @@ const loadUnsignedCa = async (
     }),
   );
   return {
-    uca: { ...parsed, target: loaded.map(({ target }) => target) },
+    uca: { ...uca, target: loaded.map(({ target }) => target) },
     htmls: new Set(
       loaded
         .map(({ html }) => html)
         .filter((html): html is string => html !== undefined),
     ),
   };
+};
+
+const loadUnsignedCa = async (
+  input: string,
+  root: string,
+): Promise<{ uca: UnsignedContentAttestation; htmls: Set<string> }> => {
+  const text = await readText(resolve(input));
+  let parsed: UnsignedContentAttestation;
+  try {
+    parsed = UnsignedContentAttestation.parse(JSON.parse(text));
+  } catch (error) {
+    throw new CaClientError(`${input} is not a valid unsigned CA`, {
+      code: CaClientErrorCode.Validation,
+      cause: error,
+    });
+  }
+  return resolveTargetContent(parsed, root);
 };
 
 export type SignCaFileOptions = {

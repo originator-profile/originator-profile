@@ -6,7 +6,6 @@ import { jwtPayload } from "../ca/expiry.ts";
 import { CaClientError, CaClientErrorCode } from "../errors.ts";
 import { compareTargets, type TargetComparison } from "../targets/compare.ts";
 import { isEnoent, readText, writeText } from "../utils/file.ts";
-import { elementLocation } from "../utils/html.ts";
 import { isInside } from "../utils/paths.ts";
 
 export const CAS_SCRIPT_TYPE = "application/ca-set+json";
@@ -17,17 +16,8 @@ const CAS_SCRIPT_SELECTOR = [CAS_SCRIPT_TYPE, DEPRECATED_CAS_SCRIPT_TYPE]
   .map((type) => `script[type='${type}']`)
   .join(", ");
 
-export type CasSource =
-  | { kind: "file"; path: string }
-  | {
-      kind: "inline";
-      htmlFile: string;
-      html: string;
-      start: number;
-      end: number;
-    };
-
-type InlineSource = Extract<CasSource, { kind: "inline" }>;
+/** CAS ファイル。パスは絶対パス。 */
+export type CasSource = { path: string };
 
 export type CasContext = {
   issuer: string;
@@ -35,9 +25,6 @@ export type CasContext = {
   distDir: string;
   origins?: string[];
 };
-
-const contentOf = (source: InlineSource) =>
-  source.html.slice(source.start, source.end);
 
 export type Recorded = { id?: string; selector?: string };
 
@@ -58,40 +45,27 @@ export const localPathOf = (
 };
 
 const sourceOf = (
-  dom: JSDOM,
   context: CasContext,
-  htmlFile: string,
-  html: string,
   script: Element,
 ): CasSource | undefined => {
   const src = script.getAttribute("src")?.trim();
-  if (src) {
-    const path = localPathOf(src, context.origins);
-    return path === undefined
-      ? undefined
-      : { kind: "file", path: join(context.publicDir, path) };
-  }
-  const location = elementLocation(dom, script);
-  if (!location?.startTag || !location.endTag) {
+  if (!src) {
     return undefined;
   }
-  return {
-    kind: "inline",
-    htmlFile,
-    html,
-    start: location.startTag.endOffset,
-    end: location.endTag.startOffset,
-  };
+  const path = localPathOf(src, context.origins);
+  return path === undefined
+    ? undefined
+    : { path: join(context.publicDir, path) };
 };
 
 export const localCasSourcesOf = (
   dom: JSDOM,
   context: CasContext,
-  htmlFile: string,
-  html: string,
+  _htmlFile: string,
+  _html: string,
 ): CasSource[] =>
   Array.from(dom.window.document.querySelectorAll(CAS_SCRIPT_SELECTOR)).flatMap(
-    (script) => sourceOf(dom, context, htmlFile, html, script) ?? [],
+    (script) => sourceOf(context, script) ?? [],
   );
 
 export const usesDeprecatedType = (dom: JSDOM): boolean =>
@@ -99,20 +73,15 @@ export const usesDeprecatedType = (dom: JSDOM): boolean =>
     `script[type='${DEPRECATED_CAS_SCRIPT_TYPE}']`,
   ) !== null;
 
-/** CAS の置き場所。パスはどちらも絶対パス。 */
-export type CasLocation =
-  | { kind: "file"; path: string }
-  | { kind: "inline"; htmlFile: string };
+/** CAS の置き場所。パスは絶対パス。 */
+export type CasLocation = { path: string };
 
-export const locationOf = (source: CasSource): CasLocation =>
-  source.kind === "file"
-    ? { kind: "file", path: source.path }
-    : { kind: "inline", htmlFile: source.htmlFile };
+export const locationOf = (source: CasSource): CasLocation => ({
+  path: source.path,
+});
 
 export const whereOf = (location: CasLocation): string =>
-  location.kind === "file"
-    ? relative(process.cwd(), location.path)
-    : `inline CAS in ${relative(process.cwd(), location.htmlFile)}`;
+  relative(process.cwd(), location.path);
 
 const readFileCas = async (path: string): Promise<string> => {
   try {
@@ -126,10 +95,7 @@ const readFileCas = async (path: string): Promise<string> => {
 };
 
 const itemsOf = async (source: CasSource): Promise<unknown[]> => {
-  const content =
-    source.kind === "inline"
-      ? contentOf(source)
-      : await readFileCas(source.path);
+  const content = await readFileCas(source.path);
   if (content.trim() === "") {
     return [];
   }
@@ -232,8 +198,7 @@ export const driftOf = async (
   if (jwt === undefined) {
     return { status: "cas_missing" };
   }
-  const html = source.kind === "inline" ? source.html : pageHtml;
-  return compareTargets({ html, jwt });
+  return compareTargets({ html: pageHtml, jwt });
 };
 
 // publicDir の CAS はビルドで distDir に写るまで配信されないので、ビルド済みの distDir にも同じものを書く。
@@ -268,16 +233,10 @@ export const upsertOwnCa = async (
         ? jwt
         : { ...item, attestation: jwt };
   }
-  if (source.kind === "file") {
-    await Promise.all(
-      copiesOf(source.path, context).map((path) =>
-        writeText(path, `${JSON.stringify(items, null, 2)}\n`),
-      ),
-    );
-    return source;
-  }
-  const content = JSON.stringify(items);
-  const html = `${source.html.slice(0, source.start)}${content}${source.html.slice(source.end)}`;
-  await writeText(source.htmlFile, html);
-  return { ...source, html, end: source.start + content.length };
+  await Promise.all(
+    copiesOf(source.path, context).map((path) =>
+      writeText(path, `${JSON.stringify(items, null, 2)}\n`),
+    ),
+  );
+  return source;
 };

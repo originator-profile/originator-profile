@@ -5,203 +5,21 @@ import {
   parseCaConfig,
   parseIssuer,
   parseOrigin,
-  parsePattern,
   type CaConfig,
 } from "../operations/config.ts";
 import {
-  buildUnsignedCa,
-  forEachPage,
-  isExcluded,
-  pathnameOf,
-  selectorFor,
-  UnissuableError,
-  type Page,
-} from "../operations/page.ts";
+  DIST_CANDIDATES,
+  distCandidates,
+  previewIssuance,
+  proposeConfig,
+  scanSite,
+  suggestSelector,
+  type InitAnswers,
+  type SiteScan,
+} from "../operations/site-init.ts";
 import { isEnoent, readText, writeText } from "../utils/file.ts";
-import { resolveFiles } from "../utils/paths.ts";
 
-export type Persistence = "commit" | "rebuild";
-const PERSISTENCES: Persistence[] = ["commit", "rebuild"];
-
-const DIST_CANDIDATES = ["dist", "docs", "out", "build", "_site", "public"];
-const PUBLIC_CANDIDATES = ["public", "static"];
-export const SELECTOR_CANDIDATES = [
-  "[itemprop='headline'], [itemprop='articleBody']",
-  "article",
-  "main",
-];
-
-export type SiteScan = {
-  distDir: string;
-  pages: number;
-  origins: { origin: string; pages: number }[];
-  selectors: { selector: string; pages: number }[];
-  withoutAuthor: number;
-  withoutGenre: number;
-  publicDir?: string;
-};
-
-export type InitAnswers = {
-  issuer?: string;
-  distDir?: string;
-  origins?: string[];
-  selector?: string;
-  author?: string[];
-  editor?: string[];
-  genre?: string;
-  exclude?: string[];
-  persistence?: Persistence;
-  publicDir?: string;
-};
-
-export type Proposal = {
-  raw: Record<string, unknown>;
-  persistence: Persistence;
-};
-
-const countBy = (values: string[]) =>
-  [
-    ...values.reduce(
-      (counts, value) => counts.set(value, (counts.get(value) ?? 0) + 1),
-      new Map<string, number>(),
-    ),
-  ]
-    .map(([key, pages]) => ({ key, pages }))
-    .sort((a, b) => b.pages - a.pages);
-
-export const distCandidates = async (
-  root: string,
-): Promise<{ dir: string; pages: number }[]> =>
-  (
-    await Promise.all(
-      DIST_CANDIDATES.map(async (name) => ({
-        dir: resolve(root, name),
-        pages: (await resolveFiles(resolve(root, name), [], ".html")).length,
-      })),
-    )
-  )
-    .filter(({ pages }) => pages > 0)
-    .sort((a, b) => b.pages - a.pages);
-
-type PageTraits = {
-  origin?: string;
-  selectors: string[];
-  hasAuthor: boolean;
-  hasGenre: boolean;
-};
-
-const traitsOf = (document: Document): PageTraits => {
-  const url =
-    document.querySelector("link[rel='canonical']")?.getAttribute("href") ??
-    document.querySelector("meta[property='og:url']")?.getAttribute("content");
-  return {
-    origin: url && URL.canParse(url) ? new URL(url).origin : undefined,
-    selectors: SELECTOR_CANDIDATES.filter(
-      (selector) => document.querySelector(selector) !== null,
-    ),
-    hasAuthor: Boolean(
-      document.querySelector("meta[name='author']")?.getAttribute("content"),
-    ),
-    hasGenre: Boolean(
-      document
-        .querySelector("meta[property='article:section']")
-        ?.getAttribute("content"),
-    ),
-  };
-};
-
-export const scanSite = async (
-  root: string,
-  distDir: string,
-): Promise<SiteScan> => {
-  const files = await resolveFiles(distDir, [], ".html");
-  const traits: PageTraits[] = [];
-  await forEachPage(files, ({ dom }) => {
-    traits.push(traitsOf(dom.window.document));
-  });
-  return {
-    distDir,
-    pages: files.length,
-    origins: countBy(traits.flatMap(({ origin }) => origin ?? [])).map(
-      ({ key, pages }) => ({ origin: key, pages }),
-    ),
-    selectors: SELECTOR_CANDIDATES.map((selector) => ({
-      selector,
-      pages: traits.filter((trait) => trait.selectors.includes(selector))
-        .length,
-    })),
-    withoutAuthor: traits.filter(({ hasAuthor }) => !hasAuthor).length,
-    withoutGenre: traits.filter(({ hasGenre }) => !hasGenre).length,
-    publicDir: PUBLIC_CANDIDATES.map((name) => resolve(root, name)).find(
-      (dir) => dir !== distDir && existsSync(dir),
-    ),
-  };
-};
-
-export const suggestSelector = (scan: SiteScan): string | undefined => {
-  const hit = scan.selectors.filter(({ pages }) => pages > 0);
-  return (
-    hit.find(({ pages }) => pages * 2 >= scan.pages) ??
-    [...hit].sort((a, b) => b.pages - a.pages)[0]
-  )?.selector;
-};
-
-const requiredAnswers = (
-  scan: SiteScan,
-  answers: InitAnswers,
-): { issuer: string; selector: string } => {
-  const selector = answers.selector ?? suggestSelector(scan);
-  const missing = [
-    ...(answers.issuer ? [] : ["--issuer"]),
-    ...(selector ? [] : ["--selector"]),
-  ];
-  if (missing.length > 0) {
-    throw new Error(`${missing.join(" と ")} が必要です`);
-  }
-  // missing が空なら issuer / selector はどちらも入っている
-  return { issuer: answers.issuer as string, selector: selector as string };
-};
-
-const defaultsOf = (answers: InitAnswers) => ({
-  ...(answers.author?.length ? { author: answers.author } : {}),
-  ...(answers.editor?.length ? { editor: answers.editor } : {}),
-  ...(answers.genre ? { genre: answers.genre } : {}),
-});
-
-const publicDirOf = (
-  scan: SiteScan,
-  answers: InitAnswers,
-  configDir: string,
-): string =>
-  answers.publicDir ?? scan.publicDir ?? resolve(configDir, "public");
-
-export const proposeConfig = (
-  scan: SiteScan,
-  answers: InitAnswers,
-  configDir: string,
-): Proposal => {
-  const { issuer, selector } = requiredAnswers(scan, answers);
-  const persistence = answers.persistence ?? "commit";
-  const at = (dir: string) => relative(configDir, dir) || ".";
-  const origins =
-    answers.origins ?? scan.origins.slice(0, 1).map(({ origin }) => origin);
-  const defaults = defaultsOf(answers);
-  return {
-    persistence,
-    raw: {
-      issuer,
-      distDir: at(scan.distDir),
-      ...(persistence === "commit"
-        ? { publicDir: at(publicDirOf(scan, answers, configDir)) }
-        : {}),
-      ...(origins.length > 0 ? { origins } : {}),
-      selectors: [{ selector }],
-      ...(answers.exclude?.length ? { exclude: answers.exclude } : {}),
-      ...(Object.keys(defaults).length > 0 ? { defaults } : {}),
-      cas: { mode: persistence === "commit" ? "file" : "inline" },
-    },
-  };
-};
+export type { InitAnswers, SiteScan } from "../operations/site-init.ts";
 
 export type Ask = (question: string, fallback?: string) => Promise<string>;
 
@@ -253,79 +71,10 @@ const askDistDir = async (root: string, ask: Ask, log: Log) => {
   );
 };
 
-export const parsePersistence = (value: string): Persistence => {
-  if (!PERSISTENCES.includes(value as Persistence)) {
-    throw new Error(`--persistence は ${PERSISTENCES.join(" か ")}: ${value}`);
-  }
-  return value as Persistence;
-};
-
-export type IssuancePreview = {
-  issuable: number;
-  unmatched: number;
-  problems: { problem: string; pages: string[] }[];
-};
-
-const previewPage = (
-  config: CaConfig,
-  { file, html, dom }: Page,
-): "issuable" | "unmatched" | { problem: string } => {
-  const pathname = pathnameOf(config.distDir, file);
-  const document = dom.window.document;
-  const selector = selectorFor(config, pathname, undefined);
-  if (selector === undefined || document.querySelector(selector) === null) {
-    return "unmatched";
-  }
-  try {
-    buildUnsignedCa({
-      config,
-      document,
-      pathname,
-      recorded: undefined,
-      content: html,
-    });
-    return "issuable";
-  } catch (error) {
-    if (!(error instanceof UnissuableError)) {
-      throw error;
-    }
-    return { problem: error.message };
-  }
-};
-
-export const previewIssuance = async (
-  config: CaConfig,
-): Promise<IssuancePreview> => {
-  const files = (await resolveFiles(config.distDir, [], ".html")).filter(
-    (file) => !isExcluded(config, pathnameOf(config.distDir, file)),
-  );
-  let issuable = 0;
-  let unmatched = 0;
-  const problems = new Map<string, string[]>();
-  await forEachPage(files, (page) => {
-    const result = previewPage(config, page);
-    if (result === "issuable") {
-      issuable++;
-    } else if (result === "unmatched") {
-      unmatched++;
-    } else {
-      problems.set(result.problem, [
-        ...(problems.get(result.problem) ?? []),
-        pathnameOf(config.distDir, page.file),
-      ]);
-    }
-  });
-  return {
-    issuable,
-    unmatched,
-    problems: [...problems].map(([problem, pages]) => ({ problem, pages })),
-  };
-};
-
 const previewWith = async (config: CaConfig, log: Log) => {
   const preview = await previewIssuance(config);
   log.log(
-    `CA を作れるページ ${preview.issuable}、作れないページ ${preview.problems.reduce((sum, { pages }) => sum + pages.length, 0)}、selector に当たらないページ ${preview.unmatched}`,
+    `CA を作れるページ ${preview.issuable}、作れないページ ${preview.problems.reduce((sum, { pages }) => sum + pages.length, 0)}、セレクタに当たらないページ ${preview.unmatched}`,
   );
   for (const { problem, pages } of preview.problems) {
     log.log(
@@ -343,7 +92,7 @@ const askSite = async (
   answers.issuer ??= await askValid(
     ask,
     log,
-    "issuer（OP レジストリに登録した OP ID、dns: で始まる）",
+    "発行者 ID（OP レジストリの dns: で始まる ID）",
     undefined,
     parseIssuer,
   );
@@ -354,7 +103,7 @@ const askSite = async (
     answers.origins = await askValid(
       ask,
       log,
-      "サイトのオリジン（カンマ区切り。http は localhost だけ）",
+      "サイトの URL（カンマ区切り。例: https://example.com。http は localhost だけ）",
       scan.origins[0]?.origin,
       (value) => list(value).map(parseOrigin),
     );
@@ -366,11 +115,11 @@ const askSite = async (
     answers.selector = await askValid(
       ask,
       log,
-      "証明する要素の selector",
+      "証明する要素の CSS セレクタ",
       suggestSelector(scan),
       (value) => {
         if (!value) {
-          throw new Error("selector が必要です");
+          throw new Error("CSS セレクタが必要です");
         }
         return value;
       },
@@ -421,27 +170,9 @@ const askPublishing = async (
   configDir: string,
   log: Log,
 ): Promise<void> => {
-  if (answers.exclude === undefined) {
-    await previewWith(
-      parseCaConfig(proposeConfig(scan, answers, configDir).raw, configDir),
-      log,
-    );
-    answers.exclude = await askValid(
-      ask,
-      log,
-      "対象にしないパスの正規表現（カンマ区切り。無ければ空のまま）",
-      "",
-      (value) => list(value).map((pattern) => parsePattern(pattern)),
-    );
-  }
-  answers.persistence ??= await askValid(
-    ask,
-    log,
-    "CAS の置き場所。commit はリポジトリに置いてビルドに含める、rebuild はデプロイのたびに作り直す",
-    "commit",
-    parsePersistence,
-  );
-  if (answers.persistence === "commit" && answers.publicDir === undefined) {
+  // exclude は対話では聞かず、空配列のまま書いて後から編集してもらう
+  answers.exclude ??= [];
+  if (answers.publicDir === undefined) {
     answers.publicDir = resolve(
       await askValid(
         ask,
@@ -473,30 +204,20 @@ const askAnswers = async (
   return answers;
 };
 
-const nextSteps = (config: CaConfig, persistence: Persistence) => {
+const nextSteps = (config: CaConfig) => {
   const dist = relative(process.cwd(), config.distDir) || ".";
-  const steps = [
+  return [
     "次の手順:",
     "  環境変数 CA_SERVER_URL と CCSP_CONFIG を設定する",
-    `  ビルドしてから ca inject ${dist} && ca sync ${dist}`,
+    "  ビルドしてから opca inject && opca sync",
+    `  ${relative(process.cwd(), config.publicDir)} に書かれた CAS をコミットする（${dist} にも写すので、そのままデプロイしてよい）`,
+    "  以後はビルドのたびに同じ 2 コマンドを流す。変わったページだけ署名し直す",
   ];
-  return persistence === "commit"
-    ? [
-        ...steps,
-        `  ${relative(process.cwd(), config.publicDir)} に書かれた CAS をコミットする（${dist} にも写すので、そのままデプロイしてよい）`,
-        "  以後はビルドのたびに同じ 2 コマンドを流す。変わったページだけ署名し直す",
-      ]
-    : [
-        ...steps,
-        `  ${dist} をデプロイする`,
-        "  ⚠ CAS はビルドのたびに消えるので、デプロイごとに全ページを署名し直し、CA ID も変わる",
-      ];
 };
 
-type InitOptions = {
+export type InitOptions = {
   configFile: string;
   answers: InitAnswers;
-  force: boolean;
   ask?: Ask;
   log: Pick<Console, "log">;
 };
@@ -521,7 +242,7 @@ const distDirOf = async (
 const writeConfigFile = async (
   configFile: string,
   json: string,
-  { force, log }: Pick<InitOptions, "force" | "log">,
+  { log }: Pick<InitOptions, "log">,
 ): Promise<void> => {
   let current: string | undefined;
   try {
@@ -534,17 +255,6 @@ const writeConfigFile = async (
   if (current === json) {
     log.log(`${relative(process.cwd(), configFile)} は変わりません`);
     return;
-  }
-  if (current !== undefined && !force) {
-    throw new Error(
-      [
-        `${relative(process.cwd(), configFile)} がすでにあります。上書きするには --force を付けてください`,
-        "--- 今の内容",
-        current.trimEnd(),
-        "+++ 作る内容",
-        json.trimEnd(),
-      ].join("\n"),
-    );
   }
   await writeText(configFile, json);
   log.log(`✓ ${relative(process.cwd(), configFile)} を書きました`);
@@ -563,7 +273,7 @@ export const init = async (options: InitOptions): Promise<CaConfig> => {
   const answers = ask
     ? await askAnswers(scan, options.answers, ask, configDir, log)
     : options.answers;
-  const { raw, persistence } = proposeConfig(scan, answers, configDir);
+  const { raw } = proposeConfig(scan, answers, configDir);
   const config = parseCaConfig(raw, configDir);
   if (!answers.author?.length && scan.withoutAuthor > 0) {
     log.log(
@@ -577,7 +287,7 @@ export const init = async (options: InitOptions): Promise<CaConfig> => {
   );
 
   await previewWith(config, log);
-  for (const line of nextSteps(config, persistence)) {
+  for (const line of nextSteps(config)) {
     log.log(line);
   }
   return config;
