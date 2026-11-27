@@ -744,9 +744,10 @@ test("sync と renew: CAS に他の発行者の CA があれば残し、自分�
     ARTICLE.replace("/cas/a.cas.json", "/cas/b.cas.json"),
   );
   const foreign = jwt({ issuer: "dns:ads.example", exp: expIn(1) });
+  const ownExp = expIn(10);
   const own = jwt({
     issuer: ISSUER,
-    ...matching(s.config, ARTICLE, expIn(10)),
+    ...matching(s.config, ARTICLE, ownExp),
   });
   mkdirSync(dirname(s.casFile), { recursive: true });
   writeFileSync(
@@ -769,7 +770,7 @@ test("sync と renew: CAS に他の発行者の CA があれば残し、自分�
   expect(a.length).toBe(2);
   expect(a[0]).toBe(foreign);
   expect(a[1].main).toBe(true);
-  expect(payloadOf(a[1].attestation).exp).toBe(expIn(10));
+  expect(payloadOf(a[1].attestation).exp).toBe(ownExp);
   const b = JSON.parse(
     readFileSync(join(s.config.publicDir, "cas", "b.cas.json"), "utf-8"),
   );
