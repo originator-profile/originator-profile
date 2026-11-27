@@ -20,6 +20,10 @@ export type Organization = {
   annotations: Certificate[];
   /** 組織実在証が表明する国 */
   country?: string;
+  /** 組織実在証が表明する法人番号 */
+  corporateNumber?: string;
+  /** 先頭の業界団体所属証の名前 (PA ポリシーの名前) */
+  membership?: string;
 };
 
 const nonNull = <T>(value: T | null): value is T => value !== null;
@@ -32,19 +36,30 @@ const annotationGroup = (annotation: Certificate) =>
     getAnnotationPolicy(annotation).id,
   ]);
 
-/** 組織実在証が表明する国を得る */
-export function countryOf(annotations: Certificate[]): string | undefined {
-  for (const annotation of annotations) {
-    const subject = annotation.credentialSubject;
-    if (
-      subject.type === "JP-OrganizationExistenceCertificate" &&
-      "addressCountry" in subject &&
-      typeof subject.addressCountry === "string"
-    ) {
-      return subject.addressCountry;
-    }
-  }
-  return undefined;
+/** 組織実在証が表明する値を得る */
+function existenceOf(
+  annotations: Certificate[],
+): Pick<Organization, "country" | "corporateNumber"> {
+  const subject: Record<string, unknown> | undefined = annotations.find(
+    ({ credentialSubject }) =>
+      credentialSubject.type === "JP-OrganizationExistenceCertificate",
+  )?.credentialSubject;
+  const text = (key: string) => {
+    const value = subject?.[key];
+    return typeof value === "string" ? value : undefined;
+  };
+  return {
+    country: text("addressCountry"),
+    corporateNumber: text("corporateNumber"),
+  };
+}
+
+/** 先頭の業界団体所属証の名前を得る */
+function membershipOf(annotations: Certificate[]): string | undefined {
+  const membership = annotations.find(
+    ({ credentialSubject }) => credentialSubject.type === "Membership",
+  );
+  return membership && getAnnotationPolicy(membership).name;
 }
 
 /**
@@ -75,6 +90,7 @@ export function organizationOf(
     id,
     media: selectByLocale(media),
     annotations,
-    country: countryOf(annotations),
+    ...existenceOf(annotations),
+    membership: membershipOf(annotations),
   };
 }

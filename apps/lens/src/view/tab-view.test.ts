@@ -1,3 +1,4 @@
+import type { SubscribedTabVerification } from "@originator-profile/extension-common";
 import { describe, expect, test, vi } from "vitest";
 import { tabViewOf } from "./tab-view";
 import {
@@ -34,6 +35,25 @@ const topDocument = document(
   [{ main: true, attestation: article }],
 );
 
+const subFrameOf = (documentId: string, frameId: number) => ({
+  ...subFrame,
+  frameId,
+  documentId,
+});
+
+/** サブフレームの、広告 1 件を載せた文書 */
+const adDocument = (id: string) =>
+  document(
+    [originator(advertiser, { name: "advertiser" })],
+    [{ main: false, attestation: ca(advertiser, id, { type: "OnlineAd" }) }],
+  );
+
+const keysOf = (view: ReturnType<typeof tabViewOf>) =>
+  view.state === "ready" ? view.contents.map(({ key }) => key) : undefined;
+
+const invalidated = (entry: unknown) =>
+  ({ ...(entry as object), state: "invalidated" }) as never;
+
 describe("tabViewOf", () => {
   test("Site Profile が確定するまで読み込み中", () => {
     const view = tabViewOf(
@@ -43,6 +63,18 @@ describe("tabViewOf", () => {
       }),
     );
     expect(view).toEqual({ state: "loading", origin: "https://media.example" });
+  });
+
+  test("文書を提示できるときは、レジストリが揃うまで読み込み中", () => {
+    const view = tabViewOf(
+      1,
+      subscribed({
+        frames: [{ frame: topFrame, entry: settled(topFrame, topDocument) }],
+        siteProfile: site(),
+        registry: null,
+      }),
+    );
+    expect(view.state).toBe("loading");
   });
 
   test("確定していないサブフレームの文書は、確定するまで提示に加えない", () => {
@@ -62,7 +94,7 @@ describe("tabViewOf", () => {
     expect(view.state === "ready" && view.contents).toHaveLength(1);
   });
 
-  test("運営者と作成者が異なれば、運営者を提示する", () => {
+  test("運営者と提供者が異なれば、運営者を提示する", () => {
     const view = tabViewOf(
       1,
       subscribed({
@@ -77,15 +109,14 @@ describe("tabViewOf", () => {
       name: "Example Media",
       operator: { id: operator },
     });
-    expect(view.contents.map(({ key }) => key)).toEqual([
-      `${publisher}:urn:uuid:article`,
-    ]);
+    expect(keysOf(view)).toEqual([`${publisher}:urn:uuid:article`]);
     expect(view.issuers.get(publisher)?.media?.credentialSubject.name).toBe(
       "publisher",
     );
+    expect(view.failed).toBe(false);
   });
 
-  test("運営者がメインのコンテンツの作成者と同じなら、サイト名だけを提示する", () => {
+  test("運営者がメインのコンテンツの提供者と同じなら、サイト名だけを提示する", () => {
     const view = tabViewOf(
       1,
       subscribed({
@@ -99,7 +130,32 @@ describe("tabViewOf", () => {
     });
   });
 
-  test("Site Profile が無ければ運営者を確認できないことを示す", () => {
+  test("サブフレームのメインはメインとして扱わず、運営者と比べない", () => {
+    const sub = document(
+      [originator(publisher, { name: "publisher" })],
+      [{ main: true, attestation: article }],
+    );
+    const view = tabViewOf(
+      1,
+      subscribed({
+        frames: [
+          {
+            frame: topFrame,
+            entry: settled(topFrame, document([], [])),
+          },
+          { frame: subFrame, entry: settled(subFrame, sub) },
+        ],
+        siteProfile: site(publisher),
+      }),
+    );
+    expect(view).toMatchObject({
+      state: "ready",
+      contents: [{ main: false }],
+      site: { state: "present", operator: { id: publisher } },
+    });
+  });
+
+  test("Site Profile を置いていなければ、運営者を確認できないことを示す", () => {
     const view = tabViewOf(
       1,
       subscribed({
@@ -112,10 +168,59 @@ describe("tabViewOf", () => {
         siteProfile: failure("ERR_SITE_PROFILE_FETCH_FAILED"),
       }),
     );
-    expect(view).toMatchObject({ state: "ready", site: { state: "absent" } });
+    expect(view).toMatchObject({
+      state: "ready",
+      site: { state: "absent" },
+      failed: false,
+    });
   });
 
-  test("Site Profile も CA も無ければ未対応", () => {
+  test.each(["ERR_SITE_PROFILE_VERIFY_FAILED", "ERR_SITE_PROFILE_INVALID"])(
+    "Site Profile が %s なら運営者を確認できないとし、コンテンツは提示する",
+    (code) => {
+      const view = tabViewOf(
+        1,
+        subscribed({
+          frames: [
+            {
+              frame: topFrame,
+              entry: settled(topFrame, topDocument, { usesSiteProfile: false }),
+            },
+          ],
+          siteProfile: failure(code),
+        }),
+      );
+      expect(view).toMatchObject({
+        state: "ready",
+        site: { state: "absent" },
+        failed: true,
+      });
+      expect(keysOf(view)).toEqual([`${publisher}:urn:uuid:article`]);
+    },
+  );
+
+  test("Site Profile の結果が無効になれば、運営者を確認できないとする", () => {
+    const subscription = subscribed({
+      frames: [{ frame: topFrame, entry: settled(topFrame, topDocument) }],
+      siteProfile: site(),
+    });
+    const verification = subscription.verification;
+    if (!verification) throw new Error("verification not found");
+    const view = tabViewOf(1, {
+      ...subscription,
+      verification: {
+        ...verification,
+        siteProfile: invalidated(verification.siteProfile),
+      },
+    });
+    expect(view).toMatchObject({
+      state: "ready",
+      site: { state: "absent" },
+      failed: true,
+    });
+  });
+
+  test("Site Profile も CA も無ければ、どちらも無いことを示す", () => {
     const view = tabViewOf(
       1,
       subscribed({
@@ -130,37 +235,95 @@ describe("tabViewOf", () => {
         siteProfile: failure("ERR_SITE_PROFILE_FETCH_FAILED"),
       }),
     );
-    expect(view).toEqual({
-      state: "unsupported",
-      codes: ["ERR_SITE_PROFILE_FETCH_FAILED"],
+    expect(view).toMatchObject({
+      state: "ready",
+      site: { state: "absent" },
+      contents: [],
+      failed: false,
     });
   });
 
   test.each([
-    ["ERR_SITE_PROFILE_VERIFY_FAILED", "site"],
-    ["ERR_SITE_PROFILE_INVALID", "site"],
-    ["ERR_ORIGINATOR_PROFILE_SET_VERIFY_FAILED", "document"],
-    ["ERR_CONTENT_ATTESTATION_SET_VERIFY_FAILED", "document"],
-  ])("%s なら閲覧禁止", (code, target) => {
+    "ERR_ORIGINATOR_PROFILE_SET_INVALID",
+    "ERR_ORIGINATOR_PROFILE_SET_VERIFY_FAILED",
+    "ERR_CONTENT_ATTESTATION_SET_VERIFY_FAILED",
+  ])(
+    "トップレベル文書が %s ならメインは無いとし、サブフレームのコンテンツは提示する",
+    (code) => {
+      const view = tabViewOf(
+        1,
+        subscribed({
+          frames: [
+            { frame: topFrame, entry: settled(topFrame, failure(code)) },
+            {
+              frame: subFrame,
+              entry: settled(subFrame, adDocument("urn:uuid:ad")),
+            },
+          ],
+          siteProfile: site(),
+        }),
+      );
+      expect(view).toMatchObject({ state: "ready", failed: true });
+      expect(keysOf(view)).toEqual([`${advertiser}:urn:uuid:ad`]);
+    },
+  );
+
+  test("トップレベル文書の結果が無効になれば、メインは無いとする", () => {
     const view = tabViewOf(
       1,
       subscribed({
         frames: [
           {
             frame: topFrame,
-            entry: settled(
-              topFrame,
-              target === "document" ? failure(code) : topDocument,
-            ),
+            entry: invalidated(settled(topFrame, topDocument)),
           },
         ],
-        siteProfile: target === "site" ? failure(code) : site(),
+        siteProfile: site(),
       }),
     );
-    expect(view).toEqual({ state: "prohibited" });
+    expect(view).toMatchObject({ state: "ready", contents: [], failed: true });
   });
 
-  test("OPS の形式が無効でも Site Profile があれば表示する", () => {
+  // NOTE: 失敗した文書のコンテンツは、ほかの文書の失敗の種類や並び順によらず
+  // 提示しない (最初の失敗だけを見ると、後ろの失敗を見落とす)
+  test.each([
+    [
+      "ERR_ORIGINATOR_PROFILE_SET_INVALID",
+      "ERR_CONTENT_ATTESTATION_SET_VERIFY_FAILED",
+    ],
+    [
+      "ERR_CONTENT_ATTESTATION_SET_VERIFY_FAILED",
+      "ERR_ORIGINATOR_PROFILE_SET_INVALID",
+    ],
+  ])(
+    "サブフレームが %s と %s で失敗しても、成功したサブフレームのコンテンツだけを提示する",
+    (first, second) => {
+      const [a, b, c] = [
+        subFrameOf("a", 1),
+        subFrameOf("b", 2),
+        subFrameOf("c", 3),
+      ];
+      const view = tabViewOf(
+        1,
+        subscribed({
+          frames: [
+            { frame: topFrame, entry: settled(topFrame, topDocument) },
+            { frame: a, entry: settled(a, failure(first)) },
+            { frame: b, entry: settled(b, failure(second)) },
+            { frame: c, entry: settled(c, adDocument("urn:uuid:c")) },
+          ],
+          siteProfile: site(),
+        }),
+      );
+      expect(keysOf(view)).toEqual([
+        `${publisher}:urn:uuid:article`,
+        `${advertiser}:urn:uuid:c`,
+      ]);
+      expect(view).toMatchObject({ failed: false });
+    },
+  );
+
+  test("トップレベル文書が失敗していても、失敗したサブフレームのコンテンツは提示しない", () => {
     const view = tabViewOf(
       1,
       subscribed({
@@ -170,6 +333,13 @@ describe("tabViewOf", () => {
             entry: settled(
               topFrame,
               failure("ERR_ORIGINATOR_PROFILE_SET_INVALID"),
+            ),
+          },
+          {
+            frame: subFrame,
+            entry: settled(
+              subFrame,
+              failure("ERR_CONTENT_ATTESTATION_SET_VERIFY_FAILED"),
             ),
           },
         ],
@@ -183,25 +353,56 @@ describe("tabViewOf", () => {
     });
   });
 
-  test("結果が無効になっていれば未対応とし、その理由を示す", () => {
+  test("結果が無効になったサブフレームのコンテンツは提示しない", () => {
+    const [a, b] = [subFrameOf("a", 1), subFrameOf("b", 2)];
     const view = tabViewOf(
       1,
       subscribed({
         frames: [
+          { frame: topFrame, entry: settled(topFrame, topDocument) },
           {
-            frame: topFrame,
-            entry: {
-              ...settled(topFrame, topDocument),
-              state: "invalidated",
-            } as never,
+            frame: a,
+            entry: invalidated(settled(a, adDocument("urn:uuid:a"))),
           },
+          { frame: b, entry: settled(b, adDocument("urn:uuid:b")) },
         ],
-        siteProfile: failure("ERR_SITE_PROFILE_FETCH_FAILED"),
+        siteProfile: site(),
       }),
     );
-    expect(view).toEqual({
-      state: "unsupported",
-      codes: ["ERR_SITE_PROFILE_FETCH_FAILED", "ERR_VERIFICATION_INVALIDATED"],
+    expect(keysOf(view)).toEqual([
+      `${publisher}:urn:uuid:article`,
+      `${advertiser}:urn:uuid:b`,
+    ]);
+  });
+
+  test("レジストリの検証に失敗すれば、どのコンテンツも提示しない", () => {
+    const code = "ERR_ORIGINATOR_PROFILE_SET_VERIFY_FAILED";
+    const view = tabViewOf(
+      1,
+      subscribed({
+        frames: [
+          { frame: topFrame, entry: settled(topFrame, failure(code)) },
+          { frame: subFrame, entry: settled(subFrame, failure(code)) },
+        ],
+        siteProfile: failure("ERR_SITE_PROFILE_VERIFY_FAILED"),
+        registry: failure(code),
+      }),
+    );
+    expect(view).toMatchObject({
+      state: "ready",
+      site: { state: "absent" },
+      contents: [],
+      failed: true,
+    });
+  });
+
+  test("トップレベル文書に届かなければ、運営者もコンテンツも無いことを示す", () => {
+    const unreachable: SubscribedTabVerification = { error: new Error() };
+    expect(tabViewOf(1, unreachable)).toMatchObject({
+      state: "ready",
+      site: { state: "absent" },
+      contents: [],
+      failed: false,
     });
   });
 
@@ -212,23 +413,7 @@ describe("tabViewOf", () => {
       subscribed({
         frames: [
           { frame: topFrame, entry: settled(topFrame, topDocument) },
-          {
-            frame: fenced,
-            entry: settled(
-              fenced,
-              document(
-                [originator(advertiser, { name: "advertiser" })],
-                [
-                  {
-                    main: false,
-                    attestation: ca(advertiser, "urn:uuid:ad", {
-                      type: "OnlineAd",
-                    }),
-                  },
-                ],
-              ),
-            ),
-          },
+          { frame: fenced, entry: settled(fenced, adDocument("urn:uuid:ad")) },
         ],
         siteProfile: site(),
       }),

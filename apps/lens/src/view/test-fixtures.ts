@@ -25,7 +25,11 @@ export const wmp = (id: string, name: string) => ({
   },
 });
 
-export const existencePa = (id: string, addressCountry: string) => ({
+export const existencePa = (
+  id: string,
+  addressCountry: string,
+  corporateNumber = "0000000000000",
+) => ({
   "@context": ["https://www.w3.org/ns/credentials/v2"],
   type: ["VerifiableCredential", "Certificate"],
   issuer: "dns:pa-issuer.example",
@@ -39,6 +43,7 @@ export const existencePa = (id: string, addressCountry: string) => ({
       ref: "https://pa-issuer.example/policy",
     },
     addressCountry,
+    corporateNumber,
   },
 });
 
@@ -155,7 +160,10 @@ export const document = (
   cas: { main: boolean; attestation: unknown }[],
 ) => success({ originators, cas });
 
-/** タブの検証の状態を組み立てる */
+/**
+ * タブの検証の状態を組み立てる
+ * @param registry レジストリの検証結果。まだ届いていなければ null
+ */
 export function subscribed({
   frames,
   siteProfile,
@@ -176,7 +184,7 @@ export function subscribed({
         siteProfile === undefined
           ? undefined
           : ({ state: "settled", origin, result: siteProfile } as never),
-      registry: registry as never,
+      registry: (registry ?? undefined) as never,
     },
   };
 }

@@ -1,21 +1,16 @@
 import { selectByLocale } from "@originator-profile/core";
 import {
+  isSiteProfileFetchError,
   isTopFrameUnreachable,
-  VerificationInvalidated,
   type FrameVerification,
+  type RegistryEntry,
   type SubscribedTabVerification,
   type VerificationEntry,
 } from "@originator-profile/extension-common";
-import { codeOf } from "@originator-profile/extension-common/utils/problem-code";
 import type { WebsiteProfile } from "@originator-profile/model";
-import {
-  CasVerifyFailed,
-  OpsVerifyFailed,
-  SiteProfileInvalid,
-  SiteProfileVerifyFailed,
-  type OriginatorPayload,
-  type ProblemDetails,
-  type VerificationResult,
+import type {
+  OriginatorPayload,
+  VerificationResult,
 } from "@originator-profile/verify";
 import { contentsOf, type Content } from "./contents";
 import { organizationOf, type Organization } from "./organization";
@@ -29,7 +24,7 @@ export type SiteView =
       operator: Organization;
     }
   | {
-      /** 運営者がメインのコンテンツの作成者と同じなので、サイト名だけを提示する */
+      /** 運営者がメインのコンテンツの提供者と同じなので、サイト名だけを提示する */
       state: "same-as-main";
       name: string;
     }
@@ -41,31 +36,21 @@ export type SiteView =
 /** タブの表示 */
 export type TabView =
   | { state: "loading"; origin?: string }
-  /** 発信者の詐称やコンテンツの改竄のおそれがある */
-  | { state: "prohibited" }
-  /** OP に対応していない。codes は理由のエラーコード (不明なら undefined) */
-  | { state: "unsupported"; codes: (string | undefined)[] }
   | {
       state: "ready";
       tabId: number;
       site: SiteView;
+      /** 検証に成功した文書のコンテンツ。メインはトップレベル文書のものに限る */
       contents: Content[];
       /** CA 発行者ごとの組織。発行者を確認できないものは含まない */
       issuers: Map<string, Organization>;
       /** 検証に成功した発信者。PA 発行者の組織を引くのに用いる */
       originators: OriginatorPayload[];
+      /** Site Profile かトップレベル文書の検証に失敗したか、結果が無効になった */
+      failed: boolean;
     };
 
 type Settled = Extract<VerificationEntry, { state: "settled" }>;
-
-/** 失敗の理由。成功していれば null、確定していなければ undefined */
-type Failure = { code?: string } | null | undefined;
-
-const problemCode = (problem?: ProblemDetails) =>
-  problem && codeOf(problem.type);
-
-const failureOf = (result: VerificationResult<unknown>): Failure =>
-  result.status ? null : { code: problemCode(result.errors[0]) };
 
 /**
  * 利用者に提示する文書。トップレベル文書を先頭とする
@@ -90,78 +75,53 @@ function presentedFrames(subscribed: SubscribedTabVerification) {
   return [...frames.filter(isTop), ...frames.filter((f) => !isTop(f))];
 }
 
-const isSettled = (entry?: VerificationEntry): entry is Settled =>
-  entry?.state === "settled";
-
-/** 文書群の検証の状態 */
-type Documents = {
-  /** 確定した文書。トップレベル文書を先頭とする */
-  settled: Settled[];
-  failure: Failure;
-};
-
 /**
- * 文書群の検証の状態を得る
- *
- * NOTE: 共有の発信者の検証に失敗していれば文書の検証も失敗している。失敗は
- * 文書の結果から読み、共有の発信者の失敗を文書の失敗として扱わない
+ * 文書の検証の状態
+ * @returns 成功していればその結果、失敗か無効なら null、確定していなければ undefined
  */
-function documentsOf(subscribed: SubscribedTabVerification): Documents {
-  if (isTopFrameUnreachable(subscribed)) return { settled: [], failure: {} };
-  const frames = subscribed.reachable ? presentedFrames(subscribed) : [];
-  if (frames[0]?.frame.frameType !== "outermost_frame") {
-    return { settled: [], failure: undefined };
-  }
-
-  const entries = frames.map(({ entry }) => entry);
-  if (entries.some((entry) => entry?.state === "invalidated")) {
-    return { settled: [], failure: { code: VerificationInvalidated.code } };
-  }
-  if (!entries.every(isSettled)) return { settled: [], failure: undefined };
-  const failure =
-    entries.map(({ result }) => failureOf(result)).find(Boolean) ?? null;
-  return { settled: entries, failure };
+function documentOf(entry?: VerificationEntry): Settled | null | undefined {
+  if (entry?.state === "invalidated") return null;
+  if (entry?.state !== "settled") return undefined;
+  return entry.result.status ? entry : null;
 }
 
+/** Web サイトの検証の状態 */
+type SiteState =
+  | {
+      state: "verified";
+      sites: WebsiteProfile[];
+      /** Site Profile の検証に用いた発信者 */
+      originators: OriginatorPayload[];
+    }
+  /** Site Profile を置いていないか、取得できなかった */
+  | { state: "absent" }
+  /** 検証に失敗したか、結果が無効になった */
+  | { state: "failed" };
+
 /**
- * Web サイトの検証の状態
+ * Web サイトの検証の状態を得る
  * @returns 確定していなければ undefined
  */
-function siteFailureOf(subscribed: SubscribedTabVerification): Failure {
-  if (isTopFrameUnreachable(subscribed)) return {};
+function siteStateOf(
+  subscribed: SubscribedTabVerification,
+): SiteState | undefined {
   const entry = subscribed.verification?.siteProfile;
   if (!entry || entry.state === "verifying") return undefined;
-  if (entry.state === "invalidated") {
-    return { code: VerificationInvalidated.code };
+  if (entry.state === "invalidated") return { state: "failed" };
+  const { result } = entry;
+  if (result.status) {
+    return {
+      state: "verified",
+      sites: result.outcome.sites.filter(
+        (s): s is WebsiteProfile => s !== null,
+      ),
+      originators: result.outcome.originators,
+    };
   }
-  return failureOf(entry.result);
+  return isSiteProfileFetchError(result.errors[0])
+    ? { state: "absent" }
+    : { state: "failed" };
 }
-
-/**
- * トップレベル文書の検証に用いた共有の発信者が揃っているか
- *
- * 文書の結果より後に届くことがあるため、揃うまで提示を待つ。
- */
-function sharedReady(top: Settled, subscribed: SubscribedTabVerification) {
-  const usesSiteProfile = top.result.inputRange.some(
-    ({ kind }) => kind === "site-profile",
-  );
-  const site = subscribed.verification?.siteProfile;
-  return (
-    subscribed.verification?.registry !== undefined &&
-    (!usesSiteProfile || (site !== undefined && site.state !== "verifying"))
-  );
-}
-
-const isSiteProhibited = (failure: Failure) =>
-  !!failure &&
-  (failure.code === SiteProfileVerifyFailed.code ||
-    failure.code === SiteProfileInvalid.code);
-
-const isDocumentProhibited = (failure: Failure) =>
-  !!failure &&
-  (failure.code === OpsVerifyFailed.code ||
-    failure.code === CasVerifyFailed.code);
 
 /** 検証に成功した結果の発信者を集める */
 function originatorsOf(
@@ -176,17 +136,11 @@ function originatorsOf(
 }
 
 function siteOf(
-  subscribed: SubscribedTabVerification,
+  site: SiteState,
   originators: OriginatorPayload[],
   contents: Content[],
 ): SiteView {
-  const entry = subscribed.verification?.siteProfile;
-  const result = entry?.state === "settled" ? entry.result : undefined;
-  const sites =
-    result?.status === true
-      ? result.outcome.sites.filter((s): s is WebsiteProfile => s !== null)
-      : [];
-  const wsp = selectByLocale(sites);
+  const wsp = selectByLocale(site.state === "verified" ? site.sites : []);
   if (!wsp) return { state: "absent" };
   const name = wsp.credentialSubject.name;
 
@@ -195,40 +149,6 @@ function siteOf(
 
   const operator = organizationOf(wsp.issuer, originators);
   return operator ? { state: "present", name, operator } : { state: "absent" };
-}
-
-/** 提示が揃うまで待つか */
-function isLoading(
-  subscribed: SubscribedTabVerification,
-  siteFailure: Failure,
-  { settled: [top], failure }: Documents,
-) {
-  return (
-    siteFailure === undefined ||
-    failure === undefined ||
-    (top !== undefined && failure === null && !sharedReady(top, subscribed))
-  );
-}
-
-/** 検証に成功した発信者とコンテンツ */
-function verifiedOf(
-  subscribed: SubscribedTabVerification,
-  { settled, failure }: Documents,
-) {
-  const verified = failure === null ? settled : [];
-  const site = subscribed.verification?.siteProfile;
-  const originators = originatorsOf([
-    subscribed.verification?.registry,
-    site?.state === "settled" ? site.result : undefined,
-    ...verified.map(({ result }) => result),
-  ]);
-  const contents = contentsOf(
-    verified.map(({ subject, result }) => ({
-      frame: subject,
-      cas: result.status ? result.outcome.cas : [],
-    })),
-  );
-  return { originators, contents };
 }
 
 /** CA 発行者ごとの組織 */
@@ -240,14 +160,76 @@ const issuersOf = (contents: Content[], originators: OriginatorPayload[]) =>
     }),
   );
 
+/** 文書ごとの検証の状態。トップレベル文書を先頭とする */
+type Documents = ReturnType<typeof documentOf>[];
+
+/**
+ * 提示が揃うまで待つか
+ *
+ * NOTE: 共有の発信者 (レジストリ) は文書の結果より後に届くことがあるため、
+ * 文書を提示できるときは揃うまで待つ
+ */
+const isLoading = (
+  site: SiteState | undefined,
+  frames: FrameVerification[],
+  documents: Documents,
+  registry: RegistryEntry | undefined,
+) =>
+  site === undefined ||
+  frames[0]?.frame.frameType !== "outermost_frame" ||
+  documents[0] === undefined ||
+  (documents.some(Boolean) && registry === undefined);
+
+/** 検証に成功した文書のコンテンツ。メインはトップレベル文書のものに限る */
+const contentsOfDocuments = (documents: Documents) =>
+  contentsOf(
+    documents.flatMap((document, index) =>
+      document?.result.status
+        ? [
+            {
+              frame: document.subject,
+              cas: document.result.outcome.cas.map(({ main, attestation }) => ({
+                main: index === 0 && main,
+                attestation,
+              })),
+            },
+          ]
+        : [],
+    ),
+  );
+
+function readyOf(
+  tabId: number,
+  site: SiteState,
+  documents: Documents,
+  registry: RegistryEntry | undefined,
+): TabView {
+  const originators = [
+    ...originatorsOf([
+      registry,
+      ...documents.map((document) => document?.result),
+    ]),
+    ...(site.state === "verified" ? site.originators : []),
+  ];
+  const contents = contentsOfDocuments(documents);
+  return {
+    state: "ready",
+    tabId,
+    site: siteOf(site, originators, contents),
+    contents,
+    issuers: issuersOf(contents, originators),
+    originators,
+    failed: site.state === "failed" || documents[0] === null,
+  };
+}
+
 /**
  * タブの検証の状態から、表示を得る
  *
- * 閲覧禁止と未対応の振り分けは次による。
- *
- * - Site Profile、OPS、CAS のいずれかの検証に失敗していれば閲覧禁止
- * - Site Profile か CA のいずれかを提示できれば表示する
- * - いずれも提示できなければ未対応とし、その理由を示す
+ * 文書ごとに、検証に成功した文書のコンテンツだけを提示する。失敗した文書や
+ * 結果が無効になった文書は、無いものとして扱う。メインのコンテンツは
+ * トップレベル文書のものに限り、サブフレームのメインは他のコンテンツと同じに扱う。
+ * Site Profile も、検証に失敗したか結果が無効になれば無いものとして扱う。
  * @param tabId タブID
  * @param subscribed タブの検証の状態
  */
@@ -255,34 +237,18 @@ export function tabViewOf(
   tabId: number,
   subscribed: SubscribedTabVerification,
 ): TabView {
-  const siteFailure = siteFailureOf(subscribed);
-  const documents = documentsOf(subscribed);
-  if (isLoading(subscribed, siteFailure, documents)) {
-    return { state: "loading", origin: documents.settled[0]?.subject.origin };
+  if (isTopFrameUnreachable(subscribed)) {
+    return readyOf(tabId, { state: "absent" }, [], undefined);
   }
-  if (
-    isSiteProhibited(siteFailure) ||
-    isDocumentProhibited(documents.failure)
-  ) {
-    return { state: "prohibited" };
+  const site = siteStateOf(subscribed);
+  const frames = subscribed.reachable ? presentedFrames(subscribed) : [];
+  const documents = frames.map(({ entry }) => documentOf(entry));
+  const registry = subscribed.verification?.registry;
+  if (site === undefined || isLoading(site, frames, documents, registry)) {
+    const entry = frames[0]?.entry;
+    const origin =
+      entry?.state === "settled" ? entry.subject.origin : undefined;
+    return { state: "loading", origin };
   }
-
-  const { originators, contents } = verifiedOf(subscribed, documents);
-
-  if (siteFailure !== null && contents.length === 0) {
-    return {
-      state: "unsupported",
-      codes: [siteFailure, documents.failure]
-        .filter((failure) => !!failure)
-        .map(({ code }) => code),
-    };
-  }
-  return {
-    state: "ready",
-    tabId,
-    site: siteOf(subscribed, originators, contents),
-    contents,
-    issuers: issuersOf(contents, originators),
-    originators,
-  };
+  return readyOf(tabId, site, documents, registry);
 }
