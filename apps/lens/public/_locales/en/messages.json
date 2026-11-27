@@ -169,5 +169,11 @@
   },
   "Launcher_Failed": {
     "message": "The origin couldn't be confirmed"
+  },
+  "Sidepanel_SiteOperatorLabel": {
+    "message": "Site operator: "
+  },
+  "Sidepanel_ProviderLabel": {
+    "message": "Provider: "
   }
 }

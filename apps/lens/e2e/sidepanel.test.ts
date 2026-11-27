@@ -32,7 +32,7 @@ test("Site Profile だけがあれば運営者と、コンテンツの提供者�
 
   const header = ext.getByTestId("site-header");
   await expect(header.getByRole("heading", { name: siteName })).toBeVisible();
-  await expect(header.getByText("サイト運営者")).toBeVisible();
+  await expect(header.getByText("サイト運営者", { exact: true })).toBeVisible();
   expect(await ext.evaluate(() => document.documentElement.lang)).toBe("ja");
   await expect(
     header.locator("summary", { hasText: organizationName }),
@@ -163,7 +163,10 @@ test("提供者の国を国旗と国名で、法人登記と業界団体所属�
   await page.goto("http://localhost:8080/examples/iframe");
   const ext = await sidepanel(context);
 
-  await ext.getByTestId("content-card").first().locator("summary").click();
+  const summary = ext.getByTestId("content-card").first().locator("summary");
+  // NOTE: 閉じている間は、役割と国も summary の名前で伝える
+  await expect(summary).toHaveAccessibleName(/^提供者：.+日本$/);
+  await summary.click();
   const country = ext.locator("details[open] p", { hasText: "日本" });
   await expect(country).toBeVisible();
   // NOTE: 国旗は拡張機能に同梱したファイルを読み込む

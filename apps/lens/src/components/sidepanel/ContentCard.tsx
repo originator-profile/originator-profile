@@ -26,7 +26,7 @@ export function ContentCard({ content, provider }: Props) {
     >
       {main
         ? title && (
-            <h3 className="text-sm leading-[1.35] font-bold text-black">
+            <h3 className="text-sm leading-[1.35] font-bold wrap-anywhere text-black">
               {title}
             </h3>
           )
@@ -39,7 +39,7 @@ export function ContentCard({ content, provider }: Props) {
                 />
               )}
               {title && (
-                <h3 className="min-w-0 flex-1 text-xs leading-[1.35] font-bold text-black">
+                <h3 className="min-w-0 flex-1 text-xs leading-[1.35] font-bold wrap-anywhere text-black">
                   {title}
                 </h3>
               )}

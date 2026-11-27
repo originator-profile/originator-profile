@@ -30,7 +30,7 @@ export function OrganizationFacts({
   const url = media?.credentialSubject.url;
   const hasLinks = !!(url || corporateNumber);
   return (
-    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1">
+    <div className="flex flex-wrap items-center gap-x-2.5 gap-y-1.5">
       {country && (
         <p className="flex items-center gap-1.5 text-xs leading-none font-medium text-black">
           <CountryFlag country={country} decorative />
@@ -41,7 +41,7 @@ export function OrganizationFacts({
         <span className="h-3.25 w-px bg-gray-300" aria-hidden />
       )}
       {hasLinks && (
-        <div className="flex flex-wrap items-center gap-x-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1.5">
           {url && (
             <ExternalLink href={url}>
               {_("Sidepanel_OfficialSite")}

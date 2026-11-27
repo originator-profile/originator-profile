@@ -79,14 +79,21 @@ export function ContentList(props: Props) {
   const [openKey, setOpenKey] = useState<string>();
   const [detailId, setDetailId] = useState<string>();
   const detailTrigger = useRef<HTMLButtonElement>(null);
+  const list = useRef<HTMLDivElement>(null);
   useHighlight(props, openKey);
 
   const detailOrganization =
     detailId === undefined ? undefined : findOrganization(props, detailId);
   const showingDetail = detailOrganization !== undefined;
-  // 詳細から戻ったら、詳細を開いたボタンにフォーカスを返す
+  // 詳細の組織が一覧から消えたら詳細を閉じる。一覧に戻ってきても開き直さない
+  if (detailId !== undefined && !showingDetail) setDetailId(undefined);
+  // 詳細から戻ったら、詳細を開いたボタンにフォーカスを返す。ボタンが一覧から
+  // 消えていれば一覧の先頭に移す
   useEffect(() => {
-    if (!showingDetail) detailTrigger.current?.focus();
+    const trigger = detailTrigger.current;
+    if (showingDetail || !trigger) return;
+    detailTrigger.current = null;
+    (trigger.isConnected ? trigger : list.current)?.focus();
   }, [showingDetail]);
 
   const name = useId();
@@ -95,9 +102,14 @@ export function ContentList(props: Props) {
       if (open) return key;
       return current === key ? undefined : current;
     });
-  const accordion = (key: string, organization: Organization) => (
+  const accordion = (
+    key: string,
+    organization: Organization,
+    roleLabel: string,
+  ) => (
     <OriginatorAccordion
       organization={organization}
+      roleLabel={roleLabel}
       name={name}
       open={openKey === key}
       onToggle={toggle(key)}
@@ -114,13 +126,16 @@ export function ContentList(props: Props) {
   return (
     <>
       <div
-        className="flex flex-col gap-3 bg-gray-100 px-4 py-6"
+        ref={list}
+        className="flex flex-col gap-3 bg-gray-100 px-4 py-6 focus:outline-none"
+        tabIndex={-1}
         inert={showingDetail}
       >
         <SiteHeader
           site={site}
           operator={
-            site.state === "present" && accordion("site", site.operator)
+            site.state === "present" &&
+            accordion("site", site.operator, _("Sidepanel_SiteOperatorLabel"))
           }
         />
         <div className="flex flex-col gap-6 rounded-2xl bg-white p-4">
@@ -148,7 +163,14 @@ export function ContentList(props: Props) {
                     <ContentCard
                       key={content.key}
                       content={content}
-                      provider={issuer && accordion(content.key, issuer)}
+                      provider={
+                        issuer &&
+                        accordion(
+                          content.key,
+                          issuer,
+                          _("Sidepanel_ProviderLabel"),
+                        )
+                      }
                     />
                   );
                 })}

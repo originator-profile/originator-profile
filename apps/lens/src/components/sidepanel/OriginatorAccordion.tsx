@@ -10,6 +10,8 @@ import { hasFacts, OrganizationFacts } from "./OrganizationFacts";
 
 type Props = {
   organization: Organization;
+  /** 組織の役割 (運営者か提供者か)。読み上げで組織名の前に置く */
+  roleLabel: string;
   /** 同時に 1 つだけ開くアコーディオンの組の名前 */
   name: string;
   open: boolean;
@@ -22,8 +24,10 @@ type Props = {
 
 function Summary({
   organization: { id, media, country },
+  roleLabel,
 }: {
   organization: Organization;
+  roleLabel: string;
 }) {
   return (
     <summary className="flex min-h-12 cursor-pointer list-none items-center py-3 pr-2 pl-4 transition-colors hover:bg-gray-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-black">
@@ -36,15 +40,13 @@ function Summary({
           width={24}
           height={24}
         />
-        <span className="text-sm leading-[1.3] font-medium text-black">
+        <span className="min-w-0 text-sm leading-[1.3] font-medium wrap-anywhere text-black">
+          <span className="sr-only">{roleLabel}</span>
           {media?.credentialSubject.name ?? id}
         </span>
+        {/* NOTE: 閉じている間は国名を併記していないため、国旗に国名を読ませる */}
         {country && (
-          <CountryFlag
-            className="group-open:hidden"
-            country={country}
-            decorative
-          />
+          <CountryFlag className="group-open:hidden" country={country} />
         )}
       </span>
       <span className="flex size-6 shrink-0 items-center justify-center">
@@ -98,6 +100,7 @@ function Body({
  */
 export function OriginatorAccordion({
   organization,
+  roleLabel,
   name,
   open,
   onToggle,
@@ -114,7 +117,7 @@ export function OriginatorAccordion({
       open={open}
       onToggle={(event) => onToggle(event.currentTarget.open)}
     >
-      <Summary organization={organization} />
+      <Summary organization={organization} roleLabel={roleLabel} />
       <Body organization={organization} onShowDetail={onShowDetail} />
     </details>
   );

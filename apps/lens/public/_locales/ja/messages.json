@@ -169,5 +169,11 @@
   },
   "Launcher_Failed": {
     "message": "出どころを確認できませんでした"
+  },
+  "Sidepanel_SiteOperatorLabel": {
+    "message": "サイト運営者："
+  },
+  "Sidepanel_ProviderLabel": {
+    "message": "提供者："
   }
 }

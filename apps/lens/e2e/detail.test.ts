@@ -35,10 +35,13 @@ test("「第三者による確認」で組織の詳細をサイドパネルの�
   await trigger.click();
 
   const view = ext.getByTestId("detail");
+  // NOTE: 画面が切り替わったことを、組織名の見出しにフォーカスを移して伝える
   await expect(
     view.getByRole("heading", { level: 1, name: organizationName }),
+  ).toBeFocused();
+  await expect(
+    ext.getByRole("region", { name: organizationName }),
   ).toBeVisible();
-  await expect(view.getByRole("button", { name: "戻る" })).toBeFocused();
   await expect(
     view.getByRole("heading", { name: "第三者による確認" }),
   ).toBeVisible();

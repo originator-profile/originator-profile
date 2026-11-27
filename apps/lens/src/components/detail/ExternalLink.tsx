@@ -16,7 +16,7 @@ export function ExternalLink({
   return (
     <a
       className={twMerge(
-        "inline-flex items-center gap-2 self-start text-xs leading-normal font-medium text-black underline transition-[text-decoration-thickness] hover:decoration-2",
+        "inline-flex items-center gap-2 self-start text-xs leading-normal font-medium text-black underline underline-offset-2",
         className,
       )}
       href={href}

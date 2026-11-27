@@ -1,7 +1,8 @@
 import IconChevronLeft from "@iconify-react/fa6-solid/chevron-left";
 import { _, Image } from "@originator-profile/extension-common/ui";
 import placeholderLogoMainUrl from "@originator-profile/extension-common/ui/assets/placeholder-logo-main.png";
-import { useEffect, useRef } from "react";
+import { useEffect, useId, useRef, useState } from "react";
+import { twMerge } from "tailwind-merge";
 import type { OrganizationDetail as Detail } from "../../view";
 import { OrganizationFacts } from "../sidepanel/OrganizationFacts";
 import { AnnotationGroupView } from "./AnnotationGroupView";
@@ -22,38 +23,86 @@ function policyLinksOf({ organization }: Detail) {
   ].filter((link) => link !== undefined);
 }
 
+/**
+ * 固定したヘッダーの高さを、スクロールする容器の scroll-padding-top にする
+ *
+ * NOTE: フォーカスを移したときのスクロールで、移った先がヘッダーの裏に隠れない
+ * ようにする。ヘッダーの高さは組織名や言語による折り返しで変わる
+ */
+function useHeaderScrollPadding() {
+  const container = useRef<HTMLDivElement>(null);
+  const header = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const target = header.current;
+    if (!target) return;
+    const observer = new ResizeObserver(([entry]) => {
+      const height = entry?.borderBoxSize[0]?.blockSize;
+      if (container.current && height !== undefined) {
+        container.current.style.scrollPaddingTop = `${height}px`;
+      }
+    });
+    observer.observe(target);
+    return () => observer.disconnect();
+  }, []);
+  return { container, header };
+}
+
+const prefersReducedMotion = () =>
+  matchMedia("(prefers-reduced-motion: reduce)").matches;
+
 type Props = {
   detail: Detail;
-  /** 戻るボタンを押したとき */
+  /** 戻り終えたとき */
   onBack: () => void;
 };
 
 /**
- * 組織の詳細
+ * 組織の詳細の画面
  *
- * サイドパネルの中で、コンテンツの一覧に重ねて表示する。表示したら戻るボタンに
- * フォーカスを移す。
+ * コンテンツの一覧から切り替わる画面として扱う。右からスライドインし、表示したら
+ * 組織名の見出しにフォーカスを移す。戻るときは右へスライドアウトしてから onBack を呼ぶ。
+ * 一覧を残したまま上に重ねて描くのは、戻ったときに一覧の状態を保つためで、
+ * 一覧は呼び出し側で操作できなくする。
  */
 export function OrganizationDetail({ detail, onBack }: Props) {
   const { organization, groups } = detail;
   const subject = organization.media?.credentialSubject;
   const name = subject?.name ?? organization.id;
   const links = policyLinksOf(detail);
-  const back = useRef<HTMLButtonElement>(null);
-  useEffect(() => back.current?.focus(), []);
+  const headingId = useId();
+  const heading = useRef<HTMLHeadingElement>(null);
+  const { container, header } = useHeaderScrollPadding();
+  const [leaving, setLeaving] = useState(false);
+  useEffect(() => heading.current?.focus(), []);
+
+  const back = () => {
+    // NOTE: 動きを減らす設定では遷移しないため transitionend が届かない
+    if (prefersReducedMotion()) onBack();
+    else setLeaving(true);
+  };
 
   return (
-    <div
-      className="fixed inset-0 z-10 flex flex-col overflow-y-auto overscroll-contain bg-gray-100"
+    <section
+      ref={container}
+      className={twMerge(
+        "fixed inset-0 z-10 flex flex-col overflow-y-auto overscroll-contain bg-gray-100 transition-transform starting:translate-x-full motion-reduce:transition-none",
+        leaving && "translate-x-full",
+      )}
+      aria-labelledby={headingId}
       data-testid="detail"
+      onTransitionEnd={(event) => {
+        if (leaving && event.target === event.currentTarget) onBack();
+      }}
     >
-      <header className="sticky top-0 flex items-center gap-4 border-b border-gray-300 bg-white p-4">
+      <header
+        ref={header}
+        className="sticky top-0 z-10 flex items-center gap-4 border-b border-gray-300 bg-white p-4"
+      >
         <button
-          ref={back}
           type="button"
           className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md border border-gray-300 text-black transition-colors hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-black"
           aria-label={_("Detail_Back")}
-          onClick={onBack}
+          onClick={back}
         >
           <IconChevronLeft className="size-4" aria-hidden />
         </button>
@@ -67,7 +116,12 @@ export function OrganizationDetail({ detail, onBack }: Props) {
               width={20}
               height={20}
             />
-            <h1 className="min-w-0 text-lg leading-normal font-bold text-black">
+            <h1
+              ref={heading}
+              id={headingId}
+              className="min-w-0 text-lg leading-normal font-bold wrap-anywhere text-black focus:outline-none"
+              tabIndex={-1}
+            >
               {name}
             </h1>
           </div>
@@ -80,11 +134,13 @@ export function OrganizationDetail({ detail, onBack }: Props) {
             <h2 className="text-base font-medium text-black">
               {_("Detail_ThirdPartyVerification")}
             </h2>
-            <div className="flex flex-col gap-8 rounded-xl bg-white p-4">
+            <ul className="flex flex-col gap-8 rounded-xl bg-white p-4">
               {groups.map((group) => (
-                <AnnotationGroupView key={group.issuer.id} group={group} />
+                <li key={group.issuer.id}>
+                  <AnnotationGroupView group={group} />
+                </li>
               ))}
-            </div>
+            </ul>
           </section>
         )}
         {links.length > 0 && (
@@ -103,7 +159,7 @@ export function OrganizationDetail({ detail, onBack }: Props) {
         )}
         <footer className="flex justify-center">
           <a
-            className="text-xs text-gray-600 underline transition-[text-decoration-thickness] hover:decoration-2"
+            className="text-xs text-gray-600 underline underline-offset-2"
             href={aboutUrl}
             target="_blank"
             rel="noreferrer noopener"
@@ -113,6 +169,6 @@ export function OrganizationDetail({ detail, onBack }: Props) {
           </a>
         </footer>
       </div>
-    </div>
+    </section>
   );
 }

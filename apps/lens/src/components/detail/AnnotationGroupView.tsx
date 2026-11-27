@@ -20,7 +20,7 @@ function Annotation({ annotation }: { annotation: AnnotationView }) {
             height={40}
           />
         )}
-        <h3 className="min-w-0 flex-1 text-sm font-medium text-black">
+        <h3 className="min-w-0 flex-1 text-sm font-medium wrap-anywhere text-black">
           {policyUrl ? (
             <ExternalLink className="text-sm" href={policyUrl}>
               {name}
@@ -47,7 +47,7 @@ export function AnnotationGroupView({ group }: { group: AnnotationGroup }) {
           <Annotation key={annotation.id} annotation={annotation} />
         ))}
       </ul>
-      <p className="rounded-xl border border-gray-300 p-4 text-base leading-[1.3] font-medium text-black">
+      <p className="rounded-xl border border-gray-300 p-4 text-base leading-[1.3] font-medium wrap-anywhere text-black">
         {/* NOTE: 確認と発行者の対応は吹き出しの尾でしか見えないため、文言でも示す */}
         <span className="sr-only">{_("Detail_VerifiedBy")}</span>
         {issuer.name ?? issuer.id}
