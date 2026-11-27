@@ -38,45 +38,6 @@
       }
     }
   },
-  "Unsupported_ERR_SITE_PROFILE_FETCH_FAILED": {
-    "message": "Failed to retrieve the data required to verify the site operator or content creator"
-  },
-  "Unsupported_ERR_SITE_PROFILE_FETCH_INVALID": {
-    "message": "The data format required to verify the site operator or content creator is invalid"
-  },
-  "Unsupported_ERR_ORIGINATOR_PROFILE_SET_INVALID": {
-    "message": "The data format required to verify the site operator or content creator is invalid"
-  },
-  "Unsupported_ERR_VERIFICATION_INVALIDATED": {
-    "message": "The verification result is no longer valid because it expired or the URL changed after verification"
-  },
-  "Unsupported_UnknownError": {
-    "message": "The data required to verify the site operator or content creator either does not exist or could not be retrieved"
-  },
-  "Unsupported_OpNotSupported": {
-    "message": "This site does not support OP yet"
-  },
-  "Prohibition_Warning": {
-    "message": "This content may not be legitimate"
-  },
-  "Prohibition_Site": {
-    "message": "There is a possibility of sender spoofing or content tampering"
-  },
-  "Link_OriginatorProfile": {
-    "message": "Learn more about Originator Profile (external site)"
-  },
-  "LinkVerification_Matched_Title": {
-    "message": "Link destination verified"
-  },
-  "LinkVerification_Mismatched_Title": {
-    "message": "Unexpected link destination"
-  },
-  "LinkVerification_MissingOpid_Title": {
-    "message": "Unable to verify link destination"
-  },
-  "LinkVerification_Error_Title": {
-    "message": "Link destination verification failed"
-  },
   "Warning_Title": {
     "message": "Unable to verify site identity"
   },
@@ -153,39 +114,60 @@
     "message": "Site operator"
   },
   "Sidepanel_NoSiteOperator": {
-    "message": "No site operator information"
+    "message": "Site operator information can't be confirmed"
   },
-  "Sidepanel_Originator": {
-    "message": "Creator"
-  },
-  "Sidepanel_NoMainContent": {
-    "message": "This page has no information about the origin of its main content."
+  "Sidepanel_Provider": {
+    "message": "Provider"
   },
   "Sidepanel_OfficialSite": {
     "message": "Official site"
   },
-  "Sidepanel_ShowDetail": {
-    "message": "Show details"
-  },
-  "Sidepanel_ShowDetailFailed": {
-    "message": "Couldn't open the details. Please try again."
-  },
   "Detail_ThirdPartyVerification": {
     "message": "Third-party verification"
-  },
-  "Detail_IssuancePolicy": {
-    "message": "Issuance policy"
   },
   "Link_OpensInNewTab": {
     "message": " (opens in a new tab)"
   },
-  "Link_OpensInNewWindow": {
-    "message": " (opens in a new window)"
-  },
   "Detail_VerifiedBy": {
     "message": "Verified by: "
   },
-  "Detail_NotFound": {
-    "message": "The organization details are not available. Open them again from the side panel."
+  "Sidepanel_NoProvider": {
+    "message": "Provider information can't be confirmed"
+  },
+  "ContentType_Content": {
+    "message": "Content"
+  },
+  "Organization_CorporateRegistry": {
+    "message": "Corporate registry"
+  },
+  "Detail_PublishedPolicies": {
+    "message": "Published policies"
+  },
+  "Detail_Back": {
+    "message": "Back"
+  },
+  "Detail_AboutThisTool": {
+    "message": "About this tool"
+  },
+  "Launcher_SiteAndMain": {
+    "message": "You can confirm the site operator and the origin of the page's main content"
+  },
+  "Launcher_SiteOnly": {
+    "message": "You can confirm the site operator. The origin of the page's main content can't be confirmed"
+  },
+  "Launcher_MainOnly": {
+    "message": "You can confirm the origin of the page's main content. The site operator can't be confirmed"
+  },
+  "Launcher_PageContentOnly": {
+    "message": "You can confirm the origin of some content on this page"
+  },
+  "Launcher_NoOrigin": {
+    "message": "This page has no origin information"
+  },
+  "Launcher_EmbeddedOnly": {
+    "message": "The origin of the page's main content can't be confirmed"
+  },
+  "Launcher_Failed": {
+    "message": "The origin couldn't be confirmed"
   }
 }

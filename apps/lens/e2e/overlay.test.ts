@@ -19,7 +19,7 @@ const organizationName = "Originator Profile 技術研究組合 (開発用)";
 const overlayOf = (page: Page) =>
   page.locator('iframe[srcdoc*="content-script/iframe.js"]');
 
-test("作成者のアコーディオンを開くと、コンテンツの範囲を強調する", async ({
+test("提供者のアコーディオンを開くと、コンテンツの範囲を強調する", async ({
   context,
   page,
   validSiteProfile,
@@ -41,17 +41,17 @@ test("作成者のアコーディオンを開くと、コンテンツの範囲�
   await page.goto(credentialsPage.endpoint);
   const ext = await sidepanel(context);
 
-  const creator = ext
+  const provider = ext
     .getByTestId("content-card")
     .locator("summary", { hasText: organizationName });
-  await creator.click();
+  await provider.click();
   const overlay = overlayOf(page).contentFrame();
   await expect(overlay.getByTestId("highlight-area")).toHaveCount(1);
   await expect(overlay.getByText(organizationName)).toBeVisible();
   // NOTE: 強調はサイドパネルの内容の複製なので、フォーカスも支援技術も向けない
   await expect(overlayOf(page)).toHaveJSProperty("inert", true);
 
-  await creator.click();
+  await provider.click();
   await expect(overlayOf(page)).toHaveCount(0);
 });
 
