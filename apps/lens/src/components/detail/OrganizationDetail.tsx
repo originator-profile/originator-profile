@@ -59,8 +59,9 @@ type Props = {
 /**
  * 組織の詳細の画面
  *
- * コンテンツの一覧から切り替わる画面として扱う。右からスライドインし、表示したら
- * 組織名の見出しにフォーカスを移す。戻るときは右へスライドアウトしてから onBack を呼ぶ。
+ * コンテンツの一覧から切り替わる画面として扱う。右からスライドインし (後ろの一覧は
+ * 白くかすむ)、表示したら組織名の見出しにフォーカスを移す。戻るときは右へ
+ * スライドアウトしてから onBack を呼ぶ。
  * 一覧を残したまま上に重ねて描くのは、戻ったときに一覧の状態を保つためで、
  * 一覧は呼び出し側で操作できなくする。
  */
@@ -82,93 +83,102 @@ export function OrganizationDetail({ detail, onBack }: Props) {
   };
 
   return (
-    <section
-      ref={container}
-      className={twMerge(
-        "fixed inset-0 z-10 flex flex-col overflow-y-auto overscroll-contain bg-gray-100 transition-transform starting:translate-x-full motion-reduce:transition-none",
-        leaving && "translate-x-full",
-      )}
-      aria-labelledby={headingId}
-      data-testid="detail"
-      onTransitionEnd={(event) => {
-        if (leaving && event.target === event.currentTarget) onBack();
-      }}
-    >
-      <header
-        ref={header}
-        className="sticky top-0 z-10 flex items-center gap-4 border-b border-gray-300 bg-white p-4"
+    <>
+      <div
+        className={twMerge(
+          "fixed inset-0 z-10 bg-white/50 transition-opacity starting:opacity-0 motion-reduce:transition-none",
+          leaving && "opacity-0",
+        )}
+        aria-hidden
+      />
+      <section
+        ref={container}
+        className={twMerge(
+          "fixed inset-0 z-10 flex flex-col overflow-y-auto overscroll-contain bg-gray-100 transition-transform starting:translate-x-full motion-reduce:transition-none",
+          leaving && "translate-x-full",
+        )}
+        aria-labelledby={headingId}
+        data-testid="detail"
+        onTransitionEnd={(event) => {
+          if (leaving && event.target === event.currentTarget) onBack();
+        }}
       >
-        <button
-          type="button"
-          className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md border border-gray-300 text-black transition-colors hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-black"
-          aria-label={_("Detail_Back")}
-          onClick={back}
+        <header
+          ref={header}
+          className="sticky top-0 z-10 flex items-center gap-4 border-b border-gray-300 bg-white p-4"
         >
-          <IconChevronLeft className="size-4" aria-hidden />
-        </button>
-        <div className="flex min-w-0 flex-1 flex-col gap-1">
-          <div className="flex items-center gap-3">
-            <Image
-              className="size-5 shrink-0"
-              src={subject?.logo?.id}
-              placeholderSrc={placeholderLogoMainUrl}
-              alt=""
-              width={20}
-              height={20}
-            />
-            <h1
-              ref={heading}
-              id={headingId}
-              className="min-w-0 text-lg leading-normal font-bold wrap-anywhere text-black focus:outline-none"
-              tabIndex={-1}
-            >
-              {name}
-            </h1>
-          </div>
-          <OrganizationFacts organization={organization} />
-        </div>
-      </header>
-      <div className="flex flex-col gap-8 px-4 py-6">
-        {groups.length > 0 && (
-          <section className="flex flex-col gap-4">
-            <h2 className="text-base font-medium text-black">
-              {_("Detail_ThirdPartyVerification")}
-            </h2>
-            <ul className="flex flex-col gap-8 rounded-xl bg-white p-4">
-              {groups.map((group) => (
-                <li key={group.issuer.id}>
-                  <AnnotationGroupView group={group} />
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-        {links.length > 0 && (
-          <section className="flex flex-col gap-4">
-            <h2 className="text-base font-medium text-black">
-              {_("Detail_PublishedPolicies")}
-            </h2>
-            <ul className="flex flex-col gap-1.5 rounded-2xl bg-white p-4">
-              {links.map(({ id, name }, index) => (
-                <li key={index} className="flex">
-                  <ExternalLink href={id}>{name}</ExternalLink>
-                </li>
-              ))}
-            </ul>
-          </section>
-        )}
-        <footer className="flex justify-center">
-          <a
-            className="text-xs text-gray-600 underline underline-offset-2"
-            href={aboutUrl}
-            target="_blank"
-            rel="noreferrer noopener"
+          <button
+            type="button"
+            className="flex size-9 shrink-0 cursor-pointer items-center justify-center rounded-md border border-gray-300 text-black transition-colors hover:bg-gray-50 focus-visible:outline-2 focus-visible:outline-black"
+            aria-label={_("Detail_Back")}
+            onClick={back}
           >
-            {_("Detail_AboutThisTool")}
-            <span className="sr-only">{_("Link_OpensInNewTab")}</span>
-          </a>
-        </footer>
-      </div>
-    </section>
+            <IconChevronLeft className="size-4" aria-hidden />
+          </button>
+          <div className="flex min-w-0 flex-1 flex-col gap-1">
+            <div className="flex items-center gap-3">
+              <Image
+                className="size-5 shrink-0"
+                src={subject?.logo?.id}
+                placeholderSrc={placeholderLogoMainUrl}
+                alt=""
+                width={20}
+                height={20}
+              />
+              <h1
+                ref={heading}
+                id={headingId}
+                className="min-w-0 text-lg leading-normal font-bold wrap-anywhere text-black focus:outline-none"
+                tabIndex={-1}
+              >
+                {name}
+              </h1>
+            </div>
+            <OrganizationFacts organization={organization} />
+          </div>
+        </header>
+        <div className="flex flex-col gap-8 px-4 py-6">
+          {groups.length > 0 && (
+            <section className="flex flex-col gap-4">
+              <h2 className="text-base font-medium text-black">
+                {_("Detail_ThirdPartyVerification")}
+              </h2>
+              <ul className="flex flex-col gap-8 rounded-xl bg-white p-4">
+                {groups.map((group) => (
+                  <li key={group.issuer.id}>
+                    <AnnotationGroupView group={group} />
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          {links.length > 0 && (
+            <section className="flex flex-col gap-4">
+              <h2 className="text-base font-medium text-black">
+                {_("Detail_PublishedPolicies")}
+              </h2>
+              <ul className="flex flex-col gap-1.5 rounded-2xl bg-white p-4">
+                {links.map(({ id, name }, index) => (
+                  <li key={index} className="flex">
+                    <ExternalLink href={id}>{name}</ExternalLink>
+                  </li>
+                ))}
+              </ul>
+            </section>
+          )}
+          <footer className="flex justify-center">
+            <a
+              className="text-xs text-gray-600 underline underline-offset-2"
+              href={aboutUrl}
+              target="_blank"
+              rel="noreferrer noopener"
+            >
+              {_("Detail_AboutThisTool")}
+              <span className="sr-only">{_("Link_OpensInNewTab")}</span>
+            </a>
+          </footer>
+        </div>
+      </section>
+    </>
   );
 }
