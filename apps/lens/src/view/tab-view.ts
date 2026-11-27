@@ -40,7 +40,7 @@ export type TabView =
       state: "ready";
       tabId: number;
       site: SiteView;
-      /** 検証に成功した文書のコンテンツ。メインはトップレベル文書のものに限る */
+      /** 検証に成功した文書のコンテンツ */
       contents: Content[];
       /** CA 発行者ごとの組織。発行者を確認できないものは含まない */
       issuers: Map<string, Organization>;

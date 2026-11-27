@@ -82,7 +82,6 @@ test("組織の詳細は組織実在証を示さず、法人登記へのリン�
     "href",
     "https://www.houjin-bangou.nta.go.jp/henkorireki-johoto.html?selHouzinNo=0000000000000",
   );
-  // NOTE: PA の名前は発行ポリシーへのリンクにする
   await expect(
     view.getByRole("link", {
       name: /^架空業界団体 会員\s*（新しいタブで開きます）$/,

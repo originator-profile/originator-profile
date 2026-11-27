@@ -65,7 +65,7 @@ async function affectedTabIds(
  * 検証結果ストアの変化を受けて、ランチャーアイコンのツールチップを更新する
  * (Service Worker で呼ぶ)
  *
- * アイコンの画像は切り替えない。
+ * アイコンの画像は未確定のため切り替えない。
  */
 export function setupLauncher() {
   chrome.storage.onChanged.addListener(async (changes, area) => {
