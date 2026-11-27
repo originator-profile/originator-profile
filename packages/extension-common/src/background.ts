@@ -15,8 +15,8 @@ const SIDEBAR_POLL_INTERVAL_MS = 500;
 export type BackgroundConfig = {
   /** 警告ページの URL を組み立てる */
   buildWarningUrl: WarningUrlBuilder;
-  /** タブのバッジに表示するクレデンシャルの件数を数える */
-  countCredentials: (verification: TabVerification) => number;
+  /** タブのバッジに表示するクレデンシャルの件数を数える。未指定ならバッジを出さない */
+  countCredentials?: (verification: TabVerification) => number;
 };
 
 /**
@@ -29,7 +29,7 @@ export type BackgroundConfig = {
 export function setupBackground(config: BackgroundConfig) {
   setupVerificationPipeline();
   setupLinkVerification(config.buildWarningUrl);
-  setupTabBadge(config.countCredentials);
+  if (config.countCredentials) setupTabBadge(config.countCredentials);
 
   // Chromium: アクションクリック時にサイドパネルを開く
   if (chrome.sidePanel) {

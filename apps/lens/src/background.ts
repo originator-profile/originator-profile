@@ -1,6 +1,5 @@
 import { readTabVerification } from "@originator-profile/extension-common";
 import { setupBackground } from "@originator-profile/extension-common/background";
-import { countCredentials } from "./components/tabBadge";
 import { setupLauncher } from "./launcher/setup-launcher";
 import { documentFramesOf } from "./overlay/frames";
 import { lensOverlayMessenger } from "./overlay/protocol";
@@ -8,7 +7,6 @@ import { lensOverlayMessenger } from "./overlay/protocol";
 setupBackground({
   buildWarningUrl: (params) =>
     `${chrome.runtime.getURL("index.html")}#/warning?${params.toString()}`,
-  countCredentials,
 });
 setupLauncher();
 
