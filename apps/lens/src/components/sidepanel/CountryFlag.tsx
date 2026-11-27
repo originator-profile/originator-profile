@@ -41,7 +41,7 @@ export function CountryFlag({ country, decorative = false, className }: Props) {
   return (
     <img
       className={twMerge(
-        "block h-3 w-4 shrink-0 rounded-[2px] border-[0.5px] border-[#d9d9d9]",
+        "block h-3 w-4 shrink-0 rounded-xs border-[0.5px] border-[#d9d9d9]",
         className,
       )}
       // NOTE: 拡張機能のルートからの相対 URL。ページの文脈で動く overlay の

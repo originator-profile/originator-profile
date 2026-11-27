@@ -85,7 +85,7 @@ function Area({
     <>
       <div
         className={twMerge(
-          "absolute rounded-[2px] border-[1.5px] border-primary-700",
+          "absolute rounded-xs border-[1.5px] border-primary-700",
           !page && "bg-primary-700/12",
           fade(locating),
         )}

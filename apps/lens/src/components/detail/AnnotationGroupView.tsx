@@ -8,7 +8,7 @@ function Annotation({ annotation }: { annotation: AnnotationView }) {
   return (
     // NOTE: しっぽは疑似要素の三角形を 2 つ重ねて描く。::before が枠線の色で
     // 1px 大きく、::after が塗りの色で、本体の枠線のうちしっぽの付け根を覆う
-    <li className="relative flex flex-col gap-2 rounded-lg border border-gray-300 bg-gray-100 p-4 before:absolute before:top-full before:right-[29px] before:border-x-11 before:border-t-11 before:border-x-transparent before:border-t-gray-300 after:absolute after:top-full after:right-[30px] after:border-x-10 after:border-t-10 after:border-x-transparent after:border-t-gray-100">
+    <li className="relative flex flex-col gap-2 rounded-lg border border-gray-300 bg-gray-100 p-4 before:absolute before:top-full before:right-7.25 before:border-x-11 before:border-t-11 before:border-x-transparent before:border-t-gray-300 after:absolute after:top-full after:right-7.5 after:border-x-10 after:border-t-10 after:border-x-transparent after:border-t-gray-100">
       <div className="flex items-center gap-3.5">
         {image && (
           <Image

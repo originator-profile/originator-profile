@@ -110,7 +110,7 @@ export function OriginatorAccordion({
   return (
     <details
       className={twMerge(
-        "group accordion w-full overflow-hidden rounded-[10px] border border-gray-300 bg-white",
+        "group accordion w-full overflow-hidden rounded-[0.625rem] border border-gray-300 bg-white",
         className,
       )}
       name={name}
