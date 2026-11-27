@@ -38,45 +38,6 @@
       }
     }
   },
-  "Unsupported_ERR_SITE_PROFILE_FETCH_FAILED": {
-    "message": "サイトの運営者またはコンテンツ作成者を検証するためのデータが取得できませんでした"
-  },
-  "Unsupported_ERR_SITE_PROFILE_FETCH_INVALID": {
-    "message": "サイトの運営者またはコンテンツ作成者を検証するためのデータの形式が無効です"
-  },
-  "Unsupported_ERR_ORIGINATOR_PROFILE_SET_INVALID": {
-    "message": "サイトの運営者またはコンテンツ作成者を検証するためのデータの形式が無効です"
-  },
-  "Unsupported_ERR_VERIFICATION_INVALIDATED": {
-    "message": "検証した後に有効期限を過ぎたか URL が変わったため、検証結果は有効ではなくなりました"
-  },
-  "Unsupported_UnknownError": {
-    "message": "サイトの運営者またはコンテンツ作成者を検証するためのデータが存在しないか、取得できませんでした"
-  },
-  "Unsupported_OpNotSupported": {
-    "message": "このサイトはまだOPに対応していません"
-  },
-  "Prohibition_Warning": {
-    "message": "正規のコンテンツではない可能性があります"
-  },
-  "Prohibition_Site": {
-    "message": "発信者の詐称やコンテンツの改竄（かいざん）がされている可能性があります"
-  },
-  "Link_OriginatorProfile": {
-    "message": "Originator Profile についてより詳しく（外部サイト）"
-  },
-  "LinkVerification_Matched_Title": {
-    "message": "リンク先確認成功"
-  },
-  "LinkVerification_Mismatched_Title": {
-    "message": "予期されたリンク先と異なります"
-  },
-  "LinkVerification_MissingOpid_Title": {
-    "message": "リンク先のサイト運営者の確認ができませんでした"
-  },
-  "LinkVerification_Error_Title": {
-    "message": "リンク先の検証に失敗しました"
-  },
   "Warning_Title": {
     "message": "サイトの身元を確認できません"
   },
@@ -153,39 +114,66 @@
     "message": "サイト運営者"
   },
   "Sidepanel_NoSiteOperator": {
-    "message": "サイト運営者情報はありません"
+    "message": "サイト運営者の情報を確認できません"
   },
-  "Sidepanel_Originator": {
-    "message": "作成者"
-  },
-  "Sidepanel_NoMainContent": {
-    "message": "このページにはメインコンテンツの出どころの情報がありません。"
+  "Sidepanel_Provider": {
+    "message": "提供者"
   },
   "Sidepanel_OfficialSite": {
     "message": "公式サイト"
   },
-  "Sidepanel_ShowDetail": {
-    "message": "詳細はこちら"
-  },
-  "Sidepanel_ShowDetailFailed": {
-    "message": "詳細を開けませんでした。もう一度お試しください。"
-  },
   "Detail_ThirdPartyVerification": {
-    "message": "第三者機関による確認"
-  },
-  "Detail_IssuancePolicy": {
-    "message": "発行ポリシー"
+    "message": "第三者による確認"
   },
   "Link_OpensInNewTab": {
     "message": "（新しいタブで開きます）"
   },
-  "Link_OpensInNewWindow": {
-    "message": "（新しいウインドウで開きます）"
-  },
   "Detail_VerifiedBy": {
     "message": "確認した機関: "
   },
-  "Detail_NotFound": {
-    "message": "組織の詳細を表示できません。サイドパネルから開き直してください。"
+  "Sidepanel_NoProvider": {
+    "message": "提供者の情報を確認できません"
+  },
+  "ContentType_Content": {
+    "message": "コンテンツ"
+  },
+  "Organization_CorporateRegistry": {
+    "message": "法人登記"
+  },
+  "Detail_PublishedPolicies": {
+    "message": "公表している方針"
+  },
+  "Detail_Back": {
+    "message": "戻る"
+  },
+  "Detail_AboutThisTool": {
+    "message": "このツールについて"
+  },
+  "Launcher_SiteAndMain": {
+    "message": "サイト運営者とページ本体の出どころを確認できます"
+  },
+  "Launcher_SiteOnly": {
+    "message": "サイト運営者を確認できます。ページ本体の出どころは確認できません"
+  },
+  "Launcher_MainOnly": {
+    "message": "ページ本体の出どころを確認できます。サイト運営者は確認できません"
+  },
+  "Launcher_PageContentOnly": {
+    "message": "ページ内の一部のコンテンツの出どころを確認できます"
+  },
+  "Launcher_NoOrigin": {
+    "message": "このページには出どころの情報がありません"
+  },
+  "Launcher_EmbeddedOnly": {
+    "message": "ページ本体の出どころは確認できません"
+  },
+  "Launcher_Failed": {
+    "message": "出どころを確認できませんでした"
+  },
+  "Sidepanel_SiteOperatorLabel": {
+    "message": "サイト運営者："
+  },
+  "Sidepanel_ProviderLabel": {
+    "message": "提供者："
   }
 }

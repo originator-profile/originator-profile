@@ -78,11 +78,7 @@ export async function sidepanel(ctx: BrowserContext): Promise<Page> {
   const panelPage = await ctx.newPage();
   await panelPage.goto(url);
 
-  // Loading 完了を待つ（表示・未対応・閲覧禁止のいずれかになる）
-  await panelPage
-    .getByTestId("sidepanel")
-    .or(panelPage.getByTestId("p-elm-unsupported-message"))
-    .or(panelPage.getByTestId("p-elm-prohibition-message"))
-    .waitFor({ state: "visible" });
+  // Loading 完了を待つ
+  await panelPage.getByTestId("sidepanel").waitFor({ state: "visible" });
   return panelPage;
 }

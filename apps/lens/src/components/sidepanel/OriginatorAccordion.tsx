@@ -1,31 +1,36 @@
+import IconArrowRight from "@iconify-react/fa6-solid/arrow-right";
 import IconChevronDown from "@iconify-react/fa6-solid/chevron-down";
 import { _, Image } from "@originator-profile/extension-common/ui";
 import placeholderLogoMainUrl from "@originator-profile/extension-common/ui/assets/placeholder-logo-main.png";
-import { useState } from "react";
+import type { MouseEvent } from "react";
 import { twMerge } from "tailwind-merge";
 import type { Organization } from "../../view";
-import { ExternalLink } from "../detail/ExternalLink";
-import { CountryFlag, countryName } from "./CountryFlag";
+import { CountryFlag } from "./CountryFlag";
+import { hasFacts, OrganizationFacts } from "./OrganizationFacts";
 
 type Props = {
   organization: Organization;
+  /** 組織の役割 (運営者か提供者か)。読み上げで組織名の前に置く */
+  roleLabel: string;
   /** 同時に 1 つだけ開くアコーディオンの組の名前 */
   name: string;
   open: boolean;
   /** 開閉したとき。開いていれば true */
   onToggle: (open: boolean) => void;
-  /** 「詳細はこちら」を押したとき。未指定ならボタンを出さない */
-  onShowDetail?: () => Promise<void>;
+  /** 「第三者による確認」を押したとき。押したボタンを受け取る */
+  onShowDetail: (button: HTMLButtonElement) => void;
   className?: string;
 };
 
 function Summary({
   organization: { id, media, country },
+  roleLabel,
 }: {
   organization: Organization;
+  roleLabel: string;
 }) {
   return (
-    <summary className="flex min-h-12 cursor-pointer list-none items-center py-3 pr-2 pl-4 transition-colors group-open:border-b group-open:border-gray-300 hover:bg-gray-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-black">
+    <summary className="flex min-h-12 cursor-pointer list-none items-center py-3 pr-2 pl-4 transition-colors hover:bg-gray-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-black">
       <span className="flex min-w-0 flex-1 items-center gap-2">
         <Image
           className="size-6 shrink-0"
@@ -35,15 +40,13 @@ function Summary({
           width={24}
           height={24}
         />
-        <span className="text-sm leading-[1.3] font-medium text-black">
+        <span className="min-w-0 text-sm leading-[1.3] font-medium wrap-anywhere text-black">
+          <span className="sr-only">{roleLabel}</span>
           {media?.credentialSubject.name ?? id}
         </span>
+        {/* NOTE: 閉じている間は国名を併記していないため、国旗に国名を読ませる */}
         {country && (
-          <CountryFlag
-            className="group-open:hidden"
-            country={country}
-            decorative
-          />
+          <CountryFlag className="group-open:hidden" country={country} />
         )}
       </span>
       <span className="flex size-6 shrink-0 items-center justify-center">
@@ -56,67 +59,36 @@ function Summary({
   );
 }
 
-/**
- * 「詳細はこちら」のボタン
- *
- * 開き終えるまでは押しても何もしない。開けなければ、ボタンの下にそのことを示す
- */
-function DetailButton({ onShowDetail }: { onShowDetail: () => Promise<void> }) {
-  const [pending, setPending] = useState(false);
-  const [failed, setFailed] = useState(false);
-  const showDetail = async () => {
-    if (pending) return;
-    setPending(true);
-    setFailed(false);
-    try {
-      await onShowDetail();
-    } catch (error) {
-      console.warn("Failed to open the organization detail:", error);
-      setFailed(true);
-    } finally {
-      setPending(false);
-    }
-  };
-  return (
-    <div className="flex flex-col">
-      {/* NOTE: disabled 属性はフォーカスを外してしまうため aria-disabled にする */}
-      <button
-        type="button"
-        className="w-full cursor-pointer rounded-md border border-gray-500 px-4 py-2.5 text-left text-xs leading-normal text-black transition-colors hover:bg-gray-50"
-        aria-disabled={pending}
-        onClick={() => void showDetail()}
-      >
-        {_("Sidepanel_ShowDetail")}
-        <span className="sr-only">{_("Link_OpensInNewWindow")}</span>
-      </button>
-      {/* NOTE: 読み上げさせるため、空のうちから置いて中身だけを変える */}
-      <output className="text-xs leading-normal text-black not-empty:mt-2">
-        {failed && _("Sidepanel_ShowDetailFailed")}
-      </output>
-    </div>
-  );
-}
-
 function Body({
-  organization: { media, country },
+  organization,
   onShowDetail,
 }: {
   organization: Organization;
-  onShowDetail?: () => Promise<void>;
+  onShowDetail: (button: HTMLButtonElement) => void;
 }) {
-  const url = media?.credentialSubject.url;
+  const { membership } = organization;
   return (
-    <div className="flex flex-col gap-3 px-4 pt-3.5 pb-4">
-      {country && (
-        <p className="flex items-center gap-1.5 text-xs font-medium text-black">
-          <CountryFlag country={country} decorative />
-          {countryName(country)}
-        </p>
+    <div className="flex flex-col">
+      {(hasFacts(organization) || membership) && (
+        <div className="flex flex-col gap-1.5 px-4 pt-3 pb-3.5">
+          <OrganizationFacts organization={organization} />
+          {membership && (
+            <p className="text-xs leading-normal font-medium text-black">
+              {membership}
+            </p>
+          )}
+        </div>
       )}
-      {url && (
-        <ExternalLink href={url}>{_("Sidepanel_OfficialSite")}</ExternalLink>
-      )}
-      {onShowDetail && <DetailButton onShowDetail={onShowDetail} />}
+      <button
+        type="button"
+        className="flex w-full cursor-pointer items-center justify-between border-t border-gray-300 px-5 py-3 text-left text-xs leading-normal font-bold text-black transition-colors hover:bg-gray-50 focus-visible:outline-2 focus-visible:-outline-offset-2 focus-visible:outline-black"
+        onClick={(event: MouseEvent<HTMLButtonElement>) =>
+          onShowDetail(event.currentTarget)
+        }
+      >
+        {_("Detail_ThirdPartyVerification")}
+        <IconArrowRight className="size-3.5 shrink-0" aria-hidden />
+      </button>
     </div>
   );
 }
@@ -128,6 +100,7 @@ function Body({
  */
 export function OriginatorAccordion({
   organization,
+  roleLabel,
   name,
   open,
   onToggle,
@@ -137,14 +110,14 @@ export function OriginatorAccordion({
   return (
     <details
       className={twMerge(
-        "group accordion jumpu-card w-full rounded-[10px] transition-colors open:border-gray-500",
+        "group accordion w-full overflow-hidden rounded-[0.625rem] border border-gray-300 bg-white",
         className,
       )}
       name={name}
       open={open}
       onToggle={(event) => onToggle(event.currentTarget.open)}
     >
-      <Summary organization={organization} />
+      <Summary organization={organization} roleLabel={roleLabel} />
       <Body organization={organization} onShowDetail={onShowDetail} />
     </details>
   );

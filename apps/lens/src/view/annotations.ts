@@ -74,7 +74,8 @@ function issuerOf(
  * 組織の詳細を得る
  *
  * PA は発行者ごとにまとめ、OP に含まれる順序を保つ。認定証 PA は PA 発行者の
- * 資格を示すもので、組織そのものの確認ではないため含めない。
+ * 資格を示すもので、組織そのものの確認ではないため含めない。組織実在証 PA は
+ * 法人登記へのリンクで示すため含めない。
  * @param organization 組織
  * @param originators 検証済みの発信者。PA 発行者の組織を引くのに用いる
  */
@@ -83,7 +84,10 @@ export function detailOf(
   originators: OriginatorPayload[],
 ): OrganizationDetail {
   const displayable = organization.annotations.filter(
-    (annotation) => !isIssuerAccreditation(annotation),
+    (annotation) =>
+      !isIssuerAccreditation(annotation) &&
+      annotation.credentialSubject.type !==
+        "JP-OrganizationExistenceCertificate",
   );
   const groups = Map.groupBy(displayable, ({ issuer }) => issuer)
     .entries()

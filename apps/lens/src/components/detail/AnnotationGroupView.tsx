@@ -8,7 +8,7 @@ function Annotation({ annotation }: { annotation: AnnotationView }) {
   return (
     // NOTE: しっぽは疑似要素の三角形を 2 つ重ねて描く。::before が枠線の色で
     // 1px 大きく、::after が塗りの色で、本体の枠線のうちしっぽの付け根を覆う
-    <li className="jumpu-balloon relative flex flex-col gap-2 rounded-lg border border-gray-300 p-4 before:absolute before:top-full before:right-[29px] before:border-x-11 before:border-t-11 before:border-x-transparent before:border-t-gray-300 after:absolute after:top-full after:right-[30px] after:border-x-10 after:border-t-10 after:border-x-transparent after:border-t-gray-100">
+    <li className="relative flex flex-col gap-2 rounded-lg border border-gray-300 bg-gray-100 p-4 before:absolute before:top-full before:right-7.25 before:border-x-11 before:border-t-11 before:border-x-transparent before:border-t-gray-300 after:absolute after:top-full after:right-7.5 after:border-x-10 after:border-t-10 after:border-x-transparent after:border-t-gray-100">
       <div className="flex items-center gap-3.5">
         {image && (
           <Image
@@ -20,15 +20,18 @@ function Annotation({ annotation }: { annotation: AnnotationView }) {
             height={40}
           />
         )}
-        <h3 className="text-sm font-medium text-black">{name}</h3>
+        <h3 className="min-w-0 flex-1 text-sm font-medium wrap-anywhere text-black">
+          {policyUrl ? (
+            <ExternalLink className="text-sm" href={policyUrl}>
+              {name}
+            </ExternalLink>
+          ) : (
+            name
+          )}
+        </h3>
       </div>
       {description && (
         <p className="text-xs leading-normal text-black">{description}</p>
-      )}
-      {policyUrl && (
-        <ExternalLink href={policyUrl}>
-          {_("Detail_IssuancePolicy")}
-        </ExternalLink>
       )}
     </li>
   );
@@ -44,23 +47,11 @@ export function AnnotationGroupView({ group }: { group: AnnotationGroup }) {
           <Annotation key={annotation.id} annotation={annotation} />
         ))}
       </ul>
-      <div className="jumpu-card flex items-center gap-3 rounded-xl p-4">
-        {issuer.logo && (
-          <Image
-            className="shrink-0"
-            src={issuer.logo}
-            placeholderSrc={placeholderLogoMainUrl}
-            alt=""
-            width={40}
-            height={40}
-          />
-        )}
-        <p className="text-base leading-[1.3] font-medium text-black">
-          {/* NOTE: 確認と発行者の対応は吹き出しの尾でしか見えないため、文言でも示す */}
-          <span className="sr-only">{_("Detail_VerifiedBy")}</span>
-          {issuer.name ?? issuer.id}
-        </p>
-      </div>
+      <p className="rounded-xl border border-gray-300 p-4 text-base leading-[1.3] font-medium wrap-anywhere text-black">
+        {/* NOTE: 確認と発行者の対応は吹き出しの尾でしか見えないため、文言でも示す */}
+        <span className="sr-only">{_("Detail_VerifiedBy")}</span>
+        {issuer.name ?? issuer.id}
+      </p>
     </div>
   );
 }

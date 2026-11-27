@@ -1,25 +1,20 @@
-import { useState } from "react";
-
-/** サムネイルの寸法 */
-const size = { width: 56, height: 56 };
-
-/**
- * コンテンツのサムネイル
- *
- * 読み込めなければ何も表示しない。プレースホルダーは出さない
- */
-export function Thumbnail({ src }: { src: string }) {
-  const [failed, setFailed] = useState(false);
-  if (failed) return null;
+/** コンテンツのサムネイル。読み込めなければ onError で知らせる */
+export function Thumbnail({
+  src,
+  onError,
+}: {
+  src: string;
+  onError: () => void;
+}) {
   return (
     <img
-      className="shrink-0 rounded-md object-cover"
-      style={size}
+      className="h-14 w-21 shrink-0 rounded-md object-cover"
       src={src}
       alt=""
       crossOrigin="anonymous"
-      onError={() => setFailed(true)}
-      {...size}
+      onError={onError}
+      width={84}
+      height={56}
     />
   );
 }

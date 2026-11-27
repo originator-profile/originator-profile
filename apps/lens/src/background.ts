@@ -1,16 +1,14 @@
 import { readTabVerification } from "@originator-profile/extension-common";
 import { setupBackground } from "@originator-profile/extension-common/background";
-import { countCredentials } from "./components/tabBadge";
-import { setupDetailCleanup } from "./detail/snapshot";
+import { setupLauncher } from "./launcher/setup-launcher";
 import { documentFramesOf } from "./overlay/frames";
 import { lensOverlayMessenger } from "./overlay/protocol";
 
 setupBackground({
   buildWarningUrl: (params) =>
     `${chrome.runtime.getURL("index.html")}#/warning?${params.toString()}`,
-  countCredentials,
 });
-setupDetailCleanup();
+setupLauncher();
 
 // サブフレームでの位置の計測を、それぞれのフレームの content script に中継する
 lensOverlayMessenger.onMessage("locateTargets", async ({ data, sender }) => {

@@ -23,7 +23,7 @@ export function SiteHeader({ site, operator }: Props) {
 
   return (
     <section className="flex flex-col gap-2" data-testid="site-header">
-      <h1 className="text-sm leading-[1.35] font-bold text-black">
+      <h1 className="text-sm leading-[1.35] font-bold wrap-anywhere text-black">
         {site.name}
       </h1>
       {site.state === "present" && (

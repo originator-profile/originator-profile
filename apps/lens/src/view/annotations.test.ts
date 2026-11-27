@@ -19,7 +19,7 @@ const accreditation = {
 const detail = (annotations: unknown[]) => {
   const originators = [
     originator(id, { name: "publisher", annotations }),
-    originator("dns:pa-issuer.example", { name: "pa-issuer" }),
+    originator("dns:association.example", { name: "association" }),
   ];
   const organization = organizationOf(id, originators);
   if (!organization) throw new Error("organization not found");
@@ -38,15 +38,16 @@ describe("detailOf", () => {
         issuer.id,
         annotations.map(({ type }) => type),
       ]),
-    ).toEqual([
-      ["dns:association.example", ["Membership", "Membership"]],
-      ["dns:pa-issuer.example", ["JP-OrganizationExistenceCertificate"]],
-    ]);
+    ).toEqual([["dns:association.example", ["Membership", "Membership"]]]);
   });
 
   test("PA 発行者の名前をその組織の WMP から得る", () => {
-    const { groups } = detail([existencePa(id, "JP")]);
-    expect(groups[0]?.issuer).toMatchObject({ name: "pa-issuer" });
+    const { groups } = detail([membershipPa(id, "urn:uuid:policy")]);
+    expect(groups[0]?.issuer).toMatchObject({ name: "association" });
+  });
+
+  test("組織実在証 PA は含めない", () => {
+    expect(detail([existencePa(id, "JP")]).groups).toEqual([]);
   });
 
   test("認定証 PA は含めない", () => {
