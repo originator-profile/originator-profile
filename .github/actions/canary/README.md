@@ -1,12 +1,13 @@
 # Canary Release
 
-Web Extension と WordPress プラグインのカナリアリリースを GitHub に公開。
+ブラウザー拡張機能 (OP Inspector・OP Lens) と WordPress プラグインのカナリアリリースを GitHub に公開。
 
 ## ローカル実行
 
 ### 前提条件
 
 - `apps/inspector/web-ext-artifacts/*.zip` が存在すること
+- `apps/lens/web-ext-artifacts/*.zip` が存在すること
 - `packages/wordpress/dist/*.zip` が存在すること
 - `gh` CLI がインストールされ、認証済みであること
 
@@ -18,6 +19,6 @@ Web Extension と WordPress プラグインのカナリアリリースを GitHub
 
 ## 動作
 
-1. `.github/dist/` に両方の `.zip` をコピー
+1. `.github/dist/` に各 `.zip` をコピー
 2. バージョン番号（`-1.2.3.zip`）を `-canary.zip` に置換
 3. GitHub の `canary` プレリリースを作成/更新

@@ -10,13 +10,13 @@ inputs:
     required: true
 outputs:
   artifact-url:
-    description: URL of the built artifact
+    description: URL of the built OP Inspector artifact
     value: ${{ steps.upload.outputs.artifact-url }}
 runs:
   using: composite
   steps:
     - name: Clean up previous artifacts
-      run: rm -rf ./apps/inspector/web-ext-artifacts*
+      run: rm -rf ./apps/inspector/web-ext-artifacts* ./apps/lens/web-ext-artifacts*
       shell: bash
     - run: pnpm build
       shell: bash
@@ -28,3 +28,7 @@ runs:
       with:
         name: inspector
         path: apps/inspector/web-ext-artifacts*
+    - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+      with:
+        name: lens
+        path: apps/lens/web-ext-artifacts*
