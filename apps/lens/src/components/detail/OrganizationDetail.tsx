@@ -47,6 +47,23 @@ function useHeaderScrollPadding() {
   return { container, header };
 }
 
+/**
+ * 表示しているあいだ、後ろの一覧 (文書) をスクロールさせない
+ *
+ * NOTE: overflow: hidden でも文書のスクロール位置は保たれ、戻ったときに一覧の
+ * 位置が変わらない
+ */
+function useDocumentScrollLock() {
+  useEffect(() => {
+    const root = document.documentElement;
+    const previous = root.style.overflow;
+    root.style.overflow = "hidden";
+    return () => {
+      root.style.overflow = previous;
+    };
+  }, []);
+}
+
 const prefersReducedMotion = () =>
   matchMedia("(prefers-reduced-motion: reduce)").matches;
 
@@ -73,6 +90,7 @@ export function OrganizationDetail({ detail, onBack }: Props) {
   const headingId = useId();
   const heading = useRef<HTMLHeadingElement>(null);
   const { container, header } = useHeaderScrollPadding();
+  useDocumentScrollLock();
   const [leaving, setLeaving] = useState(false);
   useEffect(() => heading.current?.focus(), []);
 

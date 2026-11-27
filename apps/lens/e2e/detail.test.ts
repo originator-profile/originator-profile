@@ -42,6 +42,10 @@ test("「第三者による確認」で組織の詳細をサイドパネルの�
   await expect(
     ext.getByRole("region", { name: organizationName }),
   ).toBeVisible();
+  // NOTE: 詳細を表示しているあいだ、後ろの一覧はスクロールさせない
+  const rootOverflow = () =>
+    ext.evaluate(() => getComputedStyle(document.documentElement).overflowY);
+  expect(await rootOverflow()).toBe("hidden");
   await expect(
     view.getByRole("heading", { name: "第三者による確認" }),
   ).toBeVisible();
@@ -63,6 +67,7 @@ test("「第三者による確認」で組織の詳細をサイドパネルの�
 
   await view.getByRole("button", { name: "戻る" }).click();
   await expect(view).toHaveCount(0);
+  expect(await rootOverflow()).toBe("visible");
   await expect(accordion).toHaveAttribute("open");
   await expect(trigger).toBeFocused();
 });
