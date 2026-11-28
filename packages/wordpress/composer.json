@@ -17,10 +17,14 @@
       "@test:integration:storage",
       "@test:integration:update",
       "@test:integration:diagnostics",
-      "@test:integration:issue-status"
+      "@test:integration:issue-status",
+      "@test:integration:log",
+      "@test:integration:settings"
     ],
     "test:integration:diagnostics": "wp --path=/var/www/html eval-file /var/www/html/wp-content/plugins/ca-manager/tests/integration/diagnostics.php",
     "test:integration:issue-status": "wp --path=/var/www/html eval-file /var/www/html/wp-content/plugins/ca-manager/tests/integration/issue-status.php",
+    "test:integration:log": "wp --path=/var/www/html eval-file /var/www/html/wp-content/plugins/ca-manager/tests/integration/log.php",
+    "test:integration:settings": "wp --path=/var/www/html eval-file /var/www/html/wp-content/plugins/ca-manager/tests/integration/settings.php",
     "lint": "phpcs .",
     "format": "phpcbf -v ."
   },

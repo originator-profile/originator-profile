@@ -691,6 +691,12 @@ test:integration:diagnostics
 test:integration:issue-status
 : CA発行の失敗の記録に関する結合テスト
 
+test:integration:log
+: ログの出力設定と、プラグイン有効化時に用意するログ用ディレクトリのアクセス制御ファイルに関する結合テスト
+
+test:integration:settings
+: 設定値の初期値、CA発行への反映、設定画面での表示に関する結合テスト
+
 test:integration
 : 上記の結合テストを順番に実行。CIでもE2EのWordPress準備後に実行。ローカルのE2Eでも実行する場合は `WORDPRESS_RUN_INTEGRATION_TESTS=1` を指定
 
